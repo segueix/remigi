@@ -1,23 +1,70 @@
-import { difficultyByKey, finalScores } from '@rummikub/core';
+import { difficultyByKey, finalScores, findRackMelds, type Tile } from '@rummikub/core';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { BoardView } from '../components/BoardView';
 import { RackView } from '../components/RackView';
+import { TileView } from '../components/TileView';
+import { useDragTile } from '../game/useDragTile';
 import { invalidMeldIndexes, missingOpeningPoints, openingPoints } from '../game/turnDraft';
 import { useGame, type GameHandle, type GameSetup } from '../game/useGame';
 import type { RatingChange } from '../state/gameOutcome';
+import type { SavedGameHandle } from '../state/useSavedGame';
 import type { ProfileHandle } from '../state/useProfile';
 import { useRecordResult } from '../state/useRecordResult';
+import type { GameState } from '@rummikub/core';
 
 interface Props {
   setup: GameSetup;
+  /** Partida a reprendre; si no n'hi ha, se'n reparteix una de nova. */
+  resume?: GameState;
   profile: ProfileHandle;
+  savedGame: SavedGameHandle;
   onExit(): void;
 }
 
-export function GameScreen({ setup, profile, onExit }: Props) {
-  const handle = useGame(setup);
+export function GameScreen({ setup, resume, profile, savedGame, onExit }: Props) {
+  const handle = useGame(setup, resume);
   const { game, draft, selectedTileId, error, highlighted, isHumanTurn } = handle;
-  // En acabar la partida, el resultat passa a comptar per a l'habilitat.
   const change = useRecordResult(game, setup.opponents, profile);
+  const [helpOn, setHelpOn] = useState(false);
+
+  const { moveTileTo } = handle;
+  const drag = useDragTile(isHumanTurn, moveTileTo);
+
+  // La partida es desa a cada moviment, i s'esborra quan s'acaba: així es pot
+  // tancar la pestanya a mitges i continuar-la després.
+  const { persist, clear } = savedGame;
+  useEffect(() => {
+    if (game.status === 'playing') persist({ setup, game });
+    else clear();
+  }, [game, setup, persist, clear]);
+
+  // Fitxes de la mà que poden formar alguna jugada. Només es calcula quan
+  // l'ajuda està encesa i quan canvia el faristol.
+  const suggested = useMemo(() => {
+    if (!helpOn || !draft) return new Set<string>();
+    const ids = new Set<string>();
+    for (const candidate of findRackMelds(draft.rack, true)) {
+      for (const tile of candidate.meld) ids.add(tile.id);
+    }
+    return ids;
+  }, [helpOn, draft]);
+
+  /**
+   * Un sol gest per a tot: si no hi ha res triat, el clic tria la fitxa; si n'hi
+   * ha, el clic diu on deixar-la. Tornar a clicar la fitxa triada la desmarca.
+   * Un clic que ve de deixar anar una fitxa arrossegada s'ignora.
+   */
+  const handleTileClick = useCallback(
+    (tileId: string, meldIndex: number | null) => {
+      if (drag.consumeDragFlag()) return;
+      if (!selectedTileId) return handle.selectTile(tileId);
+      if (selectedTileId === tileId) return handle.selectTile(null);
+      handle.placeSelected(
+        meldIndex === null ? { kind: 'rack' } : { kind: 'meld', index: meldIndex },
+      );
+    },
+    [drag, handle, selectedTileId],
+  );
 
   if (game.status === 'finished') {
     return <GameOver handle={handle} change={change} onExit={onExit} />;
@@ -26,17 +73,7 @@ export function GameScreen({ setup, profile, onExit }: Props) {
   const human = game.players[0];
   const invalid = draft ? invalidMeldIndexes(draft) : new Set<number>();
   const needsOpening = draft !== null && !human.hasOpened;
-
-  /**
-   * Un sol gest per a tot: si no hi ha res seleccionat, el clic tria la fitxa;
-   * si n'hi ha, el clic diu on deixar-la (la jugada on has clicat, o el
-   * faristol). Tornar a clicar la fitxa triada la deselecciona.
-   */
-  function handleTileClick(tileId: string, meldIndex: number | null) {
-    if (!selectedTileId) return handle.selectTile(tileId);
-    if (selectedTileId === tileId) return handle.selectTile(null);
-    handle.placeSelected(meldIndex === null ? { kind: 'rack' } : { kind: 'meld', index: meldIndex });
-  }
+  const draggedTile = drag.dragging ? findTile(draft?.board.flat(), draft?.rack, drag.dragging.tileId) : null;
 
   return (
     <section className="game">
@@ -55,8 +92,10 @@ export function GameScreen({ setup, profile, onExit }: Props) {
         ))}
       </ul>
 
-      <p className="muted turn-line">
-        Torn {game.turn} · {isHumanTurn ? 'et toca a tu' : `juga ${game.players[game.currentPlayer].name}…`} ·{' '}
+      {/* Els canvis de torn i els errors s'anuncien als lectors de pantalla. */}
+      <p className="muted turn-line" aria-live="polite">
+        Torn {game.turn} ·{' '}
+        {isHumanTurn ? 'et toca a tu' : `juga ${game.players[game.currentPlayer].name}…`} ·{' '}
         {game.bag.length} fitxes al sac
       </p>
 
@@ -64,9 +103,12 @@ export function GameScreen({ setup, profile, onExit }: Props) {
         board={draft ? draft.board : game.board}
         invalidIndexes={invalid}
         selectedTileId={selectedTileId}
+        draggingTileId={drag.dragging?.tileId ?? null}
+        over={drag.dragging?.over ?? null}
         highlighted={highlighted}
         interactive={isHumanTurn}
         onTileClick={handleTileClick}
+        onTilePointerDown={drag.start}
         onMeldClick={(index) => handle.placeSelected({ kind: 'meld', index })}
         onNewMeldClick={() => handle.placeSelected({ kind: 'new' })}
       />
@@ -84,14 +126,22 @@ export function GameScreen({ setup, profile, onExit }: Props) {
         </p>
       )}
 
-      {error && <p className="error">{error}</p>}
+      <p className="error-slot" role="alert">
+        {error && <span className="error">{error}</span>}
+      </p>
 
       <RackView
         rack={draft ? draft.rack : human.rack}
         selectedTileId={selectedTileId}
+        draggingTileId={drag.dragging?.tileId ?? null}
+        isOver={drag.dragging?.over?.kind === 'rack'}
+        suggested={suggested}
+        helpOn={helpOn}
         interactive={isHumanTurn}
+        onToggleHelp={() => setHelpOn((on) => !on)}
         onTileClick={(tileId) => handleTileClick(tileId, null)}
-        onRackClick={() => selectedTileId && handle.placeSelected({ kind: 'rack' })}
+        onTilePointerDown={drag.start}
+        onReturnToRack={() => handle.placeSelected({ kind: 'rack' })}
       />
 
       <div className="row actions">
@@ -112,8 +162,22 @@ export function GameScreen({ setup, profile, onExit }: Props) {
           Deixar la partida
         </button>
       </div>
+
+      {/* Còpia que segueix el punter. No rep clics: així no tapa la destinació. */}
+      {drag.dragging && draggedTile && (
+        <div
+          className="drag-layer"
+          style={{ transform: `translate(${drag.dragging.x}px, ${drag.dragging.y}px)` }}
+        >
+          <TileView tile={draggedTile} floating />
+        </div>
+      )}
     </section>
   );
+}
+
+function findTile(board: Tile[] | undefined, rack: Tile[] | undefined, id: string): Tile | null {
+  return board?.find((t) => t.id === id) ?? rack?.find((t) => t.id === id) ?? null;
 }
 
 function GameOver({
@@ -132,7 +196,7 @@ function GameOver({
   const humanWon = game.winnerId === game.players[0].id;
 
   return (
-    <section className="card">
+    <section className={humanWon ? 'card game-over won' : 'card game-over'}>
       <h2>{humanWon ? 'Has guanyat!' : `Ha guanyat ${winner?.name}`}</h2>
       <p className="muted">
         {blocked
@@ -156,8 +220,7 @@ function GameOver({
 
       {change && (
         <p className="rating-change">
-          La teva habilitat: {change.before} →{' '}
-          <strong>{change.after}</strong>{' '}
+          La teva habilitat: {change.before} → <strong>{change.after}</strong>{' '}
           <span className={change.delta >= 0 ? 'points-positive' : 'points-negative'}>
             ({change.delta >= 0 ? '+' : ''}
             {change.delta})

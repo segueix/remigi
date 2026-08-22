@@ -1,42 +1,59 @@
+import type { GameState } from '@rummikub/core';
 import { useState } from 'react';
 import type { GameSetup } from './game/useGame';
 import { GameScreen } from './screens/GameScreen';
 import { HomeScreen } from './screens/HomeScreen';
 import { StatsScreen } from './screens/StatsScreen';
 import { useProfile } from './state/useProfile';
+import { useSavedGame } from './state/useSavedGame';
 
 export type Screen = 'home' | 'game' | 'stats';
 
 /**
- * Navegació mínima amb estat local: encara no cal un router, perquè no hi ha
- * enllaços profunds ni URL per compartir. Si a la Fase 5 fa falta historial del
- * navegador, aquí és on s'hi posaria.
+ * Navegació mínima amb estat local: no hi ha enllaços profunds ni URL per
+ * compartir, així que un router seria pes de més.
  */
 export function App() {
   const [screen, setScreen] = useState<Screen>('home');
   const [setup, setSetup] = useState<GameSetup | null>(null);
-  const handle = useProfile();
+  const [resume, setResume] = useState<GameState | undefined>();
+  const profile = useProfile();
+  const savedGame = useSavedGame();
 
-  if (handle.loading) {
+  if (profile.loading || savedGame.loading) {
     return (
       <main className="app">
-        <p className="muted">Carregant el perfil…</p>
+        <p className="muted">Carregant…</p>
       </main>
     );
   }
 
   function startGame(next: GameSetup) {
     setSetup(next);
+    setResume(undefined);
     setScreen('game');
+  }
+
+  function continueGame() {
+    if (!savedGame.saved) return;
+    setSetup(savedGame.saved.setup);
+    setResume(savedGame.saved.game);
+    setScreen('game');
+  }
+
+  /** En tornar a l'inici es torna a mirar si hi ha partida per continuar. */
+  function goHome() {
+    setScreen('home');
+    savedGame.refresh();
   }
 
   return (
     <main className="app">
       <header className="app-header">
-        <h1 onClick={() => setScreen('home')}>Rummikub</h1>
-        {handle.profile && (
+        <h1 onClick={goHome}>Rummikub</h1>
+        {profile.profile && (
           <nav>
-            <button className="link" onClick={() => setScreen('home')} disabled={screen === 'home'}>
+            <button className="link" onClick={goHome} disabled={screen === 'home'}>
               Inici
             </button>
             <button className="link" onClick={() => setScreen('stats')} disabled={screen === 'stats'}>
@@ -46,11 +63,24 @@ export function App() {
         )}
       </header>
 
-      {screen === 'home' && <HomeScreen handle={handle} onPlay={startGame} />}
-      {screen === 'game' && setup && (
-        <GameScreen setup={setup} profile={handle} onExit={() => setScreen('home')} />
+      {screen === 'home' && (
+        <HomeScreen
+          handle={profile}
+          savedGame={savedGame.saved}
+          onPlay={startGame}
+          onContinue={continueGame}
+        />
       )}
-      {screen === 'stats' && <StatsScreen handle={handle} />}
+      {screen === 'game' && setup && (
+        <GameScreen
+          setup={setup}
+          resume={resume}
+          profile={profile}
+          savedGame={savedGame}
+          onExit={goHome}
+        />
+      )}
+      {screen === 'stats' && <StatsScreen handle={profile} />}
     </main>
   );
 }

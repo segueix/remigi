@@ -43,7 +43,7 @@ acabar-la.
 | 2 | Esquelet de l'aplicació web | ✅ Feta (2026-08-22) |
 | 3 | Pantalla de partida jugable | ✅ Feta (2026-08-22) |
 | 4 | Cicle adaptatiu complet a la web | ✅ Feta (2026-08-22) |
-| 5 | Experiència d'usuari i polit | ⬜ Pendent |
+| 5 | Experiència d'usuari i polit | ✅ Feta (2026-08-22) |
 | 6 | Motor avançat (solver òptim i regles pendents) | ⬜ Pendent |
 | 7 | Desplegament | ⬜ Pendent |
 
@@ -222,9 +222,9 @@ bots, amb totes les regles aplicades pel motor.
 - `insertSmart` tria la primera posició que fa vàlida la jugada, que no sempre
   és la que l'usuari vol en casos ambigus. L'arrossegar i deixar anar de la
   Fase 5 donarà control exacte.
-- La `key` de cada jugada depèn de les seves fitxes, així que en canviar es
-  remunta el component. Innocu ara, però caldrà revisar-ho quan la Fase 5 hi
-  posi animacions i navegació per teclat.
+- ~~La `key` de cada jugada depèn de les seves fitxes~~ — **resolt a la Fase 5**:
+  ara la clau és la posició, així afegir una fitxa a una jugada ja no en torna a
+  muntar el component ni s'endú l'animació.
 
 ---
 
@@ -286,34 +286,64 @@ l'actualitza.
 
 ## Fase 5 — Experiència d'usuari i polit
 
-**Estat**: ⬜ Pendent
+**Estat**: ✅ Feta (2026-08-22)
 
 **Objectiu**: que jugar-hi sigui còmode i agradable a ordinador i a mòbil.
 
 ### Tasques
 
-- [ ] Disseny responsiu (taula i faristol usables en pantalla petita) i
-      interacció tàctil per moure fitxes.
-- [ ] Arrossegar i deixar anar complet (si va quedar pendent de la Fase 3),
-      amb alternativa accessible per teclat.
-- [ ] Animacions curtes: robar, baixar jugades, torn dels bots, victòria.
-- [ ] Desar la **partida en curs** (serialitzar `GameState` a localStorage) i
-      oferir «Continuar la partida» en tornar a obrir.
+- [x] Disseny responsiu i interacció tàctil: fitxes de 44 px de costat, taula i
+      faristol amb desplaçament propi, botons del torn de 44 px d'alçada.
+- [x] Arrossegar i deixar anar amb esdeveniments de punter (`useDragTile`), que
+      funcionen igual amb ratolí i amb dit. El «tria i col·loca» a clics de la
+      Fase 3 continua sent l'alternativa accessible per teclat, amb un botó
+      «Torna la fitxa al faristol» per al cas que el faristol sigui buit.
+- [x] Animacions curtes en robar, en guanyar i a les fitxes que acaba de baixar
+      un bot, totes desactivades amb `prefers-reduced-motion`.
+- [x] Partida en curs desada a cada moviment i oferta de continuar-la en tornar
+      a obrir, amb validació del que hi ha desat (`state/savedGame.ts`).
 - [x] ~~Ordenar el faristol (per color / per número)~~ — avançat a la Fase 3.
-- [ ] Ressaltar jugades possibles com a *ajuda* opcional (`findRackMelds`).
-- [ ] Accessibilitat bàsica: contrast, mides de toc, focus visible, textos
-      alternatius; tot el text de la UI en català.
-- [ ] Revisió de rendiment (una partida llarga no ha de degradar la UI).
+- [x] Ajuda opcional: marca les fitxes de la mà que poden formar jugada
+      (`findRackMelds`), calculada només quan està encesa.
+- [x] Accessibilitat: mides de toc, focus visible, `aria-live` per al canvi de
+      torn i `role="alert"` per als errors, etiquetes a totes les fitxes.
+- [x] Revisió de rendiment amb mesures reals.
+- [x] Extra: tota la taula és zona per crear jugada nova, i la clau de cada
+      jugada passa a ser la posició (resol la limitació apuntada a la Fase 3).
 
-### Criteris d'acceptació
+### Criteris d'acceptació (verificats)
 
-- Partida completa jugable amb comoditat en un mòbil (o emulació de mòbil).
-- Tancar la pestanya a mitja partida i reobrir: es pot continuar exactament on era.
-- `typecheck`, `test` i `build` en verd.
+- Partida completa jugable amb comoditat en un mòbil. ✔ Verificat en un Pixel 5
+  emulat (393 px): partida sencera a base de tocs, arrossegament amb el dit,
+  fitxes de 44×56 px, botons de 44 px i cap desbordament horitzontal.
+- Tancar la pestanya a mitja partida i continuar-la. ✔ Es reprèn al mateix torn
+  i amb les mateixes fitxes a la mà; en acabar-se, deixa d'oferir-se.
+- `typecheck`, `test` i `build` en verd. ✔ (74 core + 36 web; 223 kB, 71 kB gzip)
+- Rendiment: la resposta del torn **no es degrada** a mesura que creix la taula
+  (90 ms el primer torn per escalfament; després 40–55 ms estables fins a 31
+  fitxes a la taula). Inclou el temps d'anada i tornada de l'automatització, així
+  que el treball real de la interfície és força menor.
+- Tema fosc i moviment reduït comprovats: contrast de 6,3:1 al número de la
+  fitxa i animacions efectivament desactivades.
 
 ### Problemes trobats
 
-*(cap encara)*
+- [2026-08-22] Els botons del torn feien 42 px d'alçada i l'enllaç «Deixar la
+  partida» només 24: per sota dels 44 recomanats per al tacte. Detectat
+  mesurant-los en el mòbil emulat; resolt amb una alçada mínima en pantalles
+  petites.
+- [2026-08-22] **Compromís del tacte**: per poder arrossegar amb el dit cal
+  `touch-action: none` a les fitxes, i això impedeix desplaçar la pàgina
+  lliscant just damunt d'una fitxa. S'ha compensat donant desplaçament propi a
+  la taula i al faristol, i mantenint el «tria i col·loca» a tocs, que no
+  necessita arrossegar gens. Queda anotat perquè és una decisió, no un descuit.
+- [2026-08-22] Una escala llarga no cap en una pantalla estreta i desquadrava la
+  pàgina. Resolt fent que la taula es desplaci per dins, sense partir les
+  jugades.
+- [2026-08-22] Una primera mesura de rendiment no valia res: la partida
+  s'acabava abans d'omplir-se la taula i es mesurava amb la taula buida.
+  Repetida seguint la mida de la taula a cada torn, que és el que es volia
+  saber.
 
 ---
 

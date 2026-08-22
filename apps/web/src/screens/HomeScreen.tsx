@@ -7,18 +7,22 @@ import {
 } from '@rummikub/core';
 import { useState } from 'react';
 import type { GameSetup } from '../game/useGame';
+import type { SavedGame } from '../state/savedGame';
 import type { ProfileHandle } from '../state/useProfile';
 
 interface Props {
   handle: ProfileHandle;
+  /** Partida a mig jugar, si n'hi ha cap de desada. */
+  savedGame: SavedGame | null;
   onPlay(setup: GameSetup): void;
+  onContinue(): void;
 }
 
 type OpponentCount = 1 | 2 | 3;
 
 const FALLBACK: DifficultyKey[] = ['easy', 'medium', 'advanced'];
 
-export function HomeScreen({ handle, onPlay }: Props) {
+export function HomeScreen({ handle, savedGame, onPlay, onContinue }: Props) {
   const { profile } = handle;
   const [name, setName] = useState(profile?.name ?? '');
   const [editing, setEditing] = useState(false);
@@ -89,8 +93,18 @@ export function HomeScreen({ handle, onPlay }: Props) {
         {profile!.gamesPlayed === 1 ? 'partida jugada' : 'partides jugades'}
       </p>
 
+      {savedGame && (
+        <div className="resume">
+          <p>
+            Tens una partida a mig jugar: <strong>torn {savedGame.game.turn}</strong> contra{' '}
+            {savedGame.setup.opponents.map((key) => DIFFICULTIES[key].label).join(', ')}.
+          </p>
+          <button onClick={onContinue}>Continua la partida</button>
+        </div>
+      )}
+
       <fieldset className="setup">
-        <legend>Contra quants oponents vols jugar?</legend>
+        <legend>{savedGame ? 'O comença’n una de nova' : 'Contra quants oponents vols jugar?'}</legend>
         <div className="row count-picker">
           {([1, 2, 3] as OpponentCount[]).map((option) => (
             <button
@@ -153,8 +167,11 @@ export function HomeScreen({ handle, onPlay }: Props) {
       </fieldset>
 
       <div className="row">
-        <button onClick={() => onPlay({ playerName: profile!.name, opponents })}>
-          Comença a jugar
+        <button
+          className={savedGame ? 'secondary' : ''}
+          onClick={() => onPlay({ playerName: profile!.name, opponents })}
+        >
+          {savedGame ? 'Comença una partida nova' : 'Comença a jugar'}
         </button>
         <button className="secondary" onClick={() => setEditing(true)}>
           Canvia el nom

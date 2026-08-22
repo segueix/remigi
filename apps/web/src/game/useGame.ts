@@ -41,6 +41,8 @@ export interface GameHandle {
   canCommit: boolean;
   selectTile(tileId: string | null): void;
   placeSelected(destination: Destination): void;
+  /** Mou una fitxa concreta (l'usa l'arrossegament, que no passa per la tria). */
+  moveTileTo(tileId: string, destination: Destination): void;
   commit(): void;
   draw(): void;
   resetTurn(): void;
@@ -68,9 +70,13 @@ function draftFor(game: GameState): TurnDraft | null {
   return isHumanTurn(game) ? startTurn(game, game.currentPlayer) : null;
 }
 
-export function useGame(initialSetup: GameSetup): GameHandle {
+/**
+ * `initialGame` permet reprendre una partida desada: si no se'n passa cap,
+ * se'n reparteix una de nova.
+ */
+export function useGame(initialSetup: GameSetup, initialGame?: GameState): GameHandle {
   const setupRef = useRef(initialSetup);
-  const [game, setGame] = useState<GameState>(() => newGameState(initialSetup));
+  const [game, setGame] = useState<GameState>(() => initialGame ?? newGameState(initialSetup));
   const [draft, setDraft] = useState<TurnDraft | null>(() => draftFor(game));
   const [selectedTileId, setSelectedTileId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -105,14 +111,17 @@ export function useGame(initialSetup: GameSetup): GameHandle {
     setError(null);
   }, []);
 
+  const moveTileTo = useCallback((tileId: string, destination: Destination) => {
+    setDraft((current) => (current ? moveTile(current, tileId, destination) : current));
+    setSelectedTileId(null);
+    setError(null);
+  }, []);
+
   const placeSelected = useCallback(
     (destination: Destination) => {
-      if (!selectedTileId) return;
-      setDraft((current) => (current ? moveTile(current, selectedTileId, destination) : current));
-      setSelectedTileId(null);
-      setError(null);
+      if (selectedTileId) moveTileTo(selectedTileId, destination);
     },
-    [selectedTileId],
+    [selectedTileId, moveTileTo],
   );
 
   const commit = useCallback(() => {
@@ -156,6 +165,7 @@ export function useGame(initialSetup: GameSetup): GameHandle {
     canCommit: draft !== null && hasChanges(draft),
     selectTile,
     placeSelected,
+    moveTileTo,
     commit,
     draw,
     resetTurn,

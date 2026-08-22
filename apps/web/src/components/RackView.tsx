@@ -5,18 +5,38 @@ import { TileView } from './TileView';
 interface Props {
   rack: Tile[];
   selectedTileId?: string | null;
+  draggingTileId?: string | null;
+  /** El punter que arrossega és sobre el faristol. */
+  isOver?: boolean;
+  /** Fitxes que poden formar jugada, quan l'ajuda està activada. */
+  suggested?: ReadonlySet<string>;
+  helpOn?: boolean;
   interactive?: boolean;
+  onToggleHelp?(): void;
   onTileClick?(tileId: string): void;
-  /** Tornar al faristol la fitxa seleccionada. */
-  onRackClick?(): void;
+  onTilePointerDown?(event: React.PointerEvent, tileId: string): void;
+  /** Tornar al faristol la fitxa triada. */
+  onReturnToRack?(): void;
 }
 
 type Order = 'cap' | 'numero' | 'color';
 
 const COLOR_ORDER = ['red', 'blue', 'black', 'orange'];
 
-/** El faristol del jugador, amb ordenació opcional (només visual). */
-export function RackView({ rack, selectedTileId, interactive, onTileClick, onRackClick }: Props) {
+/** El faristol del jugador, amb ordenació i ajuda opcionals (només visuals). */
+export function RackView({
+  rack,
+  selectedTileId,
+  draggingTileId,
+  isOver,
+  suggested,
+  helpOn,
+  interactive,
+  onToggleHelp,
+  onTileClick,
+  onTilePointerDown,
+  onReturnToRack,
+}: Props) {
   const [order, setOrder] = useState<Order>('cap');
   const tiles = sortTiles(rack, order);
 
@@ -26,7 +46,7 @@ export function RackView({ rack, selectedTileId, interactive, onTileClick, onRac
         <h3>
           El teu faristol <span className="muted">({rack.length})</span>
         </h3>
-        <div className="rack-order">
+        <div className="rack-tools">
           <span className="muted">Ordena:</span>
           {(['cap', 'numero', 'color'] as Order[]).map((option) => (
             <button
@@ -39,20 +59,43 @@ export function RackView({ rack, selectedTileId, interactive, onTileClick, onRac
               {option === 'cap' ? 'com està' : option === 'numero' ? 'per número' : 'per color'}
             </button>
           ))}
+          {interactive && onToggleHelp && (
+            <button type="button" className="link" onClick={onToggleHelp} aria-pressed={helpOn}>
+              {helpOn ? 'amaga l’ajuda' : 'ajuda’m'}
+            </button>
+          )}
         </div>
       </header>
 
-      <div className="rack" onClick={onRackClick}>
+      <div className={isOver ? 'rack over' : 'rack'} data-drop="rack">
         {tiles.map((tile) => (
           <TileView
             key={tile.id}
             tile={tile}
             selected={tile.id === selectedTileId}
+            dragging={tile.id === draggingTileId}
+            suggested={helpOn && suggested?.has(tile.id)}
             onClick={interactive ? () => onTileClick?.(tile.id) : undefined}
+            onPointerDown={
+              interactive && onTilePointerDown
+                ? (event) => onTilePointerDown(event, tile.id)
+                : undefined
+            }
           />
         ))}
         {tiles.length === 0 && <p className="muted">Cap fitxa: has guanyat!</p>}
       </div>
+
+      {/*
+       * Amb el ratolí o el dit, tornar una fitxa al faristol és deixar-la-hi a
+       * sobre; amb el teclat cal un botó, perquè si el faristol és buit no hi ha
+       * cap fitxa on clicar.
+       */}
+      {interactive && selectedTileId && onReturnToRack && (
+        <button type="button" className="secondary return-tile" onClick={onReturnToRack}>
+          ↩ Torna la fitxa al faristol
+        </button>
+      )}
     </section>
   );
 }

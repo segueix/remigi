@@ -12,11 +12,11 @@ npm test           # tests d'aquest paquet
 
 ## Estat
 
-**S'hi pot jugar i el joc s'adapta a tu** (fases 3 i 4): partida completa contra
-1, 2 o 3 bots amb totes les regles aplicades pel motor, i cada resultat mou la
-teva habilitat, que és la que tria els rivals de la partida següent. El que
-encara no fa: arrossegar i deixar anar, i desar la partida en curs (Fase 5).
-Vegeu `AGENT.md`.
+**Completa** (fases 3 a 5): partida contra 1, 2 o 3 bots amb totes les regles
+aplicades pel motor; cada resultat mou la teva habilitat, que tria els rivals de
+la partida següent; s'hi juga amb el ratolí, amb el dit o amb el teclat; i una
+partida a mitges es pot continuar més tard. El que queda és de motor (Fase 6) i
+de desplegament (Fase 7). Vegeu `AGENT.md`.
 
 ## Estructura
 
@@ -32,10 +32,14 @@ src/
 │   ├── useProfile.ts         # càrrega, desat i reinici del perfil
 │   ├── gameOutcome.ts        # el resultat d'una partida → perfil actualitzat
 │   ├── gameOutcome.test.ts
-│   └── useRecordResult.ts    # registra el resultat un sol cop per partida
+│   ├── useRecordResult.ts    # registra el resultat un sol cop per partida
+│   ├── savedGame.ts          # desa i valida la partida en curs
+│   ├── savedGame.test.ts
+│   └── useSavedGame.ts
 ├── game/
 │   ├── turnDraft.ts          # lògica pura de l'edició del torn
 │   ├── turnDraft.test.ts
+│   ├── useDragTile.ts        # arrossegar amb ratolí, dit o llapis
 │   └── useGame.ts            # estat de la partida i torns dels bots
 ├── components/
 │   ├── TileView.tsx          # una fitxa
@@ -50,11 +54,15 @@ src/
 
 ## Com es juga un torn
 
-Un sol gest per a tot: **cliques una fitxa per triar-la i cliques on la vols
-deixar** (una jugada de la taula, «+ Jugada nova» o el faristol). Tornar a
-clicar la fitxa triada la deselecciona. En deixar-la sobre una jugada, s'insereix
-a la posició que la fa vàlida si n'hi ha cap: un 6 vermell entra sol a l'esquerra
-de 7-8-9.
+Dues maneres, totes dues amb el mateix resultat:
+
+- **Arrossegar** la fitxa fins on la vols deixar (funciona amb ratolí i amb dit).
+- **Tocar per triar i tocar per deixar**: una jugada de la taula, un lloc buit
+  de la taula, «+ Jugada nova» o el faristol. Aquesta és també la via per
+  teclat, i per això no desapareix.
+
+En deixar-la sobre una jugada, s'insereix a la posició que la fa vàlida si n'hi
+ha cap: un 6 vermell entra sol a l'esquerra de 7-8-9.
 
 Mentre dura el torn es treballa sobre una **còpia de la taula**, que pot quedar
 temporalment invàlida (per partir una escala en dues cal passar per estats
@@ -75,6 +83,14 @@ El registre es fa **una sola vegada per partida**: es recorda quin estat de
 partida ja s'ha comptat, perquè ni un render de més ni el doble muntatge del
 mode estricte de React puguin comptar dos cops el mateix resultat.
 
+## Continuar una partida
+
+La partida es desa a cada moviment i s'esborra quan s'acaba, així que es pot
+tancar la pestanya a mitges i continuar-la després. El que hi ha desat es valida
+abans de fer-lo servir: pot ser d'una versió anterior o haver-se quedat a
+mitges, i davant del dubte val més començar de nou que carregar un estat que
+petaria.
+
 ## Comprovacions manuals
 
 Fins que la Fase 7 no automatitzi això a la CI, abans de tocar la pantalla de
@@ -91,6 +107,9 @@ partida val la pena repassar a mà:
 - [ ] En acabar una partida, l'habilitat canvia i el canvi es conserva després
       de recarregar.
 - [ ] A Inici, pujar o baixar l'habilitat canvia els oponents proposats.
+- [ ] Arrossegar una fitxa amb el ratolí i amb el dit.
+- [ ] Deixar la partida a mitges, recarregar i continuar-la des de l'inici.
+- [ ] Amb `prefers-reduced-motion`, cap animació.
 
 ## Notes de disseny
 
