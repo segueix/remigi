@@ -591,6 +591,22 @@ posi el del bot que ha fet la modificació.»
 manté pur i sense estat que no siguin regles; la web ho dedueix comparant la
 taula d'abans i la de després de cada moviment (`apps/web/src/game/meldOwners.ts`).
 
+### Vermell i taronja que es distingeixin ✅ Feta (2026-08-22)
+
+Demanat pel jugador: «fes que els números vermells siguin més intensos i els
+taronges un pel més grocs, són difícil de diferenciar a la pantalla actualment».
+Tenia raó i es pot mesurar: els dos colors estaven a ΔE 23, i a ΔE 6 amb
+daltonisme simulat, que és tant com dir el mateix color.
+
+- [x] Vermell més intens i fosc (`#cc0000`), que a sobre contrasta més amb el
+      crema de la fitxa que abans: 5.5:1 en comptes de 4.5:1.
+- [x] Taronja cap al groc (`#c47504`), amb el mateix contrast d'abans (3.3:1).
+
+**Criteris d'acceptació (verificats)**: la distància entre els dos colors passa
+de ΔE 23 a 46 (de 6 a 13 amb daltonisme), cap dels dos no perd contrast, i tots
+dos continuen lluny del blau i del negre. Comprovat també mirant-ho, amb una mà
+de vermells i taronges alternats en tema clar i fosc.
+
 ### Problemes trobats
 
 - [2026-08-22] **Identificar una jugada per la posició no serveix.** Una jugada
@@ -611,6 +627,11 @@ taula d'abans i la de després de cada moviment (`apps/web/src/game/meldOwners.t
 - [2026-08-22] Una prova nova esperava el torn del jugador mirant si el botó
   «Acabar jugada» estava actiu, i aquest només s'activa quan hi ha canvis al
   torn. Resolt esperant la línia de torn, que és qui ho diu de debò.
+- [2026-08-22] **Fer el taronja més groc li treia contrast**: com més groc, més
+  clar, i menys es veu sobre el crema de la fitxa. Els candidats més grocs
+  baixaven de 3:1, que és el mínim per a un número d'aquesta mida. Resolt
+  abaixant-ne la lluminositat a mesura que se'n pujava el to, fins a trobar-ne
+  un de prou groc que manté el contrast d'abans.
 
 ---
 

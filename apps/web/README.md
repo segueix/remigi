@@ -105,7 +105,14 @@ i la de després de cada moviment. La jugada s'identifica per **les seves fitxes
 i no per la posició: una jugada es proposa reordenant la taula sencera, i una
 que no ha canviat ha de conservar el color encara que hagi canviat de lloc.
 
-Els colors estan mesurats, no triats a ull: es distingeixen entre ells també amb
+**La tinta dels números** també està mesurada. El vermell i el taronja
+s'assemblaven massa a la pantalla —ΔE 23, i només 6 amb daltonisme simulat, que
+és tant com dir el mateix color—: ara el vermell és més intens i fosc i el
+taronja tira cap al groc, i la distància entre tots dos passa a ΔE 46 (13 amb
+daltonisme). El vermell, a més, contrasta més amb el crema de la fitxa que abans
+(5.5:1 en comptes de 4.5:1) i el taronja es queda igual (3.3:1).
+
+Els colors dels bots estan mesurats igual, no triats a ull: es distingeixen entre ells també amb
 daltonisme simulat (separació mínima ΔE 36 en tema clar i 33 en fosc), no es
 confonen amb el vermell d'una jugada invàlida ni amb el color d'acció, i
 contrasten com a mínim 3.9:1 amb el fons. Per si de cas, el nom del bot també

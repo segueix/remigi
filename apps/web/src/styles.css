@@ -407,8 +407,16 @@ input {
   }
 }
 
+/*
+ * La tinta dels números. El vermell i el taronja s'assemblaven massa a la
+ * pantalla —ΔE 23, i només 6 amb daltonisme simulat, o sigui pràcticament el
+ * mateix color—: ara el vermell és més intens i fosc, i el taronja tira cap al
+ * groc. La distància entre tots dos passa a ΔE 46 (13 amb daltonisme). El
+ * vermell, a més, contrasta més amb el crema de la fitxa que abans (5.5:1 en
+ * comptes de 4.5:1), i el taronja es queda igual (3.3:1).
+ */
 .tile-red {
-  --tinta: #dc2626;
+  --tinta: #cc0000;
 }
 .tile-blue {
   --tinta: #1d4ed8;
@@ -417,7 +425,7 @@ input {
   --tinta: #1c1917;
 }
 .tile-orange {
-  --tinta: #ea580c;
+  --tinta: #c47504;
 }
 .tile-joker {
   --tinta: #7c3aed;
