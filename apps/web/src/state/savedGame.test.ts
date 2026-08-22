@@ -49,6 +49,14 @@ describe('desar i continuar la partida', () => {
     expect(next.turn).toBe(game.turn + 1);
   });
 
+  it('conserva qui ha jugat cada jugada, perquè no perdi els colors', async () => {
+    const store = new MemoryStore();
+    const owners: [string, number][] = [['red-7-a blue-7-a black-7-a', 2]];
+    await saveGame(store, { ...playing(), owners });
+
+    expect((await loadGame(store))!.owners).toEqual(owners);
+  });
+
   it('esborrar-la deixa de oferir-la', async () => {
     const store = new MemoryStore();
     await saveGame(store, playing());
@@ -73,6 +81,17 @@ describe('el que hi ha desat no és de fiar', () => {
     expect(
       await stored(JSON.stringify({ ...saved, game: { ...saved.game, status: 'finished' } })),
     ).toBeNull();
+  });
+
+  it('els autors malmesos es descarten, però la partida es continua igual', async () => {
+    // Són informació només visual: no val la pena perdre-hi una partida.
+    const saved = playing();
+    const loaded = await stored(
+      JSON.stringify({ ...saved, owners: ['això no', ['bona', 1], ['sense jugador']] }),
+    );
+    expect(loaded).not.toBeNull();
+    expect(loaded!.owners).toEqual([['bona', 1]]);
+    expect(await stored(JSON.stringify({ ...saved, owners: 'ni tan sols una llista' }))).not.toBeNull();
   });
 
   it('descarta estats incomplets o incoherents', async () => {

@@ -41,6 +41,8 @@ src/
 │   ├── turnDraft.ts          # lògica pura de l'edició del torn
 │   ├── turnDraft.test.ts
 │   ├── useDragTile.ts        # arrossegar amb ratolí, dit o llapis
+│   ├── meldOwners.ts         # qui ha jugat cada jugada de la taula
+│   ├── meldOwners.test.ts
 │   └── useGame.ts            # estat de la partida i torns dels bots
 ├── components/
 │   ├── TileView.tsx          # una fitxa
@@ -84,6 +86,31 @@ Durant el torn, si hi ha jugades marcades en vermell, la pista de la sortida
 inicial explica **per què no sumen punts**. Dir només «en portes 0» amb fitxes a
 la taula desconcerta: sembla que el joc no les vegi.
 
+## Qui ha jugat què
+
+Dues marques per no perdre el fil de la partida:
+
+- **La fitxa que acabes de robar** queda amb un recuadre de ratlles al faristol
+  fins que tornes a jugar o a robar. Trobar-la entre tretze fitxes més no hauria
+  de ser un joc a part. Va per fora de la fitxa (`outline`) i de ratlles perquè
+  no es confongui amb la fitxa triada, que va enlairada i amb el marc sencer.
+- **Cada bot té un color**, el mateix a la pastilla del seu nom i al marc de les
+  jugades que ha posat. Si algú modifica una jugada, el marc passa a ser del seu
+  color; si qui la modifica ets tu, el marc desapareix, perquè el color és dels
+  bots.
+
+Qui ha tocat cada jugada no és estat del joc —el motor no en sap res, i és el
+que toca— sinó que es dedueix a `game/meldOwners.ts` comparant la taula d'abans
+i la de després de cada moviment. La jugada s'identifica per **les seves fitxes**
+i no per la posició: una jugada es proposa reordenant la taula sencera, i una
+que no ha canviat ha de conservar el color encara que hagi canviat de lloc.
+
+Els colors estan mesurats, no triats a ull: es distingeixen entre ells també amb
+daltonisme simulat (separació mínima ΔE 36 en tema clar i 33 en fosc), no es
+confonen amb el vermell d'una jugada invàlida ni amb el color d'acció, i
+contrasten com a mínim 3.9:1 amb el fons. Per si de cas, el nom del bot també
+surt en text: al títol emergent de la jugada i al costat del color, a la llista.
+
 ## Com s'adapta al jugador
 
 En acabar cada partida, `useRecordResult` la registra al perfil amb els nivells
@@ -99,7 +126,9 @@ mode estricte de React puguin comptar dos cops el mateix resultat.
 ## Continuar una partida
 
 La partida es desa a cada moviment i s'esborra quan s'acaba, així que es pot
-tancar la pestanya a mitges i continuar-la després. El que hi ha desat es valida
+tancar la pestanya a mitges i continuar-la després. Amb ella es desen els colors
+de les jugades, que si no es perdrien en continuar; com que són informació només
+visual, si venen malmesos es descarten sense tocar la partida. El que hi ha desat es valida
 abans de fer-lo servir: pot ser d'una versió anterior o haver-se quedat a
 mitges, i davant del dubte val més començar de nou que carregar un estat que
 petaria.
@@ -115,7 +144,9 @@ El que abans era una llista per repassar a mà ara ho comprova `npm run test:e2e
 - «Desfer canvis» retorna el torn a com estava.
 - Arrossegar del faristol a la taula, i l'ajuda que marca les jugades possibles.
 - El perfil es conserva, els oponents proposats pugen amb l'habilitat, i una
-  partida a mitges es pot continuar.
+  partida a mitges es pot continuar (amb els colors de les jugades inclosos).
+- La fitxa robada es marca i deixa d'estar-ho en jugar; les jugades dels bots
+  porten el color del bot, i el perden quan les toques.
 - Rutes correctes sota `/rummikub/`, manifest i icones, i jugar sense connexió.
 - En pantalla petita: res no desborda i els objectius de toc fan 44 px.
 

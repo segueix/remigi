@@ -4,9 +4,11 @@ import { BoardView } from '../components/BoardView';
 import { RackView } from '../components/RackView';
 import { TileView } from '../components/TileView';
 import { useDragTile } from '../game/useDragTile';
+import { meldAuthors } from '../game/meldOwners';
 import { invalidMeldIndexes, missingOpeningPoints, openingPoints } from '../game/turnDraft';
 import { useGame, type GameHandle, type GameSetup } from '../game/useGame';
 import type { RatingChange } from '../state/gameOutcome';
+import type { SavedGame } from '../state/savedGame';
 import type { SavedGameHandle } from '../state/useSavedGame';
 import type { ProfileHandle } from '../state/useProfile';
 import { useRecordResult } from '../state/useRecordResult';
@@ -16,14 +18,16 @@ interface Props {
   setup: GameSetup;
   /** Partida a reprendre; si no n'hi ha, se'n reparteix una de nova. */
   resume?: GameState;
+  /** Autors de les jugades de la partida represa, per no perdre'n els colors. */
+  resumeOwners?: SavedGame['owners'];
   profile: ProfileHandle;
   savedGame: SavedGameHandle;
   onExit(): void;
 }
 
-export function GameScreen({ setup, resume, profile, savedGame, onExit }: Props) {
-  const handle = useGame(setup, resume);
-  const { game, draft, selectedTileId, error, highlighted, isHumanTurn } = handle;
+export function GameScreen({ setup, resume, resumeOwners, profile, savedGame, onExit }: Props) {
+  const handle = useGame(setup, resume, resumeOwners);
+  const { game, draft, selectedTileId, error, highlighted, drawnTileId, isHumanTurn } = handle;
   const change = useRecordResult(game, setup.opponents, profile);
   const [helpOn, setHelpOn] = useState(false);
 
@@ -33,10 +37,11 @@ export function GameScreen({ setup, resume, profile, savedGame, onExit }: Props)
   // La partida es desa a cada moviment, i s'esborra quan s'acaba: així es pot
   // tancar la pestanya a mitges i continuar-la després.
   const { persist, clear } = savedGame;
+  const { meldOwners } = handle;
   useEffect(() => {
-    if (game.status === 'playing') persist({ setup, game });
+    if (game.status === 'playing') persist({ setup, game, owners: [...meldOwners] });
     else clear();
-  }, [game, setup, persist, clear]);
+  }, [game, setup, meldOwners, persist, clear]);
 
   // Fitxes de la mà que poden formar alguna jugada. Només es calcula quan
   // l'ajuda està encesa i quan canvia el faristol.
@@ -48,6 +53,18 @@ export function GameScreen({ setup, resume, profile, savedGame, onExit }: Props)
     }
     return ids;
   }, [helpOn, draft]);
+
+  /*
+   * La taula que es veu és la del torn en curs mentre jugues tu, i la del motor
+   * la resta del temps. Els marcs de color surten d'aquesta mateixa taula: una
+   * jugada que toques deixa de coincidir amb la que hi havia i perd el color a
+   * l'instant, que és justament el senyal que se'n vol.
+   */
+  const board = draft ? draft.board : game.board;
+  const authors = useMemo(
+    () => meldAuthors(board, meldOwners, game.players),
+    [board, meldOwners, game.players],
+  );
 
   /**
    * Un sol gest per a tot: si no hi ha res triat, el clic tria la fitxa; si n'hi
@@ -79,8 +96,14 @@ export function GameScreen({ setup, resume, profile, savedGame, onExit }: Props)
     <section className="game">
       <ul className="players">
         {game.players.map((player, index) => (
-          <li key={player.id} className={index === game.currentPlayer ? 'player active' : 'player'}>
+          <li
+            key={player.id}
+            className={index === game.currentPlayer ? 'player active' : 'player'}
+            /* Cada bot té color propi; aquí és on es veu de qui és cadascun. */
+            data-bot={player.kind === 'ai' ? index : undefined}
+          >
             <span className="player-name">
+              {player.kind === 'ai' && <span className="player-color" aria-hidden="true" />}
               {player.name}
               {player.kind === 'ai' && (
                 <span className="tag">{difficultyByKey(player.aiLevel).label}</span>
@@ -100,12 +123,13 @@ export function GameScreen({ setup, resume, profile, savedGame, onExit }: Props)
       </p>
 
       <BoardView
-        board={draft ? draft.board : game.board}
+        board={board}
         invalidIndexes={invalid}
         selectedTileId={selectedTileId}
         draggingTileId={drag.dragging?.tileId ?? null}
         over={drag.dragging?.over ?? null}
         highlighted={highlighted}
+        authors={authors}
         interactive={isHumanTurn}
         onTileClick={handleTileClick}
         onTilePointerDown={drag.start}
@@ -150,6 +174,7 @@ export function GameScreen({ setup, resume, profile, savedGame, onExit }: Props)
         draggingTileId={drag.dragging?.tileId ?? null}
         isOver={drag.dragging?.over?.kind === 'rack'}
         suggested={suggested}
+        drawnTileId={drawnTileId}
         helpOn={helpOn}
         interactive={isHumanTurn}
         onToggleHelp={() => setHelpOn((on) => !on)}

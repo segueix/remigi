@@ -7,6 +7,16 @@ const KEY = 'rummikub:game';
 export interface SavedGame {
   setup: GameSetup;
   game: GameState;
+  /**
+   * Qui ha jugat cada jugada de la taula, en parelles `[jugada, jugador]`
+   * perquè un `Map` no es pot desar tal qual en JSON (vegeu `meldOwners.ts`).
+   *
+   * És informació només visual, i per això no forma part de l'estat del motor.
+   * Es desa perquè continuar una partida no faci desaparèixer els colors de la
+   * taula; si falta o ve malmesa, la partida es continua igual i les jugades
+   * d'abans es queden sense marc.
+   */
+  owners?: [string, number][];
 }
 
 export async function saveGame(store: KeyValueStore, saved: SavedGame): Promise<void> {
@@ -29,10 +39,24 @@ export async function loadGame(store: KeyValueStore): Promise<SavedGame | null> 
   const raw = await store.get(KEY);
   if (!raw) return null;
   try {
-    return isResumable(JSON.parse(raw)) ? (JSON.parse(raw) as SavedGame) : null;
+    const saved = JSON.parse(raw) as SavedGame;
+    if (!isResumable(saved)) return null;
+    return 'owners' in saved ? { ...saved, owners: validOwners(saved.owners) } : saved;
   } catch {
     return null;
   }
+}
+
+/** Els autors que tenen forma d'autor; la resta es descarten sense fer soroll. */
+function validOwners(owners: unknown): [string, number][] {
+  if (!Array.isArray(owners)) return [];
+  return owners.filter(
+    (pair): pair is [string, number] =>
+      Array.isArray(pair) &&
+      pair.length === 2 &&
+      typeof pair[0] === 'string' &&
+      typeof pair[1] === 'number',
+  );
 }
 
 function isResumable(value: unknown): boolean {

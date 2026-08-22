@@ -49,6 +49,9 @@ acabar-la.
 
 Llegenda: `⬜ Pendent` · `🔄 En curs` · `✅ Feta (data)` · `⏸️ Aturada (motiu)`
 
+La feina demanada un cop tancades les set fases s'apunta a **[Millores després de
+les fases](#millores-després-de-les-fases)**, amb el mateix protocol.
+
 ---
 
 ## Fase 1 — Estructura i motor del joc
@@ -538,6 +541,76 @@ apuntat com a següent pas natural, per ordre de profit:
 ### Problemes trobats
 
 *(cap encara)*
+
+---
+
+## Millores després de les fases
+
+Feina demanada un cop tancades les set fases. S'apunta aquí perquè aquest
+document continuï sent l'estat de la veritat, amb el mateix protocol: criteris
+comprovats de debò i problemes registrats.
+
+### Explicar com s'obre ✅ Feta (2026-08-22)
+
+Un jugador va provar d'obrir amb un 6 i dos 12 («sumen 30») i el joc li va
+respondre «en portes 0» i «una jugada necessita com a mínim 3 fitxes». Les dues
+coses eren certes —6+12+12 no és ni grup ni escala, i les fitxes li havien quedat
+en caixes separades— però cap de les dues ho explicava.
+
+- [x] «Com es juga (i com s'obre)» a la pantalla d'inici, amb exemples fets amb
+      fitxes de debò, inclòs el cas que enganya.
+- [x] Durant el torn, la pista de la sortida inicial diu **per què** les jugades
+      marcades en vermell no sumen punts.
+
+**Criteris d'acceptació (verificats)**: dues proves de navegador noves, una per a
+l'explicació de l'inici i una per al cas real del jugador.
+
+### Qui ha jugat què ✅ Feta (2026-08-22)
+
+Demanat pel jugador: «marca amb un recuadre la peça que he robat a la jugada.
+Dona un color a cada bot i posa un marc del color del bot en el moment que posi
+un grup nou de peces, si aquest és modificat que perdi el color del marc o es
+posi el del bot que ha fet la modificació.»
+
+- [x] La fitxa acabada de robar es marca al faristol fins que tornes a jugar o a
+      robar.
+- [x] Un color per bot, a la llista de jugadors i al marc de les seves jugades.
+- [x] Una jugada modificada passa al color de qui la modifica, i perd el marc si
+      qui la toca ets tu (el color és dels bots).
+- [x] Els colors es desen amb la partida, perquè continuar-la no els faci perdre.
+
+**Criteris d'acceptació (verificats)**:
+
+- `npm test` en verd (147 tests, 14 de nous) i `npm run typecheck` net.
+- `npm run test:e2e` en verd: 53 proves de navegador, 10 de noves (5 × 2
+  projectes), en escriptori i mòbil sobre el build de producció.
+- Comprovat també mirant-ho: captures de la partida amb tema clar i fosc, amb
+  fitxa robada marcada i jugades de dos bots diferents.
+
+**Decisió**: qui ha jugat cada jugada **no entra al motor**. `packages/core` es
+manté pur i sense estat que no siguin regles; la web ho dedueix comparant la
+taula d'abans i la de després de cada moviment (`apps/web/src/game/meldOwners.ts`).
+
+### Problemes trobats
+
+- [2026-08-22] **Identificar una jugada per la posició no serveix.** Una jugada
+  es proposa reordenant la taula sencera, així que els índexs ballen a cada
+  moviment i el color hauria saltat de jugada. Resolt identificant-la per les
+  seves fitxes (els ids, ordenats): una jugada que no ha canviat conserva el
+  color encara que canviï de lloc, i una de modificada és una altra jugada, que
+  és justament el que es vol.
+- [2026-08-22] **Continuar una partida deixava la taula sense colors**, perquè
+  els autors no són estat del motor i no es desaven. Semblava un error, no una
+  limitació. Resolt desant-los amb la partida, validats a part: si vénen
+  malmesos es descarten i la partida es continua igual.
+- [2026-08-22] **La primera tria de colors no passava el test del daltonisme**:
+  violeta i verd sobre fons fosc quedaven a ΔE 21 amb deuteranopia simulada, o
+  sigui pràcticament iguals. Resolt mesurant contrast i separació de tots els
+  candidats i quedant-se amb fúcsia/oliva/blau (mínim ΔE 36 en clar i 33 en
+  fosc). El nom del bot també surt en text, que no depèn de veure el color.
+- [2026-08-22] Una prova nova esperava el torn del jugador mirant si el botó
+  «Acabar jugada» estava actiu, i aquest només s'activa quan hi ha canvis al
+  torn. Resolt esperant la línia de torn, que és qui ho diu de debò.
 
 ---
 

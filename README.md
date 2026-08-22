@@ -167,3 +167,6 @@ state = applyMove(state, decideAiMove(state, state.currentPlayer));
       Elo amb marge de resultat i ajust de dificultat dins de la partida.
 - [x] Publicació automàtica a GitHub Pages, CI amb proves de navegador, i
       instal·lable al mòbil amb joc sense connexió.
+- [x] Seguir la partida amb un cop d'ull: la fitxa que acabes de robar queda
+      marcada, cada bot té color propi i les seves jugades porten marc del seu
+      color mentre ningú no les toqui.
