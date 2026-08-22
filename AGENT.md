@@ -40,7 +40,7 @@ acabar-la.
 | Fase | Nom | Estat |
 |---|---|---|
 | 1 | Estructura i motor del joc | ✅ Feta (2026-08-22, reverificada 2026-08-22) |
-| 2 | Esquelet de l'aplicació web | ⬜ Pendent |
+| 2 | Esquelet de l'aplicació web | ✅ Feta (2026-08-22) |
 | 3 | Pantalla de partida jugable | ⬜ Pendent |
 | 4 | Cicle adaptatiu complet a la web | ⬜ Pendent |
 | 5 | Experiència d'usuari i polit | ⬜ Pendent |
@@ -112,7 +112,7 @@ independent de la interfície, amb IA per nivells i sistema adaptatiu, tot prova
 
 ## Fase 2 — Esquelet de l'aplicació web
 
-**Estat**: ⬜ Pendent
+**Estat**: ✅ Feta (2026-08-22)
 
 **Objectiu**: `apps/web` arrenca amb Vite + React + TypeScript, importa
 `@rummikub/core` del workspace i té la navegació i la persistència de base.
@@ -120,32 +120,44 @@ Encara sense partida jugable: només l'esquelet sòlid on penjar les fases 3 i 4
 
 ### Tasques
 
-- [ ] Crear `apps/web` (Vite, plantilla react-ts), paquet `@rummikub/web`,
+- [x] Crear `apps/web` (Vite 8 + React 19 + TypeScript), paquet `@rummikub/web`,
       amb `@rummikub/core` com a dependència de workspace.
-- [ ] Comprovar que Vite resol el paquet core (el seu `main` apunta a font
-      `.ts`); si cal, afegir `resolve.alias` o `optimizeDeps` — vegeu riscos.
-- [ ] `LocalStorageStore` implementant `KeyValueStore` (amb try/catch: si
-      `localStorage` no és accessible, degradar a `MemoryStore`).
-- [ ] Estructura de pantalles i navegació mínima (sense router extern si no cal):
-      **Inici** (nom del jugador, configurar partida), **Partida** (buida, de
-      moment), **Estadístiques** (buida, de moment).
-- [ ] Pàgina d'inici funcional: demana/recorda el nom, crea el perfil amb
-      `ProfileRepository` sobre `LocalStorageStore`.
-- [ ] Prova de fum del motor a la UI: crear una partida amb `createGame` i
-      pintar (encara sense estil) el nombre de fitxes de cada jugador.
-- [ ] Scripts a l'arrel: que `npm run dev` i `npm run build` funcionin per al
-      workspace web; actualitzar el README de l'arrel i el d'`apps/web`.
+- [x] Comprovar que Vite resol el paquet core (el seu `main` apunta a font
+      `.ts`): **funciona sense àlies ni `optimizeDeps`** — risc descartat.
+- [x] `LocalStorageStore` implementant `KeyValueStore`, amb `createWebStore()`
+      que comprova de debò si es pot escriure i degrada a `MemoryStore` si no.
+- [x] Estructura de pantalles i navegació mínima (estat a `App.tsx`, sense
+      router): **Inici**, **Partida**, **Estadístiques**.
+- [x] Pàgina d'inici funcional: demana/recorda el nom i crea el perfil amb
+      `ProfileRepository` sobre l'emmagatzematge del navegador.
+- [x] Prova de fum del motor a la UI: `createGame` real, amb els jugadors, les
+      fitxes de cadascun, el nivell dels bots i el sac.
+- [x] Scripts a l'arrel (`dev`, `build`, `preview`); READMEs actualitzats.
+- [x] 7 tests de l'adaptador d'emmagatzematge, inclosa la degradació i la
+      persistència del perfil «entre recàrregues».
 
-### Criteris d'acceptació
+### Criteris d'acceptació (verificats)
 
-- `npm install` net des de zero; `npm run typecheck` i `npm test` segueixen en verd.
-- `npm run build -w @rummikub/web` compila sense errors.
+- `npm install` net des de zero (esborrant `node_modules` i el lockfile);
+  `npm run typecheck` i `npm test` en verd. ✔ (74 core + 7 web)
+- `npm run build -w @rummikub/web` compila sense errors. ✔ (198 kB, 63 kB gzip)
 - `npm run dev` mostra la pantalla d'inici; en recarregar, el nom del jugador
-  es conserva (localStorage).
+  es conserva. ✔ Verificat amb Chromium (Playwright): perfil desat i recuperat,
+  motor repartint 14 fitxes a 3 jugadors i 64 al sac, sense errors de consola
+  ni desbordament horitzontal a 390 px.
 
 ### Problemes trobats
 
-*(cap encara)*
+- [2026-08-22] `defineConfig` importat de `vite` no accepta l'apartat `test` i
+  el typecheck fallava (TS2769) — resolt important-lo de `vitest/config`.
+- [2026-08-22] **Conflicte de versions de vitest**: el core anava amb vitest 2,
+  que porta Vite 5 a dins, i la web necessita Vite 8. Tenir-hi dues versions
+  majors del mateix runner era demanar problemes, així que s'ha unificat tot el
+  monorepo a **vitest 4**. Els 74 tests del core hi passen sense cap canvi.
+- [2026-08-22] Risc que hi havia apuntat sobre la resolució de `@rummikub/core`
+  amb font TypeScript: **no s'ha materialitzat**. Vite el transpila com a codi
+  del projecte a través de l'enllaç de workspace, tant en `dev` com en `build`.
+  El risc queda tancat a la llista de sota.
 
 ---
 
@@ -331,10 +343,11 @@ dispositiu.
 
 ## Riscos coneguts (a vigilar quan toqui)
 
-- **Vite + workspace amb font TS** (Fase 2): `@rummikub/core` publica `main`
-  apuntant a `src/index.ts`. El prebundling d'esbuild normalment ho digereix;
-  si no, les sortides són `resolve.alias` cap a la font o excloure el paquet
-  d'`optimizeDeps`. Documentar la solució aquí quan es confirmi.
+- ~~**Vite + workspace amb font TS**~~ (Fase 2): **tancat**. `@rummikub/core`
+  publica `main` apuntant a `src/index.ts` i Vite 8 el transpila com a codi del
+  projecte, tant en `dev` com en `build`. No calen àlies ni `optimizeDeps`.
+  Compte si algun dia es publica el paquet fora del monorepo: llavors sí que
+  caldrà compilar-lo i canviar `main`/`types` cap a `dist`.
 - **Cost del solver òptim** (Fase 6): la reordenació completa de taula és
   combinatòria; cal límit de temps/nodes i, si s'escau, executar-lo en un
   Web Worker perquè no bloquegi la UI.

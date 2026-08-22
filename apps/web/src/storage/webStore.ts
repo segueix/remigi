@@ -1,0 +1,67 @@
+import { MemoryStore, type KeyValueStore } from '@rummikub/core';
+
+/**
+ * Adaptador de `localStorage` a la interfície `KeyValueStore` del motor.
+ *
+ * `localStorage` falla de maneres que no es poden preveure amb una comprovació
+ * de tipus: navegació privada, permisos de galetes bloquejats, quota exhaurida o
+ * el mateix objecte inaccessible dins d'un iframe. Per això aquí no es dona mai
+ * per fet que hi és, i cap error d'emmagatzematge no ha de tombar la partida.
+ */
+export class LocalStorageStore implements KeyValueStore {
+  constructor(private readonly storage: Storage) {}
+
+  async get(key: string): Promise<string | null> {
+    try {
+      return this.storage.getItem(key);
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Si l'escriptura falla (típicament, quota exhaurida) es perd el desat però
+   * **no es llança**: val més seguir jugant sense desar que tallar la partida.
+   */
+  async set(key: string, value: string): Promise<void> {
+    try {
+      this.storage.setItem(key, value);
+    } catch (error) {
+      console.warn('No s’ha pogut desar a localStorage:', error);
+    }
+  }
+
+  async remove(key: string): Promise<void> {
+    try {
+      this.storage.removeItem(key);
+    } catch (error) {
+      console.warn('No s’ha pogut esborrar de localStorage:', error);
+    }
+  }
+}
+
+/**
+ * Comprova que `localStorage` no només existeix, sinó que **deixa escriure-hi**:
+ * al Safari en mode privat, per exemple, l'objecte hi és però `setItem` peta.
+ */
+export function isStorageUsable(storage: Storage | undefined): storage is Storage {
+  if (!storage) return false;
+  const probe = '__rummikub_probe__';
+  try {
+    storage.setItem(probe, '1');
+    storage.removeItem(probe);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Emmagatzematge per a l'aplicació web: `localStorage` quan es pot fer servir i,
+ * si no, memòria (el perfil viurà només mentre duri la pestanya).
+ */
+export function createWebStore(storage: Storage | undefined = globalThis.localStorage): KeyValueStore {
+  if (isStorageUsable(storage)) return new LocalStorageStore(storage);
+  console.warn('localStorage no disponible: el perfil no es conservarà en tancar la pestanya.');
+  return new MemoryStore();
+}

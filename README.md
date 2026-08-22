@@ -8,10 +8,14 @@ equilibrades.
 
 ## Estat del projecte
 
+El pla complet, fase a fase, és a **[`AGENT.md`](AGENT.md)**.
+
 | Fase | Contingut | Estat |
 |------|-----------|-------|
-| 1 | Estructura del repositori i motor del joc (`packages/core`) | ✅ feta |
-| 2 | Aplicació web (`apps/web`) | ⏳ pendent |
+| 1 | Motor del joc (`packages/core`) | ✅ feta |
+| 2 | Esquelet de l'aplicació web (`apps/web`) | ✅ feta |
+| 3 | Pantalla de partida jugable | ⏳ pendent |
+| 4–7 | Cicle adaptatiu, polit, motor avançat i desplegament | ⏳ pendents |
 
 ## Estructura del repositori
 
@@ -43,7 +47,12 @@ rummikub/
 │       │   └── index.ts       # API pública del paquet
 │       └── test/              # Tests (vitest)
 ├── apps/
-│   └── web/                   # Fase 2: aplicació web (Vite + React), encara buida
+│   └── web/                   # Aplicació web (Vite + React + TypeScript)
+│       └── src/
+│           ├── screens/       # Inici, Partida, Estadístiques
+│           ├── state/         # Perfil del jugador (hook)
+│           └── storage/       # Adaptador de localStorage
+├── AGENT.md                   # Pla de fases i registre de problemes
 └── docs/
     ├── ARQUITECTURA.md        # Decisions de disseny i mapa de mòduls
     ├── REGLES.md              # Regles implementades i pendents
@@ -54,8 +63,10 @@ rummikub/
 
 ```bash
 npm install
-npm test            # tests del motor
+npm run dev         # aplicació web a http://localhost:5173
+npm test            # tests (motor + web)
 npm run typecheck   # comprovació de tipus
+npm run build       # build de producció de la web
 npm run simulate    # partides IA contra IA (mostra que els nivells estan ordenats)
 ```
 
@@ -84,9 +95,11 @@ state = applyMove(state, decideAiMove(state, state.currentPlayer));
 - [x] IA amb 5 nivells de dificultat parametritzats.
 - [x] Sistema adaptatiu: perfil del jugador amb Elo i tria automàtica d'oponents.
 - [x] Simulador i tests.
-- [ ] **Fase 2**: aplicació web a `apps/web` (Vite + React + TypeScript) amb
-      arrossegar i deixar anar, perfil desat a `localStorage` i pantalles de
-      partida, configuració i estadístiques.
+- [x] Esquelet de la web: perfil desat a `localStorage`, navegació i motor
+      integrat.
+- [ ] **Ara**: taula jugable amb arrossegar i deixar anar (Fase 3).
+- [ ] Cicle adaptatiu a la web: oponents proposats per l'Elo i estadístiques.
 - [ ] Solver òptim (reordenació completa de la taula per part de la IA experta).
 - [ ] Intercanvi de jokers de la taula.
 - [ ] Ajust de dificultat dins de la mateixa partida (rubber banding).
+- [ ] Desplegament públic.
