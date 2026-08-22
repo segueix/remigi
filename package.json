@@ -1,0 +1,14 @@
+{
+  "name": "rummikub",
+  "private": true,
+  "description": "Rummikub contra oponents IA amb dificultat adaptativa",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "test": "npm run test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "simulate": "npm run simulate -w @rummikub/core --"
+  }
+}
