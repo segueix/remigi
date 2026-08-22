@@ -39,7 +39,14 @@ jobs:
         env:
           BASE_PATH: /${{ github.event.repository.name }}/
 
+      # `enablement` demana que la font de Pages sigui aquest flux. Cal perquè,
+      # mentre la font sigui «Deploy from a branch», cada canvi a main llança
+      # TAMBÉ el generador antic de Jekyll: els dos publiquen al mateix lloc i
+      # guanya el que acaba l'últim, que sol ser el Jekyll. Si això no basta,
+      # s'ha de canviar a mà a Settings → Pages.
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - uses: actions/upload-pages-artifact@v3
         with:

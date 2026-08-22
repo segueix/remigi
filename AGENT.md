@@ -453,6 +453,24 @@ dispositiu.
 - Extra: es pot jugar **sense connexió** un cop visitat (prova amb la xarxa
   tallada) i instal·lar com a aplicació (manifest i icones comprovats).
 
+### Dos publicadors alhora: el problema que va costar més
+
+Amb la font de Pages en «Deploy from a branch», **cada canvi a `main` engega dos
+desplegaments**: el d'aquest projecte i el generador antic de Jekyll. Els dos
+publiquen al mateix lloc i guanya el que acaba l'últim.
+
+Es va veure comparant les hores de la fusió de la PR núm. 4: el desplegament del
+joc va acabar a les 21:24:04 i el de Jekyll a les 21:24:11, set segons més tard.
+Per això el joc va aparèixer un moment i després va tornar a sortir el README.
+
+La solució és canviar la font a «GitHub Actions», que apaga el generador antic.
+El flux ho demana ell mateix amb `enablement: true`, però si el permís no basta
+s'ha de fer des de *Settings → Pages*.
+
+**Símptoma per reconèixer-ho una altra vegada**: el lloc publicat és el README
+convertit en pàgina i, a Actions, cada canvi a `main` té dues execucions de
+desplegament en comptes d'una.
+
 ### Com va anar la primera publicació
 
 Dues coses no es podien fer des del codi, i les va fer l'usuari: portar els
@@ -489,6 +507,12 @@ correctament en 30 segons. Els canvis següents a `main` sí que l'engeguen.
   va publicar sense problemes. Queda documentat al README perquè, si torna a
   passar amb un flux acabat d'afegir, se sàpiga que la sortida és el botó «Run
   workflow» i no tornar a tocar la configuració.
+- [2026-08-22] **El joc publicat va tornar enrere tot sol.** No era cap error
+  del desplegament: amb la font de Pages en mode branca, cada canvi a `main`
+  engega també el generador de Jekyll, i com que acaba uns segons més tard,
+  sobreescriu el joc amb el README. Diagnosticat comparant les hores de les
+  dues execucions. Afegit `enablement: true` perquè el flux demani la font
+  correcta, i documentat el símptoma al README.
 - [2026-08-22] El navegador d'aquest entorn no pot sortir a internet (ni amb el
   proxy configurat: `ERR_CONNECTION_RESET`), tot i que `curl` sí que hi surt.
   Per verificar la publicació de debò es van baixar amb curl els fitxers que
