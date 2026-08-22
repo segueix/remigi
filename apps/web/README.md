@@ -6,17 +6,18 @@ lògica de joc de `@rummikub/core` (workspace).
 ```bash
 npm run dev        # servidor de desenvolupament (http://localhost:5173)
 npm run build      # build de producció a dist/
-npm run preview    # serveix el build de producció
+npm run preview    # serveix el build de producció a /rummikub/
 npm test           # tests d'aquest paquet
+npm run test:e2e   # proves de navegador sobre el build de producció
 ```
 
 ## Estat
 
-**Completa** (fases 3 a 5): partida contra 1, 2 o 3 bots amb totes les regles
-aplicades pel motor; cada resultat mou la teva habilitat, que tria els rivals de
-la partida següent; s'hi juga amb el ratolí, amb el dit o amb el teclat; i una
-partida a mitges es pot continuar més tard. El que queda és de motor (Fase 6) i
-de desplegament (Fase 7). Vegeu `AGENT.md`.
+**Completa.** Partida contra 1, 2 o 3 bots amb totes les regles aplicades pel
+motor; cada resultat mou la teva habilitat, que tria els rivals de la partida
+següent; s'hi juga amb el ratolí, amb el dit o amb el teclat; una partida a
+mitges es pot continuar més tard; i es publica sola a GitHub Pages, instal·lable
+al mòbil i jugable sense connexió.
 
 ## Estructura
 
@@ -91,31 +92,46 @@ abans de fer-lo servir: pot ser d'una versió anterior o haver-se quedat a
 mitges, i davant del dubte val més començar de nou que carregar un estat que
 petaria.
 
-## Comprovacions manuals
+## Proves de navegador
 
-Fins que la Fase 7 no automatitzi això a la CI, abans de tocar la pantalla de
-partida val la pena repassar a mà:
+El que abans era una llista per repassar a mà ara ho comprova `npm run test:e2e`
+(Playwright), a `e2e/`:
 
-- [ ] Partida sencera contra 1, 2 i 3 bots, sense errors a la consola.
-- [ ] Sortida inicial de menys de 30 punts: el motor la rebutja amb el seu missatge.
-- [ ] Jugada de menys de 3 fitxes: es marca en vermell i el motor la rebutja.
-- [ ] Una fitxa que ja era a la taula no es pot endur al faristol.
-- [ ] «Desfer canvis» retorna el torn a com estava.
-- [ ] Amb el sac buit, el botó passa a dir «Passar torn» i la partida es bloqueja
-      si tothom passa.
-- [ ] Es veu bé a 390 px d'amplada.
-- [ ] En acabar una partida, l'habilitat canvia i el canvi es conserva després
-      de recarregar.
-- [ ] A Inici, pujar o baixar l'habilitat canvia els oponents proposats.
-- [ ] Arrossegar una fitxa amb el ratolí i amb el dit.
-- [ ] Deixar la partida a mitges, recarregar i continuar-la des de l'inici.
-- [ ] Amb `prefers-reduced-motion`, cap animació.
+- Partida sencera contra 1, 2 i 3 bots, sense errors de consola.
+- El motor rebutja la sortida de menys de 30 punts i la jugada de menys de 3
+  fitxes, i no deixa endur-se al faristol una fitxa que ja era a la taula.
+- «Desfer canvis» retorna el torn a com estava.
+- Arrossegar del faristol a la taula, i l'ajuda que marca les jugades possibles.
+- El perfil es conserva, els oponents proposats pugen amb l'habilitat, i una
+  partida a mitges es pot continuar.
+- Rutes correctes sota `/rummikub/`, manifest i icones, i jugar sense connexió.
+- En pantalla petita: res no desborda i els objectius de toc fan 44 px.
+
+Tot s'executa dues vegades, en **escriptori i en mòbil**, i contra el **build de
+producció servit a `/rummikub/`**, que és exactament el que es publica: així una
+ruta base mal configurada es detecta aquí i no un cop desplegat.
+
+Els bots juguen sense pausa durant les proves (`VITE_BOT_DELAY=0`) perquè una
+partida sencera duri segons; és l'única diferència amb el build públic.
+
+## Publicació
+
+`npm run build` genera el lloc a `dist/`, ja preparat per a
+`https://segueix.github.io/rummikub/`. La ruta base es pot canviar amb
+`BASE_PATH` sense tocar codi.
+
+L'aplicació es pot instal·lar al mòbil (manifest i icones a `public/`) i,
+un cop visitada, funciona sense connexió gràcies a `public/sw.js`. Aquest
+demana **sempre la pàgina a la xarxa primer** i només fa servir la còpia desada
+si no hi ha connexió, de manera que una versió nova arriba de seguida; els
+fitxers de codi, en canvi, es poden servir de la memòria sense por perquè porten
+el nom amb empremta i canvien de nom quan canvien de contingut.
 
 ## Notes de disseny
 
 - **Sense router**: la navegació és un estat de `App.tsx`. No hi ha enllaços
-  profunds ni URL per compartir, així que un router seria pes de més; si a la
-  Fase 5 cal historial del navegador, s'hi afegeix allà.
+  profunds ni URL per compartir, així que un router seria pes de més. Si algun
+  dia calgués historial del navegador, és aquí on s'hi posaria.
 - **`@rummikub/core` es resol sol**: el paquet publica el seu codi font
   TypeScript (`main` → `src/index.ts`) i Vite el transpila com a codi del
   projecte gràcies a l'enllaç de workspace. No calen àlies ni `optimizeDeps`.

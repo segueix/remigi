@@ -11,3 +11,17 @@ createRoot(container).render(
     <App />
   </StrictMode>,
 );
+
+/*
+ * El service worker només al build de producció: en desenvolupament només
+ * faria nosa, servint fitxers desats en comptes dels que s'acaben de tocar.
+ * Si el registre falla (navegador sense suport, servit per http...), el joc
+ * funciona igual, només que sense connexió no s'obrirà.
+ */
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch((error) => {
+      console.warn('No s’ha pogut registrar el service worker:', error);
+    });
+  });
+}

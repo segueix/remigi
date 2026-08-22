@@ -18,7 +18,7 @@ El pla complet, fase a fase, és a **[`AGENT.md`](AGENT.md)**.
 | 4 | Cicle adaptatiu complet a la web | ✅ feta |
 | 5 | Experiència d'usuari i polit | ✅ feta |
 | 6 | Motor avançat (IA que reordena la taula) | ✅ feta |
-| 7 | Desplegament | ⏳ pendent |
+| 7 | Desplegament a GitHub Pages | ✅ feta |
 
 **Ja s'hi pot jugar**: `npm install && npm run dev`. Cada partida compta per al
 teu perfil, els rivals s'ajusten al teu nivell, i pots jugar amb el ratolí o amb
@@ -43,24 +43,28 @@ rummikub/
 │       │   ├── ai/            # Oponents artificials
 │       │   │   ├── difficulty.ts  # 5 nivells: novell, fàcil, mitjà, avançat, expert
 │       │   │   ├── solver.ts      # Cerca de jugades possibles
+│       │   │   ├── rearrange.ts   # Repartiment òptim de la taula (nivell expert)
 │       │   │   └── aiPlayer.ts    # Decisió de moviment segons el nivell
 │       │   ├── adaptive/      # Dificultat adaptativa
 │       │   │   ├── rating.ts               # Càlcul Elo
 │       │   │   ├── experience.ts           # Perfil i historial del jugador
 │       │   │   └── adaptiveDifficulty.ts   # Tria d'oponents segons l'habilitat
-│       │   ├── persistence/   # Desat del perfil (memòria, fitxer JSON; localStorage a la fase web)
+│       │   ├── persistence/   # Desat del perfil (memòria i fitxer JSON)
 │       │   ├── cli/
 │       │   │   └── simulate.ts    # Simulador IA contra IA per validar el motor
 │       │   └── index.ts       # API pública del paquet
 │       └── test/              # Tests (vitest)
 ├── apps/
 │   └── web/                   # Aplicació web (Vite + React + TypeScript)
-│       └── src/
-│           ├── screens/       # Inici, Partida, Estadístiques
-│           ├── components/    # Fitxa, jugada, taula i faristol
-│           ├── game/          # Lògica del torn i estat de la partida
-│           ├── state/         # Perfil del jugador i registre de resultats
-│           └── storage/       # Adaptador de localStorage
+│       ├── src/
+│       │   ├── screens/       # Inici, Partida, Estadístiques
+│       │   ├── components/    # Fitxa, jugada, taula i faristol
+│       │   ├── game/          # Lògica del torn, arrossegar i estat de la partida
+│       │   ├── state/         # Perfil, resultats i partida desada
+│       │   └── storage/       # Adaptador de localStorage
+│       ├── e2e/               # Proves de navegador (Playwright)
+│       └── public/            # Manifest, icones i service worker
+├── .github/workflows/         # CI i desplegament a GitHub Pages
 ├── AGENT.md                   # Pla de fases i registre de problemes
 └── docs/
     ├── ARQUITECTURA.md        # Decisions de disseny i mapa de mòduls
@@ -68,18 +72,49 @@ rummikub/
     └── IA-ADAPTATIVA.md       # Com s'adapta la dificultat al jugador
 ```
 
-## Com provar-ho
+## Jugar-hi
+
+Un cop publicat (vegeu **Publicació** més avall), el joc és a:
+
+**https://segueix.github.io/rummikub/**
+
+És una aplicació que funciona del tot al navegador: es pot instal·lar al mòbil
+com una app i, un cop visitada, també s'hi pot jugar sense connexió.
+
+## Com provar-ho en local
 
 ```bash
 npm install
 npm run dev         # aplicació web a http://localhost:5173
-npm test            # tests (motor + web)
+npm test            # tests del motor i de la web
+npm run test:e2e    # proves de navegador sobre el build de producció
 npm run typecheck   # comprovació de tipus
 npm run build       # build de producció de la web
 npm run simulate    # partides IA contra IA (mostra que els nivells estan ordenats)
 ```
 
-Exemple d'ús del motor des de codi:
+Per a les proves de navegador la primera vegada cal el navegador:
+`npx playwright install chromium` dins d'`apps/web`.
+
+## Publicació
+
+El desplegament és automàtic: cada canvi que arriba a `main` construeix el joc i
+el publica a GitHub Pages (`.github/workflows/desplega.yml`). La CI
+(`.github/workflows/ci.yml`) passa tipus, tests, build i proves de navegador a
+cada push i a cada pull request.
+
+**Perquè la primera publicació funcioni cal activar Pages una vegada**, a mà:
+*Settings → Pages → Build and deployment → Source: **GitHub Actions***. Sense
+això el flux de desplegament falla amb un error de permisos, perquè el
+repositori encara no té Pages habilitat.
+
+La ruta base del build surt del nom del repositori. Si el projecte canvia de nom
+o es publica en una altra ruta, es pot passar `BASE_PATH` al build sense tocar
+el codi.
+
+## Fer servir el motor des de codi
+
+`@rummikub/core` és independent de la interfície i es pot fer servir sol:
 
 ```ts
 import { createGame, applyMove, decideAiMove } from '@rummikub/core';
@@ -113,4 +148,5 @@ state = applyMove(state, decideAiMove(state, state.currentPlayer));
       ajuda opcional i accessibilitat.
 - [x] IA experta que reparteix de nou la taula sencera, intercanvi de jokers,
       Elo amb marge de resultat i ajust de dificultat dins de la partida.
-- [ ] **Ara**: desplegament públic (Fase 7).
+- [x] Publicació automàtica a GitHub Pages, CI amb proves de navegador, i
+      instal·lable al mòbil amb joc sense connexió.

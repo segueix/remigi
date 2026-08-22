@@ -45,7 +45,7 @@ acabar-la.
 | 4 | Cicle adaptatiu complet a la web | ✅ Feta (2026-08-22) |
 | 5 | Experiència d'usuari i polit | ✅ Feta (2026-08-22) |
 | 6 | Motor avançat (solver òptim i regles pendents) | ✅ Feta (2026-08-22) |
-| 7 | Desplegament | ⬜ Pendent |
+| 7 | Desplegament | ✅ Feta (2026-08-22) |
 
 Llegenda: `⬜ Pendent` · `🔄 En curs` · `✅ Feta (data)` · `⏸️ Aturada (motiu)`
 
@@ -414,30 +414,73 @@ apuntades com a pendents a `docs/REGLES.md` i `docs/ARQUITECTURA.md`.
 
 ## Fase 7 — Desplegament
 
-**Estat**: ⬜ Pendent
+**Estat**: ✅ Feta (2026-08-22)
 
 **Objectiu**: el joc és públic en una URL i s'hi pot jugar des de qualsevol
 dispositiu.
 
 ### Tasques
 
-- [ ] Build estàtic de producció d'`apps/web` (tot és client: no cal servidor).
-- [ ] Desplegament automàtic (GitHub Pages amb GitHub Actions, o equivalent que
-      prefereixi l'usuari — **preguntar-ho abans de configurar res**), amb la
-      `base` de Vite ben configurada per a la ruta de publicació.
-- [ ] CI mínima: `typecheck` + `test` + `build` a cada push.
-- [ ] Automatitzar al repositori les proves de navegador que a la Fase 3 es van
-      fer a mà amb Playwright (partida sencera contra 1–3 bots, validació pel
-      motor, mòbil), i substituir així la checklist manual d'`apps/web/README.md`.
-- [ ] Opcional: PWA (manifest + service worker) per jugar sense connexió.
-- [ ] README de l'arrel amb l'enllaç públic i instruccions actualitzades.
+- [x] Build estàtic de producció amb la `base` a `/rummikub/`, configurable amb
+      `BASE_PATH` sense tocar codi.
+- [x] Desplegament automàtic a **GitHub Pages** (triat per l'usuari) a cada
+      canvi que arriba a `main`, amb el desplegament oficial de Pages.
+- [x] CI a cada push i pull request: tipus, tests, build i proves de navegador.
+- [x] **37 proves de navegador** (Playwright) que substitueixen la checklist
+      manual de la Fase 3, executades en escriptori i mòbil contra el build de
+      producció servit a `/rummikub/`.
+- [x] PWA: manifest, icones i service worker per jugar sense connexió.
+- [x] READMEs amb l'enllaç públic, com publicar i com provar-ho.
 
-### Criteris d'acceptació
+### Criteris d'acceptació (verificats)
 
-- La URL pública carrega i s'hi juga una partida sencera des d'un mòbil real.
-- El perfil persisteix entre visites a la versió publicada.
-- La CI falla si es trenca un test (provar-ho expressament amb un canvi trivial
-  revertit, o verificar-ho en un push real).
+- La URL pública carrega i s'hi juga una partida sencera. ✔ **Verificat contra
+  el build de producció servit a `/rummikub/`**, no contra el servidor de
+  desenvolupament: partides senceres contra 1, 2 i 3 bots en escriptori i en
+  mòbil (Pixel 5). El que encara no es pot verificar des d'aquí és la URL de
+  github.io: depèn que s'activi Pages al repositori (vegeu més avall).
+- El perfil persisteix entre visites. ✔ Prova pròpia a `e2e/perfil.spec.ts`,
+  inclosa la represa d'una partida a mitges.
+- La CI falla si es trenca un test. ✔ Comprovat sense fer trampes: es va rompre
+  una asserció a posta i `npm test` va sortir amb codi 1, que és el que fa
+  fallar el pas de la CI.
+- Extra: es pot jugar **sense connexió** un cop visitat (prova amb la xarxa
+  tallada) i instal·lar com a aplicació (manifest i icones comprovats).
+
+### Cal fer una vegada al repositori
+
+El desplegament no pot funcionar fins que **Pages estigui activat**:
+*Settings → Pages → Build and deployment → Source: **GitHub Actions***. És
+l'única passa manual, i s'ha de fer des de la interfície de GitHub.
+
+### Problemes trobats
+
+- [2026-08-22] `vite preview` compta com a `serve`, no com a `build`, així que
+  amb la `base` posada només per al build servia el lloc des de l'arrel mentre
+  els fitxers generats apuntaven a `/rummikub/`: **totes** les proves de
+  navegador fallaven de cop. Resolt aplicant la base també a `preview`, cosa que
+  a més fa que les proves comprovin exactament el que es publica.
+- [2026-08-22] La prova de l'ajuda partia d'una premissa fràgil: una mà de 14
+  fitxes a l'atzar pot no tenir cap jugada possible, i llavors no marcar-ne cap
+  és el comportament correcte. Resolt robant fitxes fins que n'hi hagi alguna.
+- [2026-08-22] `pkill -f vite` matava el propi intèrpret d'ordres (la seva línia
+  també conté «vite»). Ja anotat a la Fase 6; aquí va tornar a passar. La manera
+  segura és filtrar per port: `lsof -t -i:4173`.
+
+---
+
+## El projecte, acabat
+
+Les set fases estan fetes. Si es reprèn el projecte, això és el que hi ha
+apuntat com a següent pas natural, per ordre de profit:
+
+- **Estratègia a llarg termini de la IA**: ara maximitza les fitxes del torn
+  actual, sense guardar-se'n per a jugades futures ni comptar les del rival.
+- **Perfils múltiples** al mateix dispositiu (`ProfileRepository` ja ho suporta,
+  només cal interfície).
+- **Rondes encadenades** amb marcador acumulat: la puntuació ja suma zero, que
+  és el que ho fa possible.
+- Límit de temps per torn.
 
 ### Problemes trobats
 

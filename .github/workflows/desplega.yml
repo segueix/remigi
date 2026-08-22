@@ -1,0 +1,57 @@
+name: Desplega a GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  # Permet publicar a mà des de la pestanya Actions.
+  workflow_dispatch:
+
+# Permisos que demana el desplegament oficial de Pages.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Un desplegament a la vegada; no es cancel·la el que ja s'està publicant.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Construeix el lloc
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instal·la dependències
+        run: npm ci
+
+      - name: Build de producció
+        # La ruta base ha de coincidir amb el nom del repositori, perquè el joc
+        # penja de https://<usuari>.github.io/<repositori>/.
+        run: npm run build -w @rummikub/web
+        env:
+          BASE_PATH: /${{ github.event.repository.name }}/
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: apps/web/dist
+
+  deploy:
+    name: Publica
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.desplegament.outputs.page_url }}
+    steps:
+      - id: desplegament
+        uses: actions/deploy-pages@v4
