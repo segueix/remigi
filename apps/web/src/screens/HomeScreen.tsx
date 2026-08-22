@@ -6,6 +6,7 @@ import {
   type DifficultyKey,
 } from '@rummikub/core';
 import { useState } from 'react';
+import { ComEsJuga } from '../components/ComEsJuga';
 import type { GameSetup } from '../game/useGame';
 import type { SavedGame } from '../state/savedGame';
 import type { ProfileHandle } from '../state/useProfile';
@@ -93,6 +94,8 @@ export function HomeScreen({ handle, savedGame, onPlay, onContinue }: Props) {
         Habilitat actual: <strong>{profile!.rating}</strong> punts · {profile!.gamesPlayed}{' '}
         {profile!.gamesPlayed === 1 ? 'partida jugada' : 'partides jugades'}
       </p>
+
+      <ComEsJuga obertPerDefecte={profile!.gamesPlayed === 0} />
 
       {savedGame && (
         <div className="resume">

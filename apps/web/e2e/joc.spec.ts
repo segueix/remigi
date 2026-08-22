@@ -167,3 +167,30 @@ test.describe('en pantalla petita', () => {
     }
   });
 });
+
+test.describe('explicar les regles', () => {
+  test('l’inici explica com s’obre, amb exemples', async ({ page }) => {
+    await comencaDeZero(page);
+
+    const explicacio = page.locator('details.rules');
+    await expect(explicacio).toBeVisible();
+    // A qui no ha jugat mai se li ensenya desplegada.
+    expect(await explicacio.evaluate((el) => (el as HTMLDetailsElement).open)).toBe(true);
+    await expect(explicacio).toContainText('mateix número');
+    await expect(explicacio).toContainText('mateix color');
+    // I hi ha el cas que enganya: fitxes que sumen 30 sense ser jugada vàlida.
+    await expect(page.locator('.exemple.malament')).toContainText('no és ni grup ni escala');
+  });
+
+  test('durant el torn diu per què una jugada no suma punts', async ({ page }) => {
+    // El cas real: 6 + 12 + 12 suma 30 però no és ni grup ni escala.
+    await entraAmbPartida(page, { rack: [f('red', 6), f('blue', 12), f('black', 12)] });
+    await baixaGrup(page, ['6 vermell', '12 blau', '12 negre']);
+
+    await expect(page.locator('.meld.invalid')).toHaveCount(1);
+    const pista = page.locator('.hint');
+    await expect(pista).toContainText('en portes 0');
+    await expect(pista).toContainText('no compten');
+    await expect(pista).toContainText('mateixa caixa');
+  });
+});

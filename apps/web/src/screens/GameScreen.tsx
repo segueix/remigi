@@ -119,6 +119,20 @@ export function GameScreen({ setup, resume, profile, savedGame, onExit }: Props)
             <>
               Encara no has obert: la primera jugada ha de sumar 30 punts i en portes{' '}
               <strong>{openingPoints(draft)}</strong>.
+              {/*
+               * Dir només «en portes 0» amb fitxes a la taula desconcerta: sembla
+               * que el joc no les vegi. El que passa és que les jugades que no
+               * són vàlides no sumen, i val més dir-ho aquí mateix.
+               */}
+              {invalid.size > 0 && (
+                <>
+                  {' '}
+                  Les jugades marcades en vermell no compten: han de ser{' '}
+                  <strong>grups</strong> (mateix número, colors diferents) o{' '}
+                  <strong>escales</strong> (mateix color, números seguits), i totes les fitxes
+                  d’una jugada han d’anar a la mateixa caixa.
+                </>
+              )}
             </>
           ) : (
             <>Ja tens els 30 punts de la sortida inicial: pots acabar la jugada.</>
