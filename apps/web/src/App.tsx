@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { GameSetup } from './game/useGame';
 import { GameScreen } from './screens/GameScreen';
 import { HomeScreen } from './screens/HomeScreen';
 import { StatsScreen } from './screens/StatsScreen';
@@ -13,6 +14,7 @@ export type Screen = 'home' | 'game' | 'stats';
  */
 export function App() {
   const [screen, setScreen] = useState<Screen>('home');
+  const [setup, setSetup] = useState<GameSetup | null>(null);
   const handle = useProfile();
 
   if (handle.loading) {
@@ -21,6 +23,11 @@ export function App() {
         <p className="muted">Carregant el perfil…</p>
       </main>
     );
+  }
+
+  function startGame(next: GameSetup) {
+    setSetup(next);
+    setScreen('game');
   }
 
   return (
@@ -39,8 +46,8 @@ export function App() {
         )}
       </header>
 
-      {screen === 'home' && <HomeScreen handle={handle} onPlay={() => setScreen('game')} />}
-      {screen === 'game' && <GameScreen handle={handle} onExit={() => setScreen('home')} />}
+      {screen === 'home' && <HomeScreen handle={handle} onPlay={startGame} />}
+      {screen === 'game' && setup && <GameScreen setup={setup} onExit={() => setScreen('home')} />}
       {screen === 'stats' && <StatsScreen handle={handle} />}
     </main>
   );

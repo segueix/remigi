@@ -15,6 +15,14 @@
   --avis: #fef3c7;
   --avis-vora: #fcd34d;
   --avis-text: #713f12;
+  --taula: #eceae7;
+  --taula-jugada: #ffffff;
+  /* Les fitxes són de color crema en tots dos temes, com les de debò. */
+  --fitxa: #fffbeb;
+  --fitxa-vora: #e7e5e4;
+  --error: #dc2626;
+  --error-fons: #fef2f2;
+  --error-text: #991b1b;
   color-scheme: light dark;
 }
 
@@ -30,6 +38,13 @@
     --avis: #3f2d0d;
     --avis-vora: #78500f;
     --avis-text: #fde68a;
+    --taula: #171412;
+    --taula-jugada: #292524;
+    --fitxa: #faf7f0;
+    --fitxa-vora: #a8a29e;
+    --error: #f87171;
+    --error-fons: #431414;
+    --error-text: #fecaca;
   }
 }
 
@@ -218,4 +233,280 @@ input {
   margin: 0.25rem 0 0;
   font-size: 1.5rem;
   font-weight: 600;
+}
+
+/* ---------- Partida ---------- */
+
+.turn-line {
+  margin: 0.75rem 0;
+}
+
+.board {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 0.5rem;
+  min-height: 8rem;
+  padding: 0.75rem;
+  border: 1px solid var(--vora);
+  border-radius: 0.75rem;
+  background: var(--taula);
+}
+
+.board-empty {
+  margin: auto;
+}
+
+.meld {
+  display: flex;
+  gap: 0.15rem;
+  padding: 0.3rem;
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  background: var(--taula-jugada);
+}
+
+.meld.target {
+  cursor: pointer;
+  border-style: dashed;
+  border-color: var(--vora);
+}
+
+.meld.target:hover {
+  border-color: var(--accent);
+  border-style: solid;
+}
+
+.meld.invalid {
+  border-color: var(--error);
+  background: var(--error-fons);
+}
+
+/* No porta la classe .meld a posta: no és una jugada, és el botó per crear-ne. */
+.new-meld {
+  font: inherit;
+  align-self: flex-start;
+  background: transparent;
+  color: var(--text-suau);
+  border: 1px dashed var(--vora);
+  border-radius: 0.5rem;
+  padding: 1.1rem 1rem;
+}
+
+.new-meld:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ---------- Fitxes ---------- */
+
+.tile {
+  --tinta: var(--text);
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 3.25rem;
+  padding: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--tinta);
+  background: var(--fitxa);
+  border: 1px solid var(--fitxa-vora);
+  border-radius: 0.35rem;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.2);
+  cursor: default;
+}
+
+.tile:not(:disabled) {
+  cursor: pointer;
+}
+
+.tile:not(:disabled):hover {
+  transform: translateY(-2px);
+}
+
+.tile:disabled {
+  opacity: 1; /* les fitxes de la taula no són "inactives", només no es toquen */
+}
+
+.tile.selected {
+  transform: translateY(-6px);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.tile.highlighted {
+  animation: acabada-de-jugar 1.6s ease-out;
+}
+
+@keyframes acabada-de-jugar {
+  from {
+    box-shadow: 0 0 0 3px var(--accent);
+  }
+  to {
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.2);
+  }
+}
+
+.tile-red {
+  --tinta: #dc2626;
+}
+.tile-blue {
+  --tinta: #1d4ed8;
+}
+.tile-black {
+  --tinta: #1c1917;
+}
+.tile-orange {
+  --tinta: #ea580c;
+}
+.tile-joker {
+  --tinta: #7c3aed;
+}
+
+/* ---------- Faristol ---------- */
+
+.rack-area {
+  margin-top: 1.25rem;
+}
+
+.rack-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.rack-header h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.rack-order {
+  display: flex;
+  gap: 0.6rem;
+  align-items: baseline;
+  font-size: 0.85rem;
+}
+
+.rack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  min-height: 4.5rem;
+  border: 1px solid var(--vora);
+  border-radius: 0.75rem;
+  background: var(--superficie);
+}
+
+.actions {
+  margin-top: 1.25rem;
+}
+
+/* ---------- Missatges ---------- */
+
+.hint,
+.error {
+  margin: 0.75rem 0 0;
+  padding: 0.6rem 0.85rem;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.hint {
+  background: var(--taula-jugada);
+  border: 1px solid var(--vora);
+  color: var(--text-suau);
+}
+
+.error {
+  background: var(--error-fons);
+  border: 1px solid var(--error);
+  color: var(--error-text);
+}
+
+/* ---------- Configuració de la partida ---------- */
+
+.setup {
+  margin: 1.25rem 0 0;
+  padding: 1rem;
+  border: 1px solid var(--vora);
+  border-radius: 0.5rem;
+}
+
+.setup legend {
+  padding: 0 0.4rem;
+  font-weight: 600;
+}
+
+.count-picker {
+  margin-top: 0;
+}
+
+.count-picker button {
+  min-width: 3rem;
+}
+
+.opponents {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.opponents label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+select {
+  font: inherit;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--vora);
+  border-radius: 0.4rem;
+  background: var(--fons);
+  color: var(--text);
+}
+
+.small {
+  font-size: 0.85rem;
+  margin-bottom: 0;
+}
+
+/* ---------- Resultat ---------- */
+
+.scores {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.scores li {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.6rem 0.85rem;
+  border: 1px solid var(--vora);
+  border-radius: 0.5rem;
+}
+
+.scores li.winner {
+  border-color: var(--accent);
+  font-weight: 600;
+}
+
+.points-positive {
+  color: var(--accent);
+}
+
+.points-negative {
+  color: var(--text-suau);
 }

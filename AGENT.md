@@ -41,7 +41,7 @@ acabar-la.
 |---|---|---|
 | 1 | Estructura i motor del joc | ✅ Feta (2026-08-22, reverificada 2026-08-22) |
 | 2 | Esquelet de l'aplicació web | ✅ Feta (2026-08-22) |
-| 3 | Pantalla de partida jugable | ⬜ Pendent |
+| 3 | Pantalla de partida jugable | ✅ Feta (2026-08-22) |
 | 4 | Cicle adaptatiu complet a la web | ⬜ Pendent |
 | 5 | Experiència d'usuari i polit | ⬜ Pendent |
 | 6 | Motor avançat (solver òptim i regles pendents) | ⬜ Pendent |
@@ -163,43 +163,68 @@ Encara sense partida jugable: només l'esquelet sòlid on penjar les fases 3 i 4
 
 ## Fase 3 — Pantalla de partida jugable
 
-**Estat**: ⬜ Pendent
+**Estat**: ✅ Feta (2026-08-22)
 
 **Objectiu**: es pot jugar una partida sencera al navegador contra 1, 2 o 3
 bots, amb totes les regles aplicades pel motor.
 
 ### Tasques
 
-- [ ] Components de fitxa, jugada (meld), taula i faristol, amb els colors i
-      valors reals (`COLOR_LABELS` per a textos).
-- [ ] Interacció per moure fitxes: seleccionar i col·locar (clic) com a mínim;
-      arrossegar i deixar anar si no complica el calendari (sinó, passa a Fase 5).
-- [ ] Zona d'edició del torn: l'usuari manipula una **còpia de treball** de la
-      taula; «Acabar jugada» construeix el `Move` `play` amb la taula sencera i
-      crida `applyMove` dins de `try/catch`.
-- [ ] Mostrar el missatge del `RulesError` en català quan la jugada no és legal,
-      i botó «Desfer canvis del torn» (restaurar l'estat del començament del torn).
-- [ ] Botó «Robar fitxa» (`draw`), que també fa de «passar» amb el sac buit.
-- [ ] Torns dels bots amb `decideAiMove` + retard artificial (~1 s) i indicació
-      visual de qui juga i de què ha jugat (ressaltar fitxes noves).
-- [ ] Final de partida: pantalla de resultat amb `finalScores`, guanyador i
+- [x] Components de fitxa, jugada, taula i faristol, amb colors i valors reals
+      (`COLOR_LABELS` per als textos d'accessibilitat).
+- [x] Interacció per **seleccionar i col·locar** (clic): tries una fitxa i cliques
+      on la deixes. `insertSmart` la posa a la posició que fa vàlida la jugada.
+      L'arrossegar i deixar anar queda per a la Fase 5, com preveia el pla.
+- [x] Còpia de treball del torn (`turnDraft.ts`, funcions pures); «Acabar jugada»
+      envia la taula sencera a `applyMove` dins d'un `try/catch`.
+- [x] Missatge del `RulesError` en català i botó «Desfer canvis».
+- [x] Botó «Robar fitxa», que passa a dir «Passar torn» amb el sac buit.
+- [x] Torns dels bots amb `decideAiMove` i pausa (`VITE_BOT_DELAY`, 900 ms per
+      defecte), amb el jugador actiu ressaltat i animació a les fitxes que
+      acaba de baixar.
+- [x] Final de partida amb `finalScores`, guanyador, avís si ha estat bloqueig i
       botó de partida nova.
-- [ ] Selector de partida a Inici: nombre d'oponents (1–3) i nivell de cada un
-      (de moment manual; l'automàtic ve a la Fase 4).
-- [ ] Tests dels components/fluxos clau que siguin raonables sense navegador
-      (p. ex. reducers/hooks del torn); la resta, checklist manual documentada.
+- [x] Selector a Inici: nombre d'oponents (1–3) i nivell de cadascun.
+- [x] Ordenació del faristol (per número o per color), que el pla situava a la
+      Fase 5 però surt gairebé de franc i fa la partida molt més còmoda.
+- [x] 22 tests de la lògica del torn + checklist manual a `apps/web/README.md`.
 
-### Criteris d'acceptació
+### Criteris d'acceptació (verificats)
 
-- Partida completa jugable contra 1, 2 i 3 bots sense errors de consola.
-- És impossible fer trampes des de la UI: tota validació passa pel motor
-  (provar expressament: sortida de <30, retirar fitxes de la taula, jugada de 2).
-- La partida sempre pot acabar (victòria o bloqueig amb sac buit).
-- `typecheck`, `test` i `build` en verd.
+- Partida completa jugable contra 1, 2 i 3 bots sense errors de consola. ✔
+  Verificat amb Chromium: les tres partides arriben al final i mostren la
+  puntuació de tothom.
+- És impossible fer trampes des de la UI. ✔ Verificat un per un: sortida inicial
+  de 9 punts → *«la sortida inicial demana 30 punts i n'has jugat 9»*; jugada
+  d'una sola fitxa → *«una jugada necessita com a mínim 3 fitxes»*; i una fitxa
+  que ja era a la taula no es pot endur al faristol.
+- La partida sempre pot acabar. ✔ Les tres partides de prova han acabat per
+  bloqueig amb el sac buit, i el marcador suma zero (+420 −121 −299).
+- `typecheck`, `test` i `build` en verd. ✔ (74 core + 22 web; 212 kB, 67 kB gzip)
 
 ### Problemes trobats
 
-*(cap encara)*
+- [2026-08-22] El botó «+ Jugada nova» portava la classe `meld`, així que
+  comptava com una jugada més: en col·locar-hi fitxes, cadascuna anava a una
+  jugada nova en comptes d'ajuntar-se. Ho va destapar la prova de fer una
+  sortida inicial vàlida al navegador. Resolt separant-lo (`new-meld` sol): no
+  és una jugada, és el botó per crear-ne una.
+- [2026-08-22] Els efectes de React s'executen dues vegades en mode estricte i
+  el bot podia jugar dos cops el mateix torn. Resolt amb el `clearTimeout` del
+  cleanup i una comprovació dins de `setGame`, que és qui té l'estat de debò.
+- [2026-08-22] En treure una fitxa d'una jugada que es queda buida, la jugada
+  desapareix i les següents es desplacen, així que l'índex de destinació que
+  venia de la interfície ja no assenyalava el mateix lloc. Detectat escrivint
+  els tests de `moveTile`; resolt amb `adjustIndex` i cobert amb un test propi.
+
+### Limitacions conegudes (per a fases següents)
+
+- `insertSmart` tria la primera posició que fa vàlida la jugada, que no sempre
+  és la que l'usuari vol en casos ambigus. L'arrossegar i deixar anar de la
+  Fase 5 donarà control exacte.
+- La `key` de cada jugada depèn de les seves fitxes, així que en canviar es
+  remunta el component. Innocu ara, però caldrà revisar-ho quan la Fase 5 hi
+  posi animacions i navegació per teclat.
 
 ---
 
@@ -255,8 +280,8 @@ l'actualitza.
 - [ ] Animacions curtes: robar, baixar jugades, torn dels bots, victòria.
 - [ ] Desar la **partida en curs** (serialitzar `GameState` a localStorage) i
       oferir «Continuar la partida» en tornar a obrir.
-- [ ] Ordenar el faristol (per color / per número) i ressaltar jugades
-      possibles com a *ajuda* opcional (fent servir `findRackMelds`).
+- [x] ~~Ordenar el faristol (per color / per número)~~ — avançat a la Fase 3.
+- [ ] Ressaltar jugades possibles com a *ajuda* opcional (`findRackMelds`).
 - [ ] Accessibilitat bàsica: contrast, mides de toc, focus visible, textos
       alternatius; tot el text de la UI en català.
 - [ ] Revisió de rendiment (una partida llarga no ha de degradar la UI).
@@ -325,6 +350,9 @@ dispositiu.
       prefereixi l'usuari — **preguntar-ho abans de configurar res**), amb la
       `base` de Vite ben configurada per a la ruta de publicació.
 - [ ] CI mínima: `typecheck` + `test` + `build` a cada push.
+- [ ] Automatitzar al repositori les proves de navegador que a la Fase 3 es van
+      fer a mà amb Playwright (partida sencera contra 1–3 bots, validació pel
+      motor, mòbil), i substituir així la checklist manual d'`apps/web/README.md`.
 - [ ] Opcional: PWA (manifest + service worker) per jugar sense connexió.
 - [ ] README de l'arrel amb l'enllaç públic i instruccions actualitzades.
 

@@ -12,9 +12,9 @@ npm test           # tests d'aquest paquet
 
 ## Estat
 
-L'**esquelet** (Fase 2) està fet: perfil del jugador desat al navegador,
-navegació entre pantalles i el motor integrat i funcionant. **Encara no s'hi pot
-jugar**: la taula jugable és la Fase 3 (vegeu `AGENT.md` a l'arrel).
+**S'hi pot jugar** (Fase 3): partida completa contra 1, 2 o 3 bots, amb totes
+les regles aplicades pel motor. El que encara no fa: comptar els resultats per
+al perfil (Fase 4) i arrossegar i deixar anar (Fase 5). Vegeu `AGENT.md`.
 
 ## Estructura
 
@@ -22,17 +22,55 @@ jugar**: la taula jugable és la Fase 3 (vegeu `AGENT.md` a l'arrel).
 src/
 ├── main.tsx                  # punt d'entrada
 ├── App.tsx                   # navegació entre pantalles
-├── styles.css                # estils de base (tema clar i fosc)
+├── styles.css                # estils (tema clar i fosc)
 ├── storage/
 │   ├── webStore.ts           # adaptador de localStorage a KeyValueStore
 │   └── webStore.test.ts
 ├── state/
 │   └── useProfile.ts         # càrrega i desat del perfil del jugador
+├── game/
+│   ├── turnDraft.ts          # lògica pura de l'edició del torn
+│   ├── turnDraft.test.ts
+│   └── useGame.ts            # estat de la partida i torns dels bots
+├── components/
+│   ├── TileView.tsx          # una fitxa
+│   ├── MeldView.tsx          # una jugada
+│   ├── BoardView.tsx         # la taula
+│   └── RackView.tsx          # el faristol, amb ordenació
 └── screens/
-    ├── HomeScreen.tsx        # nom del jugador i entrada a la partida
-    ├── GameScreen.tsx        # prova de fum del motor (Fase 3: jugable)
+    ├── HomeScreen.tsx        # nom del jugador i configuració de la partida
+    ├── GameScreen.tsx        # la partida i el resultat final
     └── StatsScreen.tsx       # dades del perfil (Fase 4: historial i gràfic)
 ```
+
+## Com es juga un torn
+
+Un sol gest per a tot: **cliques una fitxa per triar-la i cliques on la vols
+deixar** (una jugada de la taula, «+ Jugada nova» o el faristol). Tornar a
+clicar la fitxa triada la deselecciona. En deixar-la sobre una jugada, s'insereix
+a la posició que la fa vàlida si n'hi ha cap: un 6 vermell entra sol a l'esquerra
+de 7-8-9.
+
+Mentre dura el torn es treballa sobre una **còpia de la taula**, que pot quedar
+temporalment invàlida (per partir una escala en dues cal passar per estats
+intermedis). Les jugades incorrectes es marquen en vermell, però **qui mana és
+el motor**: «Acabar jugada» li envia la taula sencera i, si la rebutja, es mostra
+el seu missatge. La interfície no duplica cap regla; només impedeix el que no té
+sentit ni intentar, com endur-se al faristol una fitxa que ja era a la taula.
+
+## Comprovacions manuals
+
+Fins que la Fase 7 no automatitzi això a la CI, abans de tocar la pantalla de
+partida val la pena repassar a mà:
+
+- [ ] Partida sencera contra 1, 2 i 3 bots, sense errors a la consola.
+- [ ] Sortida inicial de menys de 30 punts: el motor la rebutja amb el seu missatge.
+- [ ] Jugada de menys de 3 fitxes: es marca en vermell i el motor la rebutja.
+- [ ] Una fitxa que ja era a la taula no es pot endur al faristol.
+- [ ] «Desfer canvis» retorna el torn a com estava.
+- [ ] Amb el sac buit, el botó passa a dir «Passar torn» i la partida es bloqueja
+      si tothom passa.
+- [ ] Es veu bé a 390 px d'amplada.
 
 ## Notes de disseny
 

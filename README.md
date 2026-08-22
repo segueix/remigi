@@ -14,8 +14,12 @@ El pla complet, fase a fase, és a **[`AGENT.md`](AGENT.md)**.
 |------|-----------|-------|
 | 1 | Motor del joc (`packages/core`) | ✅ feta |
 | 2 | Esquelet de l'aplicació web (`apps/web`) | ✅ feta |
-| 3 | Pantalla de partida jugable | ⏳ pendent |
-| 4–7 | Cicle adaptatiu, polit, motor avançat i desplegament | ⏳ pendents |
+| 3 | Pantalla de partida jugable | ✅ feta |
+| 4 | Cicle adaptatiu complet a la web | ⏳ pendent |
+| 5–7 | Polit, motor avançat i desplegament | ⏳ pendents |
+
+**Ja s'hi pot jugar**: `npm install && npm run dev`. El que encara no fa és
+comptar els resultats per al teu perfil, que és la Fase 4.
 
 ## Estructura del repositori
 
@@ -97,8 +101,10 @@ state = applyMove(state, decideAiMove(state, state.currentPlayer));
 - [x] Simulador i tests.
 - [x] Esquelet de la web: perfil desat a `localStorage`, navegació i motor
       integrat.
-- [ ] **Ara**: taula jugable amb arrossegar i deixar anar (Fase 3).
-- [ ] Cicle adaptatiu a la web: oponents proposats per l'Elo i estadístiques.
+- [x] Partida jugable contra 1, 2 o 3 bots, amb validació en viu i resultat final.
+- [ ] **Ara**: cicle adaptatiu a la web (oponents proposats per l'Elo,
+      estadístiques i historial).
+- [ ] Arrossegar i deixar anar, i desar la partida en curs.
 - [ ] Solver òptim (reordenació completa de la taula per part de la IA experta).
 - [ ] Intercanvi de jokers de la taula.
 - [ ] Ajust de dificultat dins de la mateixa partida (rubber banding).
