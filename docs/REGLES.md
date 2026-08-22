@@ -52,7 +52,9 @@ vàlid i hagi afegit almenys una fitxa de la mà.
   **bloquejada** i guanya qui té menys punts pendents a la mà.
 - Puntuació (`finalScores`): cada perdedor **resta** els punts de les fitxes que
   li queden (el joker penalitza 30); el guanyador **suma** els punts de tots els
-  altres.
+  altres i no es penalitza les pròpies (només en té si hi ha hagut bloqueig).
+  Per tant **la puntuació sempre suma zero**, cosa que permet encadenar rondes
+  amb un marcador acumulat coherent.
 
 ## Variants encara no implementades
 

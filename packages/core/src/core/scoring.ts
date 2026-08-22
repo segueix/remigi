@@ -19,8 +19,12 @@ export interface PlayerScore {
 
 /**
  * Puntuació final de la partida: cada perdedor resta els punts que li queden a la
- * mà i el guanyador suma els punts de tots els altres (menys els seus propis, si
- * la partida ha quedat bloquejada i encara té fitxes).
+ * mà i el guanyador suma els punts de tots els altres, sense penalitzar-se les
+ * fitxes pròpies (només en té si la partida ha quedat bloquejada).
+ *
+ * Invariant: la suma de tots els punts és sempre 0, tant si algú s'ha quedat
+ * sense fitxes com si la partida ha quedat bloquejada. Això manté coherent el
+ * marcador quan s'encadenen rondes.
  */
 export function finalScores(state: GameState): PlayerScore[] {
   const pending = state.players.map((p) => rackPoints(p.rack));
@@ -28,7 +32,6 @@ export function finalScores(state: GameState): PlayerScore[] {
   return state.players.map((player, i) => ({
     playerId: player.id,
     name: player.name,
-    points:
-      player.id === state.winnerId ? totalPending - 2 * pending[i] : -pending[i],
+    points: player.id === state.winnerId ? totalPending - pending[i] : -pending[i],
   }));
 }

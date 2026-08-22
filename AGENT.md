@@ -39,7 +39,7 @@ acabar-la.
 
 | Fase | Nom | Estat |
 |---|---|---|
-| 1 | Estructura i motor del joc | ✅ Feta (2026-08-22) |
+| 1 | Estructura i motor del joc | ✅ Feta (2026-08-22, reverificada 2026-08-22) |
 | 2 | Esquelet de l'aplicació web | ⬜ Pendent |
 | 3 | Pantalla de partida jugable | ⬜ Pendent |
 | 4 | Cicle adaptatiu complet a la web | ⬜ Pendent |
@@ -73,11 +73,17 @@ independent de la interfície, amb IA per nivells i sistema adaptatiu, tot prova
 - [x] Persistència a `src/persistence/`: interfície `KeyValueStore`,
       `MemoryStore`, `JsonFileStore` (Node) i `ProfileRepository`.
 - [x] Simulador IA contra IA (`npm run simulate`) amb invariant de conservació.
-- [x] 38 tests amb vitest; docs en català a `docs/`.
+- [x] Docs en català a `docs/`.
+- [x] **Cobertura de tota l'API pública** (74 tests): a més de fitxes, jugades,
+      partida, solver i sistema adaptatiu, també `core/board.ts`,
+      `core/scoring.ts`, `ai/difficulty.ts`, `ai/aiPlayer.ts` (errors "humans"
+      amb RNG controlat), la capa `persistence/` sencera (bateria comuna per a
+      qualsevol `KeyValueStore`, `JsonFileStore` sobre disc i
+      `ProfileRepository`) i el contracte de `src/index.ts`.
 
 ### Criteris d'acceptació (verificats)
 
-- `npm run typecheck` i `npm test` en verd. ✔ (38/38)
+- `npm run typecheck` i `npm test` en verd. ✔ (74/74, reverificat 2026-08-22)
 - `npm run simulate -- --games 100` acaba sempre i ordena els nivells. ✔
   (Expert 59%, Mitjà 39%, Novell 2%; ~95 torns/partida)
 
@@ -90,6 +96,17 @@ independent de la interfície, amb IA per nivells i sistema adaptatiu, tot prova
   interns** (extrems sempre reals): un test suposava que també allargava
   extrems amb joker. S'ha ajustat el test a l'heurística documentada i la
   millora queda apuntada a la Fase 6.
+- [2026-08-22] **Buit de cobertura**: en reverificar la fase es va detectar que
+  `core/board.ts`, `ai/difficulty.ts` i tota la capa `persistence/` eren API
+  pública **sense cap test**. Resolt afegint-ne (38 → 74 tests).
+- [2026-08-22] **Bug de puntuació** (el va destapar un dels tests nous):
+  `finalScores` feia `totalPending - 2 * pending[guanyador]`, de manera que en
+  una **partida bloquejada** el guanyador es penalitzava les seves pròpies
+  fitxes i el marcador **no sumava zero** (una partida d'exemple donava −36).
+  En victòria neta no es notava, perquè el guanyador té 0 fitxes. Resolt:
+  `totalPending - pending[guanyador]`, que deixa igual la victòria neta,
+  quadra el bloqueig i alinea el codi amb el que ja deia `docs/REGLES.md`.
+  S'hi ha afegit l'invariant «la puntuació sempre suma zero» com a test.
 
 ---
 
