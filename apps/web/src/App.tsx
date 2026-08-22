@@ -4,6 +4,7 @@ import type { GameSetup } from './game/useGame';
 import { GameScreen } from './screens/GameScreen';
 import { HomeScreen } from './screens/HomeScreen';
 import { StatsScreen } from './screens/StatsScreen';
+import type { SavedGame } from './state/savedGame';
 import { useProfile } from './state/useProfile';
 import { useSavedGame } from './state/useSavedGame';
 
@@ -17,6 +18,7 @@ export function App() {
   const [screen, setScreen] = useState<Screen>('home');
   const [setup, setSetup] = useState<GameSetup | null>(null);
   const [resume, setResume] = useState<GameState | undefined>();
+  const [resumeOwners, setResumeOwners] = useState<SavedGame['owners']>();
   const profile = useProfile();
   const savedGame = useSavedGame();
 
@@ -31,6 +33,7 @@ export function App() {
   function startGame(next: GameSetup) {
     setSetup(next);
     setResume(undefined);
+    setResumeOwners(undefined);
     setScreen('game');
   }
 
@@ -38,6 +41,7 @@ export function App() {
     if (!savedGame.saved) return;
     setSetup(savedGame.saved.setup);
     setResume(savedGame.saved.game);
+    setResumeOwners(savedGame.saved.owners);
     setScreen('game');
   }
 
@@ -75,6 +79,7 @@ export function App() {
         <GameScreen
           setup={setup}
           resume={resume}
+          resumeOwners={resumeOwners}
           profile={profile}
           savedGame={savedGame}
           onExit={goHome}

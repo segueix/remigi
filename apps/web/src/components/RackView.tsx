@@ -10,6 +10,8 @@ interface Props {
   isOver?: boolean;
   /** Fitxes que poden formar jugada, quan l'ajuda està activada. */
   suggested?: ReadonlySet<string>;
+  /** Fitxa acabada de robar del sac, per trobar-la de seguida entre les altres. */
+  drawnTileId?: string | null;
   helpOn?: boolean;
   interactive?: boolean;
   onToggleHelp?(): void;
@@ -30,6 +32,7 @@ export function RackView({
   draggingTileId,
   isOver,
   suggested,
+  drawnTileId,
   helpOn,
   interactive,
   onToggleHelp,
@@ -75,6 +78,7 @@ export function RackView({
             selected={tile.id === selectedTileId}
             dragging={tile.id === draggingTileId}
             suggested={helpOn && suggested?.has(tile.id)}
+            drawn={tile.id === drawnTileId}
             onClick={interactive ? () => onTileClick?.(tile.id) : undefined}
             onPointerDown={
               interactive && onTilePointerDown

@@ -1,5 +1,6 @@
 import type { Destination } from '../game/turnDraft';
 import type { Meld } from '@rummikub/core';
+import type { MeldAuthor } from '../game/meldOwners';
 import { MeldView } from './MeldView';
 
 interface Props {
@@ -10,6 +11,8 @@ interface Props {
   /** Destinació sota el punter mentre s'arrossega. */
   over?: Destination | null;
   highlighted?: ReadonlySet<string>;
+  /** Bot autor de cada jugada, alineat per posició amb `board`. */
+  authors?: ReadonlyArray<MeldAuthor | null>;
   /** Actiu només durant el torn del jugador. */
   interactive?: boolean;
   onTileClick?(tileId: string, meldIndex: number): void;
@@ -25,6 +28,7 @@ export function BoardView({
   draggingTileId,
   over,
   highlighted,
+  authors,
   interactive,
   onTileClick,
   onTilePointerDown,
@@ -61,6 +65,7 @@ export function BoardView({
           selectedTileId={selectedTileId}
           draggingTileId={draggingTileId}
           highlighted={highlighted}
+          author={authors?.[index]}
           onTileClick={interactive ? (tileId) => onTileClick?.(tileId, index) : undefined}
           onTilePointerDown={interactive ? onTilePointerDown : undefined}
           onMeldClick={interactive && selectedTileId ? () => onMeldClick?.(index) : undefined}

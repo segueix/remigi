@@ -1,5 +1,15 @@
 import { expect, test } from '@playwright/test';
-import { baixaGrup, comencaDeZero, entraAmbPartida, f, jugaContra, robaFinsAlFinal } from './ajudants';
+import type { Meld } from '@rummikub/core';
+import { meldKey } from '../src/game/meldOwners';
+import {
+  baixaGrup,
+  comencaDeZero,
+  entraAmbPartida,
+  f,
+  jugaContra,
+  robaFinsAlFinal,
+  robaFinsQueUnBotJugui,
+} from './ajudants';
 
 test.describe('una partida sencera', () => {
   for (const oponents of [1, 2, 3] as const) {
@@ -192,5 +202,88 @@ test.describe('explicar les regles', () => {
     await expect(pista).toContainText('en portes 0');
     await expect(pista).toContainText('no compten');
     await expect(pista).toContainText('mateixa caixa');
+  });
+});
+
+test.describe('qui ha jugat què', () => {
+  test('la fitxa que acabes de robar queda marcada', async ({ page }) => {
+    await entraAmbPartida(page, { rack: [f('red', 3), f('blue', 8)] });
+    await expect(page.locator('.rack .tile.drawn')).toHaveCount(0);
+
+    await page.getByRole('button', { name: 'Robar fitxa' }).click();
+    await expect(page.locator('.rack .tile')).toHaveCount(3);
+
+    // Al sac només hi ha un 1 negre: la fitxa marcada ha de ser aquesta.
+    const marcada = page.locator('.rack .tile.drawn');
+    await expect(marcada).toHaveCount(1);
+    await expect(marcada).toHaveAttribute('aria-label', '1 negre (acabada de robar)');
+  });
+
+  test('la marca desapareix quan tornes a jugar', async ({ page }) => {
+    await entraAmbPartida(page, {
+      rack: [f('red', 12), f('blue', 12), f('black', 12)],
+    });
+    await page.getByRole('button', { name: 'Robar fitxa' }).click();
+    await expect(page.locator('.rack .tile.drawn')).toHaveCount(1);
+
+    // Robar acaba el torn: cal esperar que torni.
+    await expect(page.locator('.turn-line')).toContainText('et toca a tu');
+    await baixaGrup(page, ['12 vermell', '12 blau', '12 negre']);
+    await page.getByRole('button', { name: 'Acabar jugada' }).click();
+
+    await expect(page.locator('.error')).toHaveCount(0);
+    await expect(page.locator('.rack .tile.drawn')).toHaveCount(0);
+  });
+
+  test('cada jugada d’un bot porta el color del seu bot', async ({ page }) => {
+    await comencaDeZero(page);
+    await jugaContra(page, 2);
+    expect(await robaFinsQueUnBotJugui(page)).toBe(true);
+
+    // El jugador només ha robat: tot el que hi ha a la taula és dels bots.
+    await expect(page.locator('.board .meld:not([data-bot])')).toHaveCount(0);
+
+    // I el color de cada jugada és el d'un bot que és a la llista de jugadors.
+    const bots = new Set(
+      await page.locator('.board .meld').evaluateAll((melds) =>
+        melds.map((meld) => (meld as HTMLElement).dataset.bot),
+      ),
+    );
+    expect(bots.size).toBeGreaterThan(0);
+    for (const bot of bots) {
+      await expect(page.locator(`.player[data-bot="${bot}"] .player-color`)).toBeVisible();
+    }
+  });
+
+  test('continuar una partida no li fa perdre els colors', async ({ page }) => {
+    const grup = [f('red', 7), f('blue', 7), f('black', 7)];
+    await entraAmbPartida(page, {
+      rack: [f('orange', 7), f('blue', 2)],
+      board: [grup],
+      haObert: true,
+      // `meldKey` només mira els identificadors: les fitxes de prova li serveixen.
+      autors: [[meldKey(grup as unknown as Meld), 1]],
+    });
+
+    await expect(page.locator('.board .meld').first()).toHaveAttribute('data-bot', '1');
+    await expect(page.locator('.player[data-bot="1"] .player-color')).toBeVisible();
+  });
+
+  test('una jugada d’un bot que toques deixa de ser seva', async ({ page }) => {
+    await comencaDeZero(page);
+    await jugaContra(page, 2);
+    expect(await robaFinsQueUnBotJugui(page)).toBe(true);
+
+    const jugada = page.locator('.board .meld').first();
+    await expect(jugada).toHaveAttribute('data-bot', /[1-3]/);
+
+    // Deixar-hi una fitxa a sobre li treu el color a l'instant.
+    await page.locator('.rack .tile').first().click();
+    await jugada.click();
+    await expect(jugada).not.toHaveAttribute('data-bot', /[1-3]/);
+
+    // I desfer el torn l'hi torna.
+    await page.getByRole('button', { name: 'Desfer canvis' }).click();
+    await expect(jugada).toHaveAttribute('data-bot', /[1-3]/);
   });
 });

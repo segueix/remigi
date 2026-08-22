@@ -79,6 +79,9 @@ rummikub/
 És una aplicació que funciona del tot al navegador: es pot instal·lar al mòbil
 com una app i, un cop visitada, també s'hi pot jugar sense connexió.
 
+> ⚠️ Mentre la font de Pages no sigui «GitHub Actions», aquesta adreça pot
+> tornar a mostrar aquest README en comptes del joc. Vegeu **Publicació**.
+
 ## Com provar-ho en local
 
 ```bash
@@ -101,13 +104,26 @@ el publica a GitHub Pages (`.github/workflows/desplega.yml`). La CI
 (`.github/workflows/ci.yml`) passa tipus, tests, build i proves de navegador a
 cada push i a cada pull request.
 
-La font de Pages ha de ser **GitHub Actions** (*Settings → Pages → Build and
-deployment*). Si algun dia es tornés a posar «Deploy from a branch», el lloc
-passaria a ser aquest README convertit amb Jekyll en comptes del joc.
+### La font de Pages ha de ser «GitHub Actions»
+
+*Settings → Pages → Build and deployment → Source: **GitHub Actions***.
+
+Això no és un detall: **mentre la font sigui «Deploy from a branch», cada canvi
+a `main` engega dos desplegaments alhora** — el d'aquest projecte i el generador
+antic de Jekyll, que agafa el repositori tal com és i en publica el README.
+Publiquen tots dos al mateix lloc i **guanya el que acaba l'últim**, que sol ser
+el Jekyll per pocs segons. El resultat és que el joc apareix i, al cap d'un
+moment, el substitueix el README.
+
+Va passar de debò: amb la fusió de la PR núm. 4, el desplegament del joc va
+acabar a les 21:24:04 i el de Jekyll a les 21:24:11.
+
+El flux demana aquest canvi ell mateix (`enablement: true` a
+`configure-pages`), però si el permís no basta s'ha de fer a mà. Un cop
+canviat, el generador de Jekyll deixa d'executar-se i el problema desapareix.
 
 Si el desplegament no s'engega sol després d'un canvi a `main`, es pot llançar a
-mà des de *Actions → Desplega a GitHub Pages → Run workflow*. Va caldre fer-ho
-la primera vegada, just després de la fusió que va afegir el flux.
+mà des de *Actions → Desplega a GitHub Pages → Run workflow*.
 
 La ruta base del build surt del nom del repositori. Si el projecte canvia de nom
 o es publica en una altra ruta, es pot passar `BASE_PATH` al build sense tocar
@@ -151,3 +167,6 @@ state = applyMove(state, decideAiMove(state, state.currentPlayer));
       Elo amb marge de resultat i ajust de dificultat dins de la partida.
 - [x] Publicació automàtica a GitHub Pages, CI amb proves de navegador, i
       instal·lable al mòbil amb joc sense connexió.
+- [x] Seguir la partida amb un cop d'ull: la fitxa que acabes de robar queda
+      marcada, cada bot té color propi i les seves jugades porten marc del seu
+      color mentre ningú no les toqui.

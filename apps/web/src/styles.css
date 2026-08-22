@@ -24,6 +24,17 @@
   --error-fons: #fef2f2;
   --error-text: #991b1b;
   --grafic: #0d9488;
+  /*
+   * Un color per bot, el mateix al seu nom de la llista i al marc de les
+   * jugades que ha posat. Estan triats de manera que es distingeixin entre ells
+   * també amb daltonisme (separació mínima ΔE 36 amb deuteranopia i protanòpia
+   * simulades), que no es confonguin ni amb el vermell d'una jugada invàlida ni
+   * amb el color d'acció de la interfície, i que contrastin com a mínim 3.9:1
+   * amb totes les superfícies del tema.
+   */
+  --bot-1: #c026d3;
+  --bot-2: #4d7c0f;
+  --bot-3: #0369a1;
   color-scheme: light dark;
 }
 
@@ -46,6 +57,10 @@
     --error: #f87171;
     --error-fons: #431414;
     --error-text: #fecaca;
+    /* Sobre fons fosc, els mateixos colors però clars (contrast mínim 5.9:1). */
+    --bot-1: #e879f9;
+    --bot-2: #a3e635;
+    --bot-3: #60a5fa;
   }
 }
 
@@ -185,6 +200,28 @@ input {
   border-color: var(--accent);
 }
 
+/*
+ * `--marc` és el color del bot d'aquest tros de pantalla. Es posa una sola
+ * vegada i el fan servir tant la pastilla del nom com el marc de les jugades.
+ */
+[data-bot='1'] {
+  --marc: var(--bot-1);
+}
+[data-bot='2'] {
+  --marc: var(--bot-2);
+}
+[data-bot='3'] {
+  --marc: var(--bot-3);
+}
+
+.player-color {
+  flex: none;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 0.25rem;
+  background: var(--marc);
+}
+
 .player-name {
   display: flex;
   align-items: center;
@@ -278,6 +315,16 @@ input {
   border-style: solid;
 }
 
+/*
+ * Jugada d'un bot: marc del seu color. Va abans que `.invalid` a posta, perquè
+ * una jugada mal feta s'ha de veure vermella per damunt de tot (encara que, si
+ * l'has tocada tu, ja no serà de cap bot i no hi haurà color a substituir).
+ */
+.meld.owned {
+  border-color: var(--marc);
+  box-shadow: inset 0 0 0 1px var(--marc);
+}
+
 .meld.invalid {
   border-color: var(--error);
   background: var(--error-fons);
@@ -341,6 +388,16 @@ input {
   animation: acabada-de-jugar 1.6s ease-out;
 }
 
+/*
+ * Fitxa acabada de robar: un recuadre per trobar-la de seguida entre les altres
+ * tretze. És a fora (`outline`) i de ratlles per no confondre's amb la fitxa
+ * triada, que va enlairada i amb el marc sencer.
+ */
+.tile.drawn {
+  outline: 2px dashed var(--accent);
+  outline-offset: 1px;
+}
+
 @keyframes acabada-de-jugar {
   from {
     box-shadow: 0 0 0 3px var(--accent);
@@ -350,8 +407,16 @@ input {
   }
 }
 
+/*
+ * La tinta dels números. El vermell i el taronja s'assemblaven massa a la
+ * pantalla —ΔE 23, i només 6 amb daltonisme simulat, o sigui pràcticament el
+ * mateix color—: ara el vermell és més intens i fosc, i el taronja tira cap al
+ * groc. La distància entre tots dos passa a ΔE 46 (13 amb daltonisme). El
+ * vermell, a més, contrasta més amb el crema de la fitxa que abans (5.5:1 en
+ * comptes de 4.5:1), i el taronja es queda igual (3.3:1).
+ */
 .tile-red {
-  --tinta: #dc2626;
+  --tinta: #cc0000;
 }
 .tile-blue {
   --tinta: #1d4ed8;
@@ -360,7 +425,7 @@ input {
   --tinta: #1c1917;
 }
 .tile-orange {
-  --tinta: #ea580c;
+  --tinta: #c47504;
 }
 .tile-joker {
   --tinta: #7c3aed;

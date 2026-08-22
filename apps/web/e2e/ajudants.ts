@@ -35,6 +35,24 @@ export async function robaFinsAlFinal(page: Page, maxTorns = 400): Promise<boole
   return finalPartida(page).isVisible();
 }
 
+/**
+ * Roba fins que hi hagi jugades a la taula. Com que el jugador no fa res més que
+ * robar, tot el que hi aparegui l'hi han posat els bots.
+ */
+export async function robaFinsQueUnBotJugui(page: Page, maxTorns = 40): Promise<boolean> {
+  for (let i = 0; i < maxTorns; i++) {
+    if ((await page.locator('.board .meld').count()) > 0) break;
+    if (await finalPartida(page).isVisible().catch(() => false)) break;
+    const roba = page.getByRole('button', { name: /Robar fitxa|Passar torn/ });
+    if (await roba.isEnabled().catch(() => false)) await roba.click();
+    await page.waitForTimeout(40);
+  }
+  if ((await page.locator('.board .meld').count()) === 0) return false;
+  // Els bots poden estar jugant encara: cal esperar el torn per poder tocar res.
+  await expect(page.getByRole('button', { name: /Robar fitxa|Passar torn/ })).toBeEnabled();
+  return true;
+}
+
 /** Baixa un grup a la taula com a jugada nova. */
 export async function baixaGrup(page: Page, fitxes: string[]): Promise<void> {
   await page.locator(`.rack .tile[aria-label="${fitxes[0]}"]`).first().click();
@@ -65,7 +83,7 @@ export function f(color: string, value: number, copia: 'a' | 'b' = 'a'): Fitxa {
  */
 export async function entraAmbPartida(
   page: import('@playwright/test').Page,
-  partida: { rack: Fitxa[]; board?: Fitxa[][]; haObert?: boolean },
+  partida: { rack: Fitxa[]; board?: Fitxa[][]; haObert?: boolean; autors?: [string, number][] },
 ): Promise<void> {
   await page.goto('./');
   await page.evaluate(
@@ -86,6 +104,7 @@ export async function entraAmbPartida(
         'rummikub:game',
         JSON.stringify({
           setup: { playerName: 'Daniel', opponents: ['easy'] },
+          owners: dades.autors,
           game: {
             seed: 1,
             bag: [{ id: 'black-1-b', kind: 'number', color: 'black', value: 1 }],
@@ -109,7 +128,14 @@ export async function entraAmbPartida(
         }),
       );
     },
-    [{ rack: partida.rack, board: partida.board ?? [], haObert: partida.haObert ?? false }],
+    [
+      {
+        rack: partida.rack,
+        board: partida.board ?? [],
+        haObert: partida.haObert ?? false,
+        autors: partida.autors ?? [],
+      },
+    ],
   );
   await page.reload();
   await page.getByRole('button', { name: 'Continua la partida' }).click();

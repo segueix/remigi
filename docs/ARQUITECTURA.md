@@ -7,14 +7,16 @@ El projecte és un monorepo amb workspaces d'npm:
 - **`packages/core`** — el motor del joc. TypeScript pur, **sense cap dependència
   d'interfície ni de navegador**, perquè la mateixa lògica serveixi per a la web
   (Fase 2), per al simulador de terminal i per als tests.
-- **`apps/web`** — l'aplicació web (pendent, Fase 2).
+- **`apps/web`** — l'aplicació web (Vite + React). Hi viu tot el que és
+  interfície: l'edició del torn, l'arrossegament, el perfil desat al navegador i
+  el que es veu de la partida.
 
 Dependències entre capes (sempre en aquesta direcció, mai al revés):
 
 ```
 core  ◄──  ai  ◄──  adaptive
   ▲          ▲          ▲
-  └──────────┴──────────┴──  persistence · cli · (futura) app web
+  └──────────┴──────────┴──  persistence · cli · app web
 ```
 
 ## Decisions principals
@@ -109,3 +111,7 @@ comprova de debò si es pot escriure i degrada a memòria si no.
   puguin seguir visualment.
 - En acabar, `finalScores` + `recordGame` actualitzen el perfil, i
   `suggestOpponents` proposa els rivals de la partida següent.
+- **El que és només visual es queda a la web.** Qui ha posat cada jugada, per
+  exemple, no és estat de joc: el motor no en sap res i no n'ha de saber. La web
+  ho dedueix comparant la taula d'abans i la de després de cada moviment
+  (`game/meldOwners.ts`) i ho desa a part amb la partida.
