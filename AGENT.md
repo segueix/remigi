@@ -444,14 +444,23 @@ dispositiu.
 - La CI falla si es trenca un test. ✔ Comprovat sense fer trampes: es va rompre
   una asserció a posta i `npm test` va sortir amb codi 1, que és el que fa
   fallar el pas de la CI.
+- La CI funciona de debò, no només sobre el paper. ✔ La primera execució als
+  servidors de GitHub va passar sencera en poc més d'un minut: tipus, tests,
+  build, instal·lació de Chromium i les 39 proves de navegador.
 - Extra: es pot jugar **sense connexió** un cop visitat (prova amb la xarxa
   tallada) i instal·lar com a aplicació (manifest i icones comprovats).
 
 ### Cal fer una vegada al repositori
 
-El desplegament no pot funcionar fins que **Pages estigui activat**:
-*Settings → Pages → Build and deployment → Source: **GitHub Actions***. És
-l'única passa manual, i s'ha de fer des de la interfície de GitHub.
+Dues coses que no es poden fer des del codi:
+
+1. **Canviar la font de Pages**: *Settings → Pages → Build and deployment →
+   Source: **GitHub Actions***. Pages ja hi estava activat, però amb la font
+   antiga («Deploy from a branch»), que publica el README convertit amb Jekyll
+   — comprovat: `https://segueix.github.io/rummikub/` respon 200 i serveix
+   `<title>Rummikub | rummikub</title>`, generat per Jekyll.
+2. **Portar els canvis a `main`**, que és l'única branca des de la qual
+   s'engega `desplega.yml`.
 
 ### Problemes trobats
 
@@ -466,6 +475,12 @@ l'única passa manual, i s'ha de fer des de la interfície de GitHub.
 - [2026-08-22] `pkill -f vite` matava el propi intèrpret d'ordres (la seva línia
   també conté «vite»). Ja anotat a la Fase 6; aquí va tornar a passar. La manera
   segura és filtrar per port: `lsof -t -i:4173`.
+- [2026-08-22] La documentació deia que calia «activar Pages» perquè el
+  repositori no el tenia. En comprovar-ho va resultar que **ja hi estava
+  activat**, amb la font antiga per branca, servint el README amb Jekyll. La
+  passa que cal no és activar-lo sinó **canviar-ne la font**. Corregit als
+  READMEs: la diferència importa, perquè amb la instrucció antiga l'usuari
+  hauria buscat un interruptor que ja estava encès.
 
 ---
 

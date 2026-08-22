@@ -74,12 +74,14 @@ rummikub/
 
 ## Jugar-hi
 
-Un cop publicat (vegeu **Publicació** més avall), el joc és a:
-
 **https://segueix.github.io/rummikub/**
 
-És una aplicació que funciona del tot al navegador: es pot instal·lar al mòbil
-com una app i, un cop visitada, també s'hi pot jugar sense connexió.
+⚠️ **Ara mateix aquesta adreça encara no serveix el joc**, sinó aquest README
+convertit en pàgina. Falta la passa manual que s'explica a **Publicació**.
+
+Un cop publicat, és una aplicació que funciona del tot al navegador: es pot
+instal·lar al mòbil com una app i, un cop visitada, també s'hi pot jugar sense
+connexió.
 
 ## Com provar-ho en local
 
@@ -103,10 +105,15 @@ el publica a GitHub Pages (`.github/workflows/desplega.yml`). La CI
 (`.github/workflows/ci.yml`) passa tipus, tests, build i proves de navegador a
 cada push i a cada pull request.
 
-**Perquè la primera publicació funcioni cal activar Pages una vegada**, a mà:
-*Settings → Pages → Build and deployment → Source: **GitHub Actions***. Sense
-això el flux de desplegament falla amb un error de permisos, perquè el
-repositori encara no té Pages habilitat.
+**Cal canviar una opció del repositori, a mà i una sola vegada.** Pages ja hi
+està activat, però amb la font antiga («Deploy from a branch»), que agafa el
+repositori tal com és i en publica el README amb Jekyll: per això l'adreça
+respon però no hi ha joc. Per publicar el joc:
+
+*Settings → Pages → Build and deployment → Source: **GitHub Actions***
+
+I perquè el desplegament s'executi, els canvis han de ser a `main`: el flux
+`desplega.yml` només s'engega des d'aquesta branca.
 
 La ruta base del build surt del nom del repositori. Si el projecte canvia de nom
 o es publica en una altra ruta, es pot passar `BASE_PATH` al build sense tocar

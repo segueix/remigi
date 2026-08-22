@@ -118,7 +118,9 @@ partida sencera duri segons; és l'única diferència amb el build públic.
 
 `npm run build` genera el lloc a `dist/`, ja preparat per a
 `https://segueix.github.io/rummikub/`. La ruta base es pot canviar amb
-`BASE_PATH` sense tocar codi.
+`BASE_PATH` sense tocar codi. La publicació la fa
+`.github/workflows/desplega.yml` des de `main`; vegeu el README de l'arrel per
+a la passa manual que encara falta al repositori.
 
 L'aplicació es pot instal·lar al mòbil (manifest i icones a `public/`) i,
 un cop visitada, funciona sense connexió gràcies a `public/sw.js`. Aquest
