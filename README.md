@@ -20,9 +20,9 @@ El pla complet, fase a fase, és a **[`AGENT.md`](AGENT.md)**.
 | 6 | Motor avançat (IA que reordena la taula) | ✅ feta |
 | 7 | Desplegament a GitHub Pages | ✅ feta |
 
-**Ja s'hi pot jugar**: `npm install && npm run dev`. Cada partida compta per al
-teu perfil, els rivals s'ajusten al teu nivell, i pots jugar amb el ratolí o amb
-el dit i deixar una partida a mitges per continuar-la després.
+**Ja s'hi pot jugar**: <https://segueix.github.io/rummikub/>. Cada partida compta
+per al teu perfil, els rivals s'ajusten al teu nivell, i pots jugar amb el ratolí
+o amb el dit i deixar una partida a mitges per continuar-la després.
 
 ## Estructura del repositori
 
@@ -76,12 +76,8 @@ rummikub/
 
 **https://segueix.github.io/rummikub/**
 
-⚠️ **Ara mateix aquesta adreça encara no serveix el joc**, sinó aquest README
-convertit en pàgina. Falta la passa manual que s'explica a **Publicació**.
-
-Un cop publicat, és una aplicació que funciona del tot al navegador: es pot
-instal·lar al mòbil com una app i, un cop visitada, també s'hi pot jugar sense
-connexió.
+És una aplicació que funciona del tot al navegador: es pot instal·lar al mòbil
+com una app i, un cop visitada, també s'hi pot jugar sense connexió.
 
 ## Com provar-ho en local
 
@@ -105,15 +101,13 @@ el publica a GitHub Pages (`.github/workflows/desplega.yml`). La CI
 (`.github/workflows/ci.yml`) passa tipus, tests, build i proves de navegador a
 cada push i a cada pull request.
 
-**Cal canviar una opció del repositori, a mà i una sola vegada.** Pages ja hi
-està activat, però amb la font antiga («Deploy from a branch»), que agafa el
-repositori tal com és i en publica el README amb Jekyll: per això l'adreça
-respon però no hi ha joc. Per publicar el joc:
+La font de Pages ha de ser **GitHub Actions** (*Settings → Pages → Build and
+deployment*). Si algun dia es tornés a posar «Deploy from a branch», el lloc
+passaria a ser aquest README convertit amb Jekyll en comptes del joc.
 
-*Settings → Pages → Build and deployment → Source: **GitHub Actions***
-
-I perquè el desplegament s'executi, els canvis han de ser a `main`: el flux
-`desplega.yml` només s'engega des d'aquesta branca.
+Si el desplegament no s'engega sol després d'un canvi a `main`, es pot llançar a
+mà des de *Actions → Desplega a GitHub Pages → Run workflow*. Va caldre fer-ho
+la primera vegada, just després de la fusió que va afegir el flux.
 
 La ruta base del build surt del nom del repositori. Si el projecte canvia de nom
 o es publica en una altra ruta, es pot passar `BASE_PATH` al build sense tocar

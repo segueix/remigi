@@ -72,6 +72,18 @@ el motor**: «Acabar jugada» li envia la taula sencera i, si la rebutja, es mos
 el seu missatge. La interfície no duplica cap regla; només impedeix el que no té
 sentit ni intentar, com endur-se al faristol una fitxa que ja era a la taula.
 
+## Explicar les regles
+
+La pantalla d'inici porta **«Com es juga (i com s'obre)»**, amb exemples fets
+amb fitxes de debò: un grup, una escala, i el cas que enganya — tres fitxes que
+sumen 30 sense ser ni grup ni escala. Ve desplegada mentre no s'ha jugat cap
+partida i plegada després, de manera que a qui ja hi juga només li ocupa una
+línia.
+
+Durant el torn, si hi ha jugades marcades en vermell, la pista de la sortida
+inicial explica **per què no sumen punts**. Dir només «en portes 0» amb fitxes a
+la taula desconcerta: sembla que el joc no les vegi.
+
 ## Com s'adapta al jugador
 
 En acabar cada partida, `useRecordResult` la registra al perfil amb els nivells
@@ -119,8 +131,7 @@ partida sencera duri segons; és l'única diferència amb el build públic.
 `npm run build` genera el lloc a `dist/`, ja preparat per a
 `https://segueix.github.io/rummikub/`. La ruta base es pot canviar amb
 `BASE_PATH` sense tocar codi. La publicació la fa
-`.github/workflows/desplega.yml` des de `main`; vegeu el README de l'arrel per
-a la passa manual que encara falta al repositori.
+`.github/workflows/desplega.yml` des de `main`.
 
 L'aplicació es pot instal·lar al mòbil (manifest i icones a `public/`) i,
 un cop visitada, funciona sense connexió gràcies a `public/sw.js`. Aquest

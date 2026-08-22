@@ -434,11 +434,14 @@ dispositiu.
 
 ### Criteris d'acceptació (verificats)
 
-- La URL pública carrega i s'hi juga una partida sencera. ✔ **Verificat contra
-  el build de producció servit a `/rummikub/`**, no contra el servidor de
-  desenvolupament: partides senceres contra 1, 2 i 3 bots en escriptori i en
-  mòbil (Pixel 5). El que encara no es pot verificar des d'aquí és la URL de
-  github.io: depèn que s'activi Pages al repositori (vegeu més avall).
+- La URL pública carrega i s'hi juga una partida sencera. ✔ **Publicat i
+  verificat** el 2026-08-22. Com que el navegador d'aquest entorn no pot sortir
+  a internet (curl sí), es van baixar un per un els fitxers que serveix
+  `https://segueix.github.io/rummikub/` i es van provar en un navegador:
+  partida sencera fins al final, habilitat 1100 → 1062, perfil conservat entre
+  visites, cap error de consola, bé en mòbil, manifest descarregable i joc
+  obrint-se amb la xarxa tallada. La resposta de la URL (200 i els fitxers
+  correctes sota `/rummikub/assets/`) es va comprovar amb curl.
 - El perfil persisteix entre visites. ✔ Prova pròpia a `e2e/perfil.spec.ts`,
   inclosa la represa d'una partida a mitges.
 - La CI falla si es trenca un test. ✔ Comprovat sense fer trampes: es va rompre
@@ -450,17 +453,16 @@ dispositiu.
 - Extra: es pot jugar **sense connexió** un cop visitat (prova amb la xarxa
   tallada) i instal·lar com a aplicació (manifest i icones comprovats).
 
-### Cal fer una vegada al repositori
+### Com va anar la primera publicació
 
-Dues coses que no es poden fer des del codi:
+Dues coses no es podien fer des del codi, i les va fer l'usuari: portar els
+canvis a `main` i posar la font de Pages a «GitHub Actions».
 
-1. **Canviar la font de Pages**: *Settings → Pages → Build and deployment →
-   Source: **GitHub Actions***. Pages ja hi estava activat, però amb la font
-   antiga («Deploy from a branch»), que publica el README convertit amb Jekyll
-   — comprovat: `https://segueix.github.io/rummikub/` respon 200 i serveix
-   `<title>Rummikub | rummikub</title>`, generat per Jekyll.
-2. **Portar els canvis a `main`**, que és l'única branca des de la qual
-   s'engega `desplega.yml`.
+Amb això encara no n'hi va haver prou: després de la fusió, el flux
+`desplega.yml` constava com a registrat i actiu però **no havia produït cap
+execució**, i el lloc continuava sent el README convertit amb Jekyll. Es va
+llançar a mà (*Actions → Desplega a GitHub Pages → Run workflow*) i va publicar
+correctament en 30 segons. Els canvis següents a `main` sí que l'engeguen.
 
 ### Problemes trobats
 
@@ -481,6 +483,18 @@ Dues coses que no es poden fer des del codi:
   passa que cal no és activar-lo sinó **canviar-ne la font**. Corregit als
   READMEs: la diferència importa, perquè amb la instrucció antiga l'usuari
   hauria buscat un interruptor que ja estava encès.
+- [2026-08-22] **El primer desplegament no es va engegar sol.** Un cop fusionat
+  a `main` i amb la font canviada, `desplega.yml` figurava actiu però sense cap
+  execució, i el lloc seguia sent el de Jekyll. Llançant-lo a mà des d'Actions
+  va publicar sense problemes. Queda documentat al README perquè, si torna a
+  passar amb un flux acabat d'afegir, se sàpiga que la sortida és el botó «Run
+  workflow» i no tornar a tocar la configuració.
+- [2026-08-22] El navegador d'aquest entorn no pot sortir a internet (ni amb el
+  proxy configurat: `ERR_CONNECTION_RESET`), tot i que `curl` sí que hi surt.
+  Per verificar la publicació de debò es van baixar amb curl els fitxers que
+  serveix Pages, es van servir en local i s'hi van fer les proves. Comprova el
+  que s'ha publicat, però no el camí de xarxa; això últim es va comprovar amb
+  curl (codi 200 i els fitxers correctes).
 
 ---
 
