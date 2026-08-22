@@ -50,7 +50,12 @@ Quan comença una partida, `suggestOpponents(perfil, quants)` tria els nivells:
   partida tingui varietat sense deixar de ser equilibrada.
 
 El jugador sempre pot ignorar la proposta i triar els nivells a mà: la tria
-adaptativa és un suggeriment, no una imposició (la interfície ho oferirà així).
+adaptativa és un suggeriment, no una imposició, i la interfície ho ofereix així
+(«Prefereixo triar-los jo» a la pantalla d'inici).
+
+Amb **dos** rivals la regla és «un per sota i un al nivell», de manera que les
+primeres partides d'un jugador nou són una mica planeres a posta. Amb **tres**
+queda repartit (un per sota, un al nivell, un per sobre).
 
 ## 4. El cicle complet
 

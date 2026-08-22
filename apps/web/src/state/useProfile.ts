@@ -3,8 +3,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createWebStore } from '../storage/webStore';
 
 /**
- * De moment hi ha un sol perfil per dispositiu. `ProfileRepository` ja en
- * suporta més d'un; la interfície per triar-los és opcional a la Fase 4.
+ * Hi ha un sol perfil per dispositiu. `ProfileRepository` ja en suporta més
+ * d'un: per oferir-ho només caldria triar l'identificador des de la interfície.
  */
 export const LOCAL_PROFILE_ID = 'local';
 
@@ -15,6 +15,8 @@ export interface ProfileHandle {
   setName(name: string): Promise<void>;
   /** Desa un perfil ja actualitzat (p. ex. després de `recordGame`). */
   save(profile: PlayerProfile): Promise<void>;
+  /** Esborra el perfil i tot el seu historial. */
+  reset(): Promise<void>;
 }
 
 export function useProfile(): ProfileHandle {
@@ -55,5 +57,10 @@ export function useProfile(): ProfileHandle {
     [profile, save],
   );
 
-  return { profile, loading, setName, save };
+  const reset = useCallback(async () => {
+    await repository.remove(LOCAL_PROFILE_ID);
+    setProfile(null);
+  }, [repository]);
+
+  return { profile, loading, setName, save, reset };
 }

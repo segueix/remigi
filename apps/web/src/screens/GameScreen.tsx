@@ -3,18 +3,24 @@ import { BoardView } from '../components/BoardView';
 import { RackView } from '../components/RackView';
 import { invalidMeldIndexes, missingOpeningPoints, openingPoints } from '../game/turnDraft';
 import { useGame, type GameHandle, type GameSetup } from '../game/useGame';
+import type { RatingChange } from '../state/gameOutcome';
+import type { ProfileHandle } from '../state/useProfile';
+import { useRecordResult } from '../state/useRecordResult';
 
 interface Props {
   setup: GameSetup;
+  profile: ProfileHandle;
   onExit(): void;
 }
 
-export function GameScreen({ setup, onExit }: Props) {
+export function GameScreen({ setup, profile, onExit }: Props) {
   const handle = useGame(setup);
   const { game, draft, selectedTileId, error, highlighted, isHumanTurn } = handle;
+  // En acabar la partida, el resultat passa a comptar per a l'habilitat.
+  const change = useRecordResult(game, setup.opponents, profile);
 
   if (game.status === 'finished') {
-    return <GameOver handle={handle} onExit={onExit} />;
+    return <GameOver handle={handle} change={change} onExit={onExit} />;
   }
 
   const human = game.players[0];
@@ -110,7 +116,15 @@ export function GameScreen({ setup, onExit }: Props) {
   );
 }
 
-function GameOver({ handle, onExit }: { handle: GameHandle; onExit(): void }) {
+function GameOver({
+  handle,
+  change,
+  onExit,
+}: {
+  handle: GameHandle;
+  change: RatingChange | null;
+  onExit(): void;
+}) {
   const { game } = handle;
   const scores = finalScores(game);
   const winner = game.players.find((player) => player.id === game.winnerId);
@@ -140,10 +154,16 @@ function GameOver({ handle, onExit }: { handle: GameHandle; onExit(): void }) {
           ))}
       </ul>
 
-      <p className="notice">
-        Aquest resultat encara no compta per al teu perfil: l’habilitat i
-        l’historial s’actualitzaran a partir de la Fase 4.
-      </p>
+      {change && (
+        <p className="rating-change">
+          La teva habilitat: {change.before} →{' '}
+          <strong>{change.after}</strong>{' '}
+          <span className={change.delta >= 0 ? 'points-positive' : 'points-negative'}>
+            ({change.delta >= 0 ? '+' : ''}
+            {change.delta})
+          </span>
+        </p>
+      )}
 
       <div className="row">
         <button onClick={() => handle.restart()}>Una altra partida</button>

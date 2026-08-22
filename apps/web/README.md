@@ -12,9 +12,11 @@ npm test           # tests d'aquest paquet
 
 ## Estat
 
-**S'hi pot jugar** (Fase 3): partida completa contra 1, 2 o 3 bots, amb totes
-les regles aplicades pel motor. El que encara no fa: comptar els resultats per
-al perfil (Fase 4) i arrossegar i deixar anar (Fase 5). Vegeu `AGENT.md`.
+**S'hi pot jugar i el joc s'adapta a tu** (fases 3 i 4): partida completa contra
+1, 2 o 3 bots amb totes les regles aplicades pel motor, i cada resultat mou la
+teva habilitat, que és la que tria els rivals de la partida següent. El que
+encara no fa: arrossegar i deixar anar, i desar la partida en curs (Fase 5).
+Vegeu `AGENT.md`.
 
 ## Estructura
 
@@ -27,7 +29,10 @@ src/
 │   ├── webStore.ts           # adaptador de localStorage a KeyValueStore
 │   └── webStore.test.ts
 ├── state/
-│   └── useProfile.ts         # càrrega i desat del perfil del jugador
+│   ├── useProfile.ts         # càrrega, desat i reinici del perfil
+│   ├── gameOutcome.ts        # el resultat d'una partida → perfil actualitzat
+│   ├── gameOutcome.test.ts
+│   └── useRecordResult.ts    # registra el resultat un sol cop per partida
 ├── game/
 │   ├── turnDraft.ts          # lògica pura de l'edició del torn
 │   ├── turnDraft.test.ts
@@ -38,9 +43,9 @@ src/
 │   ├── BoardView.tsx         # la taula
 │   └── RackView.tsx          # el faristol, amb ordenació
 └── screens/
-    ├── HomeScreen.tsx        # nom del jugador i configuració de la partida
-    ├── GameScreen.tsx        # la partida i el resultat final
-    └── StatsScreen.tsx       # dades del perfil (Fase 4: historial i gràfic)
+    ├── HomeScreen.tsx        # nom, oponents (automàtics o a mà) i perfil
+    ├── GameScreen.tsx        # la partida, el resultat i el canvi d'habilitat
+    └── StatsScreen.tsx       # habilitat, gràfic d'evolució i historial
 ```
 
 ## Com es juga un torn
@@ -58,6 +63,18 @@ el motor**: «Acabar jugada» li envia la taula sencera i, si la rebutja, es mos
 el seu missatge. La interfície no duplica cap regla; només impedeix el que no té
 sentit ni intentar, com endur-se al faristol una fitxa que ja era a la taula.
 
+## Com s'adapta al jugador
+
+En acabar cada partida, `useRecordResult` la registra al perfil amb els nivells
+que s'han jugat de debò, i l'habilitat puja o baixa segons el resultat i la
+força dels rivals. A l'inici, aquesta habilitat és la que proposa els oponents
+de la partida següent, de manera que les partides tendeixin a estar igualades;
+sempre es poden triar a mà.
+
+El registre es fa **una sola vegada per partida**: es recorda quin estat de
+partida ja s'ha comptat, perquè ni un render de més ni el doble muntatge del
+mode estricte de React puguin comptar dos cops el mateix resultat.
+
 ## Comprovacions manuals
 
 Fins que la Fase 7 no automatitzi això a la CI, abans de tocar la pantalla de
@@ -71,6 +88,9 @@ partida val la pena repassar a mà:
 - [ ] Amb el sac buit, el botó passa a dir «Passar torn» i la partida es bloqueja
       si tothom passa.
 - [ ] Es veu bé a 390 px d'amplada.
+- [ ] En acabar una partida, l'habilitat canvia i el canvi es conserva després
+      de recarregar.
+- [ ] A Inici, pujar o baixar l'habilitat canvia els oponents proposats.
 
 ## Notes de disseny
 

@@ -15,11 +15,11 @@ El pla complet, fase a fase, és a **[`AGENT.md`](AGENT.md)**.
 | 1 | Motor del joc (`packages/core`) | ✅ feta |
 | 2 | Esquelet de l'aplicació web (`apps/web`) | ✅ feta |
 | 3 | Pantalla de partida jugable | ✅ feta |
-| 4 | Cicle adaptatiu complet a la web | ⏳ pendent |
+| 4 | Cicle adaptatiu complet a la web | ✅ feta |
 | 5–7 | Polit, motor avançat i desplegament | ⏳ pendents |
 
-**Ja s'hi pot jugar**: `npm install && npm run dev`. El que encara no fa és
-comptar els resultats per al teu perfil, que és la Fase 4.
+**Ja s'hi pot jugar**: `npm install && npm run dev`. Cada partida compta per al
+teu perfil i els rivals s'ajusten al teu nivell.
 
 ## Estructura del repositori
 
@@ -54,7 +54,9 @@ rummikub/
 │   └── web/                   # Aplicació web (Vite + React + TypeScript)
 │       └── src/
 │           ├── screens/       # Inici, Partida, Estadístiques
-│           ├── state/         # Perfil del jugador (hook)
+│           ├── components/    # Fitxa, jugada, taula i faristol
+│           ├── game/          # Lògica del torn i estat de la partida
+│           ├── state/         # Perfil del jugador i registre de resultats
 │           └── storage/       # Adaptador de localStorage
 ├── AGENT.md                   # Pla de fases i registre de problemes
 └── docs/
@@ -102,9 +104,10 @@ state = applyMove(state, decideAiMove(state, state.currentPlayer));
 - [x] Esquelet de la web: perfil desat a `localStorage`, navegació i motor
       integrat.
 - [x] Partida jugable contra 1, 2 o 3 bots, amb validació en viu i resultat final.
-- [ ] **Ara**: cicle adaptatiu a la web (oponents proposats per l'Elo,
-      estadístiques i historial).
-- [ ] Arrossegar i deixar anar, i desar la partida en curs.
+- [x] Cicle adaptatiu tancat: els rivals surten de la teva habilitat, cada
+      resultat l'actualitza, i les estadístiques en mostren l'evolució.
+- [ ] **Ara**: arrossegar i deixar anar, desar la partida en curs i polit
+      general (Fase 5).
 - [ ] Solver òptim (reordenació completa de la taula per part de la IA experta).
 - [ ] Intercanvi de jokers de la taula.
 - [ ] Ajust de dificultat dins de la mateixa partida (rubber banding).

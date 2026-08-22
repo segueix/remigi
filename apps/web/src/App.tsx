@@ -47,7 +47,9 @@ export function App() {
       </header>
 
       {screen === 'home' && <HomeScreen handle={handle} onPlay={startGame} />}
-      {screen === 'game' && setup && <GameScreen setup={setup} onExit={() => setScreen('home')} />}
+      {screen === 'game' && setup && (
+        <GameScreen setup={setup} profile={handle} onExit={() => setScreen('home')} />
+      )}
       {screen === 'stats' && <StatsScreen handle={handle} />}
     </main>
   );

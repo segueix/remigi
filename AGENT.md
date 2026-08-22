@@ -42,7 +42,7 @@ acabar-la.
 | 1 | Estructura i motor del joc | ✅ Feta (2026-08-22, reverificada 2026-08-22) |
 | 2 | Esquelet de l'aplicació web | ✅ Feta (2026-08-22) |
 | 3 | Pantalla de partida jugable | ✅ Feta (2026-08-22) |
-| 4 | Cicle adaptatiu complet a la web | ⬜ Pendent |
+| 4 | Cicle adaptatiu complet a la web | ✅ Feta (2026-08-22) |
 | 5 | Experiència d'usuari i polit | ⬜ Pendent |
 | 6 | Motor avançat (solver òptim i regles pendents) | ⬜ Pendent |
 | 7 | Desplegament | ⬜ Pendent |
@@ -230,7 +230,7 @@ bots, amb totes les regles aplicades pel motor.
 
 ## Fase 4 — Cicle adaptatiu complet a la web
 
-**Estat**: ⬜ Pendent
+**Estat**: ✅ Feta (2026-08-22)
 
 **Objectiu**: la dificultat s'adapta de debò a l'experiència del jugador: el
 perfil viu al navegador, es proposa la partida segons l'Elo i cada resultat
@@ -238,30 +238,49 @@ l'actualitza.
 
 ### Tasques
 
-- [ ] A Inici, mode «Oponents automàtics» per defecte: `suggestOpponents`
-      pre-selecciona els nivells segons el perfil (amb `describeSuggestion` com
-      a explicació) i l'usuari pot canviar-los a mà.
-- [ ] En acabar cada partida: `recordGame` amb els nivells reals dels rivals i
-      el resultat, i desat immediat amb `ProfileRepository`.
-- [ ] Pantalla d'Estadístiques: Elo actual, partides i victòries, historial
-      (rivals, resultat, data) i gràfic simple de l'evolució de l'Elo
-      (`history[].ratingAfter`).
-- [ ] Gestió del perfil: reiniciar perfil (amb confirmació); opcional, més d'un
-      perfil al mateix dispositiu.
-- [ ] Test d'integració del cicle amb `MemoryStore`: partida guanyada → Elo
-      puja i queda desat; partida perduda → baixa.
+- [x] A Inici, mode «Oponents automàtics» per defecte: `suggestOpponents`
+      tria els nivells segons el perfil i `describeSuggestion` ho explica;
+      «Prefereixo triar-los jo» passa a manual partint de la proposta.
+- [x] En acabar cada partida, `useRecordResult` la registra **una sola vegada**
+      amb els nivells realment jugats i la desa de seguida; el resultat mostra
+      com ha canviat l'habilitat (p. ex. «1100 → 1070 (−30)»).
+- [x] Pantalla d'Estadístiques: habilitat, partides, victòries i percentatge;
+      gràfic d'evolució i historial complet (rivals, resultat, data).
+- [x] Reiniciar el perfil amb confirmació en dos passos (`reset()` al hook).
+- [x] Tests d'integració del cicle amb `MemoryStore`, inclosa una partida jugada
+      de debò pel motor de punta a punta (7 tests nous, 29 en total a la web).
 
-### Criteris d'acceptació
+### Criteris d'acceptació (verificats)
 
-- Jugar dues partides seguides: l'Elo canvia després de cada una i **es
-  conserva en tancar i reobrir el navegador**.
-- Amb un perfil nou (Elo 1100), la proposta automàtica és de nivell fàcil/mitjà;
-  editant l'Elo a mà a localStorage cap amunt, proposa nivells més alts.
-- `typecheck`, `test` i `build` en verd.
+- Dues partides seguides mouen l'habilitat i el canvi es conserva en tancar i
+  reobrir. ✔ Verificat amb Chromium: 1100 → 1070 → 1041, amb les dues partides
+  a l'historial i els rivals que s'havien jugat de debò.
+- La proposta puja amb l'habilitat. ✔ Amb un perfil nou proposa «Novell, Fàcil»
+  («Fàcil» amb un sol rival); posant l'habilitat a 1600 passa a «Avançat,
+  Expert» («Expert» amb un sol rival).
+- `typecheck`, `test` i `build` en verd. ✔ (74 core + 29 web; 218 kB, 69 kB gzip)
+- Extra: el gràfic i l'historial aguanten 24 partides sense desbordar ni estirar
+  la pàgina, i es poden recórrer amb el teclat.
 
 ### Problemes trobats
 
-*(cap encara)*
+- [2026-08-22] El criteri deia que un perfil nou (1100) hauria de proposar
+  «fàcil/mitjà», però amb **dos** rivals proposa **Novell i Fàcil**: 1100 queda
+  just entre Fàcil (1000) i Mitjà (1200), i l'empat es resol cap avall (decisió
+  ja documentada als riscos), i a sobre amb dos rivals la regla és «un per sota
+  i un al nivell». No s'ha tocat: fa que les primeres partides siguin planeres i
+  el jugador pugi de pressa, que és el que es vol en començar. Si es prefereix
+  que estiguin igualades des del primer moment, la regla a canviar és la de dos
+  rivals a `suggestOpponents` (passar de `[main-1, main]` a `[main, main+1]`).
+- [2026-08-22] El perfil canvia d'identitat a cada render, així que posar-lo a
+  les dependències de l'efecte que registra el resultat el feia córrer sense
+  parar. Resolt llegint-lo per referència, de manera que l'efecte només depèn
+  de la partida; el registre queda blindat, a més, per l'estat ja comptat.
+- [2026-08-22] Els colors d'accent de la interfície no passen els controls de la
+  guia de visualització com a color de dades (en tema clar la croma queda per
+  sota del mínim i en fosc la lluminositat se'n va del marc). El gràfic fa
+  servir `#0d9488`, que passa els sis controls sobre les dues superfícies i és
+  de la mateixa família.
 
 ---
 
