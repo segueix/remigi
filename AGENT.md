@@ -44,7 +44,7 @@ acabar-la.
 | 3 | Pantalla de partida jugable | ✅ Feta (2026-08-22) |
 | 4 | Cicle adaptatiu complet a la web | ✅ Feta (2026-08-22) |
 | 5 | Experiència d'usuari i polit | ✅ Feta (2026-08-22) |
-| 6 | Motor avançat (solver òptim i regles pendents) | ⬜ Pendent |
+| 6 | Motor avançat (solver òptim i regles pendents) | ✅ Feta (2026-08-22) |
 | 7 | Desplegament | ⬜ Pendent |
 
 Llegenda: `⬜ Pendent` · `🔄 En curs` · `✅ Feta (data)` · `⏸️ Aturada (motiu)`
@@ -92,10 +92,11 @@ independent de la interfície, amb IA per nivells i sistema adaptatiu, tot prova
 - [2026-08-22] L'script arrel `npm run simulate` no reenviava els arguments: el
   `npm` intermedi es menjava `--games` — resolt afegint `--` final a l'script
   de l'arrel (`npm run simulate -w @rummikub/core --`).
-- [2026-08-22] El cercador d'escales només fa servir jokers per omplir **forats
-  interns** (extrems sempre reals): un test suposava que també allargava
-  extrems amb joker. S'ha ajustat el test a l'heurística documentada i la
-  millora queda apuntada a la Fase 6.
+- [2026-08-22] El cercador d'escales només feia servir jokers per omplir
+  **forats interns** (extrems sempre reals): un test suposava que també
+  allargava extrems amb joker. Es va ajustar el test a l'heurística
+  documentada, i la millora es va fer a la **Fase 6**, on els jokers ja poden
+  anar també als extrems.
 - [2026-08-22] **Buit de cobertura**: en reverificar la fase es va detectar que
   `core/board.ts`, `ai/difficulty.ts` i tota la capa `persistence/` eren API
   pública **sense cap test**. Resolt afegint-ne (38 → 74 tests).
@@ -349,39 +350,65 @@ l'actualitza.
 
 ## Fase 6 — Motor avançat (solver òptim i regles pendents)
 
-**Estat**: ⬜ Pendent
+**Estat**: ✅ Feta (2026-08-22)
 
 **Objectiu**: apujar el sostre de la IA i completar les variants de regles
 apuntades com a pendents a `docs/REGLES.md` i `docs/ARQUITECTURA.md`.
 
 ### Tasques
 
-- [ ] **Solver amb reordenació de taula**: cerca que combina fitxes pròpies i
-      de la taula per maximitzar les fitxes jugades, mantenint tota la taula
-      vàlida. Activar-lo només quan `rearrangesTable` és `true` (expert).
-      Vigilar el cost: posar un límit de temps/nodes perquè el torn del bot no
-      es noti lent a la UI.
-- [ ] Escales amb joker també als **extrems** (limitació heretada de la Fase 1).
-- [ ] **Intercanvi de joker**: recuperar un joker de la taula substituint-lo
-      per la fitxa real, amb l'obligació de jugar-lo el mateix torn (regla
-      oficial); nous codis de `RulesError` i tests.
-- [ ] Elo amb **marge de resultat** (punts pendents) i no només guanyar/perdre.
-- [ ] *Rubber banding* opcional i desactivable: ajustar lleugerament el
-      `mistakeRate` dels bots durant la partida segons la diferència de fitxes.
-- [ ] Actualitzar `docs/` (regles noves, arquitectura del solver) i el
-      simulador si cal per mesurar les millores.
+- [x] **Solver amb reordenació de taula** (`ai/rearrange.ts`): reparteix de nou
+      totes les fitxes de la taula més les que calgui de la mà, quedant-se'n a
+      la mà les mínimes. Treballa amb recomptes per color i número (les còpies
+      són intercanviables) i recorre les caselles en ordre fix, de manera que
+      cada repartiment es genera una sola vegada. Sostre de nodes i comprovació
+      de la proposta abans de fer-la servir.
+- [x] Escales amb joker també als **extrems**.
+- [x] **Intercanvi de joker**: comprovat que ja funcionava sense cap regla nova
+      (vegeu *Problemes trobats*), i fixat amb tests.
+- [x] Elo amb **marge de resultat** (`marginFromPoints`), connectat a la web des
+      de la puntuació final.
+- [x] *Rubber banding* opcional (`rubberBandedMistakeRate`), desactivat per
+      defecte i amb casella pròpia a la pantalla d'inici.
+- [x] `docs/` actualitzats i simulador ampliat amb temps de decisió i mode duel.
 
-### Criteris d'acceptació
+### Criteris d'acceptació (verificats)
 
-- Tests nous per a cada regla i per al solver (casos de reordenació coneguts).
-- `npm run simulate -- --games 200`: l'expert amb solver nou guanya clarament
-  més que l'expert antic (comparar abans/després i apuntar els números aquí).
-- El torn d'un bot expert no triga més d'~1 s de càlcul en una partida normal.
-- `typecheck` i `test` en verd; cap canvi trenca l'API pública sense documentar-ho.
+- Tests nous per a cada regla i per al solver. ✔ 97 tests al motor (abans 81):
+  reordenació, intercanvi de joker, marge d'Elo i ajust dins de la partida.
+- L'expert nou guanya clarament més que l'antic. ✔ Mesurat de dues maneres:
+  - Duel directe a 200 partides amb el mateix repartiment i alternant qui
+    comença: **200–0** per a l'expert amb reordenació.
+  - Contra Mitjà i Novell, 100 partides amb les mateixes llavors: **92%** de
+    victòries amb reordenació contra **56%** sense (el 56% és el control que
+    confirma que l'expert antic segueix jugant com abans).
+- El torn de l'expert no arriba a ~1 s. ✔ Mitjana 9 ms, p95 60 ms, pitjor
+  **176 ms** en 100 partides.
+- `typecheck` i `test` en verd. ✔ (97 core + 36 web)
+- API pública: `recordGame` accepta ara `boolean | GameOutcome` (compatible amb
+  el que hi havia), `decideAiMove` té un quart paràmetre d'opcions, i s'hi
+  exporten `bestRearrangement`, `marginFromPoints` i `rubberBandedMistakeRate`.
 
 ### Problemes trobats
 
-*(cap encara)*
+- [2026-08-22] **L'intercanvi de joker ja funcionava.** En anar a implementar-lo
+  es va veure que surt sol de com està plantejat el moviment de jugar: com que
+  es valida la taula sencera resultant, substituir el joker per la fitxa de debò
+  i tornar-lo a col·locar és una reordenació més. I les dues restriccions de la
+  regla oficial ja hi eren: no te'l pots endur a la mà (`TILE_REMOVED`) i no el
+  pots tocar abans d'obrir (`REARRANGE_BEFORE_OPENING`). No s'hi ha afegit cap
+  codi d'error nou: hauria estat inventar-se una restricció per tenir-la.
+- [2026-08-22] Un duel 200–0 fa desconfiar. S'hi va fer un control: l'expert
+  sense reordenació, contra Mitjà i Novell, guanya el 56% de les partides, molt
+  a prop del 59% que donava a la Fase 1. Per tant no estava trencat, i el 200–0
+  és real: en un cara a cara l'avantatge s'acumula a cada torn.
+- [2026-08-22] Arreglar els jokers als extrems de les escales va abaixar
+  lleugerament l'expert antic (59% → 56%) perquè també enforteix el nivell
+  mitjà, que és el seu rival directe. És el comportament esperat, no una
+  regressió.
+- [2026-08-22] `pkill -f vite` matava el propi intèrpret d'ordres, perquè la
+  seva línia també conté «vite». Anotat perquè no torni a passar: cal filtrar
+  per `node.*vite`.
 
 ---
 

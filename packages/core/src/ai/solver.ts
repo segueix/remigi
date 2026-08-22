@@ -1,12 +1,16 @@
 import { COLORS, INITIAL_MELD_POINTS, MAX_GROUP_SIZE, MAX_VALUE, MIN_MELD_SIZE, MIN_VALUE } from '../core/constants';
 import { analyzeMeld } from '../core/melds';
+import { bestRearrangement } from './rearrange';
 import { isJoker, isNumberTile } from '../core/tiles';
 import type { GameState, Meld, NumberTile, Tile, TileColor } from '../core/types';
 
 /**
- * Cercador de jugades. És una heurística voraç: en aquesta fase no busca la
- * combinació òptima ni reordena la taula sencera (està apuntat com a millora al
- * full de ruta), però juga prou bé per als nivells actuals.
+ * Cercador de jugades.
+ *
+ * Té dues marxes. La de sempre és una heurística voraç: baixa les jugades que
+ * pot fer amb la mà i allarga les que ja hi ha a la taula. La segona, només per
+ * al nivell expert, crida `bestRearrangement`, que reparteix de nou la taula
+ * sencera per encabir-hi tantes fitxes com pugui.
  */
 
 export interface SolverOptions {
@@ -14,6 +18,10 @@ export interface SolverOptions {
   allowJokers: boolean;
   /** Si pot allargar jugades que ja són a la taula. */
   allowExtensions: boolean;
+  /** Si pot repartir de nou la taula sencera (cerca completa). */
+  allowRearrange?: boolean;
+  /** Sostre de nodes de la cerca de reordenació. */
+  maxNodes?: number;
 }
 
 export interface PlayCandidate {
@@ -53,27 +61,31 @@ export function findRackMelds(rack: Tile[], allowJokers: boolean): MeldCandidate
   }
 
   // Escales: per a cada color, totes les finestres de valors consecutius que es
-  // puguin omplir amb els jokers disponibles (heurística: extrems sempre reals).
+  // puguin completar amb els jokers disponibles. Els jokers poden anar tant a
+  // dins com als extrems: [J,6,7] és tan vàlida com [5,J,7].
   for (const color of COLORS) {
     const byValue = new Map<number, NumberTile>();
     for (const tile of numbers) {
       if (tile.color === color && !byValue.has(tile.value)) byValue.set(tile.value, tile);
     }
     for (let start = MIN_VALUE; start <= MAX_VALUE - MIN_MELD_SIZE + 1; start++) {
-      if (!byValue.has(start)) continue;
       for (let end = start + MIN_MELD_SIZE - 1; end <= MAX_VALUE; end++) {
-        if (!byValue.has(end)) continue;
         const meld: Meld = [];
         let jokersUsed = 0;
+        let realTiles = 0;
         for (let value = start; value <= end; value++) {
           const tile = byValue.get(value);
           if (tile) {
             meld.push(tile);
+            realTiles++;
           } else if (jokersUsed < jokers.length) {
             meld.push(jokers[jokersUsed++]);
+          } else {
+            break;
           }
         }
-        if (meld.length === end - start + 1) pushCandidate(candidates, meld);
+        // Ha de quedar completa i no pot ser només de jokers.
+        if (meld.length === end - start + 1 && realTiles > 0) pushCandidate(candidates, meld);
       }
     }
   }
@@ -192,6 +204,35 @@ export function chooseBestPlay(
     tilesUsed += extended.used;
   }
 
-  if (tilesUsed === 0) return null;
-  return { board, tilesUsed, points };
+  const greedy = tilesUsed > 0 ? { board, tilesUsed, points } : null;
+  if (!options.allowRearrange) return greedy;
+
+  /*
+   * La cerca completa pot no arribar a temps (sostre de nodes) o, si mai
+   * tingués un error, proposar una taula que el motor rebutjaria i tombaria la
+   * partida. Per això es comprova abans de fer-la servir i, si no convenç, es
+   * juga la de l'heurística voraç.
+   */
+  const rearranged = bestRearrangement(state.board, player.rack, { maxNodes: options.maxNodes });
+  if (!rearranged || rearranged.tilesUsed <= (greedy?.tilesUsed ?? 0)) return greedy;
+  if (!isSoundProposal(state.board, player.rack, rearranged.board)) return greedy;
+  return { board: rearranged.board, tilesUsed: rearranged.tilesUsed, points };
+}
+
+/**
+ * Xarxa de seguretat abans de confiar en una taula proposada: totes les jugades
+ * vàlides, cap fitxa repetida ni inventada, i cap de la taula que hagi
+ * desaparegut. És el mateix que comprovarà el motor, però aquí encara som a
+ * temps de fer marxa enrere.
+ */
+function isSoundProposal(board: Meld[], rack: Tile[], proposal: Meld[]): boolean {
+  if (!proposal.every((meld) => analyzeMeld(meld).valid)) return false;
+
+  const ids = proposal.flat().map((tile) => tile.id);
+  const unique = new Set(ids);
+  if (unique.size !== ids.length) return false;
+
+  const available = new Set([...board.flat(), ...rack].map((tile) => tile.id));
+  if (!ids.every((id) => available.has(id))) return false;
+  return board.flat().every((tile) => unique.has(tile.id));
 }

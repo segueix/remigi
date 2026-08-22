@@ -53,32 +53,59 @@ Amb la mateixa llavor, la mateixa partida: imprescindible per depurar i testejar
 No hi ha un algorisme per nivell: hi ha **un únic cercador de jugades**
 (`ai/solver.ts`) i **paràmetres que el limiten** (`ai/difficulty.ts`): probabilitat
 d'error humà (`mistakeRate`), si pot allargar la taula (`extendsBoard`), si juga
-els jokers (`usesJokers`)... Ajustar la corba de dificultat és tocar números, no
+els jokers (`usesJokers`), si reparteix de nou la taula (`rearrangesTable`)...
+Ajustar la corba de dificultat és tocar números, no
 reescriure lògica. La capa adaptativa (`adaptive/`) tria aquests paràmetres
 segons el perfil del jugador; vegeu `docs/IA-ADAPTATIVA.md`.
+
+### Reordenar la taula: recomptes, no fitxes
+
+`ai/rearrange.ts` resol el problema de debò del Rummikub: repartir en jugades
+vàlides **totes** les fitxes de la taula més les que es vulguin de la mà,
+quedant-se'n a la mà les mínimes possibles.
+
+Dues decisions el fan abastable:
+
+1. **Es treballa amb recomptes per color i número, no amb fitxes concretes.**
+   Dues còpies de la mateixa fitxa són intercanviables, així que distingir-les
+   només multiplicaria l'espai de cerca. Les fitxes de debò s'assignen al final,
+   gastant primer les de la taula, que és el que garanteix que no en quedi cap
+   fora.
+2. **Ordre de recorregut fix.** Les caselles es recorren per número i després
+   per color, i a cada casella només s'enumeren les jugades on aquella fitxa és
+   la de l'índex més baix. Així cada repartiment possible es genera una sola
+   vegada; amb memorització dels estats repetits, la cerca es tanca de pressa.
+
+Té un **sostre de nodes**: si s'esgota no retorna res i el cercador es queda amb
+l'heurística voraç, perquè val més jugar de pressa i una mica pitjor que fer
+esperar el jugador. I abans de fer servir cap proposta seva es comprova que la
+taula resultant és legal (`isSoundProposal`): un error aquí tombaria la partida,
+i la comprovació és barata.
 
 ### Persistència per interfície
 
 El motor només coneix `KeyValueStore` (get/set/remove). Implementacions:
 `MemoryStore` (tests), `JsonFileStore` (Node; no s'exporta des de l'índex per no
-arrossegar dependències de Node a la web) i, a la Fase 2, un adaptador de
-`localStorage`.
+arrossegar dependències de Node a la web) i `LocalStorageStore` a l'app web, que
+comprova de debò si es pot escriure i degrada a memòria si no.
 
-## Limitacions conegudes (apuntades al full de ruta)
+## Limitacions conegudes
 
-- El solver és una heurística voraç: no reordena la taula sencera per encabir-hi
-  més fitxes (`rearrangesTable` és el ganxo previst) i, a les escales, fa servir
-  els jokers per omplir forats interns, no per allargar extrems.
-- No hi ha intercanvi de jokers de la taula.
-- L'adaptació de dificultat es fa entre partides; l'ajust dins de la mateixa
-  partida (*rubber banding*) està pendent.
+- La cerca de reordenació no posa mai un joker on ja hi ha la fitxa de debò
+  disponible. Alliberar-la per a una altra jugada podria ser millor en algun cas
+  rebuscat; a canvi, l'enumeració es manté petita.
+- Els nivells que no reordenen segueixen amb una tria voraç: no busquen la
+  millor combinació entre les jugades possibles.
+- La IA no té estratègia a llarg termini: maximitza les fitxes del torn actual,
+  sense guardar-se'n per a jugades futures ni comptar les del rival.
 
-## Com hi encaixarà l'app web (Fase 2)
+## Com hi encaixa l'app web
 
-- L'estat de React serà directament el `GameState`; cada acció de l'usuari
+- L'estat de React és directament el `GameState`; cada acció de l'usuari
   construeix un `Move` i crida `applyMove` dins d'un `try/catch` que mostra el
   missatge del `RulesError` si el moviment no és legal.
-- Els torns dels bots criden `decideAiMove` (síncron i ràpid) amb un petit retard
-  perquè es puguin seguir visualment.
+- Els torns dels bots criden `decideAiMove` (síncron i prou ràpid: el pitjor
+  torn d'un expert mesurat va ser de 176 ms) amb un petit retard perquè es
+  puguin seguir visualment.
 - En acabar, `finalScores` + `recordGame` actualitzen el perfil, i
   `suggestOpponents` proposa els rivals de la partida següent.

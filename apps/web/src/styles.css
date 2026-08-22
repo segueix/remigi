@@ -846,3 +846,16 @@ button.link.danger {
     padding: 0 0.75rem;
   }
 }
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.check input {
+  flex: none;
+  width: 1.1rem;
+  height: 1.1rem;
+}

@@ -17,10 +17,14 @@ els paràmetres que el limiten o hi introdueixen errors «humans»:
 | Avançat (`advanced`) | 1400 | 4% | sí | sí |
 | Expert (`expert`) | 1600 | 0% | sí | sí |
 
+L'expert, a més, **reparteix de nou la taula sencera** a cada torn per encabir-hi
+tantes fitxes com pot (`rearrangesTable`). És el que el separa de la resta: en un
+duel a 200 partides contra la versió que només allarga jugades, les guanya
+totes.
+
 «Error per torn» (`mistakeRate`) és la probabilitat que el bot «no vegi» la
 millor jugada trobada i robi fitxa, que és exactament l'error més habitual d'un
-jugador humà d'aquell nivell. L'expert té reservat, a més, el paràmetre
-`rearrangesTable` per quan el solver sàpiga reordenar la taula sencera.
+jugador humà d'aquell nivell.
 
 ## 2. Perfil i experiència del jugador (`adaptive/experience.ts`)
 
@@ -37,7 +41,10 @@ mitjana dels rivals de la partida (`adaptive/rating.ts`):
 - perdre contra rivals fluixos baixa molt; contra rivals forts, poc;
 - el **factor K** comença alt (40) i baixa amb l'experiència (24, després 16):
   les primeres partides serveixen per situar ràpidament el nivell del jugador,
-  i després la valoració s'estabilitza.
+  i després la valoració s'estabilitza;
+- el **marge del resultat** hi posa el matís: guanyar per molts punts mou la
+  valoració un 25% més que guanyar-ne per pocs, i perdre de pallissa la baixa
+  més que perdre per poc (`marginFromPoints`).
 
 ## 3. Tria d'oponents (`adaptive/adaptiveDifficulty.ts`)
 
@@ -66,12 +73,20 @@ partida nova ──► suggestOpponents(perfil) ──► createGame(...)
 guardar perfil ◄── recordGame(resultat) ◄── partida jugada
 ```
 
+## 5. Ajust dins de la mateixa partida (opcional)
+
+L'adaptació per Elo actua **entre** partides. Amb la casella «Ajusta la
+dificultat durant la partida» activada, els bots també s'ajusten **dins** d'una:
+`rubberBandedMistakeRate` els fa equivocar-se una mica més quan al jugador li
+queden moltes més fitxes, i afinar quan va guanyant. L'ajust està acotat (mai
+per damunt d'un 50% d'error) i el nivell de sortida no canvia.
+
+Ve **desactivat** per defecte: canviar el rival a mitja partida ha de ser una
+decisió explícita del jugador, no una sorpresa.
+
 ## Millores previstes
 
-- **Rubber banding** (opcional i desactivable): ajustar lleugerament el
-  `mistakeRate` dels bots durant la partida segons com d'avançat o endarrerit va
-  el jugador, per suavitzar les ratxes.
-- Tenir en compte el **marge de derrota** (punts pendents) i no només
-  guanyar/perdre a l'hora d'actualitzar l'Elo.
 - Perfils múltiples al mateix dispositiu (ja ho suporta `ProfileRepository`,
   només cal interfície).
+- Estratègia a llarg termini de la IA: guardar-se fitxes per a jugades futures i
+  tenir en compte què li pot quedar al rival.

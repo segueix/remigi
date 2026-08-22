@@ -17,7 +17,8 @@ El pla complet, fase a fase, és a **[`AGENT.md`](AGENT.md)**.
 | 3 | Pantalla de partida jugable | ✅ feta |
 | 4 | Cicle adaptatiu complet a la web | ✅ feta |
 | 5 | Experiència d'usuari i polit | ✅ feta |
-| 6–7 | Motor avançat i desplegament | ⏳ pendents |
+| 6 | Motor avançat (IA que reordena la taula) | ✅ feta |
+| 7 | Desplegament | ⏳ pendent |
 
 **Ja s'hi pot jugar**: `npm install && npm run dev`. Cada partida compta per al
 teu perfil, els rivals s'ajusten al teu nivell, i pots jugar amb el ratolí o amb
@@ -110,8 +111,6 @@ state = applyMove(state, decideAiMove(state, state.currentPlayer));
       resultat l'actualitza, i les estadístiques en mostren l'evolució.
 - [x] Arrossegar fitxes (ratolí i dit), partida desada per continuar-la després,
       ajuda opcional i accessibilitat.
-- [ ] **Ara**: solver òptim de la IA i regles pendents (Fase 6).
-- [ ] Solver òptim (reordenació completa de la taula per part de la IA experta).
-- [ ] Intercanvi de jokers de la taula.
-- [ ] Ajust de dificultat dins de la mateixa partida (rubber banding).
-- [ ] Desplegament públic.
+- [x] IA experta que reparteix de nou la taula sencera, intercanvi de jokers,
+      Elo amb marge de resultat i ajust de dificultat dins de la partida.
+- [ ] **Ara**: desplegament públic (Fase 7).

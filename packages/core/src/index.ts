@@ -12,6 +12,7 @@ export * from './core/scoring';
 
 export * from './ai/difficulty';
 export * from './ai/solver';
+export * from './ai/rearrange';
 export * from './ai/aiPlayer';
 
 export * from './adaptive/rating';

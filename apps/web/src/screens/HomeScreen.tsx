@@ -30,6 +30,7 @@ export function HomeScreen({ handle, savedGame, onPlay, onContinue }: Props) {
   const [auto, setAuto] = useState(true);
   const [manual, setManual] = useState<DifficultyKey[]>(FALLBACK);
   const [confirmingReset, setConfirmingReset] = useState(false);
+  const [adaptDuringGame, setAdaptDuringGame] = useState(false);
 
   // Sense perfil encara no hi ha res a configurar: primer, el nom.
   const askingName = editing || !profile;
@@ -164,12 +165,24 @@ export function HomeScreen({ handle, savedGame, onPlay, onContinue }: Props) {
             </p>
           </>
         )}
+        <label className="check">
+          <input
+            type="checkbox"
+            checked={adaptDuringGame}
+            onChange={(event) => setAdaptDuringGame(event.target.checked)}
+          />
+          Ajusta la dificultat durant la partida
+        </label>
+        <p className="muted small">
+          Si l’actives, els bots afluixen quan vas molt endarrerit i afinen quan
+          vas guanyant. El nivell de sortida no canvia.
+        </p>
       </fieldset>
 
       <div className="row">
         <button
           className={savedGame ? 'secondary' : ''}
-          onClick={() => onPlay({ playerName: profile!.name, opponents })}
+          onClick={() => onPlay({ playerName: profile!.name, opponents, adaptDuringGame })}
         >
           {savedGame ? 'Comença una partida nova' : 'Comença a jugar'}
         </button>

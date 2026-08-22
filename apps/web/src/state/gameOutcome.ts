@@ -1,4 +1,6 @@
 import {
+  finalScores,
+  marginFromPoints,
   recordGame,
   type DifficultyKey,
   type GameState,
@@ -21,7 +23,8 @@ export function humanWon(game: GameState): boolean {
 /**
  * Perfil resultant després d'una partida acabada. Els rivals que es passen han
  * de ser els que s'han jugat de debò: són els que determinen quant puja o baixa
- * l'habilitat.
+ * l'habilitat. El marge de la puntuació final hi afegeix el matís entre guanyar
+ * per poc i guanyar de pallissa.
  */
 export function profileAfterGame(
   profile: PlayerProfile,
@@ -29,7 +32,9 @@ export function profileAfterGame(
   opponents: DifficultyKey[],
   date?: Date,
 ): PlayerProfile {
-  return recordGame(profile, opponents, humanWon(game), date);
+  const mine = finalScores(game).find((score) => score.playerId === game.players[0]?.id);
+  const margin = mine ? marginFromPoints(mine.points, opponents.length) : undefined;
+  return recordGame(profile, opponents, { won: humanWon(game), margin }, date);
 }
 
 export interface RatingChange {

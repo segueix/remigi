@@ -26,6 +26,8 @@ const BOT_DELAY_MS = Number(import.meta.env.VITE_BOT_DELAY ?? 900);
 export interface GameSetup {
   playerName: string;
   opponents: DifficultyKey[];
+  /** Ajusta la dificultat dels bots durant la partida segons com et va. */
+  adaptDuringGame?: boolean;
 }
 
 export interface GameHandle {
@@ -98,7 +100,12 @@ export function useGame(initialSetup: GameSetup, initialGame?: GameState): GameH
       setGame((current) => {
         if (current.status !== 'playing' || isHumanTurn(current)) return current;
         const before = new Set(current.board.flat().map((tile) => tile.id));
-        const next = applyMove(current, decideAiMove(current, current.currentPlayer));
+        const next = applyMove(
+          current,
+          decideAiMove(current, current.currentPlayer, Math.random, {
+            rubberBanding: setupRef.current.adaptDuringGame,
+          }),
+        );
         setHighlighted(new Set(next.board.flat().map((t) => t.id).filter((id) => !before.has(id))));
         return next;
       });
