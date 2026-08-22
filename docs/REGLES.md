@@ -18,7 +18,8 @@ que retorna el motor quan es trenca la regla.
 - **Escala**: 3 o més fitxes del **mateix color** amb **números consecutius**
   (l'1 no continua després del 13).
 - **Joker**: substitueix qualsevol fitxa; val el número de la fitxa que
-  substitueix. Una jugada no pot ser només de jokers.
+  substitueix, tant si va al mig d'una escala com a un extrem (`[J,6,7]` és tan
+  vàlida com `[5,J,7]`). Una jugada no pot ser només de jokers.
 
 ## Torn
 
@@ -52,12 +53,25 @@ vàlid i hagi afegit almenys una fitxa de la mà.
   **bloquejada** i guanya qui té menys punts pendents a la mà.
 - Puntuació (`finalScores`): cada perdedor **resta** els punts de les fitxes que
   li queden (el joker penalitza 30); el guanyador **suma** els punts de tots els
-  altres.
+  altres i no es penalitza les pròpies (només en té si hi ha hagut bloqueig).
+  Per tant **la puntuació sempre suma zero**, cosa que permet encadenar rondes
+  amb un marcador acumulat coherent.
+
+## Intercanvi de joker
+
+Un jugador que ja ha obert pot **recuperar un joker de la taula** posant-hi la
+fitxa que representava, sempre que la jugada d'origen quedi vàlida, i **l'ha de
+tornar a jugar el mateix torn**.
+
+No cal cap regla especial al motor: surt sol de com està plantejat el moviment
+de jugar, que valida la taula sencera resultant. Emportar-se el joker a la mà
+per a un altre torn és impossible perquè cap fitxa de la taula no pot
+desaparèixer (`TILE_REMOVED`), i qui encara no ha obert no el pot tocar
+(`REARRANGE_BEFORE_OPENING`). Hi ha tests que ho fixen a
+`packages/core/test/jokerExchange.test.ts`.
 
 ## Variants encara no implementades
 
-- **Intercanvi de joker**: agafar un joker de la taula substituint-lo per la
-  fitxa real. (Previst al full de ruta.)
 - Límit de temps per torn (el decidirà la interfície, no el motor).
 - Rondes múltiples amb marcador acumulat (la web ho podrà fer encadenant
   partides i sumant `finalScores`).

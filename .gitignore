@@ -3,3 +3,9 @@ dist/
 coverage/
 *.log
 .DS_Store
+
+# Proves de navegador
+test-results/
+playwright-report/
+blob-report/
+.playwright/

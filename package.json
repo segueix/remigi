@@ -7,8 +7,12 @@
     "apps/*"
   ],
   "scripts": {
+    "dev": "npm run dev -w @rummikub/web",
+    "build": "npm run build --workspaces --if-present",
+    "preview": "npm run preview -w @rummikub/web",
     "test": "npm run test --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "simulate": "npm run simulate -w @rummikub/core --"
+    "simulate": "npm run simulate -w @rummikub/core --",
+    "test:e2e": "npm run test:e2e -w @rummikub/web --"
   }
 }
