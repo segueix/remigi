@@ -4,6 +4,7 @@ import { BoardView } from '../components/BoardView';
 import { RackView } from '../components/RackView';
 import { TileView } from '../components/TileView';
 import { useDragTile } from '../game/useDragTile';
+import { botEmoji } from '../game/bots';
 import { meldAuthors } from '../game/meldOwners';
 import { invalidMeldIndexes, missingOpeningPoints, openingPoints } from '../game/turnDraft';
 import { useGame, type GameHandle, type GameSetup } from '../game/useGame';
@@ -94,33 +95,38 @@ export function GameScreen({ setup, resume, resumeOwners, profile, savedGame, on
 
   return (
     <section className="game">
-      <ul className="players">
-        {game.players.map((player, index) => (
-          <li
-            key={player.id}
-            className={index === game.currentPlayer ? 'player active' : 'player'}
-            /* Cada bot té color propi; aquí és on es veu de qui és cadascun. */
-            data-bot={player.kind === 'ai' ? index : undefined}
-          >
-            <span className="player-name">
-              {player.kind === 'ai' && <span className="player-color" aria-hidden="true" />}
-              {player.name}
-              {player.kind === 'ai' && (
-                <span className="tag">{difficultyByKey(player.aiLevel).label}</span>
-              )}
-              {!player.hasOpened && <span className="tag">sense obrir</span>}
-            </span>
-            <span className="muted">{player.rack.length} fitxes</span>
-          </li>
-        ))}
-      </ul>
+      <header className="game-top">
+        <ul className="players">
+          {game.players.map((player, index) => (
+            <li
+              key={player.id}
+              className={index === game.currentPlayer ? 'player active' : 'player'}
+              /* Cada bot té color propi; aquí és on es veu de qui és cadascun. */
+              data-bot={player.kind === 'ai' ? index : undefined}
+            >
+              <span className="player-name">
+                {/* L'avatar: l'emoji del bot, o la inicial del jugador humà. */}
+                <span className="player-color" aria-hidden="true">
+                  {player.kind === 'ai' ? botEmoji(player.name) : initialOf(player.name)}
+                </span>
+                <span className="player-nom">{player.name}</span>
+                {player.kind === 'ai' && (
+                  <span className="tag">{difficultyByKey(player.aiLevel).label}</span>
+                )}
+                {!player.hasOpened && <span className="tag">sense obrir</span>}
+              </span>
+              <span className="muted">{player.rack.length} fitxes</span>
+            </li>
+          ))}
+        </ul>
 
-      {/* Els canvis de torn i els errors s'anuncien als lectors de pantalla. */}
-      <p className="muted turn-line" aria-live="polite">
-        Torn {game.turn} ·{' '}
-        {isHumanTurn ? 'et toca a tu' : `juga ${game.players[game.currentPlayer].name}…`} ·{' '}
-        {game.bag.length} fitxes al sac
-      </p>
+        {/* Els canvis de torn i els errors s'anuncien als lectors de pantalla. */}
+        <p className="muted turn-line" aria-live="polite">
+          Torn {game.turn} ·{' '}
+          {isHumanTurn ? 'et toca a tu' : `juga ${game.players[game.currentPlayer].name}…`} ·{' '}
+          {game.bag.length} fitxes al sac
+        </p>
+      </header>
 
       <BoardView
         board={board}
@@ -217,6 +223,10 @@ export function GameScreen({ setup, resume, resumeOwners, profile, savedGame, on
 
 function findTile(board: Tile[] | undefined, rack: Tile[] | undefined, id: string): Tile | null {
   return board?.find((t) => t.id === id) ?? rack?.find((t) => t.id === id) ?? null;
+}
+
+function initialOf(name: string): string {
+  return name.trim().charAt(0).toUpperCase() || '?';
 }
 
 function GameOver({

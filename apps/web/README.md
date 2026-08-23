@@ -41,6 +41,8 @@ src/
 │   ├── turnDraft.ts          # lògica pura de l'edició del torn
 │   ├── turnDraft.test.ts
 │   ├── useDragTile.ts        # arrossegar amb ratolí, dit o llapis
+│   ├── bots.ts               # el planter de rivals: noms i avatars
+│   ├── bots.test.ts
 │   ├── meldOwners.ts         # qui ha jugat cada jugada de la taula
 │   ├── meldOwners.test.ts
 │   └── useGame.ts            # estat de la partida i torns dels bots
@@ -54,6 +56,29 @@ src/
     ├── GameScreen.tsx        # la partida, el resultat i el canvi d'habilitat
     └── StatsScreen.tsx       # habilitat, gràfic d'evolució i historial
 ```
+
+## La taula de joc
+
+La partida ocupa **tota la pantalla**, com un joc i no com una pàgina: a dalt la
+tira de jugadors i el torn, al mig la taula de feltre verd —que es queda tot
+l'espai que sobra—, i a baix el faristol de fusta amb les fitxes i els botons
+del torn. La pàgina no es desplaça mai; si mai cal, es desplacen per dins la
+taula o el faristol. Les fitxes de la taula són un pèl més petites que les del
+faristol perquè s'hi vegin més jugades de cop; les del faristol conserven els
+44 px de toc al mòbil.
+
+El feltre és fosc en tots dos temes, com una taula de debò. Per això tot el que
+s'hi posa a sobre —marcs dels bots, jugades invàlides, destinacions— fa servir
+sempre les **versions clares** dels colors (variables amb sufix `-taula`).
+
+## Els rivals
+
+No jugues contra «Bot 1» sinó contra algú: hi ha un **planter de 24
+personatges** amb nom i avatar (`game/bots.ts`), i cada partida en tria de
+diferents a l'atzar. El nom viatja dins de l'estat del motor —que només hi veu
+una cadena—, així que una partida represa conserva els mateixos rivals;
+l'avatar es dedueix del nom i no cal desar-lo. Un nom que no és al planter (una
+partida desada d'una versió anterior) rep l'avatar de recanvi.
 
 ## Com es juga un torn
 
@@ -90,10 +115,11 @@ la taula desconcerta: sembla que el joc no les vegi.
 
 Dues marques per no perdre el fil de la partida:
 
-- **La fitxa que acabes de robar** queda amb un recuadre de ratlles al faristol
-  fins que tornes a jugar o a robar. Trobar-la entre tretze fitxes més no hauria
-  de ser un joc a part. Va per fora de la fitxa (`outline`) i de ratlles perquè
-  no es confongui amb la fitxa triada, que va enlairada i amb el marc sencer.
+- **La fitxa que acabes de robar** queda amb un recuadre daurat de ratlles al
+  faristol fins que tornes a jugar o a robar. Trobar-la entre tretze fitxes més
+  no hauria de ser un joc a part. Va per fora de la fitxa (`outline`), de
+  ratlles i d'un color que no fa servir res més, per no confondre's ni amb la
+  fitxa triada ni amb els colors dels bots.
 - **Cada bot té un color**, el mateix a la pastilla del seu nom i al marc de les
   jugades que ha posat. Si algú modifica una jugada, el marc passa a ser del seu
   color; si qui la modifica ets tu, el marc desapareix, perquè el color és dels
@@ -154,6 +180,8 @@ El que abans era una llista per repassar a mà ara ho comprova `npm run test:e2e
   partida a mitges es pot continuar (amb els colors de les jugades inclosos).
 - La fitxa robada es marca i deixa d'estar-ho en jugar; les jugades dels bots
   porten el color del bot, i el perden quan les toques.
+- Els rivals tenen nom i avatar propis i diferents entre ells, i la partida
+  s'encaixa a la pantalla sense desplaçament de pàgina.
 - Rutes correctes sota `/rummikub/`, manifest i icones, i jugar sense connexió.
 - En pantalla petita: res no desborda i els objectius de toc fan 44 px.
 

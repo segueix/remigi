@@ -287,3 +287,33 @@ test.describe('qui ha jugat què', () => {
     await expect(jugada).toHaveAttribute('data-bot', /[1-3]/);
   });
 });
+
+test.describe('la taula de joc', () => {
+  test('els rivals tenen nom propi i avatar, diferents entre ells', async ({ page }) => {
+    await comencaDeZero(page);
+    await jugaContra(page, 3);
+
+    const noms = await page.locator('.player[data-bot] .player-nom').allTextContents();
+    expect(noms).toHaveLength(3);
+    expect(new Set(noms).size).toBe(3);
+    // Nom de debò, no el «Bot 1» d'abans.
+    for (const nom of noms) expect(nom).not.toMatch(/^Bot \d/);
+    await expect(page.locator('.player[data-bot] .player-color')).toHaveCount(3);
+  });
+
+  test('la partida cap a la pantalla, sense desplaçament de pàgina', async ({ page }) => {
+    await comencaDeZero(page);
+    await jugaContra(page, 2);
+
+    const desborda = await page.evaluate(() => ({
+      x: document.documentElement.scrollWidth > window.innerWidth + 1,
+      y: document.documentElement.scrollHeight > window.innerHeight + 1,
+    }));
+    expect(desborda).toEqual({ x: false, y: false });
+    // El faristol és a baix de tot de la pantalla, amb la taula a sobre.
+    const taula = (await page.locator('.board').boundingBox())!;
+    const faristol = (await page.locator('.rack').boundingBox())!;
+    expect(taula.y).toBeLessThan(faristol.y);
+    expect(taula.height).toBeGreaterThan(0);
+  });
+});

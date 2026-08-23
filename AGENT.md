@@ -635,6 +635,57 @@ de vermells i taronges alternats en tema clar i fosc.
 
 ---
 
+### Taula de joc a pantalla completa, amb rivals amb cara i ulls ✅ Feta (2026-08-23)
+
+Demanat pel jugador: disseny en horitzontal amb el faristol a sota i la taula a
+sobre ocupant el màxim sense desplaçament; bots amb nom (un planter de 20-30 que
+canvien a cada partida) i avatar propi; i un aspecte de joc professional,
+sobretot la taula on es posen les fitxes.
+
+- [x] La partida ocupa tota la pantalla: la taula es queda l'espai que sobra,
+      el faristol és sempre a baix i la pàgina no es desplaça mai (les úniques
+      zones amb desplaçament propi són la taula i el faristol, si mai calen).
+- [x] Les fitxes de la taula són un pèl més petites que les del faristol: hi
+      caben més jugades a la vista; el faristol conserva els 44 px de toc.
+- [x] Planter de 24 personatges amb nom i avatar (`game/bots.ts`); cada partida
+      en tria de diferents a l'atzar. El nom viatja dins de l'estat del motor
+      (que només hi veu una cadena), així que les partides desades conserven els
+      seus rivals; l'avatar es dedueix del nom i no cal desar-lo.
+- [x] Taula de feltre verd i faristol de fusta, fitxes amb relleu, jugadors en
+      targetes amb avatar i anell del seu color, i botons amb una mica de cos.
+
+**Criteris d'acceptació (verificats)**:
+
+- Les 57 proves de navegador en verd (4 de noves: rivals amb nom i avatar
+  diferents, i partida encaixada a la pantalla sense desplaçament de pàgina),
+  en escriptori i mòbil sobre el build de producció. 102 tests de unitat.
+- Mirat amb captures en tema clar, fosc i mòbil vertical: res no desborda i
+  tots els estats es distingeixen (fitxa robada, marcs de bots, jugada
+  invàlida, destinacions).
+
+**Decisions**:
+
+- El feltre és fosc en tots dos temes, com una taula de debò; per això tot el
+  que s'hi posa a sobre fa servir sempre versions clares dels colors (variables
+  amb sufix `-taula`). Els marcs dels bots sobre feltre són les versions
+  clares encara que el tema sigui clar.
+- La fitxa robada passa de marcar-se amb el color d'acció a marcar-se en
+  **daurat**: sobre la fusta del faristol el torquesa es confonia amb la fitxa
+  triada, i el daurat no el fa servir res més.
+- El planter és a la web, no al motor: per al motor el nom d'un jugador és una
+  cadena i prou, i així ha de continuar.
+
+### Problemes trobats
+
+- [2026-08-23] Una partida desada d'una versió anterior porta bots que es diuen
+  «Bot 1»: no són al planter i no tindrien avatar. Resolt amb un avatar de
+  recanvi (🤖) per a qualsevol nom desconegut, amb test.
+- [2026-08-23] El botó «+ Jugada nova» heretava el relleu nou dels botons i
+  semblava un botó d'acció flotant sobre el feltre. Resolt traient-li l'ombra:
+  és una zona per deixar-hi fitxes, no una ordre.
+
+---
+
 ## Riscos coneguts (a vigilar quan toqui)
 
 - ~~**Vite + workspace amb font TS**~~ (Fase 2): **tancat**. `@rummikub/core`

@@ -52,7 +52,8 @@ export function App() {
   }
 
   return (
-    <main className="app">
+    /* La partida ocupa tota la pantalla, com un joc; la resta és una pàgina. */
+    <main className={screen === 'game' ? 'app app-joc' : 'app'}>
       <header className="app-header">
         <h1 onClick={goHome}>Rummikub</h1>
         {profile.profile && (
