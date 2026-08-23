@@ -301,6 +301,46 @@ test.describe('la taula de joc', () => {
     await expect(page.locator('.player[data-bot] .player-color')).toHaveCount(3);
   });
 
+  test('els botons del torn van en una sola línia, també en pantalla estreta', async ({ page }) => {
+    await comencaDeZero(page);
+    await jugaContra(page, 1);
+
+    const botons = page.locator('.actions button');
+    await expect(botons).toHaveCount(4);
+    const altures = await botons.evaluateAll((b) => b.map((el) => el.getBoundingClientRect().top));
+    // Tots comencen a la mateixa alçada: cap no ha saltat de línia.
+    expect(new Set(altures.map((v) => Math.round(v))).size).toBe(1);
+
+    // Encara que el rètol s'amagui i quedi la icona, el nom no canvia.
+    await expect(page.getByRole('button', { name: 'Acabar jugada' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Desfer canvis' })).toBeVisible();
+  });
+
+  test('al mòbil apaïsat tot cap a la pantalla', async ({ page, isMobile }) => {
+    test.skip(!isMobile, 'només té sentit al projecte de mòbil');
+    // El mateix mòbil, girat.
+    await page.setViewportSize({ width: 851, height: 393 });
+    await comencaDeZero(page);
+    await jugaContra(page, 2);
+
+    const desborda = await page.evaluate(() => ({
+      x: document.documentElement.scrollWidth > window.innerWidth + 1,
+      y: document.documentElement.scrollHeight > window.innerHeight + 1,
+    }));
+    expect(desborda).toEqual({ x: false, y: false });
+
+    // La taula sobre el faristol, i els botons en una línia i tocables.
+    const taula = (await page.locator('.board').boundingBox())!;
+    const faristol = (await page.locator('.rack').boundingBox())!;
+    expect(taula.y).toBeLessThan(faristol.y);
+    expect(taula.height).toBeGreaterThan(80);
+    for (const alçada of await page
+      .locator('.actions button')
+      .evaluateAll((b) => b.map((el) => el.getBoundingClientRect().height))) {
+      expect(alçada).toBeGreaterThanOrEqual(44);
+    }
+  });
+
   test('la partida cap a la pantalla, sense desplaçament de pàgina', async ({ page }) => {
     await comencaDeZero(page);
     await jugaContra(page, 2);

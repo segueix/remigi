@@ -684,6 +684,36 @@ sobretot la taula on es posen les fitxes.
   semblava un botó d'acció flotant sobre el feltre. Resolt traient-li l'ombra:
   és una zona per deixar-hi fitxes, no una ordre.
 
+### Botons del torn amb icona i mòbil apaïsat ✅ Feta (2026-08-23)
+
+Demanat pel jugador: els quatre botons del torn en una sola línia amb icones
+estil aplicació, i que la partida s'adapti al mòbil posat en horitzontal.
+
+- [x] Els botons van sempre en una sola línia, amb icona de traç (SVG en línia,
+      `components/icons.tsx`, sense cap llibreria) i rètol; quan el rètol no hi
+      cap, s'amaga i queda la icona, com en una app. El nom accessible el porta
+      `aria-label`, així no canvia mai (i les proves tampoc).
+- [x] «Robar fitxa» i «Passar torn» tenen icona diferent: una fitxa amb un més,
+      i l'avanç de torn.
+- [x] Mòbil apaïsat (`orientation: landscape` i poca alçada): jugadors reduïts
+      a avatar i compte, faristol en una sola filera amb desplaçament
+      horitzontal, fitxes de taula més menudes i botons només amb icona. La
+      taula es queda la resta de l'alçada i la pàgina no es desplaça.
+
+**Criteris d'acceptació (verificats)**: 60 proves de navegador en verd (3 de
+noves: botons en una sola línia a totes les mides amb el nom intacte, i partida
+encaixada al mòbil apaïsat de 851×393 amb botons de 44 px). Comprovat amb
+captures en escriptori, mòbil vertical i mòbil apaïsat.
+
+**Decisió**: el nom dels botons viu a `aria-label` i el rètol visible és
+decoratiu. Si el rètol s'amagués amb `display: none` sense `aria-label`, el
+botó es quedaria sense nom accessible: no és una finor, és el que fa que
+amagar-lo sigui possible.
+
+### Problemes trobats
+
+*(cap: el canvi ha sortit net a la primera passada de proves)*
+
 ---
 
 ## Riscos coneguts (a vigilar quan toqui)

@@ -47,6 +47,7 @@ src/
 │   ├── meldOwners.test.ts
 │   └── useGame.ts            # estat de la partida i torns dels bots
 ├── components/
+│   ├── icons.tsx             # icones dels botons del torn
 │   ├── TileView.tsx          # una fitxa
 │   ├── MeldView.tsx          # una jugada
 │   ├── BoardView.tsx         # la taula
@@ -70,6 +71,13 @@ faristol perquè s'hi vegin més jugades de cop; les del faristol conserven els
 El feltre és fosc en tots dos temes, com una taula de debò. Per això tot el que
 s'hi posa a sobre —marcs dels bots, jugades invàlides, destinacions— fa servir
 sempre les **versions clares** dels colors (variables amb sufix `-taula`).
+
+Els botons del torn van sempre en **una sola línia**, amb icona de traç
+(`components/icons.tsx`, SVG en línia, sense llibreries) i rètol; quan el rètol
+no hi cap s'amaga i queda la icona, com en una app. El nom accessible el porta
+`aria-label` i no canvia mai. Amb el **mòbil apaïsat**, tot el que no és taula
+s'estreny: jugadors en avatar i compte, faristol en una sola filera amb
+desplaçament horitzontal, i botons només amb icona.
 
 ## Els rivals
 
@@ -182,6 +190,8 @@ El que abans era una llista per repassar a mà ara ho comprova `npm run test:e2e
   porten el color del bot, i el perden quan les toques.
 - Els rivals tenen nom i avatar propis i diferents entre ells, i la partida
   s'encaixa a la pantalla sense desplaçament de pàgina.
+- Els botons del torn van en una sola línia a totes les mides, i al mòbil
+  apaïsat tot cap a la pantalla amb objectius de toc de 44 px.
 - Rutes correctes sota `/rummikub/`, manifest i icones, i jugar sense connexió.
 - En pantalla petita: res no desborda i els objectius de toc fan 44 px.
 

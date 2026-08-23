@@ -1,6 +1,7 @@
 import { difficultyByKey, finalScores, findRackMelds, type Tile } from '@rummikub/core';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { BoardView } from '../components/BoardView';
+import { CheckIcon, DrawIcon, ExitIcon, PassIcon, UndoIcon } from '../components/icons';
 import { RackView } from '../components/RackView';
 import { TileView } from '../components/TileView';
 import { useDragTile } from '../game/useDragTile';
@@ -189,22 +190,44 @@ export function GameScreen({ setup, resume, resumeOwners, profile, savedGame, on
         onReturnToRack={() => handle.placeSelected({ kind: 'rack' })}
       />
 
+      {/*
+        * Els botons del torn, sempre en una sola línia. El nom el porta
+        * `aria-label` perquè no canviï mai: en pantalles estretes el rètol
+        * s'amaga i queda la icona, com en una app.
+        */}
       <div className="row actions">
-        <button onClick={handle.commit} disabled={!isHumanTurn || !handle.canCommit}>
-          Acabar jugada
+        <button
+          onClick={handle.commit}
+          disabled={!isHumanTurn || !handle.canCommit}
+          aria-label="Acabar jugada"
+          title="Acabar jugada"
+        >
+          <CheckIcon />
+          <span className="btn-text">Acabar jugada</span>
         </button>
-        <button className="secondary" onClick={handle.draw} disabled={!isHumanTurn}>
-          {game.bag.length === 0 ? 'Passar torn' : 'Robar fitxa'}
+        <button
+          className="secondary"
+          onClick={handle.draw}
+          disabled={!isHumanTurn}
+          aria-label={game.bag.length === 0 ? 'Passar torn' : 'Robar fitxa'}
+          title={game.bag.length === 0 ? 'Passar torn' : 'Robar fitxa'}
+        >
+          {game.bag.length === 0 ? <PassIcon /> : <DrawIcon />}
+          <span className="btn-text">{game.bag.length === 0 ? 'Passar torn' : 'Robar fitxa'}</span>
         </button>
         <button
           className="secondary"
           onClick={handle.resetTurn}
           disabled={!isHumanTurn || !handle.canCommit}
+          aria-label="Desfer canvis"
+          title="Desfer canvis"
         >
-          Desfer canvis
+          <UndoIcon />
+          <span className="btn-text">Desfer canvis</span>
         </button>
-        <button className="link" onClick={onExit}>
-          Deixar la partida
+        <button className="link" onClick={onExit} aria-label="Deixar la partida" title="Deixar la partida">
+          <ExitIcon />
+          <span className="btn-text">Deixar la partida</span>
         </button>
       </div>
 
