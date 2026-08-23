@@ -48,17 +48,26 @@ src/
 │   └── useGame.ts            # estat de la partida i torns dels bots
 ├── components/
 │   ├── icons.tsx             # icones dels botons del torn
+│   ├── PlayerMenu.tsx        # el desplegable del teu jugador
 │   ├── TileView.tsx          # una fitxa
 │   ├── MeldView.tsx          # una jugada
 │   ├── BoardView.tsx         # la taula
-│   └── RackView.tsx          # el faristol, amb ordenació
+│   └── RackView.tsx          # el faristol, amb ordenació i compte de fitxes
 └── screens/
-    ├── HomeScreen.tsx        # nom, oponents (automàtics o a mà) i perfil
-    ├── GameScreen.tsx        # la partida, el resultat i el canvi d'habilitat
-    └── StatsScreen.tsx       # habilitat, gràfic d'evolució i historial
+    ├── GameScreen.tsx        # la partida, el menú del jugador i el resultat
+    └── StatsScreen.tsx       # historial: habilitat, gràfic i reinici
 ```
 
 ## La taula de joc
+
+**L'app entra directament a la taula**: si hi ha una partida a mig jugar es
+continua sola, i si no se'n reparteix una de nova amb els rivals que toquen per
+l'habilitat del perfil. El perfil es crea sol la primera vegada («Jugador»).
+Tot el que abans era la pantalla d'inici viu ara al **menú del teu jugador**
+(tocant la teva targeta, a dalt): el nom, el nombre de rivals i el seu nivell
+(automàtic o fixat), «Partida nova», «Historial» i «Com es juga». L'historial
+es pinta per sobre de la partida, que no es desmunta: en tornar és exactament
+on era.
 
 La partida ocupa **tota la pantalla**, com un joc i no com una pàgina: a dalt la
 tira de jugadors i el torn, al mig la taula de feltre verd —que es queda tot
@@ -89,8 +98,10 @@ telèfon fa el mateix.
 ## Els rivals
 
 No jugues contra «Bot 1» sinó contra algú: hi ha un **planter de 24
-personatges** amb nom i avatar (`game/bots.ts`), i cada partida en tria de
-diferents a l'atzar. El nom viatja dins de l'estat del motor —que només hi veu
+personatges** amb nom d'usuari i avatar amb degradat de colors propi
+(`game/bots.ts`) —GuineuAstuta, PolpVuitMans, MussolSavi…— i cada partida en
+tria de diferents a l'atzar. L'anell de l'avatar conserva el color de taula del
+bot, que és el que lliga amb els marcs de les seves jugades. El nom viatja dins de l'estat del motor —que només hi veu
 una cadena—, així que una partida represa conserva els mateixos rivals;
 l'avatar es dedueix del nom i no cal desar-lo. Un nom que no és al planter (una
 partida desada d'una versió anterior) rep l'avatar de recanvi.
@@ -116,10 +127,10 @@ sentit ni intentar, com endur-se al faristol una fitxa que ja era a la taula.
 
 ## Explicar les regles
 
-La pantalla d'inici porta **«Com es juga (i com s'obre)»**, amb exemples fets
+El menú del jugador porta **«Com es juga (i com s'obre)»**, amb exemples fets
 amb fitxes de debò: un grup, una escala, i el cas que enganya — tres fitxes que
-sumen 30 sense ser ni grup ni escala. Ve desplegada mentre no s'ha jugat cap
-partida i plegada després, de manera que a qui ja hi juga només li ocupa una
+sumen 30 sense ser ni grup ni escala. Ve desplegat mentre no s'ha jugat cap
+partida i plegat després, de manera que a qui ja hi juga només li ocupa una
 línia.
 
 Durant el torn, si hi ha jugades marcades en vermell, la pista de la sortida
@@ -190,9 +201,11 @@ El que abans era una llista per repassar a mà ara ho comprova `npm run test:e2e
 - El motor rebutja la sortida de menys de 30 punts i la jugada de menys de 3
   fitxes, i no deixa endur-se al faristol una fitxa que ja era a la taula.
 - «Desfer canvis» retorna el torn a com estava.
-- Arrossegar del faristol a la taula, i l'ajuda que marca les jugades possibles.
+- Arrossegar del faristol a la taula.
+- L'app entra directament a la partida; el nom, els rivals i la partida nova es
+  fan des del menú del jugador, i l'historial en porta el retorn i el reinici.
 - El perfil es conserva, els oponents proposats pugen amb l'habilitat, i una
-  partida a mitges es pot continuar (amb els colors de les jugades inclosos).
+  partida a mitges es continua sola en tornar a obrir (colors inclosos).
 - La fitxa robada es marca i deixa d'estar-ho en jugar; les jugades dels bots
   porten el color del bot, i el perden quan les toques.
 - Els rivals tenen nom i avatar propis i diferents entre ells, i la partida

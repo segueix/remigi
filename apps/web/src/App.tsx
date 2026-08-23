@@ -1,28 +1,35 @@
-import type { GameState } from '@rummikub/core';
-import { useState } from 'react';
+import { suggestOpponents } from '@rummikub/core';
+import { useEffect, useState } from 'react';
 import type { GameSetup } from './game/useGame';
 import { GameScreen } from './screens/GameScreen';
-import { HomeScreen } from './screens/HomeScreen';
 import { StatsScreen } from './screens/StatsScreen';
-import type { SavedGame } from './state/savedGame';
 import { useProfile } from './state/useProfile';
 import { useSavedGame } from './state/useSavedGame';
 
-export type Screen = 'home' | 'game' | 'stats';
+export type Screen = 'game' | 'stats';
 
 /**
- * Navegació mínima amb estat local: no hi ha enllaços profunds ni URL per
- * compartir, així que un router seria pes de més.
+ * L'app entra directament a la taula de joc: si hi ha una partida a mig jugar
+ * es continua, i si no se'n reparteix una de nova amb els rivals que toquen
+ * per l'habilitat del perfil. Tot el que abans era la pantalla d'inici (nom,
+ * rivals, historial, com es juga) viu ara al menú del teu jugador.
  */
 export function App() {
-  const [screen, setScreen] = useState<Screen>('home');
-  const [setup, setSetup] = useState<GameSetup | null>(null);
-  const [resume, setResume] = useState<GameState | undefined>();
-  const [resumeOwners, setResumeOwners] = useState<SavedGame['owners']>();
+  const [screen, setScreen] = useState<Screen>('game');
   const profile = useProfile();
   const savedGame = useSavedGame();
 
-  if (profile.loading || savedGame.loading) {
+  /*
+   * El perfil es crea sol la primera vegada, amb un nom de casa: demanar-lo
+   * abans de deixar jugar era la primera pantalla, i ja no hi és. El nom es
+   * canvia quan es vulgui des del menú del jugador.
+   */
+  const { loading: profileLoading, profile: loadedProfile, setName } = profile;
+  useEffect(() => {
+    if (!profileLoading && !loadedProfile) void setName('Jugador');
+  }, [profileLoading, loadedProfile, setName]);
+
+  if (profile.loading || savedGame.loading || !profile.profile) {
     return (
       <main className="app">
         <p className="muted">Carregant…</p>
@@ -30,63 +37,31 @@ export function App() {
     );
   }
 
-  function startGame(next: GameSetup) {
-    setSetup(next);
-    setResume(undefined);
-    setResumeOwners(undefined);
-    setScreen('game');
-  }
-
-  function continueGame() {
-    if (!savedGame.saved) return;
-    setSetup(savedGame.saved.setup);
-    setResume(savedGame.saved.game);
-    setResumeOwners(savedGame.saved.owners);
-    setScreen('game');
-  }
-
-  /** En tornar a l'inici es torna a mirar si hi ha partida per continuar. */
-  function goHome() {
-    setScreen('home');
-    savedGame.refresh();
-  }
+  const setup: GameSetup = savedGame.saved?.setup ?? {
+    playerName: profile.profile.name,
+    opponents: suggestOpponents(profile.profile, 2),
+  };
 
   return (
-    /* La partida ocupa tota la pantalla, com un joc; la resta és una pàgina. */
     <main className={screen === 'game' ? 'app app-joc' : 'app'}>
-      <header className="app-header">
-        <h1 onClick={goHome}>Rummikub</h1>
-        {profile.profile && (
-          <nav>
-            <button className="link" onClick={goHome} disabled={screen === 'home'}>
-              Inici
-            </button>
-            <button className="link" onClick={() => setScreen('stats')} disabled={screen === 'stats'}>
-              Estadístiques
-            </button>
-          </nav>
-        )}
-      </header>
-
-      {screen === 'home' && (
-        <HomeScreen
-          handle={profile}
-          savedGame={savedGame.saved}
-          onPlay={startGame}
-          onContinue={continueGame}
-        />
-      )}
-      {screen === 'game' && setup && (
+      {/*
+       * La partida no es desmunta mai en anar a l'historial: es continua veient
+       * exactament on era en tornar (i els bots poden acabar la seva jugada
+       * mentrestant). Per això l'historial es pinta a sobre, no al lloc.
+       */}
+      <div style={{ display: screen === 'game' ? 'contents' : 'none' }}>
         <GameScreen
           setup={setup}
-          resume={resume}
-          resumeOwners={resumeOwners}
+          resume={savedGame.saved?.game}
+          resumeOwners={savedGame.saved?.owners}
           profile={profile}
           savedGame={savedGame}
-          onExit={goHome}
+          onHistory={() => setScreen('stats')}
         />
+      </div>
+      {screen === 'stats' && (
+        <StatsScreen handle={profile} onBack={() => setScreen('game')} />
       )}
-      {screen === 'stats' && <StatsScreen handle={profile} />}
     </main>
   );
 }

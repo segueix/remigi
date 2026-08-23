@@ -2,20 +2,51 @@ import { expect, type Page } from '@playwright/test';
 
 export const PROFILE_KEY = 'rummikub:profile:local';
 
-/** Entra al joc amb un perfil net i el nom donat. */
-export async function comencaDeZero(page: Page, nom = 'Daniel'): Promise<void> {
-  await page.goto('./');
-  await page.evaluate(() => localStorage.clear());
-  await page.reload();
-  await page.getByPlaceholder('El teu nom').fill(nom);
-  await page.getByRole('button', { name: 'Desa' }).click();
-  await expect(page.getByRole('button', { name: /Comença a jugar/ })).toBeVisible();
+/** Obre el menú del jugador (tocar la teva targeta, a dalt). */
+export async function obreMenu(page: Page): Promise<void> {
+  await page.getByRole('button', { name: 'El teu jugador' }).click();
+  await expect(page.locator('.menu-usuari')).toBeVisible();
 }
 
-/** Tria el nombre d'oponents i entra a la partida. */
+/** Tanca el menú tocant fora. */
+export async function tancaMenu(page: Page): Promise<void> {
+  await page.locator('.menu-fons').click({ position: { x: 5, y: 5 } });
+  await expect(page.locator('.menu-usuari')).toHaveCount(0);
+}
+
+/**
+ * Entra al joc amb un perfil net: l'app reparteix una partida directament, i
+ * el nom es posa pel menú del jugador (la pantalla d'inici ja no existeix).
+ */
+export async function comencaDeZero(page: Page, nom = 'Daniel'): Promise<void> {
+  /*
+   * L'emmagatzematge es neteja ABANS que l'app arrenqui: com que ara reparteix
+   * una partida només arribar i la desa a cada moviment, esborrar després de
+   * carregar era una cursa contra els bots. El senyal evita que una recàrrega
+   * posterior de la mateixa prova ho torni a esborrar.
+   */
+  await page.addInitScript(() => {
+    if (localStorage.getItem('e2e:net')) return;
+    localStorage.clear();
+    localStorage.setItem('e2e:net', '1');
+  });
+  await page.goto('./');
+  await expect(page.locator('.rack .tile').first()).toBeVisible();
+  if (nom !== 'Jugador') {
+    await obreMenu(page);
+    await page.getByLabel('El teu nom').fill(nom);
+    await page.getByRole('button', { name: 'Desa el nom' }).click();
+    await tancaMenu(page);
+  }
+}
+
+/** Comença una partida nova contra tants oponents, des del menú del jugador. */
 export async function jugaContra(page: Page, oponents: 1 | 2 | 3): Promise<void> {
+  await obreMenu(page);
   await page.getByRole('button', { name: String(oponents), exact: true }).click();
-  await page.getByRole('button', { name: /Comença (a jugar|una partida nova)/ }).click();
+  await page.getByRole('button', { name: 'Partida nova' }).click();
+  await expect(page.locator('.menu-usuari')).toHaveCount(0);
+  await expect(page.locator('.player')).toHaveCount(oponents + 1);
   await expect(page.locator('.rack .tile').first()).toBeVisible();
 }
 
@@ -85,10 +116,12 @@ export async function entraAmbPartida(
   page: import('@playwright/test').Page,
   partida: { rack: Fitxa[]; board?: Fitxa[][]; haObert?: boolean; autors?: [string, number][] },
 ): Promise<void> {
-  await page.goto('./');
-  await page.evaluate(
+  // La partida s'injecta abans que l'app arrenqui (vegeu `comencaDeZero`).
+  await page.addInitScript(
     ([dades]) => {
+      if (localStorage.getItem('e2e:llavor')) return;
       localStorage.clear();
+      localStorage.setItem('e2e:llavor', '1');
       localStorage.setItem(
         'rummikub:profile:local',
         JSON.stringify({
@@ -137,7 +170,7 @@ export async function entraAmbPartida(
       },
     ],
   );
-  await page.reload();
-  await page.getByRole('button', { name: 'Continua la partida' }).click();
+  // L'app entra directament a la partida desada: no cal cap clic.
+  await page.goto('./');
   await expect(page.locator('.rack .tile').first()).toBeVisible();
 }

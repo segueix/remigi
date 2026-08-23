@@ -8,13 +8,9 @@ interface Props {
   draggingTileId?: string | null;
   /** El punter que arrossega és sobre el faristol. */
   isOver?: boolean;
-  /** Fitxes que poden formar jugada, quan l'ajuda està activada. */
-  suggested?: ReadonlySet<string>;
   /** Fitxa acabada de robar del sac, per trobar-la de seguida entre les altres. */
   drawnTileId?: string | null;
-  helpOn?: boolean;
   interactive?: boolean;
-  onToggleHelp?(): void;
   onTileClick?(tileId: string): void;
   onTilePointerDown?(event: React.PointerEvent, tileId: string): void;
   /** Tornar al faristol la fitxa triada. */
@@ -25,17 +21,14 @@ type Order = 'cap' | 'numero' | 'color';
 
 const COLOR_ORDER = ['red', 'blue', 'black', 'orange'];
 
-/** El faristol del jugador, amb ordenació i ajuda opcionals (només visuals). */
+/** El faristol del jugador, amb ordenació opcional (només visual). */
 export function RackView({
   rack,
   selectedTileId,
   draggingTileId,
   isOver,
-  suggested,
   drawnTileId,
-  helpOn,
   interactive,
-  onToggleHelp,
   onTileClick,
   onTilePointerDown,
   onReturnToRack,
@@ -46,9 +39,6 @@ export function RackView({
   return (
     <section className="rack-area">
       <header className="rack-header">
-        <h3>
-          El teu faristol <span className="muted">({rack.length})</span>
-        </h3>
         <div className="rack-tools">
           <span className="muted">Ordena:</span>
           {(['cap', 'numero', 'color'] as Order[]).map((option) => (
@@ -62,11 +52,9 @@ export function RackView({
               {option === 'cap' ? 'com està' : option === 'numero' ? 'per número' : 'per color'}
             </button>
           ))}
-          {interactive && onToggleHelp && (
-            <button type="button" className="link" onClick={onToggleHelp} aria-pressed={helpOn}>
-              {helpOn ? 'amaga l’ajuda' : 'ajuda’m'}
-            </button>
-          )}
+          <span className="muted rack-count">
+            · {rack.length} {rack.length === 1 ? 'fitxa' : 'fitxes'}
+          </span>
         </div>
       </header>
 
@@ -77,7 +65,6 @@ export function RackView({
             tile={tile}
             selected={tile.id === selectedTileId}
             dragging={tile.id === draggingTileId}
-            suggested={helpOn && suggested?.has(tile.id)}
             drawn={tile.id === drawnTileId}
             onClick={interactive ? () => onTileClick?.(tile.id) : undefined}
             onPointerDown={

@@ -7,6 +7,7 @@ import {
   entraAmbPartida,
   f,
   jugaContra,
+  obreMenu,
   robaFinsAlFinal,
   robaFinsQueUnBotJugui,
 } from './ajudants';
@@ -135,23 +136,6 @@ test.describe('moure fitxes', () => {
     await expect(page.locator('.tile.selected')).toHaveCount(0);
   });
 
-  test('l’ajuda marca les fitxes que poden formar jugada', async ({ page }) => {
-    await comencaDeZero(page);
-    await jugaContra(page, 1);
-    await page.getByRole('button', { name: 'ajuda’m' }).click();
-
-    // Una mà de 14 fitxes a l'atzar pot no tenir cap jugada possible, i llavors
-    // no marcar-ne cap és el comportament correcte. Es roba fins que n'hi hagi.
-    for (let i = 0; i < 30 && (await page.locator('.rack .tile.suggested').count()) === 0; i++) {
-      const roba = page.getByRole('button', { name: /Robar fitxa|Passar torn/ });
-      if (await roba.isEnabled().catch(() => false)) await roba.click();
-      await page.waitForTimeout(60);
-    }
-
-    await expect(page.locator('.rack .tile.suggested').first()).toBeVisible();
-    await page.getByRole('button', { name: 'amaga l’ajuda' }).click();
-    await expect(page.locator('.rack .tile.suggested')).toHaveCount(0);
-  });
 });
 
 test.describe('en pantalla petita', () => {
@@ -179,8 +163,9 @@ test.describe('en pantalla petita', () => {
 });
 
 test.describe('explicar les regles', () => {
-  test('l’inici explica com s’obre, amb exemples', async ({ page }) => {
+  test('el menú del jugador explica com s’obre, amb exemples', async ({ page }) => {
     await comencaDeZero(page);
+    await obreMenu(page);
 
     const explicacio = page.locator('details.rules');
     await expect(explicacio).toBeVisible();
@@ -307,7 +292,7 @@ test.describe('la taula de joc', () => {
 
     // Al mòbil hi ha també el botó de girar la pantalla; a l'escriptori, no.
     const botons = page.locator('.actions button');
-    await expect(botons).toHaveCount(isMobile ? 5 : 4);
+    await expect(botons).toHaveCount(isMobile ? 4 : 3);
     const altures = await botons.evaluateAll((b) => b.map((el) => el.getBoundingClientRect().top));
     // Tots comencen a la mateixa alçada: cap no ha saltat de línia.
     expect(new Set(altures.map((v) => Math.round(v))).size).toBe(1);

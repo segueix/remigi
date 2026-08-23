@@ -749,6 +749,56 @@ l'escriptori). Captures en vertical i apaïsat amb el botó al seu lloc.
 - [2026-08-23] TypeScript ja no declara `screen.orientation.lock` (massa
   navegadors sense suport): es comprova en temps d'execució i es tipa a mà.
 
+### Directes a la taula: menú del jugador i rivals amb nom d'usuari ✅ Feta (2026-08-23)
+
+Demanat pel jugador: fora la pantalla d'inici (l'app entra directament a la
+partida), bots amb nom d'usuari i avatars més vistosos, faristol sense títol
+(el compte de fitxes al costat d'«Ordena») i sense «ajuda'm», i tot el que era
+a l'inici —nom, nivell, partida nova, historial— en un desplegable que s'obre
+tocant el teu jugador.
+
+- [x] L'app entra directament a la taula: si hi ha partida a mig jugar es
+      continua sola, i si no se'n reparteix una amb els rivals que toquen per
+      l'habilitat. El perfil es crea sol el primer cop («Jugador») i el nom es
+      canvia des del menú.
+- [x] Menú del jugador (`components/PlayerMenu.tsx`): nom, nombre de rivals,
+      nivell (automàtic o fixat), «Partida nova», «Historial» i «Com es juga».
+- [x] Planter refet amb noms d'usuari (GuineuAstuta, PolpVuitMans, MussolSavi…)
+      i avatars amb degradat de colors propi de cada personatge; l'anell
+      conserva el color de taula del bot, que és el que lliga amb els marcs.
+- [x] Faristol: fora el títol i l'ajuda; «Ordena: … · N fitxes».
+- [x] L'historial (abans «Estadístiques») porta el retorn a la partida i el
+      reinici del perfil, que vivia a l'inici.
+- [x] Fora el botó «Deixar la partida»: la seva destinació ja no existeix;
+      «Partida nova» i «Historial» viuen al menú. Queden 3 botons de torn
+      (4 al mòbil, amb el gir).
+
+**Criteris d'acceptació (verificats)**: 60 proves de navegador en verd amb el
+flux nou (entrada directa, nom pel menú, partida nova des del menú, historial
+amb retorn, reinici que torna a crear el perfil de zero, regles dins del menú)
+i 102 tests de unitat. Captures de taula i menú.
+
+**Decisions**:
+
+- **La partida no es desmunta en anar a l'historial**: es pinta a sobre i es
+  torna exactament on era, sense passar pel desat.
+- **El nom del teu jugador surt del perfil, no de l'estat de la partida**: així
+  canviar-lo al menú es veu a l'instant; l'estat del motor conserva el nom amb
+  què va començar la partida.
+- La configuració viva de la partida (rivals, adaptació) es guarda a la
+  pantalla de joc (`currentSetup`), perquè una partida nova des del menú quedi
+  ben registrada al perfil i ben desada.
+
+### Problemes trobats
+
+- [2026-08-23] **Les proves que injectaven una partida desada van petar**: ara
+  l'app reparteix una partida només arribar i la desa a cada moviment, així que
+  esborrar o injectar `localStorage` després de carregar era una cursa contra
+  els bots (que amb `VITE_BOT_DELAY=0` juguen a l'instant i sobreescrivien la
+  partida injectada abans del `reload`). Resolt amb `addInitScript`: la llavor
+  s'hi posa abans que l'app arrenqui, amb un senyal perquè una recàrrega dins
+  de la mateixa prova no ho torni a esborrar.
+
 ---
 
 ## Riscos coneguts (a vigilar quan toqui)

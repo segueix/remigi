@@ -172,3 +172,6 @@ state = applyMove(state, decideAiMove(state, state.currentPlayer));
       color mentre ningú no les toqui.
 - [x] Taula de joc a pantalla completa: feltre verd, faristol de fusta amb les
       fitxes a sota, i rivals amb nom i avatar que canvien a cada partida.
+- [x] Directes a la taula: sense pantalla d'inici, amb el nom, el nivell, la
+      partida nova i l'historial en un menú que s'obre tocant el teu jugador, i
+      rivals amb nom d'usuari i avatar de colors.

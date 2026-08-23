@@ -4,9 +4,11 @@ import type { ProfileHandle } from '../state/useProfile';
 
 interface Props {
   handle: ProfileHandle;
+  /** Tornar a la partida (l'única altra pantalla que hi ha). */
+  onBack(): void;
 }
 
-export function StatsScreen({ handle }: Props) {
+export function StatsScreen({ handle, onBack }: Props) {
   const profile = handle.profile;
   if (!profile) return <p className="muted">Encara no hi ha cap perfil.</p>;
 
@@ -16,7 +18,12 @@ export function StatsScreen({ handle }: Props) {
 
   return (
     <section className="card">
-      <h2>Estadístiques</h2>
+      <div className="row stats-header">
+        <h2>Historial</h2>
+        <button className="secondary" onClick={onBack}>
+          ← Torna a la partida
+        </button>
+      </div>
       <dl className="stats">
         <div>
           <dt>Habilitat</dt>
@@ -47,7 +54,38 @@ export function StatsScreen({ handle }: Props) {
           <HistoryList history={profile.history} />
         </>
       )}
+
+      <ResetProfile handle={handle} />
     </section>
+  );
+}
+
+/** Esborrar el perfil i tornar a començar de zero, amb confirmació. */
+function ResetProfile({ handle }: { handle: ProfileHandle }) {
+  const [confirming, setConfirming] = useState(false);
+
+  return (
+    <p className="muted small reset-line">
+      {confirming ? (
+        <>
+          Segur que vols esborrar el perfil i tot l’historial?{' '}
+          <button
+            type="button"
+            className="link danger"
+            onClick={() => void handle.reset().then(() => setConfirming(false))}
+          >
+            Sí, esborra’l
+          </button>{' '}
+          <button type="button" className="link" onClick={() => setConfirming(false)}>
+            No, deixa’l
+          </button>
+        </>
+      ) : (
+        <button type="button" className="link danger" onClick={() => setConfirming(true)}>
+          Reinicia el perfil
+        </button>
+      )}
+    </p>
   );
 }
 

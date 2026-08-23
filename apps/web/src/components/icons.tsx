@@ -53,14 +53,6 @@ export const UndoIcon = () => (
   </Icon>
 );
 
-/** Deixar la partida: la porta de sortida. */
-export const ExitIcon = () => (
-  <Icon>
-    <path d="M13.5 4H18a1.5 1.5 0 0 1 1.5 1.5v13A1.5 1.5 0 0 1 18 20h-4.5" />
-    <line x1="14" y1="12" x2="4.5" y2="12" />
-    <polyline points="8.5 8 4.5 12 8.5 16" />
-  </Icon>
-);
 
 /** Girar la pantalla: un mòbil dret i la fletxa que el tomba. */
 export const RotateIcon = () => (

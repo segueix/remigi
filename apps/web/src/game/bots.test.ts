@@ -6,6 +6,11 @@ describe('el planter de bots', () => {
     expect(BOT_PERSONAS.length).toBeGreaterThanOrEqual(20);
     expect(new Set(BOT_PERSONAS.map((p) => p.name)).size).toBe(BOT_PERSONAS.length);
     expect(new Set(BOT_PERSONAS.map((p) => p.emoji)).size).toBe(BOT_PERSONAS.length);
+    // I cadascun amb els dos colors del seu avatar.
+    for (const persona of BOT_PERSONAS) {
+      expect(persona.colors).toHaveLength(2);
+      for (const color of persona.colors) expect(color).toMatch(/^#[0-9a-fA-F]{6}$/);
+    }
   });
 
   it('tria personatges diferents dins de la mateixa partida', () => {
@@ -28,8 +33,9 @@ describe('el planter de bots', () => {
   });
 
   it('cada nom té el seu avatar, i els desconeguts en tenen un de recanvi', () => {
-    expect(botEmoji('Núria')).toBe('🦉');
-    // Una partida desada d'una versió anterior porta bots que es deien «Bot 1».
+    expect(botEmoji('MussolSavi')).toBe('🦉');
+    // Una partida desada d'una versió anterior porta bots d'un planter antic.
     expect(botEmoji('Bot 1')).toBe('🤖');
+    expect(botEmoji('Núria')).toBe('🤖');
   });
 });

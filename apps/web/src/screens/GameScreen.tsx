@@ -1,11 +1,12 @@
-import { difficultyByKey, finalScores, findRackMelds, type Tile } from '@rummikub/core';
+import { difficultyByKey, finalScores, type Tile } from '@rummikub/core';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { BoardView } from '../components/BoardView';
-import { CheckIcon, DrawIcon, ExitIcon, PassIcon, RotateIcon, UndoIcon } from '../components/icons';
+import { CheckIcon, DrawIcon, PassIcon, RotateIcon, UndoIcon } from '../components/icons';
+import { PlayerMenu } from '../components/PlayerMenu';
 import { RackView } from '../components/RackView';
 import { TileView } from '../components/TileView';
 import { useDragTile } from '../game/useDragTile';
-import { botEmoji } from '../game/bots';
+import { botPersona } from '../game/bots';
 import { meldAuthors } from '../game/meldOwners';
 import { invalidMeldIndexes, missingOpeningPoints, openingPoints } from '../game/turnDraft';
 import { useGame, type GameHandle, type GameSetup } from '../game/useGame';
@@ -24,14 +25,21 @@ interface Props {
   resumeOwners?: SavedGame['owners'];
   profile: ProfileHandle;
   savedGame: SavedGameHandle;
-  onExit(): void;
+  /** Obre l'historial (les estadístiques). */
+  onHistory(): void;
 }
 
-export function GameScreen({ setup, resume, resumeOwners, profile, savedGame, onExit }: Props) {
+export function GameScreen({ setup, resume, resumeOwners, profile, savedGame, onHistory }: Props) {
+  /*
+   * La configuració viva de la partida: comença amb la que arriba (nova o
+   * represa) i canvia quan el menú engega una partida nova. El registre del
+   * resultat i el desat fan servir aquesta, no la inicial.
+   */
+  const [currentSetup, setCurrentSetup] = useState(setup);
   const handle = useGame(setup, resume, resumeOwners);
   const { game, draft, selectedTileId, error, highlighted, drawnTileId, isHumanTurn } = handle;
-  const change = useRecordResult(game, setup.opponents, profile);
-  const [helpOn, setHelpOn] = useState(false);
+  const change = useRecordResult(game, currentSetup.opponents, profile);
+  const [menuOpen, setMenuOpen] = useState(false);
   const rotation = useScreenRotation();
 
   const { moveTileTo } = handle;
@@ -42,20 +50,18 @@ export function GameScreen({ setup, resume, resumeOwners, profile, savedGame, on
   const { persist, clear } = savedGame;
   const { meldOwners } = handle;
   useEffect(() => {
-    if (game.status === 'playing') persist({ setup, game, owners: [...meldOwners] });
+    if (game.status === 'playing') persist({ setup: currentSetup, game, owners: [...meldOwners] });
     else clear();
-  }, [game, setup, meldOwners, persist, clear]);
+  }, [game, currentSetup, meldOwners, persist, clear]);
 
-  // Fitxes de la mà que poden formar alguna jugada. Només es calcula quan
-  // l'ajuda està encesa i quan canvia el faristol.
-  const suggested = useMemo(() => {
-    if (!helpOn || !draft) return new Set<string>();
-    const ids = new Set<string>();
-    for (const candidate of findRackMelds(draft.rack, true)) {
-      for (const tile of candidate.meld) ids.add(tile.id);
-    }
-    return ids;
-  }, [helpOn, draft]);
+  const startNewGame = useCallback(
+    (next: GameSetup) => {
+      setCurrentSetup(next);
+      setMenuOpen(false);
+      handle.restart(next);
+    },
+    [handle],
+  );
 
   /*
    * La taula que es veu és la del torn en curs mentre jugues tu, i la del motor
@@ -87,7 +93,7 @@ export function GameScreen({ setup, resume, resumeOwners, profile, savedGame, on
   );
 
   if (game.status === 'finished') {
-    return <GameOver handle={handle} change={change} onExit={onExit} />;
+    return <GameOver handle={handle} change={change} onHistory={onHistory} />;
   }
 
   const human = game.players[0];
@@ -99,28 +105,71 @@ export function GameScreen({ setup, resume, resumeOwners, profile, savedGame, on
     <section className="game">
       <header className="game-top">
         <ul className="players">
-          {game.players.map((player, index) => (
-            <li
-              key={player.id}
-              className={index === game.currentPlayer ? 'player active' : 'player'}
-              /* Cada bot té color propi; aquí és on es veu de qui és cadascun. */
-              data-bot={player.kind === 'ai' ? index : undefined}
-            >
-              <span className="player-name">
-                {/* L'avatar: l'emoji del bot, o la inicial del jugador humà. */}
-                <span className="player-color" aria-hidden="true">
-                  {player.kind === 'ai' ? botEmoji(player.name) : initialOf(player.name)}
+          {game.players.map((player, index) => {
+            const isHuman = player.kind === 'human';
+            const persona = isHuman ? null : botPersona(player.name);
+            const inner = (
+              <>
+                <span className="player-name">
+                  {/* L'avatar: el del bot amb els seus colors, o la teva inicial. */}
+                  <span
+                    className="player-color"
+                    aria-hidden="true"
+                    style={
+                      persona
+                        ? { background: `linear-gradient(135deg, ${persona.colors[0]}, ${persona.colors[1]})` }
+                        : undefined
+                    }
+                  >
+                    {persona ? persona.emoji : initialOf(profile.profile?.name ?? player.name)}
+                  </span>
+                  <span className="player-nom">
+                    {isHuman ? (profile.profile?.name ?? player.name) : player.name}
+                  </span>
+                  {player.kind === 'ai' && (
+                    <span className="tag">{difficultyByKey(player.aiLevel).label}</span>
+                  )}
+                  {!player.hasOpened && <span className="tag">sense obrir</span>}
                 </span>
-                <span className="player-nom">{player.name}</span>
-                {player.kind === 'ai' && (
-                  <span className="tag">{difficultyByKey(player.aiLevel).label}</span>
+                <span className="muted">{player.rack.length} fitxes</span>
+              </>
+            );
+            return (
+              <li
+                key={player.id}
+                className={index === game.currentPlayer ? 'player active' : 'player'}
+                /* Cada bot té color propi; aquí és on es veu de qui és cadascun. */
+                data-bot={player.kind === 'ai' ? index : undefined}
+              >
+                {isHuman ? (
+                  /* El teu jugador s'obre: nom, nivell, partida nova i historial. */
+                  <button
+                    type="button"
+                    className="player-obre"
+                    onClick={() => setMenuOpen((open) => !open)}
+                    aria-expanded={menuOpen}
+                    aria-label="El teu jugador"
+                  >
+                    {inner}
+                    <span className="fletxa" aria-hidden="true">▾</span>
+                  </button>
+                ) : (
+                  inner
                 )}
-                {!player.hasOpened && <span className="tag">sense obrir</span>}
-              </span>
-              <span className="muted">{player.rack.length} fitxes</span>
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ul>
+
+        {menuOpen && (
+          <PlayerMenu
+            profile={profile}
+            current={currentSetup}
+            onNewGame={startNewGame}
+            onHistory={onHistory}
+            onClose={() => setMenuOpen(false)}
+          />
+        )}
 
         {/* Els canvis de torn i els errors s'anuncien als lectors de pantalla. */}
         <p className="muted turn-line" aria-live="polite">
@@ -181,11 +230,8 @@ export function GameScreen({ setup, resume, resumeOwners, profile, savedGame, on
         selectedTileId={selectedTileId}
         draggingTileId={drag.dragging?.tileId ?? null}
         isOver={drag.dragging?.over?.kind === 'rack'}
-        suggested={suggested}
         drawnTileId={drawnTileId}
-        helpOn={helpOn}
         interactive={isHumanTurn}
-        onToggleHelp={() => setHelpOn((on) => !on)}
         onTileClick={(tileId) => handleTileClick(tileId, null)}
         onTilePointerDown={drag.start}
         onReturnToRack={() => handle.placeSelected({ kind: 'rack' })}
@@ -226,10 +272,6 @@ export function GameScreen({ setup, resume, resumeOwners, profile, savedGame, on
           <UndoIcon />
           <span className="btn-text">Desfer canvis</span>
         </button>
-        <button className="link" onClick={onExit} aria-label="Deixar la partida" title="Deixar la partida">
-          <ExitIcon />
-          <span className="btn-text">Deixar la partida</span>
-        </button>
         {rotation.available && (
           <button
             className="secondary gir"
@@ -267,11 +309,11 @@ function initialOf(name: string): string {
 function GameOver({
   handle,
   change,
-  onExit,
+  onHistory,
 }: {
   handle: GameHandle;
   change: RatingChange | null;
-  onExit(): void;
+  onHistory(): void;
 }) {
   const { game } = handle;
   const scores = finalScores(game);
@@ -314,8 +356,8 @@ function GameOver({
 
       <div className="row">
         <button onClick={() => handle.restart()}>Una altra partida</button>
-        <button className="secondary" onClick={onExit}>
-          Torna a l’inici
+        <button className="secondary" onClick={onHistory}>
+          Historial
         </button>
       </div>
     </section>

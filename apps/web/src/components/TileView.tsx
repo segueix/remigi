@@ -4,8 +4,6 @@ interface Props {
   tile: Tile;
   selected?: boolean;
   highlighted?: boolean;
-  /** Marcada com a part d'una jugada possible (ajuda opcional). */
-  suggested?: boolean;
   /** Acabada de robar del sac: es marca amb un recuadre fins que tornis a jugar. */
   drawn?: boolean;
   /** S'està arrossegant: es queda enrere, esmorteïda. */
@@ -21,7 +19,6 @@ export function TileView({
   tile,
   selected,
   highlighted,
-  suggested,
   drawn,
   dragging,
   floating,
@@ -32,14 +29,13 @@ export function TileView({
   classes.push(tile.kind === 'joker' ? 'tile-joker' : `tile-${tile.color}`);
   if (selected) classes.push('selected');
   if (highlighted) classes.push('highlighted');
-  if (suggested) classes.push('suggested');
   if (drawn) classes.push('drawn');
   if (dragging) classes.push('dragging');
   if (floating) classes.push('floating');
 
   const label = tile.kind === 'joker' ? 'Joker' : `${tile.value} ${COLOR_LABELS[tile.color]}`;
   // El que es veu amb un cop d'ull s'ha de poder sentir també.
-  const notes = [suggested && 'pot formar jugada', drawn && 'acabada de robar'].filter(Boolean);
+  const notes = [drawn && 'acabada de robar'].filter(Boolean);
 
   if (floating) {
     return (
