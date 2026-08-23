@@ -76,8 +76,15 @@ Els botons del torn van sempre en **una sola línia**, amb icona de traç
 (`components/icons.tsx`, SVG en línia, sense llibreries) i rètol; quan el rètol
 no hi cap s'amaga i queda la icona, com en una app. El nom accessible el porta
 `aria-label` i no canvia mai. Amb el **mòbil apaïsat**, tot el que no és taula
-s'estreny: jugadors en avatar i compte, faristol en una sola filera amb
-desplaçament horitzontal, i botons només amb icona.
+s'estreny: jugadors amb el nom en lletra menuda, faristol en una sola filera
+amb desplaçament horitzontal, i botons només amb icona.
+
+El manifest no clava cap orientació (`"orientation": "any"`): l'app instal·lada
+gira amb el telèfon. I a la dreta dels botons del torn hi ha **«Gira la
+pantalla»**, que posa el joc a pantalla completa i el gira a l'orientació
+contrària (el bloqueig d'orientació dels navegadors demana pantalla completa);
+només surt on pot funcionar, i per això als iPhone no hi és: allà girar el
+telèfon fa el mateix.
 
 ## Els rivals
 

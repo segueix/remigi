@@ -301,12 +301,13 @@ test.describe('la taula de joc', () => {
     await expect(page.locator('.player[data-bot] .player-color')).toHaveCount(3);
   });
 
-  test('els botons del torn van en una sola línia, també en pantalla estreta', async ({ page }) => {
+  test('els botons del torn van en una sola línia, també en pantalla estreta', async ({ page, isMobile }) => {
     await comencaDeZero(page);
     await jugaContra(page, 1);
 
+    // Al mòbil hi ha també el botó de girar la pantalla; a l'escriptori, no.
     const botons = page.locator('.actions button');
-    await expect(botons).toHaveCount(4);
+    await expect(botons).toHaveCount(isMobile ? 5 : 4);
     const altures = await botons.evaluateAll((b) => b.map((el) => el.getBoundingClientRect().top));
     // Tots comencen a la mateixa alçada: cap no ha saltat de línia.
     expect(new Set(altures.map((v) => Math.round(v))).size).toBe(1);
@@ -339,6 +340,23 @@ test.describe('la taula de joc', () => {
       .evaluateAll((b) => b.map((el) => el.getBoundingClientRect().height))) {
       expect(alçada).toBeGreaterThanOrEqual(44);
     }
+  });
+
+  test('el botó de girar la pantalla surt només on pot funcionar', async ({ page, isMobile }) => {
+    await comencaDeZero(page);
+    await jugaContra(page, 1);
+
+    const boto = page.getByRole('button', { name: 'Gira la pantalla' });
+    if (!isMobile) {
+      // Sense pantalla tàctil no té sentit: no hi és.
+      await expect(boto).toHaveCount(0);
+      return;
+    }
+    await expect(boto).toBeVisible();
+    // En un emulador el bloqueig d'orientació pot fallar: prémer no ha de petar.
+    await boto.click();
+    await expect(page.locator('.rack .tile').first()).toBeVisible();
+    await expect(boto).toBeVisible();
   });
 
   test('la partida cap a la pantalla, sense desplaçament de pàgina', async ({ page }) => {

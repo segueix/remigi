@@ -61,3 +61,12 @@ export const ExitIcon = () => (
     <polyline points="8.5 8 4.5 12 8.5 16" />
   </Icon>
 );
+
+/** Girar la pantalla: un mòbil dret i la fletxa que el tomba. */
+export const RotateIcon = () => (
+  <Icon>
+    <rect x="4" y="3" width="9.5" height="15" rx="2" />
+    <path d="M17 6a5.5 5.5 0 0 1 4 5.5V15" />
+    <polyline points="18.5 13 21 16 23.5 13" />
+  </Icon>
+);

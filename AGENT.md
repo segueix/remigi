@@ -714,6 +714,41 @@ amagar-lo sigui possible.
 
 *(cap: el canvi ha sortit net a la primera passada de proves)*
 
+### El mòbil no girava, i el gir amb un botó ✅ Feta (2026-08-23)
+
+El jugador va veure que al mòbil el joc no es posava en horitzontal ni girant
+el telèfon, i va demanar també un botó de gir al costat dels quatre del torn, i
+que els noms dels bots es veiessin (en apaïsat s'havien amagat per estalviar
+espai).
+
+**El perquè no girava**: el manifest de l'aplicació portava
+`"orientation": "portrait"` des que es va crear, així que l'app instal·lada
+quedava clavada en vertical per molt que girés el telèfon. No era cap misteri
+de CSS: era una línia de configuració.
+
+- [x] `orientation: "any"` al manifest: l'app gira amb el telèfon.
+- [x] Botó «Gira la pantalla» a la dreta dels quatre del torn, amb la seva
+      icona: posa el joc a pantalla completa (el bloqueig d'orientació ho
+      demana) i gira a l'orientació contrària; tornar-lo a prémer ho desfà.
+      Només surt on pot funcionar (pantalla tàctil i navegador amb
+      `screen.orientation.lock`); als iPhone no hi és, i girar el telèfon fa
+      el mateix.
+- [x] Els noms dels bots tornen a veure's en apaïsat, en lletra menuda.
+
+**Criteris d'acceptació (verificats)**: 62 proves de navegador en verd (el botó
+surt al projecte de mòbil i no al d'escriptori, prémer-lo no peta encara que
+l'emulador no pugui girar, i el recompte de botons és 5 al mòbil i 4 a
+l'escriptori). Captures en vertical i apaïsat amb el botó al seu lloc.
+
+### Problemes trobats
+
+- [2026-08-23] **El bloqueig d'orientació no és un gir de CSS**: girar la
+  interfície per transformació hauria trencat l'arrossegament (coordenades del
+  punter). S'ha fet amb l'API d'orientació de debò, acceptant que on no hi és
+  (iPhone) el botó no surti: val més un botó que no surt que un que no fa res.
+- [2026-08-23] TypeScript ja no declara `screen.orientation.lock` (massa
+  navegadors sense suport): es comprova en temps d'execució i es tipa a mà.
+
 ---
 
 ## Riscos coneguts (a vigilar quan toqui)

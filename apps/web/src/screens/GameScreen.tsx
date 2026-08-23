@@ -1,7 +1,7 @@
 import { difficultyByKey, finalScores, findRackMelds, type Tile } from '@rummikub/core';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { BoardView } from '../components/BoardView';
-import { CheckIcon, DrawIcon, ExitIcon, PassIcon, UndoIcon } from '../components/icons';
+import { CheckIcon, DrawIcon, ExitIcon, PassIcon, RotateIcon, UndoIcon } from '../components/icons';
 import { RackView } from '../components/RackView';
 import { TileView } from '../components/TileView';
 import { useDragTile } from '../game/useDragTile';
@@ -32,6 +32,7 @@ export function GameScreen({ setup, resume, resumeOwners, profile, savedGame, on
   const { game, draft, selectedTileId, error, highlighted, drawnTileId, isHumanTurn } = handle;
   const change = useRecordResult(game, setup.opponents, profile);
   const [helpOn, setHelpOn] = useState(false);
+  const rotation = useScreenRotation();
 
   const { moveTileTo } = handle;
   const drag = useDragTile(isHumanTurn, moveTileTo);
@@ -229,6 +230,17 @@ export function GameScreen({ setup, resume, resumeOwners, profile, savedGame, on
           <ExitIcon />
           <span className="btn-text">Deixar la partida</span>
         </button>
+        {rotation.available && (
+          <button
+            className="secondary gir"
+            onClick={rotation.toggle}
+            aria-label="Gira la pantalla"
+            title="Gira la pantalla"
+            aria-pressed={rotation.locked}
+          >
+            <RotateIcon />
+          </button>
+        )}
       </div>
 
       {/* Còpia que segueix el punter. No rep clics: així no tapa la destinació. */}
@@ -308,4 +320,60 @@ function GameOver({
       </div>
     </section>
   );
+}
+
+/**
+ * Girar la pantalla des d'un botó, per a qui té el gir del mòbil blocat o vol
+ * jugar en horitzontal sense remenar res: es posa l'aplicació a pantalla
+ * completa (el bloqueig d'orientació ho demana) i es gira a l'orientació
+ * contrària; tornar-lo a prémer ho desfà. Si el navegador no ho permet (els
+ * iPhone, per exemple), el botó ni surt: girar el mòbil fa el mateix, ara que
+ * el manifest ja no clava l'app en vertical.
+ */
+function useScreenRotation() {
+  const [locked, setLocked] = useState(false);
+
+  // TypeScript ja no declara `lock` (massa navegadors sense): es mira en viu.
+  const orientation = () =>
+    screen.orientation as ScreenOrientation & {
+      lock?(target: 'landscape' | 'portrait'): Promise<void>;
+    };
+
+  const available = useMemo(
+    () =>
+      typeof screen !== 'undefined' &&
+      typeof orientation()?.lock === 'function' &&
+      navigator.maxTouchPoints > 0,
+    [],
+  );
+
+  // Si se surt de pantalla completa (gest del sistema), el bloqueig cau sol.
+  useEffect(() => {
+    if (!available) return;
+    const onChange = () => {
+      if (!document.fullscreenElement) setLocked(false);
+    };
+    document.addEventListener('fullscreenchange', onChange);
+    return () => document.removeEventListener('fullscreenchange', onChange);
+  }, [available]);
+
+  const toggle = useCallback(async () => {
+    try {
+      if (!locked) {
+        await document.documentElement.requestFullscreen?.().catch(() => {});
+        const target = screen.orientation.type.startsWith('portrait') ? 'landscape' : 'portrait';
+        await orientation().lock?.(target);
+        setLocked(true);
+      } else {
+        screen.orientation.unlock();
+        setLocked(false);
+        if (document.fullscreenElement) await document.exitFullscreen().catch(() => {});
+      }
+    } catch {
+      // El navegador no ha volgut girar: no passa res, girar el mòbil funciona.
+      setLocked(false);
+    }
+  }, [locked]);
+
+  return { available, locked, toggle };
 }
