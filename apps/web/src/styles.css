@@ -1043,14 +1043,19 @@ button.link.danger {
 /* ---------- Arrossegar fitxes ---------- */
 
 /*
- * Cal `touch-action: none` perquè el navegador no s'endugui el gest com un
- * desplaçament abans que puguem arrossegar la fitxa. Com que això lleva la
- * possibilitat de desplaçar la pàgina llliscant just damunt d'una fitxa, la
- * taula i el faristol tenen desplaçament propi i, a més, el «tria i col·loca»
- * a tocs continua funcionant per a qui ho prefereixi.
+ * Les fitxes NO porten `touch-action: none`: lliscar sobre una fitxa ha de
+ * desplaçar la taula o el faristol amb normalitat, que si no les jugades de
+ * fora de la pantalla queden fora de l'abast. Amb el dit, la fitxa s'agafa
+ * mantenint-la premuda un instant (vegeu `useDragTile.ts`, que atura el
+ * desplaçament només mentre hi ha fitxa aixecada). `manipulation` deixa
+ * lliscar i pessigar però treu l'espera del doble toc, i la resta evita que
+ * el manteniment acabi seleccionant text o obrint el menú del navegador.
  */
 .tile {
-  touch-action: none;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .tile.dragging {

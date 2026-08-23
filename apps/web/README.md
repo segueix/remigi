@@ -110,7 +110,11 @@ partida desada d'una versió anterior) rep l'avatar de recanvi.
 
 Dues maneres, totes dues amb el mateix resultat:
 
-- **Arrossegar** la fitxa fins on la vols deixar (funciona amb ratolí i amb dit).
+- **Arrossegar** la fitxa fins on la vols deixar. Amb el ratolí, prem i mou;
+  amb el dit, **mantén la fitxa premuda un instant** (una vibració curta ho
+  confirma) i enduu-te-la — una lliscada normal sobre les fitxes desplaça la
+  taula o el faristol, que és el que fa possible arribar a jugades que no són
+  a la pantalla.
 - **Tocar per triar i tocar per deixar**: una jugada de la taula, un lloc buit
   de la taula, «+ Jugada nova» o el faristol. Aquesta és també la via per
   teclat, i per això no desapareix.
@@ -201,7 +205,8 @@ El que abans era una llista per repassar a mà ara ho comprova `npm run test:e2e
 - El motor rebutja la sortida de menys de 30 punts i la jugada de menys de 3
   fitxes, i no deixa endur-se al faristol una fitxa que ja era a la taula.
 - «Desfer canvis» retorna el torn a com estava.
-- Arrossegar del faristol a la taula.
+- Arrossegar del faristol a la taula amb el ratolí; amb tocs de debò, lliscar
+  sobre les fitxes desplaça la taula i mantenir premut arrossega.
 - L'app entra directament a la partida; el nom, els rivals i la partida nova es
   fan des del menú del jugador, i l'historial en porta el retorn i el reinici.
 - El perfil es conserva, els oponents proposats pugen amb l'habilitat, i una

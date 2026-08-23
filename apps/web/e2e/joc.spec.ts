@@ -138,6 +138,84 @@ test.describe('moure fitxes', () => {
 
 });
 
+test.describe('amb el dit', () => {
+  test.skip(({ isMobile }) => !isMobile, 'només té sentit al projecte de mòbil');
+
+  test('lliscar desplaça la taula i mantenir premut arrossega la fitxa', async ({ page }) => {
+    // Una taula ben plena, que no capiga a la pantalla: el desplaçament hi és
+    // imprescindible per arribar a les jugades de baix.
+    const grups: ReturnType<typeof f>[][] = [];
+    for (let v = 1; v <= 13; v++) grups.push([f('red', v), f('blue', v), f('black', v)]);
+    for (let v = 2; v <= 13; v++) grups.push([f('red', v, 'b'), f('blue', v, 'b'), f('black', v, 'b')]);
+    await entraAmbPartida(page, {
+      rack: [f('orange', 5), f('orange', 6)],
+      board: grups,
+      haObert: true,
+    });
+
+    const taula = page.locator('.board');
+    expect(await taula.evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(true);
+
+    // Lliscada que COMENÇA sobre una fitxa de la taula: ha de desplaçar.
+    const cdp = await page.context().newCDPSession(page);
+    const fitxa = (await page.locator('.board .tile').first().boundingBox())!;
+    const x = fitxa.x + fitxa.width / 2;
+    const y = fitxa.y + fitxa.height / 2;
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
+    for (let i = 1; i <= 6; i++) {
+      await cdp.send('Input.dispatchTouchEvent', {
+        type: 'touchMove',
+        touchPoints: [{ x, y: y - i * 30 }],
+      });
+      await page.waitForTimeout(16);
+    }
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+
+    await expect.poll(() => taula.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+    // I no s'ha endut cap fitxa: era un desplaçament, no un arrossegament.
+    await expect(page.locator('.drag-layer')).toHaveCount(0);
+    await expect(page.locator('.rack .tile')).toHaveCount(2);
+    await expect(page.locator('.board .meld')).toHaveCount(grups.length);
+
+    // Mantenir premuda una fitxa del faristol, en canvi, l'aixeca...
+    // (primer es deixa morir la inèrcia de la lliscada, que continua rodant
+    // uns instants pel seu compte i embrutaria la mesura de després)
+    await expect
+      .poll(async () => {
+        const abans = await taula.evaluate((el) => el.scrollTop);
+        await page.waitForTimeout(90);
+        return (await taula.evaluate((el) => el.scrollTop)) === abans;
+      })
+      .toBe(true);
+    await taula.evaluate((el) => el.scrollTo(0, 0));
+    await page.waitForTimeout(80);
+    const delRack = (await page.locator('.rack .tile').first().boundingBox())!;
+    const rx = delRack.x + delRack.width / 2;
+    const ry = delRack.y + delRack.height / 2;
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: rx, y: ry }] });
+    await page.waitForTimeout(320); // més que el manteniment de 180 ms
+    await expect(page.locator('.drag-layer')).toHaveCount(1);
+
+    // ...i el dit se l'enduu fins a una jugada de la taula sense desplaçar res.
+    const destinacio = (await page.locator('.board .meld').first().boundingBox())!;
+    const dx = destinacio.x + destinacio.width / 2;
+    const dy = destinacio.y + destinacio.height / 2;
+    for (let i = 1; i <= 8; i++) {
+      await cdp.send('Input.dispatchTouchEvent', {
+        type: 'touchMove',
+        touchPoints: [{ x: rx + ((dx - rx) * i) / 8, y: ry + ((dy - ry) * i) / 8 }],
+      });
+      await page.waitForTimeout(16);
+    }
+    // Mentre la fitxa és a l'aire, el dit no desplaça res.
+    expect(await taula.evaluate((el) => el.scrollTop)).toBe(0);
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+
+    await expect(page.locator('.board .meld').first().locator('.tile')).toHaveCount(4);
+    await expect(page.locator('.rack .tile')).toHaveCount(1);
+  });
+});
+
 test.describe('en pantalla petita', () => {
   test.skip(({ isMobile }) => !isMobile, 'només té sentit al projecte de mòbil');
 

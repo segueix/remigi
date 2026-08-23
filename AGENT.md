@@ -799,6 +799,42 @@ i 102 tests de unitat. Captures de taula i menú.
   s'hi posa abans que l'app arrenqui, amb un senyal perquè una recàrrega dins
   de la mateixa prova no ho torni a esborrar.
 
+### Amb el dit: lliscar desplaça, mantenir premut arrossega ✅ Feta (2026-08-23)
+
+El jugador va topar amb un mur: amb el tacte no es podia desplaçar la taula, i
+les fitxes no es podien portar a jugades que no fossin a la pantalla. La causa
+era el `touch-action: none` de les fitxes: qualsevol lliscada que comencés
+sobre una fitxa quedava segrestada per l'arrossegament — i amb la taula plena,
+tot són fitxes.
+
+- [x] Les fitxes ja no porten `touch-action: none`: lliscar-hi per sobre
+      desplaça la taula o el faristol amb normalitat, també amb una fitxa
+      triada.
+- [x] Amb el dit, la fitxa s'agafa **mantenint-la premuda un instant** (180 ms
+      quiet), com a les apps; una vibració curta ho confirma on n'hi ha. A
+      partir d'aquí el dit se l'enduu i el desplaçament queda frenat (aturant
+      el `touchmove` amb un oient no passiu, que és l'única manera un cop
+      descartat el `touch-action`).
+- [x] Amb el ratolí res no canvia: moure's uns píxels amb el botó premut ja és
+      arrossegar, com sempre.
+
+**Criteris d'acceptació (verificats)**: prova de navegador amb tocs de debò
+(CDP) sobre una taula de 25 jugades que no cap a la pantalla — la lliscada que
+comença sobre una fitxa desplaça la taula i no s'enduu res; mantenir premut
+aixeca la fitxa, arrossegar-la no desplaça, i la fitxa acaba dins de la jugada.
+61 proves en verd.
+
+### Problemes trobats
+
+- [2026-08-23] **La inèrcia del desplaçament va embrutar la prova**: després
+  d'una lliscada, la taula continua rodant uns instants pel seu compte, i la
+  comprovació de «no s'ha desplaçat durant l'arrossegament» veia el cua d'aquell
+  impuls. Resolt esperant que la inèrcia mori abans de la segona part de la
+  prova. És cosa de la prova, no del joc.
+- [2026-08-23] El manteniment podia acabar en menú contextual a Android o en
+  selecció de text a iOS. Resolt aturant el `contextmenu` mentre hi ha gest en
+  marxa i amb `user-select: none` i `-webkit-touch-callout: none` a la fitxa.
+
 ---
 
 ## Riscos coneguts (a vigilar quan toqui)
