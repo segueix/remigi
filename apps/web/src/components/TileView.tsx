@@ -1,4 +1,4 @@
-import { COLOR_LABELS, type Tile } from '@rummikub/core';
+import { COLOR_LABELS, type Tile } from '@remigi/core';
 
 interface Props {
   tile: Tile;

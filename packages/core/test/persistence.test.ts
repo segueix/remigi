@@ -45,7 +45,7 @@ describe('JsonFileStore', () => {
   let counter = 0;
 
   beforeAll(async () => {
-    dir = await mkdtemp(join(tmpdir(), 'rummikub-test-'));
+    dir = await mkdtemp(join(tmpdir(), 'remigi-test-'));
   });
 
   afterAll(async () => {

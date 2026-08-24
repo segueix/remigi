@@ -12,7 +12,7 @@
  *   si el fitxer ha canviat, també n'ha canviat el nom.
  */
 
-const CACHE = 'rummikub-v1';
+const CACHE = 'remigi-v1';
 const APP_SHELL = new URL('./index.html', self.registration.scope).toString();
 
 self.addEventListener('install', () => {

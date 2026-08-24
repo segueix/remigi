@@ -1,7 +1,7 @@
 {
-  "name": "Rummikub",
-  "short_name": "Rummikub",
-  "description": "Rummikub contra oponents que s'adapten al teu nivell",
+  "name": "Remigi",
+  "short_name": "Remigi",
+  "description": "Remigi: rummy de fitxes contra oponents que s'adapten al teu nivell",
   "lang": "ca",
   "start_url": "./",
   "scope": "./",

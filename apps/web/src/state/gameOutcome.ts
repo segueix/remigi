@@ -5,7 +5,7 @@ import {
   type DifficultyKey,
   type GameState,
   type PlayerProfile,
-} from '@rummikub/core';
+} from '@remigi/core';
 
 /**
  * Tancament del cicle adaptatiu: convertir el resultat d'una partida en el

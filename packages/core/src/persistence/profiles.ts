@@ -1,7 +1,7 @@
 import { createProfile, type PlayerProfile } from '../adaptive/experience';
 import type { KeyValueStore } from './storage';
 
-const KEY_PREFIX = 'rummikub:profile:';
+const KEY_PREFIX = 'remigi:profile:';
 
 /** Desa i recupera perfils de jugador sobre qualsevol KeyValueStore. */
 export class ProfileRepository {

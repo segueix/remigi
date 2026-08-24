@@ -1,4 +1,4 @@
-import { MemoryStore, applyMove, createGame, decideAiMove } from '@rummikub/core';
+import { MemoryStore, applyMove, createGame, decideAiMove } from '@remigi/core';
 import { describe, expect, it } from 'vitest';
 import { clearGame, loadGame, saveGame, type SavedGame } from './savedGame';
 
@@ -68,7 +68,7 @@ describe('desar i continuar la partida', () => {
 describe('el que hi ha desat no és de fiar', () => {
   async function stored(value: string) {
     const store = new MemoryStore();
-    await store.set('rummikub:game', value);
+    await store.set('remigi:game', value);
     return loadGame(store);
   }
 

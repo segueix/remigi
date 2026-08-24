@@ -1,4 +1,4 @@
-import { ProfileRepository, createProfile, type PlayerProfile } from '@rummikub/core';
+import { ProfileRepository, createProfile, type PlayerProfile } from '@remigi/core';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createWebStore } from '../storage/webStore';
 

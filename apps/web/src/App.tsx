@@ -1,4 +1,4 @@
-import { suggestOpponents } from '@rummikub/core';
+import { suggestOpponents } from '@remigi/core';
 import { useEffect, useState } from 'react';
 import type { GameSetup } from './game/useGame';
 import { GameScreen } from './screens/GameScreen';

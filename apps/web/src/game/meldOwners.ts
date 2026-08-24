@@ -1,4 +1,4 @@
-import type { Meld, PlayerState } from '@rummikub/core';
+import type { Meld, PlayerState } from '@remigi/core';
 
 /**
  * Qui ha tocat cada jugada de la taula per últim cop.

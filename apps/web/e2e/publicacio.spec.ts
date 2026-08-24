@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 
 /**
  * El que ha de complir el build tal com es publica: rutes correctes sota
- * `/rummikub/`, dades d'instal·lació com a aplicació, i poder jugar sense
+ * `/remigi/`, dades d'instal·lació com a aplicació, i poder jugar sense
  * connexió un cop visitat.
  */
 
@@ -17,7 +17,7 @@ test('tots els fitxers pengen de la ruta publicada', async ({ page }) => {
   await expect(page.locator('.rack .tile').first()).toBeVisible();
 
   const src = await page.locator('script[type=module]').first().getAttribute('src');
-  expect(src, 'el codi ha de penjar de /rummikub/').toContain('/rummikub/assets/');
+  expect(src, 'el codi ha de penjar de /remigi/').toContain('/remigi/assets/');
   expect(fallits, fallits.join(' | ')).toHaveLength(0);
 });
 
@@ -31,7 +31,7 @@ test('es pot instal·lar com a aplicació', async ({ page, request }) => {
   expect(resposta.ok()).toBe(true);
 
   const manifest = await resposta.json();
-  expect(manifest.name).toBe('Rummikub');
+  expect(manifest.name).toBe('Remigi');
   expect(manifest.display).toBe('standalone');
   expect(manifest.icons.length).toBeGreaterThanOrEqual(2);
 

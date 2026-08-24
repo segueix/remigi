@@ -6,7 +6,7 @@ import {
   type Meld,
   type Move,
   type Tile,
-} from '@rummikub/core';
+} from '@remigi/core';
 
 /**
  * Còpia de treball del torn del jugador humà.

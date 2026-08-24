@@ -2,14 +2,14 @@ import { defineConfig, devices } from '@playwright/test';
 
 /**
  * Les proves de navegador s'executen contra el **build de producció servit a
- * `/rummikub/`**, que és exactament el que es publica. Així una ruta base mal
+ * `/remigi/`**, que és exactament el que es publica. Així una ruta base mal
  * configurada es detecta aquí i no un cop desplegat.
  *
  * Els bots juguen sense pausa (`VITE_BOT_DELAY=0`) perquè una partida sencera
  * de prova duri segons i no minuts; és l'única diferència amb el build públic.
  */
 const PORT = 4173;
-const BASE_URL = `http://localhost:${PORT}/rummikub/`;
+const BASE_URL = `http://localhost:${PORT}/remigi/`;
 
 export default defineConfig({
   testDir: './e2e',

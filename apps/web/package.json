@@ -1,5 +1,5 @@
 {
-  "name": "@rummikub/web",
+  "name": "@remigi/web",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -12,7 +12,7 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "@rummikub/core": "*",
+    "@remigi/core": "*",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },

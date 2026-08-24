@@ -1,6 +1,6 @@
 import { expect, type Page } from '@playwright/test';
 
-export const PROFILE_KEY = 'rummikub:profile:local';
+export const PROFILE_KEY = 'remigi:profile:local';
 
 /** Obre el menú del jugador (tocar la teva targeta, a dalt). */
 export async function obreMenu(page: Page): Promise<void> {
@@ -123,7 +123,7 @@ export async function entraAmbPartida(
       localStorage.clear();
       localStorage.setItem('e2e:llavor', '1');
       localStorage.setItem(
-        'rummikub:profile:local',
+        'remigi:profile:local',
         JSON.stringify({
           id: 'local',
           name: 'Daniel',
@@ -134,7 +134,7 @@ export async function entraAmbPartida(
         }),
       );
       localStorage.setItem(
-        'rummikub:game',
+        'remigi:game',
         JSON.stringify({
           setup: { playerName: 'Daniel', opponents: ['easy'] },
           owners: dades.autors,

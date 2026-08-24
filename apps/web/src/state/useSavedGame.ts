@@ -1,4 +1,4 @@
-import { type KeyValueStore } from '@rummikub/core';
+import { type KeyValueStore } from '@remigi/core';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createWebStore } from '../storage/webStore';
 import { clearGame, loadGame, saveGame, type SavedGame } from './savedGame';

@@ -1,4 +1,4 @@
-import type { Meld, PlayerState, Tile } from '@rummikub/core';
+import type { Meld, PlayerState, Tile } from '@remigi/core';
 import { describe, expect, it } from 'vitest';
 import { meldAuthors, meldKey, updateOwners, type MeldOwners } from './meldOwners';
 

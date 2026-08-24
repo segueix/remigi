@@ -1,6 +1,7 @@
-# Rummikub
+# Remigi
 
-Joc de Rummikub per jugar contra **1, 2 o 3 oponents controlats per IA**, amb una
+El Remigi és un **rummy de fitxes** per jugar contra **1, 2 o 3 oponents
+controlats per IA**, amb una
 dificultat que **s'adapta automàticament a l'experiència del jugador**: el sistema
 manté un perfil amb una puntuació d'habilitat (estil Elo) que puja i baixa segons
 els resultats, i tria el nivell dels rivals perquè les partides siguin sempre
@@ -20,14 +21,14 @@ El pla complet, fase a fase, és a **[`AGENT.md`](AGENT.md)**.
 | 6 | Motor avançat (IA que reordena la taula) | ✅ feta |
 | 7 | Desplegament a GitHub Pages | ✅ feta |
 
-**Ja s'hi pot jugar**: <https://segueix.github.io/rummikub/>. Cada partida compta
+**Ja s'hi pot jugar**: <https://segueix.github.io/remigi/>. Cada partida compta
 per al teu perfil, els rivals s'ajusten al teu nivell, i pots jugar amb el ratolí
 o amb el dit i deixar una partida a mitges per continuar-la després.
 
 ## Estructura del repositori
 
 ```
-rummikub/
+remigi/
 ├── packages/
 │   └── core/                  # Motor del joc (TypeScript pur, sense dependències de UI)
 │       ├── src/
@@ -74,7 +75,7 @@ rummikub/
 
 ## Jugar-hi
 
-**https://segueix.github.io/rummikub/**
+**https://segueix.github.io/remigi/**
 
 És una aplicació que funciona del tot al navegador: es pot instal·lar al mòbil
 com una app i, un cop visitada, també s'hi pot jugar sense connexió.
@@ -131,10 +132,10 @@ el codi.
 
 ## Fer servir el motor des de codi
 
-`@rummikub/core` és independent de la interfície i es pot fer servir sol:
+`@remigi/core` és independent de la interfície i es pot fer servir sol:
 
 ```ts
-import { createGame, applyMove, decideAiMove } from '@rummikub/core';
+import { createGame, applyMove, decideAiMove } from '@remigi/core';
 
 let state = createGame({
   players: [

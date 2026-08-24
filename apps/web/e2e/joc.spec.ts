@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import type { Meld } from '@rummikub/core';
+import type { Meld } from '@remigi/core';
 import { meldKey } from '../src/game/meldOwners';
 import {
   baixaGrup,

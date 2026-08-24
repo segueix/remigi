@@ -1,4 +1,4 @@
-import type { Tile, TileColor } from '@rummikub/core';
+import type { Tile, TileColor } from '@remigi/core';
 import { TileView } from './TileView';
 
 /** Fitxa d'exemple, només per ensenyar-la. */

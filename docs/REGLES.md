@@ -1,6 +1,6 @@
 # Regles implementades
 
-Referència de les regles del Rummikub tal com les aplica el motor
+Referència de les regles del Remigi (el rummy de fitxes) tal com les aplica el motor
 (`packages/core/src/core/`). Els codis entre parèntesis són els `RulesError.code`
 que retorna el motor quan es trenca la regla.
 

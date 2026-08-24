@@ -1,4 +1,4 @@
-import { analyzeMeld, type Meld } from '@rummikub/core';
+import { analyzeMeld, type Meld } from '@remigi/core';
 import type { MeldAuthor } from '../game/meldOwners';
 import { TileView } from './TileView';
 
