@@ -35,6 +35,38 @@
   --bot-1: #c026d3;
   --bot-2: #4d7c0f;
   --bot-3: #0369a1;
+  /*
+   * La taula de joc: feltre verd amb faristol de fusta, com les de debò. El
+   * feltre és fosc en tots dos temes, així que tot el que s'hi posa a sobre
+   * (marcs de bots, errors, destinacions) fa servir sempre les versions clares
+   * dels colors, amb sufix «-taula».
+   */
+  --feltre-1: #26795d;
+  --feltre-2: #1b5d47;
+  --feltre-3: #144736;
+  --feltre-vora: #0d3a2c;
+  --feltre-suau: rgb(236 253 245 / 0.62);
+  --fusta-1: #a8713d;
+  --fusta-2: #875730;
+  --fusta-3: #674120;
+  --fusta-vora: #4a2e15;
+  --accent-taula: #2dd4bf;
+  --error-taula: #f87171;
+  --error-taula-fons: rgb(127 29 29 / 0.5);
+  /* La fitxa robada es marca en daurat: visible sobre la fusta del faristol. */
+  --robada: #fde047;
+  --bot-1-taula: #e879f9;
+  --bot-2-taula: #a3e635;
+  --bot-3-taula: #60a5fa;
+  /* La firma de la casa (menú, final i historial): els colors de les fitxes. */
+  --franja-1: #cc0000;
+  --franja-2: #1d4ed8;
+  --franja-3: #c47504;
+  --franja-4: #7c3aed;
+  /* Or per a victòries i corones, i bé/malament per a punts i resultats. */
+  --or: #a16207;
+  --be: #15803d;
+  --mal: #b91c1c;
   color-scheme: light dark;
 }
 
@@ -61,6 +93,22 @@
     --bot-1: #e879f9;
     --bot-2: #a3e635;
     --bot-3: #60a5fa;
+    /* De nit, el feltre i la fusta s'apaguen una mica amb la resta. */
+    --feltre-1: #1e604a;
+    --feltre-2: #154a38;
+    --feltre-3: #0e392b;
+    --feltre-vora: #082a1f;
+    --fusta-1: #8a5a31;
+    --fusta-2: #6b4322;
+    --fusta-3: #4b2f16;
+    --fusta-vora: #38230f;
+    --franja-1: #f87171;
+    --franja-2: #93c5fd;
+    --franja-3: #fdba74;
+    --franja-4: #c4b5fd;
+    --or: #fbbf24;
+    --be: #4ade80;
+    --mal: #f87171;
   }
 }
 
@@ -80,6 +128,46 @@ body {
   max-width: 42rem;
   margin: 0 auto;
   padding: 1.5rem 1rem 3rem;
+}
+
+/*
+ * La partida ocupa tota la pantalla, sense desplaçament de pàgina: la taula es
+ * queda amb tot l'espai que sobra i el faristol és sempre a baix, com quan
+ * s'hi juga de debò. La resta de pantalles conserven la columna de sempre.
+ */
+.app-joc {
+  max-width: none;
+  height: 100vh;
+  height: 100dvh;
+  padding: 0.7rem 1rem 0.8rem;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: radial-gradient(
+    85% 60% at 50% 10%,
+    color-mix(in srgb, var(--accent) 6%, var(--fons)),
+    var(--fons) 72%
+  );
+}
+
+.app-joc .app-header {
+  display: none; /* dins de la partida, «Deixar la partida» és la sortida */
+}
+
+.app-joc .game {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 88rem);
+  margin: 0 auto;
+}
+
+.app-joc .game-over {
+  margin: auto;
+  width: min(100%, 32rem);
+  max-height: 100%;
+  overflow: auto;
 }
 
 .app-header {
@@ -127,12 +215,18 @@ body {
 
 button {
   font: inherit;
-  padding: 0.5rem 1rem;
+  font-weight: 600;
+  padding: 0.55rem 1.1rem;
   border: 1px solid transparent;
-  border-radius: 0.5rem;
+  border-radius: 0.6rem;
   background: var(--accent);
   color: var(--accent-text);
   cursor: pointer;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.2), 0 1px 2px rgb(0 0 0 / 0.15);
+}
+
+button:active:not(:disabled) {
+  transform: translateY(1px);
 }
 
 button:hover:not(:disabled) {
@@ -145,9 +239,10 @@ button:disabled {
 }
 
 button.secondary {
-  background: transparent;
+  background: var(--superficie);
   color: var(--text);
   border-color: var(--vora);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
 }
 
 button.link {
@@ -155,7 +250,9 @@ button.link {
   border: none;
   color: var(--accent);
   padding: 0;
+  font-weight: 500;
   text-decoration: underline;
+  box-shadow: none;
 }
 
 button.link:disabled {
@@ -178,26 +275,51 @@ input {
   outline-offset: 2px;
 }
 
+.game-top {
+  position: relative; /* el menú del jugador s'hi penja a sota */
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 1rem;
+}
+
 .players {
   list-style: none;
-  margin: 1rem 0 0;
-  padding: 0;
-  display: grid;
+  margin: 0;
+  padding: 0.15rem;
+  display: flex;
   gap: 0.5rem;
+  overflow-x: auto;
+  max-width: 100%;
 }
 
 .player {
+  flex: 0 0 auto;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.6rem 0.85rem;
+  gap: 0.6rem;
+  padding: 0.3rem 0.8rem 0.3rem 0.35rem;
   border: 1px solid var(--vora);
-  border-radius: 0.5rem;
+  border-radius: 999px;
+  background: var(--superficie);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
 }
 
 .player.active {
   border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent), 0 2px 6px rgb(0 0 0 / 0.12);
+}
+
+.player .muted {
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.player-nom {
+  max-width: 8rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /*
@@ -214,16 +336,148 @@ input {
   --marc: var(--bot-3);
 }
 
+/*
+ * L'avatar: l'emoji del bot sobre el degradat dels seus colors (posat en línia
+ * des del planter), o la teva inicial sobre el color d'acció. L'anell continua
+ * sent el color de taula del bot, que és el que lliga amb els marcs.
+ */
 .player-color {
   flex: none;
-  width: 0.75rem;
-  height: 0.75rem;
-  border-radius: 0.25rem;
-  background: var(--marc);
+  display: grid;
+  place-items: center;
+  width: 2.3rem;
+  height: 2.3rem;
+  border-radius: 50%;
+  border: 2px solid var(--marc, var(--vora));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 45%, #ffffff), var(--accent));
+  color: var(--accent-text);
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: inset 0 -3px 5px rgb(0 0 0 / 0.18), 0 1px 2px rgb(0 0 0 / 0.2);
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.25);
+}
+
+/* La teva targeta és un botó: mateix aspecte que les altres, però s'obre. */
+.player-obre {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: inherit;
+  box-shadow: none;
+  cursor: pointer;
+}
+
+.player-obre:active:not(:disabled) {
+  transform: none;
+}
+
+.player-obre .fletxa {
+  color: var(--text-suau);
+  font-size: 0.7rem;
+}
+
+.menu-fons {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: rgb(0 0 0 / 0.3);
+}
+
+.menu-usuari {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  left: 0;
+  z-index: 31;
+  width: min(24rem, calc(100vw - 1.5rem));
+  max-height: min(80vh, 36rem);
+  overflow-y: auto;
+  padding: 1rem;
+  border: 1px solid var(--vora);
+  border-radius: 0.9rem;
+  background: var(--superficie);
+  box-shadow: 0 16px 40px rgb(0 0 0 / 0.3);
+}
+
+.franja-fitxes {
+  height: 0.4rem;
+  border-radius: 999px;
+  margin-bottom: 1rem;
+  background: linear-gradient(
+    90deg,
+    var(--franja-1) 0 25%,
+    var(--franja-2) 25% 50%,
+    var(--franja-3) 50% 75%,
+    var(--franja-4) 75% 100%
+  );
+}
+
+.menu-cap {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.menu-avatar {
+  width: 3rem;
+  height: 3rem;
+  font-size: 1.5rem;
+}
+
+.menu-nom {
+  flex: 1;
+  flex-wrap: nowrap;
+  margin-top: 0;
+}
+
+.menu-nom input {
+  flex: 1 1 7rem;
+  min-width: 0;
+}
+
+.menu-habilitat {
+  margin: 0.5rem 0 0;
+}
+
+/* La configuració de la partida, en una capsa amb el to de la casa. */
+.menu-seccio {
+  margin-top: 0.9rem;
+  padding: 0.75rem 0.85rem 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, var(--vora));
+  border-radius: 0.7rem;
+  background: color-mix(in srgb, var(--accent) 7%, var(--superficie));
+}
+
+.menu-seccio .count-picker {
+  margin-top: 0;
+}
+
+.menu-seccio .check {
+  margin-top: 0.75rem;
+}
+
+.menu-nivell {
+  display: block;
+  margin-top: 0.75rem;
+}
+
+.menu-accions {
+  margin-top: 1rem;
+}
+
+.menu-usuari .rules {
+  margin-top: 1.25rem;
 }
 
 .player-name {
   display: flex;
+  min-width: 0;
   align-items: center;
   gap: 0.5rem;
   font-weight: 600;
@@ -249,6 +503,28 @@ input {
   font-size: 0.9rem;
 }
 
+.stats-header {
+  margin-top: 0;
+  justify-content: space-between;
+}
+
+.stats-header h2 {
+  margin: 0;
+}
+
+.stats-titol {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.stats-titol h2 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
@@ -256,10 +532,36 @@ input {
   margin: 1rem 0 0;
 }
 
+/*
+ * Rajoles d'estadístiques: cada una amb el seu color d'identitat a la vora
+ * esquerra i un fons tenyit; el número, sempre amb el color del text.
+ */
+.stats {
+  --identitat: var(--vora);
+}
+
 .stats div {
   border: 1px solid var(--vora);
+  border-left: 4px solid var(--identitat);
   border-radius: 0.5rem;
   padding: 0.75rem;
+  background: color-mix(in srgb, var(--identitat) 7%, var(--superficie));
+}
+
+.stat-habilitat {
+  --identitat: var(--grafic);
+}
+
+.stat-partides {
+  --identitat: var(--bot-3);
+}
+
+.stat-victories {
+  --identitat: var(--or);
+}
+
+.stat-percentatge {
+  --identitat: var(--bot-1);
 }
 
 .stats dt {
@@ -276,42 +578,85 @@ input {
 /* ---------- Partida ---------- */
 
 .turn-line {
-  margin: 0.75rem 0;
+  margin: 0 0 0 auto;
+  font-size: 0.88rem;
+  white-space: nowrap;
 }
 
+/*
+ * El feltre. La taula es queda tot l'alt que sobra (flex: 1 dins de la
+ * partida), i és l'únic tros amb desplaçament propi si mai s'omple més del
+ * que hi cap: la pàgina no es mou mai.
+ */
 .board {
+  flex: 1 1 auto;
+  min-height: 8rem;
+  overflow: auto;
   display: flex;
   flex-wrap: wrap;
   align-content: flex-start;
-  gap: 0.5rem;
-  min-height: 8rem;
-  padding: 0.75rem;
-  border: 1px solid var(--vora);
-  border-radius: 0.75rem;
-  background: var(--taula);
+  gap: 0.45rem 0.5rem;
+  margin-top: 0.5rem;
+  padding: 0.8rem;
+  border: 1px solid var(--feltre-vora);
+  border-radius: 0.9rem;
+  background:
+    repeating-linear-gradient(45deg, rgb(255 255 255 / 0.012) 0 2px, transparent 2px 4px),
+    repeating-linear-gradient(-45deg, rgb(0 0 0 / 0.018) 0 2px, transparent 2px 4px),
+    radial-gradient(130% 90% at 50% 0%, rgb(255 255 255 / 0.09), transparent 55%),
+    linear-gradient(165deg, var(--feltre-1), var(--feltre-2) 55%, var(--feltre-3));
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.12),
+    inset 0 0 42px rgb(0 0 0 / 0.28),
+    0 8px 20px rgb(0 0 0 / 0.16);
 }
 
-.board-empty {
+.board::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.board::-webkit-scrollbar-thumb {
+  background: rgb(255 255 255 / 0.28);
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-clip: content-box;
+}
+
+.board .board-empty {
   margin: auto;
+  color: var(--feltre-suau);
+}
+
+/* Sobre el feltre fosc, els marcs dels bots van sempre en versió clara. */
+.board [data-bot='1'] {
+  --marc: var(--bot-1-taula);
+}
+.board [data-bot='2'] {
+  --marc: var(--bot-2-taula);
+}
+.board [data-bot='3'] {
+  --marc: var(--bot-3-taula);
 }
 
 .meld {
   display: flex;
-  gap: 0.15rem;
+  gap: 0.18rem;
   padding: 0.3rem;
-  border: 1px solid transparent;
-  border-radius: 0.5rem;
-  background: var(--taula-jugada);
+  border: 1px solid rgb(255 255 255 / 0.08);
+  border-radius: 0.55rem;
+  background: rgb(0 20 12 / 0.25);
+  box-shadow: inset 0 1px 3px rgb(0 0 0 / 0.25);
 }
 
 .meld.target {
   cursor: pointer;
   border-style: dashed;
-  border-color: var(--vora);
+  border-color: rgb(255 255 255 / 0.45);
 }
 
 .meld.target:hover {
-  border-color: var(--accent);
+  border-color: var(--accent-taula);
   border-style: solid;
 }
 
@@ -322,28 +667,30 @@ input {
  */
 .meld.owned {
   border-color: var(--marc);
-  box-shadow: inset 0 0 0 1px var(--marc);
+  box-shadow: inset 0 1px 3px rgb(0 0 0 / 0.25), 0 0 0 1px var(--marc);
 }
 
 .meld.invalid {
-  border-color: var(--error);
-  background: var(--error-fons);
+  border-color: var(--error-taula);
+  background: var(--error-taula-fons);
 }
 
 /* No porta la classe .meld a posta: no és una jugada, és el botó per crear-ne. */
 .new-meld {
   font: inherit;
+  font-weight: 500;
   align-self: flex-start;
-  background: transparent;
-  color: var(--text-suau);
-  border: 1px dashed var(--vora);
-  border-radius: 0.5rem;
-  padding: 1.1rem 1rem;
+  background: rgb(0 0 0 / 0.12);
+  color: rgb(255 255 255 / 0.75);
+  border: 1px dashed rgb(255 255 255 / 0.4);
+  border-radius: 0.55rem;
+  padding: 1rem;
+  box-shadow: none;
 }
 
 .new-meld:hover {
-  border-color: var(--accent);
-  color: var(--accent);
+  border-color: var(--accent-taula);
+  color: var(--accent-taula);
 }
 
 /* ---------- Fitxes ---------- */
@@ -359,11 +706,23 @@ input {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--tinta);
-  background: var(--fitxa);
+  /* Crema amb llum a dalt i ombra a baix: fitxa de debò, no rectangle pla. */
+  background: linear-gradient(180deg, #fffdf6, var(--fitxa) 45%, #f2e8cf);
   border: 1px solid var(--fitxa-vora);
-  border-radius: 0.35rem;
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.2);
+  border-radius: 0.4rem;
+  box-shadow:
+    0 2px 3px rgb(0 0 0 / 0.28),
+    inset 0 1px 0 rgb(255 255 255 / 0.8),
+    inset 0 -2px 3px rgb(0 0 0 / 0.06);
+  text-shadow: 0 1px 0 rgb(255 255 255 / 0.55);
   cursor: default;
+}
+
+/* A la taula són un pèl més petites: hi caben més jugades sense desplaçar-se. */
+.board .tile {
+  width: 2.25rem;
+  height: 2.95rem;
+  font-size: 1.2rem;
 }
 
 .tile:not(:disabled) {
@@ -389,21 +748,25 @@ input {
 }
 
 /*
- * Fitxa acabada de robar: un recuadre per trobar-la de seguida entre les altres
- * tretze. És a fora (`outline`) i de ratlles per no confondre's amb la fitxa
- * triada, que va enlairada i amb el marc sencer.
+ * Fitxa acabada de robar: un recuadre daurat per trobar-la de seguida entre
+ * les altres tretze. És a fora (`outline`), de ratlles i d'un color que no fa
+ * servir res més, per no confondre's ni amb la fitxa triada (enlairada i amb
+ * el marc sencer) ni amb els colors dels bots.
  */
 .tile.drawn {
-  outline: 2px dashed var(--accent);
+  outline: 2px dashed var(--robada);
   outline-offset: 1px;
 }
 
 @keyframes acabada-de-jugar {
   from {
-    box-shadow: 0 0 0 3px var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-taula);
   }
   to {
-    box-shadow: 0 1px 2px rgb(0 0 0 / 0.2);
+    box-shadow:
+      0 2px 3px rgb(0 0 0 / 0.28),
+      inset 0 1px 0 rgb(255 255 255 / 0.8),
+      inset 0 -2px 3px rgb(0 0 0 / 0.06);
   }
 }
 
@@ -434,7 +797,7 @@ input {
 /* ---------- Faristol ---------- */
 
 .rack-area {
-  margin-top: 1.25rem;
+  margin-top: 0.5rem;
 }
 
 .rack-header {
@@ -445,11 +808,6 @@ input {
   gap: 0.5rem;
 }
 
-.rack-header h3 {
-  margin: 0;
-  font-size: 1rem;
-}
-
 .rack-order {
   display: flex;
   gap: 0.6rem;
@@ -457,27 +815,92 @@ input {
   font-size: 0.85rem;
 }
 
+/* El faristol és de fusta, com el de veritat; les fitxes hi reposen a sobre. */
 .rack {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.3rem;
-  margin-top: 0.5rem;
-  padding: 0.75rem;
-  min-height: 4.5rem;
-  border: 1px solid var(--vora);
-  border-radius: 0.75rem;
-  background: var(--superficie);
+  gap: 0.35rem;
+  margin-top: 0.35rem;
+  padding: 0.7rem 0.8rem 0.85rem;
+  min-height: 4.9rem;
+  max-height: 26vh;
+  overflow-y: auto;
+  border: 1px solid var(--fusta-vora);
+  border-radius: 0.8rem;
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.16), rgb(255 255 255 / 0) 28%, rgb(0 0 0 / 0.16)),
+    repeating-linear-gradient(
+      97deg,
+      rgb(0 0 0 / 0.05) 0 3px,
+      rgb(255 255 255 / 0.03) 3px 6px,
+      transparent 6px 18px
+    ),
+    linear-gradient(180deg, var(--fusta-1), var(--fusta-2) 55%, var(--fusta-3));
+  box-shadow: inset 0 2px 6px rgb(0 0 0 / 0.35), 0 5px 12px rgb(0 0 0 / 0.18);
 }
 
+.rack > .muted {
+  color: rgb(255 244 214 / 0.85);
+  margin: auto;
+}
+
+/* Els botons del torn: sempre una sola línia, amb icona i rètol. */
 .actions {
-  margin-top: 1.25rem;
+  margin-top: 0.6rem;
+  gap: 0.6rem;
+  flex-wrap: nowrap;
+}
+
+.actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  white-space: nowrap;
+  /* Objectiu de toc de 44 px a totes les mides. */
+  min-height: 2.75rem;
+}
+
+.actions button.link {
+  padding: 0.5rem 0.6rem;
+}
+
+.icona {
+  width: 1.15rem;
+  height: 1.15rem;
+  flex: none;
+}
+
+/*
+ * Quan els rètols no hi caben, s'amaguen i queden les icones, com en una app.
+ * El nom del botó no es perd: el porta `aria-label`, que no depèn del rètol.
+ */
+@media (max-width: 42rem), (orientation: landscape) and (max-height: 32rem) {
+  .actions {
+    gap: 0.5rem;
+  }
+
+  .actions .btn-text {
+    display: none;
+  }
+
+  .actions button {
+    flex: 1 1 0;
+    min-width: 2.75rem;
+    padding: 0.5rem;
+  }
+
+  .icona {
+    width: 1.35rem;
+    height: 1.35rem;
+  }
 }
 
 /* ---------- Missatges ---------- */
 
 .hint,
 .error {
-  margin: 0.75rem 0 0;
+  margin: 0.4rem 0 0;
   padding: 0.6rem 0.85rem;
   border-radius: 0.5rem;
   font-size: 0.9rem;
@@ -565,7 +988,8 @@ select {
 }
 
 .scores li.winner {
-  border-color: var(--accent);
+  border-color: color-mix(in srgb, var(--or) 60%, var(--vora));
+  background: color-mix(in srgb, var(--or) 9%, var(--superficie));
   font-weight: 600;
 }
 
@@ -623,6 +1047,11 @@ button.link.danger {
   width: 100%;
   height: auto;
   overflow: visible;
+}
+
+.chart-area {
+  fill: var(--grafic);
+  opacity: 0.12;
 }
 
 .chart-line {
@@ -695,13 +1124,32 @@ button.link.danger {
   font-size: 0.9rem;
 }
 
-.result-won {
-  color: var(--grafic);
+/* El resultat, com a xapa; la vora esquerra de la fila repeteix el color. */
+.result-won,
+.result-lost {
+  justify-self: start;
+  padding: 0.05rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
   font-weight: 600;
+}
+
+.result-won {
+  color: var(--be);
+  background: color-mix(in srgb, var(--be) 14%, var(--superficie));
 }
 
 .result-lost {
   color: var(--text-suau);
+  background: color-mix(in srgb, var(--text-suau) 12%, var(--superficie));
+}
+
+.history li.partida-guanyada {
+  border-left: 4px solid var(--be);
+}
+
+.history li.partida-perduda {
+  border-left: 4px solid var(--vora);
 }
 
 .history-rivals {
@@ -728,14 +1176,19 @@ button.link.danger {
 /* ---------- Arrossegar fitxes ---------- */
 
 /*
- * Cal `touch-action: none` perquè el navegador no s'endugui el gest com un
- * desplaçament abans que puguem arrossegar la fitxa. Com que això lleva la
- * possibilitat de desplaçar la pàgina llliscant just damunt d'una fitxa, la
- * taula i el faristol tenen desplaçament propi i, a més, el «tria i col·loca»
- * a tocs continua funcionant per a qui ho prefereixi.
+ * Les fitxes NO porten `touch-action: none`: lliscar sobre una fitxa ha de
+ * desplaçar la taula o el faristol amb normalitat, que si no les jugades de
+ * fora de la pantalla queden fora de l'abast. Amb el dit, la fitxa s'agafa
+ * mantenint-la premuda un instant (vegeu `useDragTile.ts`, que atura el
+ * desplaçament només mentre hi ha fitxa aixecada). `manipulation` deixa
+ * lliscar i pessigar però treu l'espera del doble toc, i la resta evita que
+ * el manteniment acabi seleccionant text o obrint el menú del navegador.
  */
 .tile {
-  touch-action: none;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .tile.dragging {
@@ -758,29 +1211,23 @@ button.link.danger {
   cursor: grabbing;
 }
 
-.meld.over,
-.rack.over {
-  border-color: var(--accent);
+.meld.over {
+  border-color: var(--accent-taula);
   border-style: solid;
-  box-shadow: inset 0 0 0 1px var(--accent);
+  box-shadow: inset 0 1px 3px rgb(0 0 0 / 0.25), 0 0 0 1px var(--accent-taula);
+}
+
+.rack.over {
+  border-color: var(--accent-taula);
+  box-shadow:
+    inset 0 0 0 2px var(--accent-taula),
+    inset 0 2px 6px rgb(0 0 0 / 0.35);
 }
 
 .new-meld.over {
-  border-color: var(--accent);
+  border-color: var(--accent-taula);
   border-style: solid;
-  color: var(--accent);
-}
-
-/* ---------- Ajuda: fitxes que poden formar jugada ---------- */
-
-.tile.suggested::after {
-  content: '';
-  position: absolute;
-  bottom: 0.25rem;
-  width: 0.35rem;
-  height: 0.35rem;
-  border-radius: 50%;
-  background: var(--grafic);
+  color: var(--accent-taula);
 }
 
 .tile {
@@ -815,8 +1262,8 @@ button.link.danger {
 
 /* Reserva l'espai del missatge d'error perquè el contingut no salti. */
 .error-slot {
-  margin: 0.75rem 0 0;
-  min-height: 1.5rem;
+  margin: 0.3rem 0 0;
+  min-height: 1.4rem;
 }
 
 .error-slot .error {
@@ -825,8 +1272,83 @@ button.link.danger {
 
 /* ---------- Animacions ---------- */
 
+.final-cap {
+  text-align: center;
+  margin-bottom: 0.75rem;
+}
+
+.final-cap h2 {
+  margin: 0.4rem 0 0.2rem;
+}
+
+.final-cap .muted {
+  margin: 0;
+}
+
+.final-emoji {
+  display: inline-block;
+  font-size: 3.2rem;
+  line-height: 1;
+  filter: drop-shadow(0 5px 12px rgb(0 0 0 / 0.25));
+}
+
+.final-avatar {
+  width: 3.4rem;
+  height: 3.4rem;
+  font-size: 1.8rem;
+  display: inline-grid;
+}
+
+.score-jugador {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  font-weight: 600;
+}
+
+.score-avatar {
+  width: 1.9rem;
+  height: 1.9rem;
+  font-size: 1rem;
+  border-width: 1.5px;
+}
+
+.score-nom {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Els punts, com a xapa: verd qui suma, vermell apagat qui resta. */
+.punts {
+  flex: none;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.punts.points-positive {
+  color: var(--be);
+  background: color-mix(in srgb, var(--be) 14%, var(--superficie));
+}
+
+.punts.points-negative {
+  color: var(--mal);
+  background: color-mix(in srgb, var(--mal) 12%, var(--superficie));
+}
+
+/* La victòria es veu daurada des de lluny. */
 .game-over.won {
   animation: victoria 0.5s ease-out;
+  border-color: color-mix(in srgb, var(--or) 55%, var(--vora));
+  background:
+    radial-gradient(
+      120% 55% at 50% 0%,
+      color-mix(in srgb, var(--or) 16%, var(--superficie)),
+      var(--superficie) 60%
+    );
 }
 
 @keyframes victoria {
@@ -877,38 +1399,135 @@ button.link.danger {
     padding: 1rem 0.75rem 2rem;
   }
 
-  /* Objectius de toc més grans (44 px de costat mínim). */
-  .tile {
+  .app-joc {
+    padding: 0.5rem 0.5rem 0.6rem;
+  }
+
+  /* Objectius de toc més grans (44 px de costat mínim) al faristol. */
+  .rack .tile {
     width: 2.75rem;
     height: 3.5rem;
   }
 
   /*
-   * Una escala llarga no cap en una pantalla estreta: la taula es desplaça per
-   * dins en comptes de desquadrar la pàgina, i les jugades no es parteixen.
+   * A la taula, més petites encara: el que importa és veure-hi el màxim de
+   * jugades de cop. Una escala llarga que no hi càpiga es desplaça per dins
+   * de la taula, mai desquadra la pàgina.
    */
-  .board {
-    overflow: auto;
-    max-height: 45vh;
+  .board .tile {
+    width: 2.2rem;
+    height: 2.85rem;
+    font-size: 1.1rem;
   }
 
   .rack {
-    max-height: 32vh;
-    overflow-y: auto;
+    max-height: 30vh;
   }
 
-  /*
-   * Objectius de toc de 44 px també als botons del torn, que són els que es
-   * fan servir a cada jugada (l'enllaç inclòs: amb la mida del text es quedava
-   * en 24 px).
-   */
-  .actions button {
-    flex: 1 1 auto;
-    min-height: 2.75rem;
+  /* La tira de jugadors s'estreny: l'avatar, el nom curt i el compte. */
+  .player {
+    padding: 0.25rem 0.6rem 0.25rem 0.3rem;
   }
 
-  .actions button.link {
-    padding: 0 0.75rem;
+  .player .tag {
+    display: none;
+  }
+
+  .player-nom {
+    max-width: 5.5rem;
+  }
+
+  .turn-line {
+    font-size: 0.78rem;
+    white-space: normal;
+  }
+
+}
+
+/*
+ * Mòbil apaïsat: l'alçada és el que escasseja, així que tot el que no és taula
+ * s'estreny. Els jugadors queden en avatar i compte (el nom el diu la línia de
+ * torn), el faristol passa a una sola filera amb desplaçament horitzontal, i
+ * els botons són només icones (regla d'aquí sobre).
+ */
+@media (orientation: landscape) and (max-height: 32rem) {
+  .app-joc {
+    padding: 0.4rem 0.6rem 0.5rem;
+  }
+
+  .game-top {
+    gap: 0.25rem 0.6rem;
+  }
+
+  .player {
+    padding: 0.15rem 0.5rem 0.15rem 0.2rem;
+    gap: 0.4rem;
+  }
+
+  .player .tag {
+    display: none;
+  }
+
+  .player-nom {
+    max-width: 4.5rem;
+    font-size: 0.8rem;
+  }
+
+  .player-color {
+    width: 1.7rem;
+    height: 1.7rem;
+    font-size: 0.95rem;
+  }
+
+  .turn-line {
+    font-size: 0.75rem;
+  }
+
+  .board {
+    margin-top: 0.35rem;
+    padding: 0.5rem;
+    gap: 0.35rem 0.4rem;
+  }
+
+  .board .tile {
+    width: 2rem;
+    height: 2.6rem;
+    font-size: 1rem;
+  }
+
+  .hint,
+  .error {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.78rem;
+  }
+
+  .error-slot {
+    min-height: 1.1rem;
+    margin: 0.2rem 0 0;
+  }
+
+  .rack-area {
+    margin-top: 0.25rem;
+  }
+
+  .rack {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    max-height: none;
+    min-height: 0;
+    padding: 0.45rem 0.55rem 0.55rem;
+  }
+
+  .rack .tile {
+    flex: none;
+    width: 2.4rem;
+    height: 3rem;
+    font-size: 1.2rem;
+  }
+
+  .actions {
+    margin-top: 0.4rem;
   }
 }
 

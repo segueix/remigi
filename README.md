@@ -170,3 +170,8 @@ state = applyMove(state, decideAiMove(state, state.currentPlayer));
 - [x] Seguir la partida amb un cop d'ull: la fitxa que acabes de robar queda
       marcada, cada bot té color propi i les seves jugades porten marc del seu
       color mentre ningú no les toqui.
+- [x] Taula de joc a pantalla completa: feltre verd, faristol de fusta amb les
+      fitxes a sota, i rivals amb nom i avatar que canvien a cada partida.
+- [x] Directes a la taula: sense pantalla d'inici, amb el nom, el nivell, la
+      partida nova i l'historial en un menú que s'obre tocant el teu jugador, i
+      rivals amb nom d'usuari i avatar de colors.

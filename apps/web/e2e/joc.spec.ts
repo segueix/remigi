@@ -7,6 +7,7 @@ import {
   entraAmbPartida,
   f,
   jugaContra,
+  obreMenu,
   robaFinsAlFinal,
   robaFinsQueUnBotJugui,
 } from './ajudants';
@@ -135,22 +136,83 @@ test.describe('moure fitxes', () => {
     await expect(page.locator('.tile.selected')).toHaveCount(0);
   });
 
-  test('l’ajuda marca les fitxes que poden formar jugada', async ({ page }) => {
-    await comencaDeZero(page);
-    await jugaContra(page, 1);
-    await page.getByRole('button', { name: 'ajuda’m' }).click();
+});
 
-    // Una mà de 14 fitxes a l'atzar pot no tenir cap jugada possible, i llavors
-    // no marcar-ne cap és el comportament correcte. Es roba fins que n'hi hagi.
-    for (let i = 0; i < 30 && (await page.locator('.rack .tile.suggested').count()) === 0; i++) {
-      const roba = page.getByRole('button', { name: /Robar fitxa|Passar torn/ });
-      if (await roba.isEnabled().catch(() => false)) await roba.click();
-      await page.waitForTimeout(60);
+test.describe('amb el dit', () => {
+  test.skip(({ isMobile }) => !isMobile, 'només té sentit al projecte de mòbil');
+
+  test('lliscar desplaça la taula i mantenir premut arrossega la fitxa', async ({ page }) => {
+    // Una taula ben plena, que no capiga a la pantalla: el desplaçament hi és
+    // imprescindible per arribar a les jugades de baix.
+    const grups: ReturnType<typeof f>[][] = [];
+    for (let v = 1; v <= 13; v++) grups.push([f('red', v), f('blue', v), f('black', v)]);
+    for (let v = 2; v <= 13; v++) grups.push([f('red', v, 'b'), f('blue', v, 'b'), f('black', v, 'b')]);
+    await entraAmbPartida(page, {
+      rack: [f('orange', 5), f('orange', 6)],
+      board: grups,
+      haObert: true,
+    });
+
+    const taula = page.locator('.board');
+    expect(await taula.evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(true);
+
+    // Lliscada que COMENÇA sobre una fitxa de la taula: ha de desplaçar.
+    const cdp = await page.context().newCDPSession(page);
+    const fitxa = (await page.locator('.board .tile').first().boundingBox())!;
+    const x = fitxa.x + fitxa.width / 2;
+    const y = fitxa.y + fitxa.height / 2;
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
+    for (let i = 1; i <= 6; i++) {
+      await cdp.send('Input.dispatchTouchEvent', {
+        type: 'touchMove',
+        touchPoints: [{ x, y: y - i * 30 }],
+      });
+      await page.waitForTimeout(16);
     }
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
 
-    await expect(page.locator('.rack .tile.suggested').first()).toBeVisible();
-    await page.getByRole('button', { name: 'amaga l’ajuda' }).click();
-    await expect(page.locator('.rack .tile.suggested')).toHaveCount(0);
+    await expect.poll(() => taula.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+    // I no s'ha endut cap fitxa: era un desplaçament, no un arrossegament.
+    await expect(page.locator('.drag-layer')).toHaveCount(0);
+    await expect(page.locator('.rack .tile')).toHaveCount(2);
+    await expect(page.locator('.board .meld')).toHaveCount(grups.length);
+
+    // Mantenir premuda una fitxa del faristol, en canvi, l'aixeca...
+    // (primer es deixa morir la inèrcia de la lliscada, que continua rodant
+    // uns instants pel seu compte i embrutaria la mesura de després)
+    await expect
+      .poll(async () => {
+        const abans = await taula.evaluate((el) => el.scrollTop);
+        await page.waitForTimeout(90);
+        return (await taula.evaluate((el) => el.scrollTop)) === abans;
+      })
+      .toBe(true);
+    await taula.evaluate((el) => el.scrollTo(0, 0));
+    await page.waitForTimeout(80);
+    const delRack = (await page.locator('.rack .tile').first().boundingBox())!;
+    const rx = delRack.x + delRack.width / 2;
+    const ry = delRack.y + delRack.height / 2;
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: rx, y: ry }] });
+    await page.waitForTimeout(320); // més que el manteniment de 180 ms
+    await expect(page.locator('.drag-layer')).toHaveCount(1);
+
+    // ...i el dit se l'enduu fins a una jugada de la taula sense desplaçar res.
+    const destinacio = (await page.locator('.board .meld').first().boundingBox())!;
+    const dx = destinacio.x + destinacio.width / 2;
+    const dy = destinacio.y + destinacio.height / 2;
+    for (let i = 1; i <= 8; i++) {
+      await cdp.send('Input.dispatchTouchEvent', {
+        type: 'touchMove',
+        touchPoints: [{ x: rx + ((dx - rx) * i) / 8, y: ry + ((dy - ry) * i) / 8 }],
+      });
+      await page.waitForTimeout(16);
+    }
+    // Mentre la fitxa és a l'aire, el dit no desplaça res.
+    expect(await taula.evaluate((el) => el.scrollTop)).toBe(0);
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+
+    await expect(page.locator('.board .meld').first().locator('.tile')).toHaveCount(4);
+    await expect(page.locator('.rack .tile')).toHaveCount(1);
   });
 });
 
@@ -179,8 +241,9 @@ test.describe('en pantalla petita', () => {
 });
 
 test.describe('explicar les regles', () => {
-  test('l’inici explica com s’obre, amb exemples', async ({ page }) => {
+  test('el menú del jugador explica com s’obre, amb exemples', async ({ page }) => {
     await comencaDeZero(page);
+    await obreMenu(page);
 
     const explicacio = page.locator('details.rules');
     await expect(explicacio).toBeVisible();
@@ -285,5 +348,93 @@ test.describe('qui ha jugat què', () => {
     // I desfer el torn l'hi torna.
     await page.getByRole('button', { name: 'Desfer canvis' }).click();
     await expect(jugada).toHaveAttribute('data-bot', /[1-3]/);
+  });
+});
+
+test.describe('la taula de joc', () => {
+  test('els rivals tenen nom propi i avatar, diferents entre ells', async ({ page }) => {
+    await comencaDeZero(page);
+    await jugaContra(page, 3);
+
+    const noms = await page.locator('.player[data-bot] .player-nom').allTextContents();
+    expect(noms).toHaveLength(3);
+    expect(new Set(noms).size).toBe(3);
+    // Nom de debò, no el «Bot 1» d'abans.
+    for (const nom of noms) expect(nom).not.toMatch(/^Bot \d/);
+    await expect(page.locator('.player[data-bot] .player-color')).toHaveCount(3);
+  });
+
+  test('els botons del torn van en una sola línia, també en pantalla estreta', async ({ page, isMobile }) => {
+    await comencaDeZero(page);
+    await jugaContra(page, 1);
+
+    // Al mòbil hi ha també el botó de girar la pantalla; a l'escriptori, no.
+    const botons = page.locator('.actions button');
+    await expect(botons).toHaveCount(isMobile ? 4 : 3);
+    const altures = await botons.evaluateAll((b) => b.map((el) => el.getBoundingClientRect().top));
+    // Tots comencen a la mateixa alçada: cap no ha saltat de línia.
+    expect(new Set(altures.map((v) => Math.round(v))).size).toBe(1);
+
+    // Encara que el rètol s'amagui i quedi la icona, el nom no canvia.
+    await expect(page.getByRole('button', { name: 'Acabar jugada' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Desfer canvis' })).toBeVisible();
+  });
+
+  test('al mòbil apaïsat tot cap a la pantalla', async ({ page, isMobile }) => {
+    test.skip(!isMobile, 'només té sentit al projecte de mòbil');
+    // El mateix mòbil, girat.
+    await page.setViewportSize({ width: 851, height: 393 });
+    await comencaDeZero(page);
+    await jugaContra(page, 2);
+
+    const desborda = await page.evaluate(() => ({
+      x: document.documentElement.scrollWidth > window.innerWidth + 1,
+      y: document.documentElement.scrollHeight > window.innerHeight + 1,
+    }));
+    expect(desborda).toEqual({ x: false, y: false });
+
+    // La taula sobre el faristol, i els botons en una línia i tocables.
+    const taula = (await page.locator('.board').boundingBox())!;
+    const faristol = (await page.locator('.rack').boundingBox())!;
+    expect(taula.y).toBeLessThan(faristol.y);
+    expect(taula.height).toBeGreaterThan(80);
+    for (const alçada of await page
+      .locator('.actions button')
+      .evaluateAll((b) => b.map((el) => el.getBoundingClientRect().height))) {
+      expect(alçada).toBeGreaterThanOrEqual(44);
+    }
+  });
+
+  test('el botó de girar la pantalla surt només on pot funcionar', async ({ page, isMobile }) => {
+    await comencaDeZero(page);
+    await jugaContra(page, 1);
+
+    const boto = page.getByRole('button', { name: 'Gira la pantalla' });
+    if (!isMobile) {
+      // Sense pantalla tàctil no té sentit: no hi és.
+      await expect(boto).toHaveCount(0);
+      return;
+    }
+    await expect(boto).toBeVisible();
+    // En un emulador el bloqueig d'orientació pot fallar: prémer no ha de petar.
+    await boto.click();
+    await expect(page.locator('.rack .tile').first()).toBeVisible();
+    await expect(boto).toBeVisible();
+  });
+
+  test('la partida cap a la pantalla, sense desplaçament de pàgina', async ({ page }) => {
+    await comencaDeZero(page);
+    await jugaContra(page, 2);
+
+    const desborda = await page.evaluate(() => ({
+      x: document.documentElement.scrollWidth > window.innerWidth + 1,
+      y: document.documentElement.scrollHeight > window.innerHeight + 1,
+    }));
+    expect(desborda).toEqual({ x: false, y: false });
+    // El faristol és a baix de tot de la pantalla, amb la taula a sobre.
+    const taula = (await page.locator('.board').boundingBox())!;
+    const faristol = (await page.locator('.rack').boundingBox())!;
+    expect(taula.y).toBeLessThan(faristol.y);
+    expect(taula.height).toBeGreaterThan(0);
   });
 });

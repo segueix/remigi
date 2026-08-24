@@ -13,7 +13,8 @@ test('tots els fitxers pengen de la ruta publicada', async ({ page }) => {
   });
 
   await page.goto('./');
-  await expect(page.getByRole('heading', { name: 'Rummikub' })).toBeVisible();
+  // L'app entra directament a la partida.
+  await expect(page.locator('.rack .tile').first()).toBeVisible();
 
   const src = await page.locator('script[type=module]').first().getAttribute('src');
   expect(src, 'el codi ha de penjar de /rummikub/').toContain('/rummikub/assets/');
@@ -48,17 +49,13 @@ test('registra el service worker i deixa jugar sense connexió', async ({ page, 
     timeout: 15_000,
   });
 
-  // Es visita una vegada amb connexió perquè es desi la pàgina...
-  await page.getByPlaceholder('El teu nom').fill('Daniel');
-  await page.getByRole('button', { name: 'Desa' }).click();
-  await expect(page.getByRole('heading', { name: 'Hola, Daniel!' })).toBeVisible();
+  // Es visita una vegada amb connexió perquè es desi tot...
+  await expect(page.locator('.rack .tile').first()).toBeVisible();
 
-  // ...i llavors es talla i s'ha de poder tornar a obrir igualment.
+  // ...i llavors es talla i s'ha de poder continuar jugant igualment.
   await context.setOffline(true);
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'Hola, Daniel!' })).toBeVisible();
-  await page.getByRole('button', { name: /Comença a jugar/ }).click();
-  await expect(page.locator('.rack .tile')).toHaveCount(14);
+  await expect(page.locator('.rack .tile').first()).toBeVisible();
 
   await context.setOffline(false);
 });

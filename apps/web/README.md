@@ -41,25 +41,80 @@ src/
 │   ├── turnDraft.ts          # lògica pura de l'edició del torn
 │   ├── turnDraft.test.ts
 │   ├── useDragTile.ts        # arrossegar amb ratolí, dit o llapis
+│   ├── bots.ts               # el planter de rivals: noms i avatars
+│   ├── bots.test.ts
 │   ├── meldOwners.ts         # qui ha jugat cada jugada de la taula
 │   ├── meldOwners.test.ts
 │   └── useGame.ts            # estat de la partida i torns dels bots
 ├── components/
+│   ├── icons.tsx             # icones dels botons del torn
+│   ├── PlayerMenu.tsx        # el desplegable del teu jugador
 │   ├── TileView.tsx          # una fitxa
 │   ├── MeldView.tsx          # una jugada
 │   ├── BoardView.tsx         # la taula
-│   └── RackView.tsx          # el faristol, amb ordenació
+│   └── RackView.tsx          # el faristol, amb ordenació i compte de fitxes
 └── screens/
-    ├── HomeScreen.tsx        # nom, oponents (automàtics o a mà) i perfil
-    ├── GameScreen.tsx        # la partida, el resultat i el canvi d'habilitat
-    └── StatsScreen.tsx       # habilitat, gràfic d'evolució i historial
+    ├── GameScreen.tsx        # la partida, el menú del jugador i el resultat
+    └── StatsScreen.tsx       # historial: habilitat, gràfic i reinici
 ```
+
+## La taula de joc
+
+**L'app entra directament a la taula**: si hi ha una partida a mig jugar es
+continua sola, i si no se'n reparteix una de nova amb els rivals que toquen per
+l'habilitat del perfil. El perfil es crea sol la primera vegada («Jugador»).
+Tot el que abans era la pantalla d'inici viu ara al **menú del teu jugador**
+(tocant la teva targeta, a dalt): el nom, el nombre de rivals i el seu nivell
+(automàtic o fixat), «Partida nova», «Historial» i «Com es juga». L'historial
+es pinta per sobre de la partida, que no es desmunta: en tornar és exactament
+on era.
+
+La partida ocupa **tota la pantalla**, com un joc i no com una pàgina: a dalt la
+tira de jugadors i el torn, al mig la taula de feltre verd —que es queda tot
+l'espai que sobra—, i a baix el faristol de fusta amb les fitxes i els botons
+del torn. La pàgina no es desplaça mai; si mai cal, es desplacen per dins la
+taula o el faristol. Les fitxes de la taula són un pèl més petites que les del
+faristol perquè s'hi vegin més jugades de cop; les del faristol conserven els
+44 px de toc al mòbil.
+
+El feltre és fosc en tots dos temes, com una taula de debò. Per això tot el que
+s'hi posa a sobre —marcs dels bots, jugades invàlides, destinacions— fa servir
+sempre les **versions clares** dels colors (variables amb sufix `-taula`).
+
+Els botons del torn van sempre en **una sola línia**, amb icona de traç
+(`components/icons.tsx`, SVG en línia, sense llibreries) i rètol; quan el rètol
+no hi cap s'amaga i queda la icona, com en una app. El nom accessible el porta
+`aria-label` i no canvia mai. Amb el **mòbil apaïsat**, tot el que no és taula
+s'estreny: jugadors amb el nom en lletra menuda, faristol en una sola filera
+amb desplaçament horitzontal, i botons només amb icona.
+
+El manifest no clava cap orientació (`"orientation": "any"`): l'app instal·lada
+gira amb el telèfon. I a la dreta dels botons del torn hi ha **«Gira la
+pantalla»**, que posa el joc a pantalla completa i el gira a l'orientació
+contrària (el bloqueig d'orientació dels navegadors demana pantalla completa);
+només surt on pot funcionar, i per això als iPhone no hi és: allà girar el
+telèfon fa el mateix.
+
+## Els rivals
+
+No jugues contra «Bot 1» sinó contra algú: hi ha un **planter de 24
+personatges** amb nom d'usuari i avatar amb degradat de colors propi
+(`game/bots.ts`) —GuineuAstuta, PolpVuitMans, MussolSavi…— i cada partida en
+tria de diferents a l'atzar. L'anell de l'avatar conserva el color de taula del
+bot, que és el que lliga amb els marcs de les seves jugades. El nom viatja dins de l'estat del motor —que només hi veu
+una cadena—, així que una partida represa conserva els mateixos rivals;
+l'avatar es dedueix del nom i no cal desar-lo. Un nom que no és al planter (una
+partida desada d'una versió anterior) rep l'avatar de recanvi.
 
 ## Com es juga un torn
 
 Dues maneres, totes dues amb el mateix resultat:
 
-- **Arrossegar** la fitxa fins on la vols deixar (funciona amb ratolí i amb dit).
+- **Arrossegar** la fitxa fins on la vols deixar. Amb el ratolí, prem i mou;
+  amb el dit, **mantén la fitxa premuda un instant** (una vibració curta ho
+  confirma) i enduu-te-la — una lliscada normal sobre les fitxes desplaça la
+  taula o el faristol, que és el que fa possible arribar a jugades que no són
+  a la pantalla.
 - **Tocar per triar i tocar per deixar**: una jugada de la taula, un lloc buit
   de la taula, «+ Jugada nova» o el faristol. Aquesta és també la via per
   teclat, i per això no desapareix.
@@ -76,10 +131,10 @@ sentit ni intentar, com endur-se al faristol una fitxa que ja era a la taula.
 
 ## Explicar les regles
 
-La pantalla d'inici porta **«Com es juga (i com s'obre)»**, amb exemples fets
+El menú del jugador porta **«Com es juga (i com s'obre)»**, amb exemples fets
 amb fitxes de debò: un grup, una escala, i el cas que enganya — tres fitxes que
-sumen 30 sense ser ni grup ni escala. Ve desplegada mentre no s'ha jugat cap
-partida i plegada després, de manera que a qui ja hi juga només li ocupa una
+sumen 30 sense ser ni grup ni escala. Ve desplegat mentre no s'ha jugat cap
+partida i plegat després, de manera que a qui ja hi juga només li ocupa una
 línia.
 
 Durant el torn, si hi ha jugades marcades en vermell, la pista de la sortida
@@ -90,10 +145,11 @@ la taula desconcerta: sembla que el joc no les vegi.
 
 Dues marques per no perdre el fil de la partida:
 
-- **La fitxa que acabes de robar** queda amb un recuadre de ratlles al faristol
-  fins que tornes a jugar o a robar. Trobar-la entre tretze fitxes més no hauria
-  de ser un joc a part. Va per fora de la fitxa (`outline`) i de ratlles perquè
-  no es confongui amb la fitxa triada, que va enlairada i amb el marc sencer.
+- **La fitxa que acabes de robar** queda amb un recuadre daurat de ratlles al
+  faristol fins que tornes a jugar o a robar. Trobar-la entre tretze fitxes més
+  no hauria de ser un joc a part. Va per fora de la fitxa (`outline`), de
+  ratlles i d'un color que no fa servir res més, per no confondre's ni amb la
+  fitxa triada ni amb els colors dels bots.
 - **Cada bot té un color**, el mateix a la pastilla del seu nom i al marc de les
   jugades que ha posat. Si algú modifica una jugada, el marc passa a ser del seu
   color; si qui la modifica ets tu, el marc desapareix, perquè el color és dels
@@ -149,11 +205,18 @@ El que abans era una llista per repassar a mà ara ho comprova `npm run test:e2e
 - El motor rebutja la sortida de menys de 30 punts i la jugada de menys de 3
   fitxes, i no deixa endur-se al faristol una fitxa que ja era a la taula.
 - «Desfer canvis» retorna el torn a com estava.
-- Arrossegar del faristol a la taula, i l'ajuda que marca les jugades possibles.
+- Arrossegar del faristol a la taula amb el ratolí; amb tocs de debò, lliscar
+  sobre les fitxes desplaça la taula i mantenir premut arrossega.
+- L'app entra directament a la partida; el nom, els rivals i la partida nova es
+  fan des del menú del jugador, i l'historial en porta el retorn i el reinici.
 - El perfil es conserva, els oponents proposats pugen amb l'habilitat, i una
-  partida a mitges es pot continuar (amb els colors de les jugades inclosos).
+  partida a mitges es continua sola en tornar a obrir (colors inclosos).
 - La fitxa robada es marca i deixa d'estar-ho en jugar; les jugades dels bots
   porten el color del bot, i el perden quan les toques.
+- Els rivals tenen nom i avatar propis i diferents entre ells, i la partida
+  s'encaixa a la pantalla sense desplaçament de pàgina.
+- Els botons del torn van en una sola línia a totes les mides, i al mòbil
+  apaïsat tot cap a la pantalla amb objectius de toc de 44 px.
 - Rutes correctes sota `/rummikub/`, manifest i icones, i jugar sense connexió.
 - En pantalla petita: res no desborda i els objectius de toc fan 44 px.
 

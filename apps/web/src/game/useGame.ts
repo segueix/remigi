@@ -7,6 +7,7 @@ import {
   type GameState,
 } from '@rummikub/core';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { pickPersonas } from './bots';
 import { updateOwners, type MeldOwners } from './meldOwners';
 import {
   hasChanges,
@@ -57,11 +58,14 @@ export interface GameHandle {
 }
 
 export function newGameState(setup: GameSetup): GameState {
+  // Cada partida té rivals nous: el nom viatja dins de l'estat del joc, així
+  // que en reprendre una partida desada tornen exactament els mateixos.
+  const personas = pickPersonas(setup.opponents.length);
   return createGame({
     players: [
       { name: setup.playerName, kind: 'human' },
       ...setup.opponents.map((level, i) => ({
-        name: `Bot ${i + 1}`,
+        name: personas[i]?.name ?? `Bot ${i + 1}`,
         kind: 'ai' as const,
         aiLevel: level,
       })),

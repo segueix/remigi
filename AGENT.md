@@ -635,6 +635,242 @@ de vermells i taronges alternats en tema clar i fosc.
 
 ---
 
+### Taula de joc a pantalla completa, amb rivals amb cara i ulls ✅ Feta (2026-08-23)
+
+Demanat pel jugador: disseny en horitzontal amb el faristol a sota i la taula a
+sobre ocupant el màxim sense desplaçament; bots amb nom (un planter de 20-30 que
+canvien a cada partida) i avatar propi; i un aspecte de joc professional,
+sobretot la taula on es posen les fitxes.
+
+- [x] La partida ocupa tota la pantalla: la taula es queda l'espai que sobra,
+      el faristol és sempre a baix i la pàgina no es desplaça mai (les úniques
+      zones amb desplaçament propi són la taula i el faristol, si mai calen).
+- [x] Les fitxes de la taula són un pèl més petites que les del faristol: hi
+      caben més jugades a la vista; el faristol conserva els 44 px de toc.
+- [x] Planter de 24 personatges amb nom i avatar (`game/bots.ts`); cada partida
+      en tria de diferents a l'atzar. El nom viatja dins de l'estat del motor
+      (que només hi veu una cadena), així que les partides desades conserven els
+      seus rivals; l'avatar es dedueix del nom i no cal desar-lo.
+- [x] Taula de feltre verd i faristol de fusta, fitxes amb relleu, jugadors en
+      targetes amb avatar i anell del seu color, i botons amb una mica de cos.
+
+**Criteris d'acceptació (verificats)**:
+
+- Les 57 proves de navegador en verd (4 de noves: rivals amb nom i avatar
+  diferents, i partida encaixada a la pantalla sense desplaçament de pàgina),
+  en escriptori i mòbil sobre el build de producció. 102 tests de unitat.
+- Mirat amb captures en tema clar, fosc i mòbil vertical: res no desborda i
+  tots els estats es distingeixen (fitxa robada, marcs de bots, jugada
+  invàlida, destinacions).
+
+**Decisions**:
+
+- El feltre és fosc en tots dos temes, com una taula de debò; per això tot el
+  que s'hi posa a sobre fa servir sempre versions clares dels colors (variables
+  amb sufix `-taula`). Els marcs dels bots sobre feltre són les versions
+  clares encara que el tema sigui clar.
+- La fitxa robada passa de marcar-se amb el color d'acció a marcar-se en
+  **daurat**: sobre la fusta del faristol el torquesa es confonia amb la fitxa
+  triada, i el daurat no el fa servir res més.
+- El planter és a la web, no al motor: per al motor el nom d'un jugador és una
+  cadena i prou, i així ha de continuar.
+
+### Problemes trobats
+
+- [2026-08-23] Una partida desada d'una versió anterior porta bots que es diuen
+  «Bot 1»: no són al planter i no tindrien avatar. Resolt amb un avatar de
+  recanvi (🤖) per a qualsevol nom desconegut, amb test.
+- [2026-08-23] El botó «+ Jugada nova» heretava el relleu nou dels botons i
+  semblava un botó d'acció flotant sobre el feltre. Resolt traient-li l'ombra:
+  és una zona per deixar-hi fitxes, no una ordre.
+
+### Botons del torn amb icona i mòbil apaïsat ✅ Feta (2026-08-23)
+
+Demanat pel jugador: els quatre botons del torn en una sola línia amb icones
+estil aplicació, i que la partida s'adapti al mòbil posat en horitzontal.
+
+- [x] Els botons van sempre en una sola línia, amb icona de traç (SVG en línia,
+      `components/icons.tsx`, sense cap llibreria) i rètol; quan el rètol no hi
+      cap, s'amaga i queda la icona, com en una app. El nom accessible el porta
+      `aria-label`, així no canvia mai (i les proves tampoc).
+- [x] «Robar fitxa» i «Passar torn» tenen icona diferent: una fitxa amb un més,
+      i l'avanç de torn.
+- [x] Mòbil apaïsat (`orientation: landscape` i poca alçada): jugadors reduïts
+      a avatar i compte, faristol en una sola filera amb desplaçament
+      horitzontal, fitxes de taula més menudes i botons només amb icona. La
+      taula es queda la resta de l'alçada i la pàgina no es desplaça.
+
+**Criteris d'acceptació (verificats)**: 60 proves de navegador en verd (3 de
+noves: botons en una sola línia a totes les mides amb el nom intacte, i partida
+encaixada al mòbil apaïsat de 851×393 amb botons de 44 px). Comprovat amb
+captures en escriptori, mòbil vertical i mòbil apaïsat.
+
+**Decisió**: el nom dels botons viu a `aria-label` i el rètol visible és
+decoratiu. Si el rètol s'amagués amb `display: none` sense `aria-label`, el
+botó es quedaria sense nom accessible: no és una finor, és el que fa que
+amagar-lo sigui possible.
+
+### Problemes trobats
+
+*(cap: el canvi ha sortit net a la primera passada de proves)*
+
+### El mòbil no girava, i el gir amb un botó ✅ Feta (2026-08-23)
+
+El jugador va veure que al mòbil el joc no es posava en horitzontal ni girant
+el telèfon, i va demanar també un botó de gir al costat dels quatre del torn, i
+que els noms dels bots es veiessin (en apaïsat s'havien amagat per estalviar
+espai).
+
+**El perquè no girava**: el manifest de l'aplicació portava
+`"orientation": "portrait"` des que es va crear, així que l'app instal·lada
+quedava clavada en vertical per molt que girés el telèfon. No era cap misteri
+de CSS: era una línia de configuració.
+
+- [x] `orientation: "any"` al manifest: l'app gira amb el telèfon.
+- [x] Botó «Gira la pantalla» a la dreta dels quatre del torn, amb la seva
+      icona: posa el joc a pantalla completa (el bloqueig d'orientació ho
+      demana) i gira a l'orientació contrària; tornar-lo a prémer ho desfà.
+      Només surt on pot funcionar (pantalla tàctil i navegador amb
+      `screen.orientation.lock`); als iPhone no hi és, i girar el telèfon fa
+      el mateix.
+- [x] Els noms dels bots tornen a veure's en apaïsat, en lletra menuda.
+
+**Criteris d'acceptació (verificats)**: 62 proves de navegador en verd (el botó
+surt al projecte de mòbil i no al d'escriptori, prémer-lo no peta encara que
+l'emulador no pugui girar, i el recompte de botons és 5 al mòbil i 4 a
+l'escriptori). Captures en vertical i apaïsat amb el botó al seu lloc.
+
+### Problemes trobats
+
+- [2026-08-23] **El bloqueig d'orientació no és un gir de CSS**: girar la
+  interfície per transformació hauria trencat l'arrossegament (coordenades del
+  punter). S'ha fet amb l'API d'orientació de debò, acceptant que on no hi és
+  (iPhone) el botó no surti: val més un botó que no surt que un que no fa res.
+- [2026-08-23] TypeScript ja no declara `screen.orientation.lock` (massa
+  navegadors sense suport): es comprova en temps d'execució i es tipa a mà.
+
+### Directes a la taula: menú del jugador i rivals amb nom d'usuari ✅ Feta (2026-08-23)
+
+Demanat pel jugador: fora la pantalla d'inici (l'app entra directament a la
+partida), bots amb nom d'usuari i avatars més vistosos, faristol sense títol
+(el compte de fitxes al costat d'«Ordena») i sense «ajuda'm», i tot el que era
+a l'inici —nom, nivell, partida nova, historial— en un desplegable que s'obre
+tocant el teu jugador.
+
+- [x] L'app entra directament a la taula: si hi ha partida a mig jugar es
+      continua sola, i si no se'n reparteix una amb els rivals que toquen per
+      l'habilitat. El perfil es crea sol el primer cop («Jugador») i el nom es
+      canvia des del menú.
+- [x] Menú del jugador (`components/PlayerMenu.tsx`): nom, nombre de rivals,
+      nivell (automàtic o fixat), «Partida nova», «Historial» i «Com es juga».
+- [x] Planter refet amb noms d'usuari (GuineuAstuta, PolpVuitMans, MussolSavi…)
+      i avatars amb degradat de colors propi de cada personatge; l'anell
+      conserva el color de taula del bot, que és el que lliga amb els marcs.
+- [x] Faristol: fora el títol i l'ajuda; «Ordena: … · N fitxes».
+- [x] L'historial (abans «Estadístiques») porta el retorn a la partida i el
+      reinici del perfil, que vivia a l'inici.
+- [x] Fora el botó «Deixar la partida»: la seva destinació ja no existeix;
+      «Partida nova» i «Historial» viuen al menú. Queden 3 botons de torn
+      (4 al mòbil, amb el gir).
+
+**Criteris d'acceptació (verificats)**: 60 proves de navegador en verd amb el
+flux nou (entrada directa, nom pel menú, partida nova des del menú, historial
+amb retorn, reinici que torna a crear el perfil de zero, regles dins del menú)
+i 102 tests de unitat. Captures de taula i menú.
+
+**Decisions**:
+
+- **La partida no es desmunta en anar a l'historial**: es pinta a sobre i es
+  torna exactament on era, sense passar pel desat.
+- **El nom del teu jugador surt del perfil, no de l'estat de la partida**: així
+  canviar-lo al menú es veu a l'instant; l'estat del motor conserva el nom amb
+  què va començar la partida.
+- La configuració viva de la partida (rivals, adaptació) es guarda a la
+  pantalla de joc (`currentSetup`), perquè una partida nova des del menú quedi
+  ben registrada al perfil i ben desada.
+
+### Problemes trobats
+
+- [2026-08-23] **Les proves que injectaven una partida desada van petar**: ara
+  l'app reparteix una partida només arribar i la desa a cada moviment, així que
+  esborrar o injectar `localStorage` després de carregar era una cursa contra
+  els bots (que amb `VITE_BOT_DELAY=0` juguen a l'instant i sobreescrivien la
+  partida injectada abans del `reload`). Resolt amb `addInitScript`: la llavor
+  s'hi posa abans que l'app arrenqui, amb un senyal perquè una recàrrega dins
+  de la mateixa prova no ho torni a esborrar.
+
+### Amb el dit: lliscar desplaça, mantenir premut arrossega ✅ Feta (2026-08-23)
+
+El jugador va topar amb un mur: amb el tacte no es podia desplaçar la taula, i
+les fitxes no es podien portar a jugades que no fossin a la pantalla. La causa
+era el `touch-action: none` de les fitxes: qualsevol lliscada que comencés
+sobre una fitxa quedava segrestada per l'arrossegament — i amb la taula plena,
+tot són fitxes.
+
+- [x] Les fitxes ja no porten `touch-action: none`: lliscar-hi per sobre
+      desplaça la taula o el faristol amb normalitat, també amb una fitxa
+      triada.
+- [x] Amb el dit, la fitxa s'agafa **mantenint-la premuda un instant** (180 ms
+      quiet), com a les apps; una vibració curta ho confirma on n'hi ha. A
+      partir d'aquí el dit se l'enduu i el desplaçament queda frenat (aturant
+      el `touchmove` amb un oient no passiu, que és l'única manera un cop
+      descartat el `touch-action`).
+- [x] Amb el ratolí res no canvia: moure's uns píxels amb el botó premut ja és
+      arrossegar, com sempre.
+
+**Criteris d'acceptació (verificats)**: prova de navegador amb tocs de debò
+(CDP) sobre una taula de 25 jugades que no cap a la pantalla — la lliscada que
+comença sobre una fitxa desplaça la taula i no s'enduu res; mantenir premut
+aixeca la fitxa, arrossegar-la no desplaça, i la fitxa acaba dins de la jugada.
+61 proves en verd.
+
+### Problemes trobats
+
+- [2026-08-23] **La inèrcia del desplaçament va embrutar la prova**: després
+  d'una lliscada, la taula continua rodant uns instants pel seu compte, i la
+  comprovació de «no s'ha desplaçat durant l'arrossegament» veia el cua d'aquell
+  impuls. Resolt esperant que la inèrcia mori abans de la segona part de la
+  prova. És cosa de la prova, no del joc.
+- [2026-08-23] El manteniment podia acabar en menú contextual a Android o en
+  selecció de text a iOS. Resolt aturant el `contextmenu` mentre hi ha gest en
+  marxa i amb `user-select: none` i `-webkit-touch-callout: none` a la fitxa.
+
+### Color i integració: menú, final de partida i historial ✅ Feta (2026-08-24)
+
+Demanat pel jugador: que el menú del jugador, la pantalla de final de partida i
+l'historial tinguin més color i lliguin més amb el joc.
+
+- [x] **Firma comuna**: una franja amb els quatre colors de les fitxes obre les
+      tres superfícies (`.franja-fitxes`), amb versions clares al tema fosc.
+- [x] **Menú**: avatar gran al costat del nom, i la configuració de la partida
+      en una capsa tenyida del color d'acció.
+- [x] **Final de partida**: trofeu gran si guanyes (amb la targeta enllustrada
+      d'or), l'avatar del bot guanyador si perds; marcador amb l'avatar de cada
+      jugador, corona al guanyador i punts com a xapes (verd qui suma, vermell
+      apagat qui resta); el canvi d'habilitat en una banda destacada.
+- [x] **Historial**: capçalera amb avatar i nom, rajoles d'estadístiques amb un
+      color d'identitat cadascuna (habilitat, partides, victòries, percentatge),
+      àrea suau sota la línia del gràfic, i resultats de l'historial com a xapes
+      amb la vora de la fila del mateix color.
+
+**Criteris d'acceptació (verificats)**: les 61 proves de navegador continuen en
+verd sense tocar-ne cap (el redisseny no canvia cap selector ni cap text que es
+comprovi), i captures de les tres superfícies en tema clar i fosc.
+
+**Decisió (de la guia de visualització)**: a les rajoles i al marcador, el color
+porta la identitat (vores, fons tenyits, xapes) i **els números van sempre amb
+el color del text**: el que s'ha de llegir no es tenyeix.
+
+### Problemes trobats
+
+- [2026-08-24] **La variable d'identitat de les rajoles no s'aplicava**: el
+  valor per defecte era a `.stats div` (especificitat 0,1,1) i les classes
+  `.stat-*` (0,1,0) no el podien guanyar. Resolt posant el valor per defecte al
+  pare `.stats`: l'herència sí que cedeix davant d'una regla pròpia de
+  l'element, la especificitat no.
+
+---
+
 ## Riscos coneguts (a vigilar quan toqui)
 
 - ~~**Vite + workspace amb font TS**~~ (Fase 2): **tancat**. `@rummikub/core`

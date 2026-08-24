@@ -1,9 +1,12 @@
-import { difficultyByKey, finalScores, findRackMelds, type Tile } from '@rummikub/core';
+import { difficultyByKey, finalScores, type Tile } from '@rummikub/core';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { BoardView } from '../components/BoardView';
+import { CheckIcon, DrawIcon, PassIcon, RotateIcon, UndoIcon } from '../components/icons';
+import { PlayerMenu } from '../components/PlayerMenu';
 import { RackView } from '../components/RackView';
 import { TileView } from '../components/TileView';
 import { useDragTile } from '../game/useDragTile';
+import { botPersona } from '../game/bots';
 import { meldAuthors } from '../game/meldOwners';
 import { invalidMeldIndexes, missingOpeningPoints, openingPoints } from '../game/turnDraft';
 import { useGame, type GameHandle, type GameSetup } from '../game/useGame';
@@ -22,14 +25,22 @@ interface Props {
   resumeOwners?: SavedGame['owners'];
   profile: ProfileHandle;
   savedGame: SavedGameHandle;
-  onExit(): void;
+  /** Obre l'historial (les estadístiques). */
+  onHistory(): void;
 }
 
-export function GameScreen({ setup, resume, resumeOwners, profile, savedGame, onExit }: Props) {
+export function GameScreen({ setup, resume, resumeOwners, profile, savedGame, onHistory }: Props) {
+  /*
+   * La configuració viva de la partida: comença amb la que arriba (nova o
+   * represa) i canvia quan el menú engega una partida nova. El registre del
+   * resultat i el desat fan servir aquesta, no la inicial.
+   */
+  const [currentSetup, setCurrentSetup] = useState(setup);
   const handle = useGame(setup, resume, resumeOwners);
   const { game, draft, selectedTileId, error, highlighted, drawnTileId, isHumanTurn } = handle;
-  const change = useRecordResult(game, setup.opponents, profile);
-  const [helpOn, setHelpOn] = useState(false);
+  const change = useRecordResult(game, currentSetup.opponents, profile);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const rotation = useScreenRotation();
 
   const { moveTileTo } = handle;
   const drag = useDragTile(isHumanTurn, moveTileTo);
@@ -39,20 +50,18 @@ export function GameScreen({ setup, resume, resumeOwners, profile, savedGame, on
   const { persist, clear } = savedGame;
   const { meldOwners } = handle;
   useEffect(() => {
-    if (game.status === 'playing') persist({ setup, game, owners: [...meldOwners] });
+    if (game.status === 'playing') persist({ setup: currentSetup, game, owners: [...meldOwners] });
     else clear();
-  }, [game, setup, meldOwners, persist, clear]);
+  }, [game, currentSetup, meldOwners, persist, clear]);
 
-  // Fitxes de la mà que poden formar alguna jugada. Només es calcula quan
-  // l'ajuda està encesa i quan canvia el faristol.
-  const suggested = useMemo(() => {
-    if (!helpOn || !draft) return new Set<string>();
-    const ids = new Set<string>();
-    for (const candidate of findRackMelds(draft.rack, true)) {
-      for (const tile of candidate.meld) ids.add(tile.id);
-    }
-    return ids;
-  }, [helpOn, draft]);
+  const startNewGame = useCallback(
+    (next: GameSetup) => {
+      setCurrentSetup(next);
+      setMenuOpen(false);
+      handle.restart(next);
+    },
+    [handle],
+  );
 
   /*
    * La taula que es veu és la del torn en curs mentre jugues tu, i la del motor
@@ -84,7 +93,7 @@ export function GameScreen({ setup, resume, resumeOwners, profile, savedGame, on
   );
 
   if (game.status === 'finished') {
-    return <GameOver handle={handle} change={change} onExit={onExit} />;
+    return <GameOver handle={handle} change={change} onHistory={onHistory} />;
   }
 
   const human = game.players[0];
@@ -94,33 +103,81 @@ export function GameScreen({ setup, resume, resumeOwners, profile, savedGame, on
 
   return (
     <section className="game">
-      <ul className="players">
-        {game.players.map((player, index) => (
-          <li
-            key={player.id}
-            className={index === game.currentPlayer ? 'player active' : 'player'}
-            /* Cada bot té color propi; aquí és on es veu de qui és cadascun. */
-            data-bot={player.kind === 'ai' ? index : undefined}
-          >
-            <span className="player-name">
-              {player.kind === 'ai' && <span className="player-color" aria-hidden="true" />}
-              {player.name}
-              {player.kind === 'ai' && (
-                <span className="tag">{difficultyByKey(player.aiLevel).label}</span>
-              )}
-              {!player.hasOpened && <span className="tag">sense obrir</span>}
-            </span>
-            <span className="muted">{player.rack.length} fitxes</span>
-          </li>
-        ))}
-      </ul>
+      <header className="game-top">
+        <ul className="players">
+          {game.players.map((player, index) => {
+            const isHuman = player.kind === 'human';
+            const persona = isHuman ? null : botPersona(player.name);
+            const inner = (
+              <>
+                <span className="player-name">
+                  {/* L'avatar: el del bot amb els seus colors, o la teva inicial. */}
+                  <span
+                    className="player-color"
+                    aria-hidden="true"
+                    style={
+                      persona
+                        ? { background: `linear-gradient(135deg, ${persona.colors[0]}, ${persona.colors[1]})` }
+                        : undefined
+                    }
+                  >
+                    {persona ? persona.emoji : initialOf(profile.profile?.name ?? player.name)}
+                  </span>
+                  <span className="player-nom">
+                    {isHuman ? (profile.profile?.name ?? player.name) : player.name}
+                  </span>
+                  {player.kind === 'ai' && (
+                    <span className="tag">{difficultyByKey(player.aiLevel).label}</span>
+                  )}
+                  {!player.hasOpened && <span className="tag">sense obrir</span>}
+                </span>
+                <span className="muted">{player.rack.length} fitxes</span>
+              </>
+            );
+            return (
+              <li
+                key={player.id}
+                className={index === game.currentPlayer ? 'player active' : 'player'}
+                /* Cada bot té color propi; aquí és on es veu de qui és cadascun. */
+                data-bot={player.kind === 'ai' ? index : undefined}
+              >
+                {isHuman ? (
+                  /* El teu jugador s'obre: nom, nivell, partida nova i historial. */
+                  <button
+                    type="button"
+                    className="player-obre"
+                    onClick={() => setMenuOpen((open) => !open)}
+                    aria-expanded={menuOpen}
+                    aria-label="El teu jugador"
+                  >
+                    {inner}
+                    <span className="fletxa" aria-hidden="true">▾</span>
+                  </button>
+                ) : (
+                  inner
+                )}
+              </li>
+            );
+          })}
+        </ul>
 
-      {/* Els canvis de torn i els errors s'anuncien als lectors de pantalla. */}
-      <p className="muted turn-line" aria-live="polite">
-        Torn {game.turn} ·{' '}
-        {isHumanTurn ? 'et toca a tu' : `juga ${game.players[game.currentPlayer].name}…`} ·{' '}
-        {game.bag.length} fitxes al sac
-      </p>
+        {menuOpen && (
+          <PlayerMenu
+            profile={profile}
+            current={currentSetup}
+            onNewGame={startNewGame}
+            onHistory={onHistory}
+            onClose={() => setMenuOpen(false)}
+          />
+        )}
+
+        {/* Els canvis de torn i els errors s'anuncien als lectors de pantalla. */}
+        <p className="muted turn-line" aria-live="polite">
+          Torn {game.turn} ·{' '}
+          {isHumanTurn ? 'et toca a tu' : `juga ${game.players[game.currentPlayer].name}…`} ·{' '}
+          {game.bag.length} fitxes al sac
+        </p>
+      </header>
 
       <BoardView
         board={board}
@@ -173,33 +230,59 @@ export function GameScreen({ setup, resume, resumeOwners, profile, savedGame, on
         selectedTileId={selectedTileId}
         draggingTileId={drag.dragging?.tileId ?? null}
         isOver={drag.dragging?.over?.kind === 'rack'}
-        suggested={suggested}
         drawnTileId={drawnTileId}
-        helpOn={helpOn}
         interactive={isHumanTurn}
-        onToggleHelp={() => setHelpOn((on) => !on)}
         onTileClick={(tileId) => handleTileClick(tileId, null)}
         onTilePointerDown={drag.start}
         onReturnToRack={() => handle.placeSelected({ kind: 'rack' })}
       />
 
+      {/*
+        * Els botons del torn, sempre en una sola línia. El nom el porta
+        * `aria-label` perquè no canviï mai: en pantalles estretes el rètol
+        * s'amaga i queda la icona, com en una app.
+        */}
       <div className="row actions">
-        <button onClick={handle.commit} disabled={!isHumanTurn || !handle.canCommit}>
-          Acabar jugada
+        <button
+          onClick={handle.commit}
+          disabled={!isHumanTurn || !handle.canCommit}
+          aria-label="Acabar jugada"
+          title="Acabar jugada"
+        >
+          <CheckIcon />
+          <span className="btn-text">Acabar jugada</span>
         </button>
-        <button className="secondary" onClick={handle.draw} disabled={!isHumanTurn}>
-          {game.bag.length === 0 ? 'Passar torn' : 'Robar fitxa'}
+        <button
+          className="secondary"
+          onClick={handle.draw}
+          disabled={!isHumanTurn}
+          aria-label={game.bag.length === 0 ? 'Passar torn' : 'Robar fitxa'}
+          title={game.bag.length === 0 ? 'Passar torn' : 'Robar fitxa'}
+        >
+          {game.bag.length === 0 ? <PassIcon /> : <DrawIcon />}
+          <span className="btn-text">{game.bag.length === 0 ? 'Passar torn' : 'Robar fitxa'}</span>
         </button>
         <button
           className="secondary"
           onClick={handle.resetTurn}
           disabled={!isHumanTurn || !handle.canCommit}
+          aria-label="Desfer canvis"
+          title="Desfer canvis"
         >
-          Desfer canvis
+          <UndoIcon />
+          <span className="btn-text">Desfer canvis</span>
         </button>
-        <button className="link" onClick={onExit}>
-          Deixar la partida
-        </button>
+        {rotation.available && (
+          <button
+            className="secondary gir"
+            onClick={rotation.toggle}
+            aria-label="Gira la pantalla"
+            title="Gira la pantalla"
+            aria-pressed={rotation.locked}
+          >
+            <RotateIcon />
+          </button>
+        )}
       </div>
 
       {/* Còpia que segueix el punter. No rep clics: així no tapa la destinació. */}
@@ -219,14 +302,18 @@ function findTile(board: Tile[] | undefined, rack: Tile[] | undefined, id: strin
   return board?.find((t) => t.id === id) ?? rack?.find((t) => t.id === id) ?? null;
 }
 
+function initialOf(name: string): string {
+  return name.trim().charAt(0).toUpperCase() || '?';
+}
+
 function GameOver({
   handle,
   change,
-  onExit,
+  onHistory,
 }: {
   handle: GameHandle;
   change: RatingChange | null;
-  onExit(): void;
+  onHistory(): void;
 }) {
   const { game } = handle;
   const scores = finalScores(game);
@@ -234,27 +321,79 @@ function GameOver({
   const blocked = winner ? winner.rack.length > 0 : false;
   const humanWon = game.winnerId === game.players[0].id;
 
+  /* L'avatar de cadascú, com a la tira de jugadors: bots amb el seu degradat. */
+  const avatarOf = (playerId: string) => {
+    const player = game.players.find((candidate) => candidate.id === playerId);
+    if (!player || player.kind === 'human') {
+      return { emoji: initialOf(player?.name ?? '?'), colors: null };
+    }
+    const persona = botPersona(player.name);
+    return { emoji: persona.emoji, colors: persona.colors };
+  };
+
   return (
     <section className={humanWon ? 'card game-over won' : 'card game-over'}>
-      <h2>{humanWon ? 'Has guanyat!' : `Ha guanyat ${winner?.name}`}</h2>
-      <p className="muted">
-        {blocked
-          ? 'Ningú no s’ha pogut desfer de totes les fitxes: la partida ha quedat bloquejada i guanya qui tenia menys punts a la mà.'
-          : `${winner?.name} s’ha quedat sense fitxes en ${game.turn} torns.`}
-      </p>
+      <div className="franja-fitxes" aria-hidden="true" />
+
+      <div className="final-cap">
+        {humanWon ? (
+          <span className="final-emoji" aria-hidden="true">
+            🏆
+          </span>
+        ) : (
+          winner && (
+            <span
+              className="player-color final-avatar"
+              aria-hidden="true"
+              style={
+                avatarOf(winner.id).colors
+                  ? {
+                      background: `linear-gradient(135deg, ${avatarOf(winner.id).colors![0]}, ${avatarOf(winner.id).colors![1]})`,
+                    }
+                  : undefined
+              }
+            >
+              {avatarOf(winner.id).emoji}
+            </span>
+          )
+        )}
+        <h2>{humanWon ? 'Has guanyat!' : `Ha guanyat ${winner?.name}`}</h2>
+        <p className="muted">
+          {blocked
+            ? 'Ningú no s’ha pogut desfer de totes les fitxes: la partida ha quedat bloquejada i guanya qui tenia menys punts a la mà.'
+            : `${winner?.name} s’ha quedat sense fitxes en ${game.turn} torns.`}
+        </p>
+      </div>
 
       <ul className="scores">
         {[...scores]
           .sort((a, b) => b.points - a.points)
-          .map((score) => (
-            <li key={score.playerId} className={score.playerId === game.winnerId ? 'winner' : ''}>
-              <span>{score.name}</span>
-              <span className={score.points >= 0 ? 'points-positive' : 'points-negative'}>
-                {score.points > 0 ? '+' : ''}
-                {score.points}
-              </span>
-            </li>
-          ))}
+          .map((score) => {
+            const avatar = avatarOf(score.playerId);
+            return (
+              <li key={score.playerId} className={score.playerId === game.winnerId ? 'winner' : ''}>
+                <span className="score-jugador">
+                  <span
+                    className="player-color score-avatar"
+                    aria-hidden="true"
+                    style={
+                      avatar.colors
+                        ? { background: `linear-gradient(135deg, ${avatar.colors[0]}, ${avatar.colors[1]})` }
+                        : undefined
+                    }
+                  >
+                    {avatar.emoji}
+                  </span>
+                  <span className="score-nom">{score.name}</span>
+                  {score.playerId === game.winnerId && <span aria-hidden="true">👑</span>}
+                </span>
+                <span className={score.points >= 0 ? 'punts points-positive' : 'punts points-negative'}>
+                  {score.points > 0 ? '+' : ''}
+                  {score.points}
+                </span>
+              </li>
+            );
+          })}
       </ul>
 
       {change && (
@@ -269,10 +408,66 @@ function GameOver({
 
       <div className="row">
         <button onClick={() => handle.restart()}>Una altra partida</button>
-        <button className="secondary" onClick={onExit}>
-          Torna a l’inici
+        <button className="secondary" onClick={onHistory}>
+          Historial
         </button>
       </div>
     </section>
   );
+}
+
+/**
+ * Girar la pantalla des d'un botó, per a qui té el gir del mòbil blocat o vol
+ * jugar en horitzontal sense remenar res: es posa l'aplicació a pantalla
+ * completa (el bloqueig d'orientació ho demana) i es gira a l'orientació
+ * contrària; tornar-lo a prémer ho desfà. Si el navegador no ho permet (els
+ * iPhone, per exemple), el botó ni surt: girar el mòbil fa el mateix, ara que
+ * el manifest ja no clava l'app en vertical.
+ */
+function useScreenRotation() {
+  const [locked, setLocked] = useState(false);
+
+  // TypeScript ja no declara `lock` (massa navegadors sense): es mira en viu.
+  const orientation = () =>
+    screen.orientation as ScreenOrientation & {
+      lock?(target: 'landscape' | 'portrait'): Promise<void>;
+    };
+
+  const available = useMemo(
+    () =>
+      typeof screen !== 'undefined' &&
+      typeof orientation()?.lock === 'function' &&
+      navigator.maxTouchPoints > 0,
+    [],
+  );
+
+  // Si se surt de pantalla completa (gest del sistema), el bloqueig cau sol.
+  useEffect(() => {
+    if (!available) return;
+    const onChange = () => {
+      if (!document.fullscreenElement) setLocked(false);
+    };
+    document.addEventListener('fullscreenchange', onChange);
+    return () => document.removeEventListener('fullscreenchange', onChange);
+  }, [available]);
+
+  const toggle = useCallback(async () => {
+    try {
+      if (!locked) {
+        await document.documentElement.requestFullscreen?.().catch(() => {});
+        const target = screen.orientation.type.startsWith('portrait') ? 'landscape' : 'portrait';
+        await orientation().lock?.(target);
+        setLocked(true);
+      } else {
+        screen.orientation.unlock();
+        setLocked(false);
+        if (document.fullscreenElement) await document.exitFullscreen().catch(() => {});
+      }
+    } catch {
+      // El navegador no ha volgut girar: no passa res, girar el mòbil funciona.
+      setLocked(false);
+    }
+  }, [locked]);
+
+  return { available, locked, toggle };
 }
