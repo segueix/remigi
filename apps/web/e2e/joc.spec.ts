@@ -298,24 +298,33 @@ test.describe('qui ha jugat què', () => {
     await expect(page.locator('.rack .tile.drawn')).toHaveCount(0);
   });
 
-  test('cada jugada d’un bot porta el color del seu bot', async ({ page }) => {
+  test('l’últim moviment d’un bot porta el marc del seu color', async ({ page }) => {
     await comencaDeZero(page);
     await jugaContra(page, 2);
     expect(await robaFinsQueUnBotJugui(page)).toBe(true);
 
-    // El jugador només ha robat: tot el que hi ha a la taula és dels bots.
-    await expect(page.locator('.board .meld:not([data-bot])')).toHaveCount(0);
-
-    // I el color de cada jugada és el d'un bot que és a la llista de jugadors.
+    // Hi ha marc, i tots els marcs són del mateix moviment: un sol bot.
     const bots = new Set(
-      await page.locator('.board .meld').evaluateAll((melds) =>
-        melds.map((meld) => (meld as HTMLElement).dataset.bot),
-      ),
+      await page
+        .locator('.board .meld[data-bot]')
+        .evaluateAll((melds) => melds.map((meld) => (meld as HTMLElement).dataset.bot)),
     );
-    expect(bots.size).toBeGreaterThan(0);
-    for (const bot of bots) {
-      await expect(page.locator(`.player[data-bot="${bot}"] .player-color`)).toBeVisible();
-    }
+    expect(bots.size).toBe(1);
+    const [bot] = [...bots];
+    // I aquest bot és a la llista de jugadors.
+    await expect(page.locator(`.player[data-bot="${bot}"] .player-color`)).toBeVisible();
+  });
+
+  test('la jugada que baixes tu també es marca, amb el teu color', async ({ page }) => {
+    await entraAmbPartida(page, {
+      rack: [f('red', 12), f('blue', 12), f('black', 12), f('orange', 5)],
+    });
+    await baixaGrup(page, ['12 vermell', '12 blau', '12 negre']);
+    await page.getByRole('button', { name: 'Acabar jugada' }).click();
+    await expect(page.locator('.error')).toHaveCount(0);
+
+    // La jugada acabada de baixar porta el marc del jugador (lloc 0).
+    await expect(page.locator('.board .meld[data-bot="0"]')).toHaveCount(1);
   });
 
   test('continuar una partida no li fa perdre els colors', async ({ page }) => {
@@ -337,7 +346,16 @@ test.describe('qui ha jugat què', () => {
     await jugaContra(page, 2);
     expect(await robaFinsQueUnBotJugui(page)).toBe(true);
 
-    const jugada = page.locator('.board .meld').first();
+    /*
+     * L'objectiu es fixa per posició: un localitzador per `[data-bot]` és viu,
+     * i quan la jugada tocada perdés el marc saltaria tot sol a una altra que
+     * encara el tingués.
+     */
+    await expect(page.locator('.board .meld[data-bot]').first()).toBeVisible();
+    const index = await page
+      .locator('.board .meld')
+      .evaluateAll((melds) => melds.findIndex((meld) => (meld as HTMLElement).dataset.bot));
+    const jugada = page.locator('.board .meld').nth(index);
     await expect(jugada).toHaveAttribute('data-bot', /[1-3]/);
 
     // Deixar-hi una fitxa a sobre li treu el color a l'instant.

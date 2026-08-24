@@ -628,7 +628,11 @@ input {
   color: var(--feltre-suau);
 }
 
-/* Sobre el feltre fosc, els marcs dels bots van sempre en versió clara. */
+/* Sobre el feltre fosc, els marcs van sempre en versió clara. El 0 és el
+   jugador: les jugades que acabes de baixar porten el teu color d'acció. */
+.board [data-bot='0'] {
+  --marc: var(--accent-taula);
+}
 .board [data-bot='1'] {
   --marc: var(--bot-1-taula);
 }

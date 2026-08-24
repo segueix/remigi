@@ -33,11 +33,19 @@ describe('updateOwners', () => {
     expect(owners.get(meldKey(GRUP_7))).toBe(1);
   });
 
-  it('una jugada que no ha canviat conserva l’autor', () => {
+  it('només es marca l’últim moviment: les marques d’abans s’esborren', () => {
     const abans = updateOwners(buit, [], [GRUP_7], 1);
     const després = updateOwners(abans, [GRUP_7], [GRUP_7, ESCALA], 2);
-    expect(després.get(meldKey(GRUP_7))).toBe(1);
+    // La jugada nova és del 2; la del moviment anterior ja no porta marc.
     expect(després.get(meldKey(ESCALA))).toBe(2);
+    expect(després.has(meldKey(GRUP_7))).toBe(false);
+  });
+
+  it('un moviment que no toca la taula no esborra el marc de l’anterior', () => {
+    // Robar o passar no mou fitxes: l'últim moviment continua sent el d'abans.
+    const abans = updateOwners(buit, [], [GRUP_7], 1);
+    const després = updateOwners(abans, [GRUP_7], [GRUP_7], 2);
+    expect(després.get(meldKey(GRUP_7))).toBe(1);
   });
 
   it('reordenar les fitxes d’una jugada no la converteix en una altra', () => {
@@ -74,12 +82,6 @@ describe('updateOwners', () => {
     expect(owners.get(meldKey(ESCALA))).toBe(1);
   });
 
-  it('oblida les jugades que ja no són a la taula', () => {
-    const abans = updateOwners(buit, [], [GRUP_7, ESCALA], 1);
-    const després = updateOwners(abans, [GRUP_7, ESCALA], [GRUP_7], 2);
-    expect([...després.keys()]).toEqual([meldKey(GRUP_7)]);
-  });
-
   it('aplicar dues vegades el mateix moviment dona el mateix resultat', () => {
     // React torna a executar les actualitzacions d'estat en mode estricte.
     const un = updateOwners(buit, [GRUP_7], [GRUP_7, ESCALA], 1);
@@ -89,16 +91,20 @@ describe('updateOwners', () => {
 });
 
 describe('meldAuthors', () => {
-  it('dona el bot de cada jugada, alineat amb la taula', () => {
-    const owners = updateOwners(updateOwners(buit, [], [GRUP_7], 2), [GRUP_7], [GRUP_7, ESCALA], 1);
+  it('dona l’autor de cada jugada de l’últim moviment, alineat amb la taula', () => {
+    const owners = updateOwners(buit, [GRUP_7], [GRUP_7, ESCALA], 1);
     expect(meldAuthors([GRUP_7, ESCALA], owners, JUGADORS)).toEqual([
-      { slot: 2, name: 'Bot 2' },
+      null,
       { slot: 1, name: 'Bot 1' },
     ]);
   });
 
-  it('les jugades de l’humà i les d’autor desconegut no en tenen', () => {
+  it('les jugades que baixa l’humà també porten marc, amb el seu lloc', () => {
     const owners = updateOwners(buit, [], [GRUP_7], 0);
-    expect(meldAuthors([GRUP_7, ESCALA], owners, JUGADORS)).toEqual([null, null]);
+    expect(meldAuthors([GRUP_7], owners, JUGADORS)).toEqual([{ slot: 0, name: 'Daniel' }]);
+  });
+
+  it('les jugades d’autor desconegut no en tenen', () => {
+    expect(meldAuthors([ESCALA], new Map([[meldKey(GRUP_7), 1]]), JUGADORS)).toEqual([null]);
   });
 });

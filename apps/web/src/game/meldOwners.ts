@@ -27,14 +27,14 @@ export function meldKey(meld: Meld): string {
 /**
  * Recalcula els autors després d'un moviment del jugador `playerIndex`.
  *
- * Una jugada que ja hi era i no ha canviat es queda amb l'autor que tenia; una
- * de nova, o una de modificada (que és una clau nova), passa a ser de qui acaba
- * de jugar. És justament el que es vol veure: el marc segueix l'últim que hi ha
- * posat les mans.
+ * Només es marca **l'últim moviment**: les jugades noves o modificades (que
+ * són claus noves) passen a ser de qui acaba de jugar, i totes les marques
+ * anteriors s'esborren. Així el marc respon a la pregunta que importa —«què
+ * ha canviat des que no miro?»— en comptes d'anar acumulant colors per tota
+ * la taula.
  *
- * Les jugades d'autor desconegut —les d'una partida represa, que es carrega
- * sense aquesta informació— es queden sense autor en comptes d'atribuir-se a
- * qui passava per allà.
+ * Un moviment que no toca la taula (robar o passar) no esborra res: l'últim
+ * moviment amb fitxes continua sent el d'abans, i el seu marc es queda.
  */
 export function updateOwners(
   previous: MeldOwners,
@@ -43,17 +43,9 @@ export function updateOwners(
   playerIndex: number,
 ): MeldOwners {
   const before = new Set(previousBoard.map(meldKey));
-  const owners = new Map<string, number>();
-  for (const meld of nextBoard) {
-    const key = meldKey(meld);
-    if (!before.has(key)) {
-      owners.set(key, playerIndex);
-      continue;
-    }
-    const kept = previous.get(key);
-    if (kept !== undefined) owners.set(key, kept);
-  }
-  return owners;
+  const changed = nextBoard.filter((meld) => !before.has(meldKey(meld)));
+  if (changed.length === 0) return previous;
+  return new Map(changed.map((meld) => [meldKey(meld), playerIndex]));
 }
 
 /** Bot autor d'una jugada: el número que li dona color. */
@@ -66,9 +58,10 @@ export interface MeldAuthor {
 /**
  * Autor de cada jugada de la taula, alineat per posició i llest per pintar.
  *
- * Només en tenen els bots: les jugades de l'humà i les d'autor desconegut van
- * sense marc, que és el que demana el joc —si toques una jugada d'un bot, deixa
- * de ser seva i perd el color.
+ * En tenen els bots i també el jugador humà (les jugades que acabes de baixar
+ * es marquen amb el teu color); les d'autor desconegut van sense marc. Tocar
+ * una jugada durant el torn li canvia la clau, així que perd el marc a
+ * l'instant, com sempre.
  */
 export function meldAuthors(
   board: readonly Meld[],
@@ -79,6 +72,6 @@ export function meldAuthors(
     const slot = owners.get(meldKey(meld));
     if (slot === undefined) return null;
     const player = players[slot];
-    return player && player.kind === 'ai' ? { slot, name: player.name } : null;
+    return player ? { slot, name: player.name } : null;
   });
 }
