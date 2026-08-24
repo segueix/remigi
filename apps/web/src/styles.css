@@ -58,6 +58,15 @@
   --bot-1-taula: #e879f9;
   --bot-2-taula: #a3e635;
   --bot-3-taula: #60a5fa;
+  /* La firma de la casa (menú, final i historial): els colors de les fitxes. */
+  --franja-1: #cc0000;
+  --franja-2: #1d4ed8;
+  --franja-3: #c47504;
+  --franja-4: #7c3aed;
+  /* Or per a victòries i corones, i bé/malament per a punts i resultats. */
+  --or: #a16207;
+  --be: #15803d;
+  --mal: #b91c1c;
   color-scheme: light dark;
 }
 
@@ -93,6 +102,13 @@
     --fusta-2: #6b4322;
     --fusta-3: #4b2f16;
     --fusta-vora: #38230f;
+    --franja-1: #f87171;
+    --franja-2: #93c5fd;
+    --franja-3: #fdba74;
+    --franja-4: #c4b5fd;
+    --or: #fbbf24;
+    --be: #4ade80;
+    --mal: #f87171;
   }
 }
 
@@ -389,8 +405,61 @@ input {
   box-shadow: 0 16px 40px rgb(0 0 0 / 0.3);
 }
 
+.franja-fitxes {
+  height: 0.4rem;
+  border-radius: 999px;
+  margin-bottom: 1rem;
+  background: linear-gradient(
+    90deg,
+    var(--franja-1) 0 25%,
+    var(--franja-2) 25% 50%,
+    var(--franja-3) 50% 75%,
+    var(--franja-4) 75% 100%
+  );
+}
+
+.menu-cap {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.menu-avatar {
+  width: 3rem;
+  height: 3rem;
+  font-size: 1.5rem;
+}
+
 .menu-nom {
+  flex: 1;
+  flex-wrap: nowrap;
   margin-top: 0;
+}
+
+.menu-nom input {
+  flex: 1 1 7rem;
+  min-width: 0;
+}
+
+.menu-habilitat {
+  margin: 0.5rem 0 0;
+}
+
+/* La configuració de la partida, en una capsa amb el to de la casa. */
+.menu-seccio {
+  margin-top: 0.9rem;
+  padding: 0.75rem 0.85rem 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, var(--vora));
+  border-radius: 0.7rem;
+  background: color-mix(in srgb, var(--accent) 7%, var(--superficie));
+}
+
+.menu-seccio .count-picker {
+  margin-top: 0;
+}
+
+.menu-seccio .check {
+  margin-top: 0.75rem;
 }
 
 .menu-nivell {
@@ -443,6 +512,19 @@ input {
   margin: 0;
 }
 
+.stats-titol {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.stats-titol h2 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
@@ -450,10 +532,36 @@ input {
   margin: 1rem 0 0;
 }
 
+/*
+ * Rajoles d'estadístiques: cada una amb el seu color d'identitat a la vora
+ * esquerra i un fons tenyit; el número, sempre amb el color del text.
+ */
+.stats {
+  --identitat: var(--vora);
+}
+
 .stats div {
   border: 1px solid var(--vora);
+  border-left: 4px solid var(--identitat);
   border-radius: 0.5rem;
   padding: 0.75rem;
+  background: color-mix(in srgb, var(--identitat) 7%, var(--superficie));
+}
+
+.stat-habilitat {
+  --identitat: var(--grafic);
+}
+
+.stat-partides {
+  --identitat: var(--bot-3);
+}
+
+.stat-victories {
+  --identitat: var(--or);
+}
+
+.stat-percentatge {
+  --identitat: var(--bot-1);
 }
 
 .stats dt {
@@ -880,7 +988,8 @@ select {
 }
 
 .scores li.winner {
-  border-color: var(--accent);
+  border-color: color-mix(in srgb, var(--or) 60%, var(--vora));
+  background: color-mix(in srgb, var(--or) 9%, var(--superficie));
   font-weight: 600;
 }
 
@@ -938,6 +1047,11 @@ button.link.danger {
   width: 100%;
   height: auto;
   overflow: visible;
+}
+
+.chart-area {
+  fill: var(--grafic);
+  opacity: 0.12;
 }
 
 .chart-line {
@@ -1010,13 +1124,32 @@ button.link.danger {
   font-size: 0.9rem;
 }
 
-.result-won {
-  color: var(--grafic);
+/* El resultat, com a xapa; la vora esquerra de la fila repeteix el color. */
+.result-won,
+.result-lost {
+  justify-self: start;
+  padding: 0.05rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
   font-weight: 600;
+}
+
+.result-won {
+  color: var(--be);
+  background: color-mix(in srgb, var(--be) 14%, var(--superficie));
 }
 
 .result-lost {
   color: var(--text-suau);
+  background: color-mix(in srgb, var(--text-suau) 12%, var(--superficie));
+}
+
+.history li.partida-guanyada {
+  border-left: 4px solid var(--be);
+}
+
+.history li.partida-perduda {
+  border-left: 4px solid var(--vora);
 }
 
 .history-rivals {
@@ -1139,8 +1272,83 @@ button.link.danger {
 
 /* ---------- Animacions ---------- */
 
+.final-cap {
+  text-align: center;
+  margin-bottom: 0.75rem;
+}
+
+.final-cap h2 {
+  margin: 0.4rem 0 0.2rem;
+}
+
+.final-cap .muted {
+  margin: 0;
+}
+
+.final-emoji {
+  display: inline-block;
+  font-size: 3.2rem;
+  line-height: 1;
+  filter: drop-shadow(0 5px 12px rgb(0 0 0 / 0.25));
+}
+
+.final-avatar {
+  width: 3.4rem;
+  height: 3.4rem;
+  font-size: 1.8rem;
+  display: inline-grid;
+}
+
+.score-jugador {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  font-weight: 600;
+}
+
+.score-avatar {
+  width: 1.9rem;
+  height: 1.9rem;
+  font-size: 1rem;
+  border-width: 1.5px;
+}
+
+.score-nom {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Els punts, com a xapa: verd qui suma, vermell apagat qui resta. */
+.punts {
+  flex: none;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.punts.points-positive {
+  color: var(--be);
+  background: color-mix(in srgb, var(--be) 14%, var(--superficie));
+}
+
+.punts.points-negative {
+  color: var(--mal);
+  background: color-mix(in srgb, var(--mal) 12%, var(--superficie));
+}
+
+/* La victòria es veu daurada des de lluny. */
 .game-over.won {
   animation: victoria 0.5s ease-out;
+  border-color: color-mix(in srgb, var(--or) 55%, var(--vora));
+  background:
+    radial-gradient(
+      120% 55% at 50% 0%,
+      color-mix(in srgb, var(--or) 16%, var(--superficie)),
+      var(--superficie) 60%
+    );
 }
 
 @keyframes victoria {

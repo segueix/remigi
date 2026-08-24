@@ -835,6 +835,40 @@ aixeca la fitxa, arrossegar-la no desplaça, i la fitxa acaba dins de la jugada.
   selecció de text a iOS. Resolt aturant el `contextmenu` mentre hi ha gest en
   marxa i amb `user-select: none` i `-webkit-touch-callout: none` a la fitxa.
 
+### Color i integració: menú, final de partida i historial ✅ Feta (2026-08-24)
+
+Demanat pel jugador: que el menú del jugador, la pantalla de final de partida i
+l'historial tinguin més color i lliguin més amb el joc.
+
+- [x] **Firma comuna**: una franja amb els quatre colors de les fitxes obre les
+      tres superfícies (`.franja-fitxes`), amb versions clares al tema fosc.
+- [x] **Menú**: avatar gran al costat del nom, i la configuració de la partida
+      en una capsa tenyida del color d'acció.
+- [x] **Final de partida**: trofeu gran si guanyes (amb la targeta enllustrada
+      d'or), l'avatar del bot guanyador si perds; marcador amb l'avatar de cada
+      jugador, corona al guanyador i punts com a xapes (verd qui suma, vermell
+      apagat qui resta); el canvi d'habilitat en una banda destacada.
+- [x] **Historial**: capçalera amb avatar i nom, rajoles d'estadístiques amb un
+      color d'identitat cadascuna (habilitat, partides, victòries, percentatge),
+      àrea suau sota la línia del gràfic, i resultats de l'historial com a xapes
+      amb la vora de la fila del mateix color.
+
+**Criteris d'acceptació (verificats)**: les 61 proves de navegador continuen en
+verd sense tocar-ne cap (el redisseny no canvia cap selector ni cap text que es
+comprovi), i captures de les tres superfícies en tema clar i fosc.
+
+**Decisió (de la guia de visualització)**: a les rajoles i al marcador, el color
+porta la identitat (vores, fons tenyits, xapes) i **els números van sempre amb
+el color del text**: el que s'ha de llegir no es tenyeix.
+
+### Problemes trobats
+
+- [2026-08-24] **La variable d'identitat de les rajoles no s'aplicava**: el
+  valor per defecte era a `.stats div` (especificitat 0,1,1) i les classes
+  `.stat-*` (0,1,0) no el podien guanyar. Resolt posant el valor per defecte al
+  pare `.stats`: l'herència sí que cedeix davant d'una regla pròpia de
+  l'element, la especificitat no.
+
 ---
 
 ## Riscos coneguts (a vigilar quan toqui)

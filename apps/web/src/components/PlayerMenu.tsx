@@ -57,32 +57,41 @@ export function PlayerMenu({ profile, current, onNewGame, onHistory, onClose }: 
       {/* Un toc fora del menú el tanca. */}
       <div className="menu-fons" onClick={onClose} />
       <div className="menu-usuari" role="dialog" aria-label="El teu jugador">
-        <form
-          className="row menu-nom"
-          onSubmit={(event) => {
-            event.preventDefault();
-            void saveName();
-          }}
-        >
-          <input
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            placeholder="El teu nom"
-            maxLength={20}
-            aria-label="El teu nom"
-          />
-          <button type="submit" disabled={!name.trim()}>
-            Desa el nom
-          </button>
-        </form>
+        {/* La firma de la casa: els quatre colors de les fitxes. */}
+        <div className="franja-fitxes" aria-hidden="true" />
+
+        <div className="menu-cap">
+          <span className="player-color menu-avatar" aria-hidden="true">
+            {(name.trim() || 'J').charAt(0).toUpperCase()}
+          </span>
+          <form
+            className="row menu-nom"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void saveName();
+            }}
+          >
+            <input
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              placeholder="El teu nom"
+              maxLength={20}
+              aria-label="El teu nom"
+            />
+            <button type="submit" disabled={!name.trim()}>
+              Desa el nom
+            </button>
+          </form>
+        </div>
 
         {profile.profile && (
-          <p className="muted small">
+          <p className="muted small menu-habilitat">
             Habilitat: <strong>{profile.profile.rating}</strong> · {profile.profile.gamesPlayed}{' '}
             {profile.profile.gamesPlayed === 1 ? 'partida' : 'partides'}
           </p>
         )}
 
+        <div className="menu-seccio">
         <div className="row count-picker">
           <span className="muted">Rivals:</span>
           {([1, 2, 3] as OpponentCount[]).map((option) => (
@@ -124,6 +133,7 @@ export function PlayerMenu({ profile, current, onNewGame, onHistory, onClose }: 
           />
           Que s’adaptin també durant la partida
         </label>
+        </div>
 
         <div className="row menu-accions">
           <button onClick={() => void startNewGame()}>Partida nova</button>

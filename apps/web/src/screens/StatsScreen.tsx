@@ -18,27 +18,45 @@ export function StatsScreen({ handle, onBack }: Props) {
 
   return (
     <section className="card">
+      <div className="franja-fitxes" aria-hidden="true" />
       <div className="row stats-header">
-        <h2>Historial</h2>
+        <div className="stats-titol">
+          <span className="player-color" aria-hidden="true">
+            {profile.name.trim().charAt(0).toUpperCase() || '?'}
+          </span>
+          <h2>Historial de {profile.name}</h2>
+        </div>
         <button className="secondary" onClick={onBack}>
           ← Torna a la partida
         </button>
       </div>
+      {/*
+        * Cada rajola porta un color d'identitat a la vora i al fons; el número
+        * va sempre amb el color del text, que és qui s'ha de llegir.
+        */}
       <dl className="stats">
-        <div>
-          <dt>Habilitat</dt>
+        <div className="stat-habilitat">
+          <dt>
+            <span aria-hidden="true">📈</span> Habilitat
+          </dt>
           <dd>{profile.rating}</dd>
         </div>
-        <div>
-          <dt>Partides</dt>
+        <div className="stat-partides">
+          <dt>
+            <span aria-hidden="true">🎲</span> Partides
+          </dt>
           <dd>{profile.gamesPlayed}</dd>
         </div>
-        <div>
-          <dt>Victòries</dt>
+        <div className="stat-victories">
+          <dt>
+            <span aria-hidden="true">🏆</span> Victòries
+          </dt>
           <dd>{profile.wins}</dd>
         </div>
-        <div>
-          <dt>Percentatge</dt>
+        <div className="stat-percentatge">
+          <dt>
+            <span aria-hidden="true">🎯</span> Percentatge
+          </dt>
           <dd>{winRate === null ? '—' : `${winRate}%`}</dd>
         </div>
       </dl>
@@ -123,6 +141,7 @@ function RatingChart({ history }: { history: GameRecord[] }) {
 
   const path = ratings.map((rating, i) => `${i ? 'L' : 'M'}${x(i)} ${y(rating)}`).join(' ');
   const last = ratings.length - 1;
+  const area = `${path} L${x(last)} ${H - PAD.bottom} L${x(0)} ${H - PAD.bottom} Z`;
   const active = hovered ?? last;
   const step = (W - PAD.left - PAD.right) / Math.max(1, history.length - 1);
 
@@ -136,6 +155,7 @@ function RatingChart({ history }: { history: GameRecord[] }) {
           {STARTING_RATING}
         </text>
 
+        <path className="chart-area" d={area} />
         <path className="chart-line" d={path} />
 
         {/* Punt final amb etiqueta directa: el valor d'ara. */}
@@ -197,7 +217,7 @@ function HistoryList({ history }: { history: GameRecord[] }) {
       <h3 className="history-title">Historial</h3>
       <ul className="history">
         {recent.map((record, i) => (
-          <li key={history.length - i}>
+          <li key={history.length - i} className={record.won ? 'partida-guanyada' : 'partida-perduda'}>
             <span className={record.won ? 'result-won' : 'result-lost'}>
               {record.won ? 'Guanyada' : 'Perduda'}
             </span>

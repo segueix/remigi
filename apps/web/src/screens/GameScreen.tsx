@@ -321,27 +321,79 @@ function GameOver({
   const blocked = winner ? winner.rack.length > 0 : false;
   const humanWon = game.winnerId === game.players[0].id;
 
+  /* L'avatar de cadascú, com a la tira de jugadors: bots amb el seu degradat. */
+  const avatarOf = (playerId: string) => {
+    const player = game.players.find((candidate) => candidate.id === playerId);
+    if (!player || player.kind === 'human') {
+      return { emoji: initialOf(player?.name ?? '?'), colors: null };
+    }
+    const persona = botPersona(player.name);
+    return { emoji: persona.emoji, colors: persona.colors };
+  };
+
   return (
     <section className={humanWon ? 'card game-over won' : 'card game-over'}>
-      <h2>{humanWon ? 'Has guanyat!' : `Ha guanyat ${winner?.name}`}</h2>
-      <p className="muted">
-        {blocked
-          ? 'Ningú no s’ha pogut desfer de totes les fitxes: la partida ha quedat bloquejada i guanya qui tenia menys punts a la mà.'
-          : `${winner?.name} s’ha quedat sense fitxes en ${game.turn} torns.`}
-      </p>
+      <div className="franja-fitxes" aria-hidden="true" />
+
+      <div className="final-cap">
+        {humanWon ? (
+          <span className="final-emoji" aria-hidden="true">
+            🏆
+          </span>
+        ) : (
+          winner && (
+            <span
+              className="player-color final-avatar"
+              aria-hidden="true"
+              style={
+                avatarOf(winner.id).colors
+                  ? {
+                      background: `linear-gradient(135deg, ${avatarOf(winner.id).colors![0]}, ${avatarOf(winner.id).colors![1]})`,
+                    }
+                  : undefined
+              }
+            >
+              {avatarOf(winner.id).emoji}
+            </span>
+          )
+        )}
+        <h2>{humanWon ? 'Has guanyat!' : `Ha guanyat ${winner?.name}`}</h2>
+        <p className="muted">
+          {blocked
+            ? 'Ningú no s’ha pogut desfer de totes les fitxes: la partida ha quedat bloquejada i guanya qui tenia menys punts a la mà.'
+            : `${winner?.name} s’ha quedat sense fitxes en ${game.turn} torns.`}
+        </p>
+      </div>
 
       <ul className="scores">
         {[...scores]
           .sort((a, b) => b.points - a.points)
-          .map((score) => (
-            <li key={score.playerId} className={score.playerId === game.winnerId ? 'winner' : ''}>
-              <span>{score.name}</span>
-              <span className={score.points >= 0 ? 'points-positive' : 'points-negative'}>
-                {score.points > 0 ? '+' : ''}
-                {score.points}
-              </span>
-            </li>
-          ))}
+          .map((score) => {
+            const avatar = avatarOf(score.playerId);
+            return (
+              <li key={score.playerId} className={score.playerId === game.winnerId ? 'winner' : ''}>
+                <span className="score-jugador">
+                  <span
+                    className="player-color score-avatar"
+                    aria-hidden="true"
+                    style={
+                      avatar.colors
+                        ? { background: `linear-gradient(135deg, ${avatar.colors[0]}, ${avatar.colors[1]})` }
+                        : undefined
+                    }
+                  >
+                    {avatar.emoji}
+                  </span>
+                  <span className="score-nom">{score.name}</span>
+                  {score.playerId === game.winnerId && <span aria-hidden="true">👑</span>}
+                </span>
+                <span className={score.points >= 0 ? 'punts points-positive' : 'punts points-negative'}>
+                  {score.points > 0 ? '+' : ''}
+                  {score.points}
+                </span>
+              </li>
+            );
+          })}
       </ul>
 
       {change && (
