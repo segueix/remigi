@@ -1,4 +1,4 @@
-import type { GameState, Meld, NumberTile, Tile, TileColor } from '@rummikub/core';
+import type { GameState, Meld, NumberTile, Tile, TileColor } from '@remigi/core';
 import { describe, expect, it } from 'vitest';
 import {
   hasChanges,

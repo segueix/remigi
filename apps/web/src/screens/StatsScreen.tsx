@@ -1,4 +1,4 @@
-import { DIFFICULTIES, STARTING_RATING, type GameRecord } from '@rummikub/core';
+import { DIFFICULTIES, STARTING_RATING, type GameRecord } from '@remigi/core';
 import { useState } from 'react';
 import type { ProfileHandle } from '../state/useProfile';
 

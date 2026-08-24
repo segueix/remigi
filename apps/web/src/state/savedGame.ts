@@ -1,8 +1,8 @@
-import type { GameState } from '@rummikub/core';
+import type { GameState } from '@remigi/core';
 import type { GameSetup } from '../game/useGame';
-import type { KeyValueStore } from '@rummikub/core';
+import type { KeyValueStore } from '@remigi/core';
 
-const KEY = 'rummikub:game';
+const KEY = 'remigi:game';
 
 export interface SavedGame {
   setup: GameSetup;

@@ -4,7 +4,7 @@ import {
   describeSuggestion,
   suggestOpponents,
   type DifficultyKey,
-} from '@rummikub/core';
+} from '@remigi/core';
 import { useState } from 'react';
 import type { GameSetup } from '../game/useGame';
 import type { ProfileHandle } from '../state/useProfile';

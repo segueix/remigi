@@ -5,7 +5,7 @@ import {
   decideAiMove,
   type DifficultyKey,
   type GameState,
-} from '@rummikub/core';
+} from '@remigi/core';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { pickPersonas } from './bots';
 import { updateOwners, type MeldOwners } from './meldOwners';

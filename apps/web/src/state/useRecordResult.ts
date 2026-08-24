@@ -1,4 +1,4 @@
-import type { DifficultyKey, GameState } from '@rummikub/core';
+import type { DifficultyKey, GameState } from '@remigi/core';
 import { useEffect, useRef, useState } from 'react';
 import { profileAfterGame, ratingChange, type RatingChange } from './gameOutcome';
 import type { ProfileHandle } from './useProfile';

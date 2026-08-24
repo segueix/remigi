@@ -35,7 +35,7 @@ jobs:
       - name: Build de producció
         # La ruta base ha de coincidir amb el nom del repositori, perquè el joc
         # penja de https://<usuari>.github.io/<repositori>/.
-        run: npm run build -w @rummikub/web
+        run: npm run build -w @remigi/web
         env:
           BASE_PATH: /${{ github.event.repository.name }}/
 

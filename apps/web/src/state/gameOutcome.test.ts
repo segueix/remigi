@@ -8,7 +8,7 @@ import {
   decideAiMove,
   type DifficultyKey,
   type GameState,
-} from '@rummikub/core';
+} from '@remigi/core';
 import { describe, expect, it } from 'vitest';
 import { humanWon, profileAfterGame, ratingChange } from './gameOutcome';
 

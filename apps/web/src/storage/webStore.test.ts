@@ -1,4 +1,4 @@
-import { ProfileRepository, createProfile } from '@rummikub/core';
+import { ProfileRepository, createProfile } from '@remigi/core';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { LocalStorageStore, createWebStore, isStorageUsable } from './webStore';
 

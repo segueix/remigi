@@ -1,4 +1,4 @@
-# AGENT — Pla de fases del Rummikub
+# AGENT — Pla de fases del Remigi
 
 Document de treball per a l'agent. Defineix **totes les fases** del projecte, en
 l'ordre en què s'han de fer, amb les tasques, els criteris per donar cada fase
@@ -58,7 +58,7 @@ les fases](#millores-després-de-les-fases)**, amb el mateix protocol.
 
 **Estat**: ✅ Feta (2026-08-22)
 
-**Objectiu**: monorepo amb el motor complet del Rummikub a `packages/core`,
+**Objectiu**: monorepo amb el motor complet del joc a `packages/core`,
 independent de la interfície, amb IA per nivells i sistema adaptatiu, tot provat.
 
 ### Tasques
@@ -94,7 +94,7 @@ independent de la interfície, amb IA per nivells i sistema adaptatiu, tot prova
 
 - [2026-08-22] L'script arrel `npm run simulate` no reenviava els arguments: el
   `npm` intermedi es menjava `--games` — resolt afegint `--` final a l'script
-  de l'arrel (`npm run simulate -w @rummikub/core --`).
+  de l'arrel (`npm run simulate -w @remigi/core --`).
 - [2026-08-22] El cercador d'escales només feia servir jokers per omplir
   **forats interns** (extrems sempre reals): un test suposava que també
   allargava extrems amb joker. Es va ajustar el test a l'heurística
@@ -119,13 +119,13 @@ independent de la interfície, amb IA per nivells i sistema adaptatiu, tot prova
 **Estat**: ✅ Feta (2026-08-22)
 
 **Objectiu**: `apps/web` arrenca amb Vite + React + TypeScript, importa
-`@rummikub/core` del workspace i té la navegació i la persistència de base.
+`@remigi/core` del workspace i té la navegació i la persistència de base.
 Encara sense partida jugable: només l'esquelet sòlid on penjar les fases 3 i 4.
 
 ### Tasques
 
-- [x] Crear `apps/web` (Vite 8 + React 19 + TypeScript), paquet `@rummikub/web`,
-      amb `@rummikub/core` com a dependència de workspace.
+- [x] Crear `apps/web` (Vite 8 + React 19 + TypeScript), paquet `@remigi/web`,
+      amb `@remigi/core` com a dependència de workspace.
 - [x] Comprovar que Vite resol el paquet core (el seu `main` apunta a font
       `.ts`): **funciona sense àlies ni `optimizeDeps`** — risc descartat.
 - [x] `LocalStorageStore` implementant `KeyValueStore`, amb `createWebStore()`
@@ -144,7 +144,7 @@ Encara sense partida jugable: només l'esquelet sòlid on penjar les fases 3 i 4
 
 - `npm install` net des de zero (esborrant `node_modules` i el lockfile);
   `npm run typecheck` i `npm test` en verd. ✔ (74 core + 7 web)
-- `npm run build -w @rummikub/web` compila sense errors. ✔ (198 kB, 63 kB gzip)
+- `npm run build -w @remigi/web` compila sense errors. ✔ (198 kB, 63 kB gzip)
 - `npm run dev` mostra la pantalla d'inici; en recarregar, el nom del jugador
   es conserva. ✔ Verificat amb Chromium (Playwright): perfil desat i recuperat,
   motor repartint 14 fitxes a 3 jugadors i 64 al sac, sense errors de consola
@@ -158,7 +158,7 @@ Encara sense partida jugable: només l'esquelet sòlid on penjar les fases 3 i 4
   que porta Vite 5 a dins, i la web necessita Vite 8. Tenir-hi dues versions
   majors del mateix runner era demanar problemes, així que s'ha unificat tot el
   monorepo a **vitest 4**. Els 74 tests del core hi passen sense cap canvi.
-- [2026-08-22] Risc que hi havia apuntat sobre la resolució de `@rummikub/core`
+- [2026-08-22] Risc que hi havia apuntat sobre la resolució de `@remigi/core`
   amb font TypeScript: **no s'ha materialitzat**. Vite el transpila com a codi
   del projecte a través de l'enllaç de workspace, tant en `dev` com en `build`.
   El risc queda tancat a la llista de sota.
@@ -869,11 +869,66 @@ el color del text**: el que s'ha de llegir no es tenyeix.
   pare `.stats`: l'herència sí que cedeix davant d'una regla pròpia de
   l'element, la especificitat no.
 
+### El marc de colors marca només l'últim moviment ✅ Feta (2026-08-24)
+
+Demanat pel jugador: que el marc del color del bot surti només a les peces
+mogudes en el darrer moviment, i també a la jugada que baixa el jugador.
+
+- [x] `updateOwners` deixa de conservar l'autoria antiga: després de cada
+      moviment només queden marcades les jugades noves o modificades d'aquell
+      moviment, atribuïdes a qui l'ha fet. Robar o passar (cap fitxa moguda) no
+      esborra res: l'últim moviment amb fitxes continua sent el d'abans.
+- [x] Les jugades que baixa el jugador també porten marc, amb el seu color
+      d'acció (`data-bot="0"` → torquesa de taula). Tocar una jugada marcada
+      durant el torn li continua traient el marc a l'instant.
+
+**Criteris d'acceptació (verificats)**: 63 proves de navegador en verd — les
+del marc reescrites al comportament nou (tots els marcs de la taula són d'un
+sol moviment i d'un sol color; la jugada baixada pel jugador porta el marc 0) i
+13 tests de unitat de `meldOwners` (2 de nous: les marques d'abans s'esborren,
+i un moviment sense fitxes no esborra res).
+
+### Problemes trobats
+
+- [2026-08-24] **Un localitzador «viu» de Playwright va emmascarar el canvi**:
+  la prova de tocar una jugada marcada la buscava per `[data-bot]`, i quan la
+  jugada tocada perdia el marc, el localitzador saltava tot sol a una altra que
+  encara el tenia. Resolt fixant l'objectiu per posició abans de tocar-lo.
+
+### Canvi de nom: de «rummikub» a «Remigi» ✅ Feta (2026-08-24)
+
+«RUMMIKUB» és una marca registrada, i encara que el projecte no en faci negoci,
+fer servir la marca com a nom d'un joc públic pot fer creure que és l'oficial.
+El jugador va triar **Remigi** — el nom tradicional de la família del rummy—,
+i la descripció diu «rummy de fitxes», que és el genèric i no és de ningú.
+
+- [x] Nom visible: títol de la pestanya, manifest de l'app (nom, nom curt i
+      descripció).
+- [x] Noms interns: paquets `@remigi/core` i `@remigi/web` amb tots els
+      imports, ruta base `/remigi/`, memòria cau del service worker i claus
+      del navegador.
+- [x] **Migració de dades**: les claus velles (`rummikub:profile:local`,
+      `rummikub:game`) es copien un sol cop a les noves en arrencar i
+      s'esborren; ningú no perd el perfil ni la partida a mitges pel canvi de
+      nom (`storage/migrate.ts`, amb tests).
+- [x] Documentació i adreces actualitzades a `/remigi/`. Les mencions del nom
+      antic al registre històric d'aquest document es queden: expliquen fets.
+
+**Pendent de l'usuari**: reanomenar el repositori a GitHub (`rummikub` →
+`remigi`). Quan ho faci, l'adreça de Pages passa a `/remigi/` tota sola (la
+ruta base del build surt del nom del repositori) i cal tornar a desplegar.
+L'app instal·lada al mòbil apunta a l'adreça antiga i s'haurà de tornar a
+instal·lar.
+
+### Problemes trobats
+
+*(cap: el canvi ha sortit net, amb la migració coberta per tests)*
+
 ---
 
 ## Riscos coneguts (a vigilar quan toqui)
 
-- ~~**Vite + workspace amb font TS**~~ (Fase 2): **tancat**. `@rummikub/core`
+- ~~**Vite + workspace amb font TS**~~ (Fase 2): **tancat**. `@remigi/core`
   publica `main` apuntant a `src/index.ts` i Vite 8 el transpila com a codi del
   projecte, tant en `dev` com en `build`. No calen àlies ni `optimizeDeps`.
   Compte si algun dia es publica el paquet fora del monorepo: llavors sí que

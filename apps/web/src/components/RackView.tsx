@@ -1,4 +1,4 @@
-import { isJoker, type Tile } from '@rummikub/core';
+import { isJoker, type Tile } from '@remigi/core';
 import { useState } from 'react';
 import { TileView } from './TileView';
 

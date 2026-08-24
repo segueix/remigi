@@ -1,4 +1,4 @@
-import { difficultyByKey, finalScores, type Tile } from '@rummikub/core';
+import { difficultyByKey, finalScores, type Tile } from '@remigi/core';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { BoardView } from '../components/BoardView';
 import { CheckIcon, DrawIcon, PassIcon, RotateIcon, UndoIcon } from '../components/icons';
@@ -15,7 +15,7 @@ import type { SavedGame } from '../state/savedGame';
 import type { SavedGameHandle } from '../state/useSavedGame';
 import type { ProfileHandle } from '../state/useProfile';
 import { useRecordResult } from '../state/useRecordResult';
-import type { GameState } from '@rummikub/core';
+import type { GameState } from '@remigi/core';
 
 interface Props {
   setup: GameSetup;

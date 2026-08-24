@@ -1,7 +1,15 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
+import { migrateOldStorage } from './storage/migrate';
 import './styles.css';
+
+// Abans de res: si hi ha dades desades amb el nom antic del joc, es migren.
+try {
+  migrateOldStorage(window.localStorage);
+} catch {
+  // Sense localStorage el joc funciona igual, en memòria.
+}
 
 const container = document.getElementById('root');
 if (!container) throw new Error('No s’ha trobat l’element arrel de l’aplicació');

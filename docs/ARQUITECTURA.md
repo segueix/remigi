@@ -62,7 +62,7 @@ segons el perfil del jugador; vegeu `docs/IA-ADAPTATIVA.md`.
 
 ### Reordenar la taula: recomptes, no fitxes
 
-`ai/rearrange.ts` resol el problema de debò del Rummikub: repartir en jugades
+`ai/rearrange.ts` resol el problema de debò del rummy de fitxes: repartir en jugades
 vàlides **totes** les fitxes de la taula més les que es vulguin de la mà,
 quedant-se'n a la mà les mínimes possibles.
 

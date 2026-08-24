@@ -1,18 +1,18 @@
 {
-  "name": "rummikub",
+  "name": "remigi",
   "private": true,
-  "description": "Rummikub contra oponents IA amb dificultat adaptativa",
+  "description": "Remigi: rummy de fitxes contra oponents IA amb dificultat adaptativa",
   "workspaces": [
     "packages/*",
     "apps/*"
   ],
   "scripts": {
-    "dev": "npm run dev -w @rummikub/web",
+    "dev": "npm run dev -w @remigi/web",
     "build": "npm run build --workspaces --if-present",
-    "preview": "npm run preview -w @rummikub/web",
+    "preview": "npm run preview -w @remigi/web",
     "test": "npm run test --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "simulate": "npm run simulate -w @rummikub/core --",
-    "test:e2e": "npm run test:e2e -w @rummikub/web --"
+    "simulate": "npm run simulate -w @remigi/core --",
+    "test:e2e": "npm run test:e2e -w @remigi/web --"
   }
 }

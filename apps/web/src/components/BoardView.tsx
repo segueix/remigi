@@ -1,5 +1,5 @@
 import type { Destination } from '../game/turnDraft';
-import type { Meld } from '@rummikub/core';
+import type { Meld } from '@remigi/core';
 import type { MeldAuthor } from '../game/meldOwners';
 import { MeldView } from './MeldView';
 

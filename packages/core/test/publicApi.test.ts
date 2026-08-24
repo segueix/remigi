@@ -6,7 +6,7 @@ import * as api from '../src/index';
  * dues regles del projecte (vegeu AGENT.md i docs/ARQUITECTURA.md): que hi hagi
  * tot el que la web necessita, i que no s'hi coli res que depengui de Node.
  */
-describe('API pública de @rummikub/core', () => {
+describe('API pública de @remigi/core', () => {
   it('exporta tot el que necessita una partida completa', () => {
     const exported = Object.keys(api);
     for (const name of [

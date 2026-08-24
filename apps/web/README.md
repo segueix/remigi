@@ -1,12 +1,12 @@
 # Aplicació web
 
-Interfície del Rummikub: **Vite + React + TypeScript**, que importa tota la
-lògica de joc de `@rummikub/core` (workspace).
+Interfície del Remigi: **Vite + React + TypeScript**, que importa tota la
+lògica de joc de `@remigi/core` (workspace).
 
 ```bash
 npm run dev        # servidor de desenvolupament (http://localhost:5173)
 npm run build      # build de producció a dist/
-npm run preview    # serveix el build de producció a /rummikub/
+npm run preview    # serveix el build de producció a /remigi/
 npm test           # tests d'aquest paquet
 npm run test:e2e   # proves de navegador sobre el build de producció
 ```
@@ -150,10 +150,12 @@ Dues marques per no perdre el fil de la partida:
   no hauria de ser un joc a part. Va per fora de la fitxa (`outline`), de
   ratlles i d'un color que no fa servir res més, per no confondre's ni amb la
   fitxa triada ni amb els colors dels bots.
-- **Cada bot té un color**, el mateix a la pastilla del seu nom i al marc de les
-  jugades que ha posat. Si algú modifica una jugada, el marc passa a ser del seu
-  color; si qui la modifica ets tu, el marc desapareix, perquè el color és dels
-  bots.
+- **El marc de colors marca l'últim moviment**: les jugades que el jugador de
+  torn acaba de posar o de modificar porten el marc del seu color —el del bot,
+  o el teu color d'acció si les has baixades tu— i les marques del moviment
+  anterior s'esborren. Així el marc respon a «què ha canviat des que no miro?»
+  en comptes d'anar acumulant colors per tota la taula. Robar o passar no
+  esborra res: l'últim moviment amb fitxes continua sent el d'abans.
 
 Qui ha tocat cada jugada no és estat del joc —el motor no en sap res, i és el
 que toca— sinó que es dedueix a `game/meldOwners.ts` comparant la taula d'abans
@@ -211,17 +213,18 @@ El que abans era una llista per repassar a mà ara ho comprova `npm run test:e2e
   fan des del menú del jugador, i l'historial en porta el retorn i el reinici.
 - El perfil es conserva, els oponents proposats pugen amb l'habilitat, i una
   partida a mitges es continua sola en tornar a obrir (colors inclosos).
-- La fitxa robada es marca i deixa d'estar-ho en jugar; les jugades dels bots
-  porten el color del bot, i el perden quan les toques.
+- La fitxa robada es marca i deixa d'estar-ho en jugar; només l'últim moviment
+  porta marc (d'un sol color), la jugada que baixes tu inclosa, i tocar una
+  jugada marcada li treu el marc.
 - Els rivals tenen nom i avatar propis i diferents entre ells, i la partida
   s'encaixa a la pantalla sense desplaçament de pàgina.
 - Els botons del torn van en una sola línia a totes les mides, i al mòbil
   apaïsat tot cap a la pantalla amb objectius de toc de 44 px.
-- Rutes correctes sota `/rummikub/`, manifest i icones, i jugar sense connexió.
+- Rutes correctes sota `/remigi/`, manifest i icones, i jugar sense connexió.
 - En pantalla petita: res no desborda i els objectius de toc fan 44 px.
 
 Tot s'executa dues vegades, en **escriptori i en mòbil**, i contra el **build de
-producció servit a `/rummikub/`**, que és exactament el que es publica: així una
+producció servit a `/remigi/`**, que és exactament el que es publica: així una
 ruta base mal configurada es detecta aquí i no un cop desplegat.
 
 Els bots juguen sense pausa durant les proves (`VITE_BOT_DELAY=0`) perquè una
@@ -230,7 +233,7 @@ partida sencera duri segons; és l'única diferència amb el build públic.
 ## Publicació
 
 `npm run build` genera el lloc a `dist/`, ja preparat per a
-`https://segueix.github.io/rummikub/`. La ruta base es pot canviar amb
+`https://segueix.github.io/remigi/`. La ruta base es pot canviar amb
 `BASE_PATH` sense tocar codi. La publicació la fa
 `.github/workflows/desplega.yml` des de `main`.
 
@@ -246,7 +249,7 @@ el nom amb empremta i canvien de nom quan canvien de contingut.
 - **Sense router**: la navegació és un estat de `App.tsx`. No hi ha enllaços
   profunds ni URL per compartir, així que un router seria pes de més. Si algun
   dia calgués historial del navegador, és aquí on s'hi posaria.
-- **`@rummikub/core` es resol sol**: el paquet publica el seu codi font
+- **`@remigi/core` es resol sol**: el paquet publica el seu codi font
   TypeScript (`main` → `src/index.ts`) i Vite el transpila com a codi del
   projecte gràcies a l'enllaç de workspace. No calen àlies ni `optimizeDeps`.
 - **L'emmagatzematge no pot tombar el joc**: `localStorage` falla en navegació

@@ -1,4 +1,4 @@
-// API pública de @rummikub/core. L'app web (Fase 2) importarà d'aquí.
+// API pública de @remigi/core. L'app web (Fase 2) importarà d'aquí.
 // (jsonFileStore.ts s'importa a banda, expressament, perquè depèn de Node.)
 
 export * from './core/types';

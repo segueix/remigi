@@ -1,4 +1,4 @@
-import { MemoryStore, type KeyValueStore } from '@rummikub/core';
+import { MemoryStore, type KeyValueStore } from '@remigi/core';
 
 /**
  * Adaptador de `localStorage` a la interfície `KeyValueStore` del motor.
@@ -46,7 +46,7 @@ export class LocalStorageStore implements KeyValueStore {
  */
 export function isStorageUsable(storage: Storage | undefined): storage is Storage {
   if (!storage) return false;
-  const probe = '__rummikub_probe__';
+  const probe = '__remigi_probe__';
   try {
     storage.setItem(probe, '1');
     storage.removeItem(probe);

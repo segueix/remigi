@@ -1,5 +1,5 @@
 {
-  "name": "@rummikub/core",
+  "name": "@remigi/core",
   "version": "0.1.0",
   "description": "Motor del joc de Rummikub: regles, IA per nivells i dificultat adaptativa",
   "type": "module",
