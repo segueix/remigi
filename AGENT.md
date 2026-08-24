@@ -869,6 +869,32 @@ el color del text**: el que s'ha de llegir no es tenyeix.
   pare `.stats`: l'herència sí que cedeix davant d'una regla pròpia de
   l'element, la especificitat no.
 
+### El marc de colors marca només l'últim moviment ✅ Feta (2026-08-24)
+
+Demanat pel jugador: que el marc del color del bot surti només a les peces
+mogudes en el darrer moviment, i també a la jugada que baixa el jugador.
+
+- [x] `updateOwners` deixa de conservar l'autoria antiga: després de cada
+      moviment només queden marcades les jugades noves o modificades d'aquell
+      moviment, atribuïdes a qui l'ha fet. Robar o passar (cap fitxa moguda) no
+      esborra res: l'últim moviment amb fitxes continua sent el d'abans.
+- [x] Les jugades que baixa el jugador també porten marc, amb el seu color
+      d'acció (`data-bot="0"` → torquesa de taula). Tocar una jugada marcada
+      durant el torn li continua traient el marc a l'instant.
+
+**Criteris d'acceptació (verificats)**: 63 proves de navegador en verd — les
+del marc reescrites al comportament nou (tots els marcs de la taula són d'un
+sol moviment i d'un sol color; la jugada baixada pel jugador porta el marc 0) i
+13 tests de unitat de `meldOwners` (2 de nous: les marques d'abans s'esborren,
+i un moviment sense fitxes no esborra res).
+
+### Problemes trobats
+
+- [2026-08-24] **Un localitzador «viu» de Playwright va emmascarar el canvi**:
+  la prova de tocar una jugada marcada la buscava per `[data-bot]`, i quan la
+  jugada tocada perdia el marc, el localitzador saltava tot sol a una altra que
+  encara el tenia. Resolt fixant l'objectiu per posició abans de tocar-lo.
+
 ---
 
 ## Riscos coneguts (a vigilar quan toqui)

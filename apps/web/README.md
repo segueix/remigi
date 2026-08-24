@@ -150,10 +150,12 @@ Dues marques per no perdre el fil de la partida:
   no hauria de ser un joc a part. Va per fora de la fitxa (`outline`), de
   ratlles i d'un color que no fa servir res més, per no confondre's ni amb la
   fitxa triada ni amb els colors dels bots.
-- **Cada bot té un color**, el mateix a la pastilla del seu nom i al marc de les
-  jugades que ha posat. Si algú modifica una jugada, el marc passa a ser del seu
-  color; si qui la modifica ets tu, el marc desapareix, perquè el color és dels
-  bots.
+- **El marc de colors marca l'últim moviment**: les jugades que el jugador de
+  torn acaba de posar o de modificar porten el marc del seu color —el del bot,
+  o el teu color d'acció si les has baixades tu— i les marques del moviment
+  anterior s'esborren. Així el marc respon a «què ha canviat des que no miro?»
+  en comptes d'anar acumulant colors per tota la taula. Robar o passar no
+  esborra res: l'últim moviment amb fitxes continua sent el d'abans.
 
 Qui ha tocat cada jugada no és estat del joc —el motor no en sap res, i és el
 que toca— sinó que es dedueix a `game/meldOwners.ts` comparant la taula d'abans
@@ -211,8 +213,9 @@ El que abans era una llista per repassar a mà ara ho comprova `npm run test:e2e
   fan des del menú del jugador, i l'historial en porta el retorn i el reinici.
 - El perfil es conserva, els oponents proposats pugen amb l'habilitat, i una
   partida a mitges es continua sola en tornar a obrir (colors inclosos).
-- La fitxa robada es marca i deixa d'estar-ho en jugar; les jugades dels bots
-  porten el color del bot, i el perden quan les toques.
+- La fitxa robada es marca i deixa d'estar-ho en jugar; només l'últim moviment
+  porta marc (d'un sol color), la jugada que baixes tu inclosa, i tocar una
+  jugada marcada li treu el marc.
 - Els rivals tenen nom i avatar propis i diferents entre ells, i la partida
   s'encaixa a la pantalla sense desplaçament de pàgina.
 - Els botons del torn van en una sola línia a totes les mides, i al mòbil

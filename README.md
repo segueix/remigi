@@ -168,8 +168,8 @@ state = applyMove(state, decideAiMove(state, state.currentPlayer));
 - [x] Publicació automàtica a GitHub Pages, CI amb proves de navegador, i
       instal·lable al mòbil amb joc sense connexió.
 - [x] Seguir la partida amb un cop d'ull: la fitxa que acabes de robar queda
-      marcada, cada bot té color propi i les seves jugades porten marc del seu
-      color mentre ningú no les toqui.
+      marcada, i l'últim moviment porta marc de color — el del bot que l'ha
+      fet, o el teu si la jugada l'has baixada tu.
 - [x] Taula de joc a pantalla completa: feltre verd, faristol de fusta amb les
       fitxes a sota, i rivals amb nom i avatar que canvien a cada partida.
 - [x] Directes a la taula: sense pantalla d'inici, amb el nom, el nivell, la
