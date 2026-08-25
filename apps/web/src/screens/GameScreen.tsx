@@ -194,6 +194,17 @@ export function GameScreen({ setup, resume, resumeOwners, profile, savedGame, on
         onNewMeldClick={() => handle.placeSelected({ kind: 'new' })}
       />
 
+      {/*
+        * Fora de l'obertura també cal dir-ho: unes fitxes deixades soles no
+        * són cap jugada, i el vermell tot sol pot passar per alt.
+        */}
+      {!needsOpening && invalid.size > 0 && (
+        <p className="hint">
+          Les jugades marcades en vermell no són vàlides: agrupa-les en grups o
+          escales de 3 fitxes o més, o torna les fitxes al faristol.
+        </p>
+      )}
+
       {needsOpening && (
         <p className="hint">
           {missingOpeningPoints(draft) > 0 ? (
@@ -285,6 +296,16 @@ export function GameScreen({ setup, resume, resumeOwners, profile, savedGame, on
         )}
       </div>
 
+      {/*
+        * L'avís de torn: mentre un bot pensa (la pausa de tres segons), al mig
+        * de la pantalla es veu qui està jugant, amb el seu avatar. No rep
+        * clics i és decoratiu: la línia de torn ja ho anuncia als lectors de
+        * pantalla.
+        */}
+      {game.status === 'playing' && !isHumanTurn && (
+        <TurnNotice player={game.players[game.currentPlayer]} slot={game.currentPlayer} />
+      )}
+
       {/* Còpia que segueix el punter. No rep clics: així no tapa la destinació. */}
       {drag.dragging && draggedTile && (
         <div
@@ -300,6 +321,23 @@ export function GameScreen({ setup, resume, resumeOwners, profile, savedGame, on
 
 function findTile(board: Tile[] | undefined, rack: Tile[] | undefined, id: string): Tile | null {
   return board?.find((t) => t.id === id) ?? rack?.find((t) => t.id === id) ?? null;
+}
+
+function TurnNotice({ player, slot }: { player: GameState['players'][number]; slot: number }) {
+  const persona = botPersona(player.name);
+  return (
+    <div className="torn-avis" aria-hidden="true" data-bot={slot}>
+      <div className="torn-avis-caixa">
+        <span
+          className="player-color torn-avatar"
+          style={{ background: `linear-gradient(135deg, ${persona.colors[0]}, ${persona.colors[1]})` }}
+        >
+          {persona.emoji}
+        </span>
+        <span>{player.name} està jugant…</span>
+      </div>
+    </div>
+  );
 }
 
 function initialOf(name: string): string {

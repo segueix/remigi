@@ -19,11 +19,12 @@ import {
 } from './turnDraft';
 
 /**
- * Pausa abans que un bot jugui, perquè es pugui seguir el seu torn. Es pot
+ * Pausa abans que un bot jugui: els tres segons que dura l'avís de «qui està
+ * jugant» al mig de la pantalla, perquè el canvi de torn es vegi venir. Es pot
  * abaixar amb `VITE_BOT_DELAY` per veure partides senceres de pressa mentre es
  * desenvolupa o es fan proves automatitzades.
  */
-const BOT_DELAY_MS = Number(import.meta.env.VITE_BOT_DELAY ?? 900);
+const BOT_DELAY_MS = Number(import.meta.env.VITE_BOT_DELAY ?? 3000);
 
 export interface GameSetup {
   playerName: string;

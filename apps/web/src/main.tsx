@@ -11,6 +11,22 @@ try {
   // Sense localStorage el joc funciona igual, en memòria.
 }
 
+/*
+ * A l'app instal·lada, el gest d'enrere d'Android tancaria el joc a mitja
+ * partida: es planta una entrada d'historial i es replanta a cada intent,
+ * així el gest no fa res. Només a l'app (display-mode standalone): en una
+ * pestanya normal l'enrere del navegador s'ha de respectar, i el gest de la
+ * vora ja el frena l'overscroll-behavior del CSS.
+ */
+if (window.matchMedia('(display-mode: standalone)').matches) {
+  try {
+    history.pushState(null, '', location.href);
+    window.addEventListener('popstate', () => history.pushState(null, '', location.href));
+  } catch {
+    // Si l'historial no es deixa tocar, el joc funciona igual.
+  }
+}
+
 const container = document.getElementById('root');
 if (!container) throw new Error('No s’ha trobat l’element arrel de l’aplicació');
 

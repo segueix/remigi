@@ -924,6 +924,47 @@ instal·lar.
 
 *(cap: el canvi ha sortit net, amb la migració coberta per tests)*
 
+### Més taula, torn visible i gestos ben educats ✅ Feta (2026-08-24)
+
+Cinc demandes del jugador i un informe d'error, en una passada:
+
+- [x] **Més espai per a la taula**: la capçalera del faristol («Ordena…») més
+      prima, i els botons del torn més prims on el punter és fi (on es toca amb
+      el dit conserven els 44 px, amb regla pròpia a cada mode i una de
+      seguretat per a `pointer: coarse`).
+- [x] **Apaïsat amb barra lateral**: els jugadors passen a una columna a
+      l'esquerra (targetes apilades i línia de torn a sota) i la taula es queda
+      tota l'alçada. Fet amb una graella dins del bloc apaïsat.
+- [x] **El canvi de torn es veu venir**: la pausa dels bots puja a 3 segons i,
+      mentre duren, al mig de la pantalla hi ha l'avís amb l'avatar i el nom
+      del bot i «està jugant…». No rep clics (`pointer-events: none`) i és
+      decoratiu: la línia de torn ja ho anuncia als lectors de pantalla.
+- [x] **El gest d'enrere d'Android no s'endú la partida**: a l'app instal·lada
+      es planta una entrada d'historial i es replanta a cada intent; a la
+      pestanya del navegador es respecta l'enrere, i el gest de la vora i el
+      d'arrossegar per refrescar els frena `overscroll-behavior: none`.
+- [x] **L'informe de «fitxes soles al tauler sense error»**: el motor és
+      estanc — `applyPlay` valida cada jugada de la taula proposada abans
+      d'acceptar res, i ara hi ha un test de regressió que ho fixa amb el cas
+      exacte de l'informe (un 10 sol i una parella). El que es veia era la
+      còpia de treball del torn del jugador, on les fitxes soles són legals
+      fins a «Acabar jugada»; el que faltava era que es veiés: el marc vermell
+      passa a 2 px amb lluïssor, i fora de l'obertura també surt la pista que
+      explica què cal fer amb les jugades en vermell.
+
+**Criteris d'acceptació (verificats)**: 157 tests i 63 proves de navegador en
+verd; captures de la barra lateral en apaïsat, de les fitxes soles ben marcades
+amb la pista nova, i de l'avís de torn sobre el build de producció (amb la
+pausa real de 3 segons).
+
+### Problemes trobats
+
+- [2026-08-24] **La barra lateral no s'aplicava**: la regla base
+  `.app-joc .game` (0,2,0) guanyava el `.game` del bloc apaïsat (0,1,0) i la
+  graella no entrava mai — la línia de torn quedava esclafada. Resolt fent
+  servir el selector complet dins del bloc. Mateixa lliçó que les rajoles de
+  l'historial: dins d'un media query l'especificitat compta igual.
+
 ---
 
 ## Riscos coneguts (a vigilar quan toqui)
