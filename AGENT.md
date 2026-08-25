@@ -1043,6 +1043,35 @@ captures d'escriptori i apaïsat.
 
 *(cap)*
 
+### Nivell propi i nivell dels rivals, sense confusió ✅ Feta (2026-08-25)
+
+El jugador va assenyalar que en triar una dificultat no quedava clar si
+s'aplicava de debò, i que es barrejava el seu nivell amb el que triava. Dues
+arrels: el menú deia «Nivell:» a seques (semblava el nivell propi) i, en
+reobrir-lo, sempre tornava a mostrar «automàtic» encara que haguessis fixat
+una dificultat.
+
+- [x] El menú diu **«Nivell dels rivals»**, les opcions fixes porten
+      «(fixat)», i en triar-ne una surt la confirmació: «Rivals fixats a X: no
+      canviaran encara que el teu nivell es mogui. S'aplica a la partida
+      nova». En automàtic, la proposta diu també que aniran canviant amb tu.
+- [x] **El menú recorda la tria**: s'obre mostrant el mode de la partida en
+      curs (el nivell fixat o «automàtic»), llegit de la configuració viva.
+- [x] **A dalt a la dreta es diferencien els dos nivells**: sempre el teu
+      («Nivell 1100 (Fàcil)») i, només si els has fixat, «· rivals fixats:
+      Mitjà». En automàtic no es diu res dels rivals: s'adapten sols.
+- [x] El final de partida, en mode fixat, ho recorda i diu com tornar a
+      l'automàtic.
+
+**Criteris d'acceptació (verificats)**: 68 proves de navegador en verd; la
+nova recorre el cicle sencer — fixar Mitjà (confirmació al menú, píndola de
+dalt, etiqueta del bot, menú que ho recorda en reobrir-se) i tornar a
+l'automàtic (la píndola calla).
+
+### Problemes trobats
+
+*(cap: el gruix era d'etiquetes i d'estat que no es rellegia)*
+
 ---
 
 ## Riscos coneguts (a vigilar quan toqui)

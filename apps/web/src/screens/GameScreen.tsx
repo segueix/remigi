@@ -85,6 +85,12 @@ export function GameScreen({ setup, resume, resumeOwners, profile, savedGame, on
         )
       : null;
 
+  /* El nivell fixat dels rivals, per dir-lo tal qual (únic si tots són iguals). */
+  const fixedRivalsLabel =
+    currentSetup.auto === false
+      ? [...new Set(currentSetup.opponents)].map((key) => DIFFICULTIES[key].label).join(', ')
+      : null;
+
   const restartAdapted = useCallback(() => {
     startNewGame(
       nextOpponents ? { ...currentSetup, opponents: nextOpponents } : currentSetup,
@@ -126,6 +132,7 @@ export function GameScreen({ setup, resume, resumeOwners, profile, savedGame, on
         handle={handle}
         change={change}
         nextOpponents={nextOpponents}
+        fixedRivals={fixedRivalsLabel}
         onRestart={restartAdapted}
         onHistory={onHistory}
       />
@@ -214,14 +221,27 @@ export function GameScreen({ setup, resume, resumeOwners, profile, savedGame, on
           {game.bag.length} fitxes al sac
         </p>
 
-        {/* El teu nivell, sempre a la vista: puja i baixa amb els resultats. */}
+        {/*
+          * El teu nivell, sempre a la vista: puja i baixa amb els resultats.
+          * Si has fixat el nivell dels rivals, també es diu — i si no, no es
+          * diu res, perquè llavors s'adapten sols al teu.
+          */}
         {profile.profile && (
           <span
             className="nivell-jugador"
-            title="El teu nivell puja i baixa segons els resultats de les partides"
+            title={
+              fixedRivalsLabel
+                ? 'Has fixat el nivell dels rivals; el teu nivell continua movent-se amb els resultats'
+                : 'Els rivals s’adapten al teu nivell: pugen i baixen amb tu'
+            }
           >
             Nivell {profile.profile.rating}{' '}
             (<strong>{playerLevelLabel(profile.profile.rating)}</strong>)
+            {fixedRivalsLabel && (
+              <>
+                {' '}· rivals fixats: <strong>{fixedRivalsLabel}</strong>
+              </>
+            )}
           </span>
         )}
       </header>
@@ -413,6 +433,7 @@ function GameOver({
   handle,
   change,
   nextOpponents,
+  fixedRivals,
   onRestart,
   onHistory,
 }: {
@@ -420,6 +441,8 @@ function GameOver({
   change: RatingChange | null;
   /** Rivals de la partida següent, si són automàtics (adaptats a l'habilitat). */
   nextOpponents: DifficultyKey[] | null;
+  /** Etiqueta dels rivals quan estan fixats a mà. */
+  fixedRivals: string | null;
   onRestart(): void;
   onHistory(): void;
 }) {
@@ -514,11 +537,18 @@ function GameOver({
         </p>
       )}
 
-      {nextOpponents && (
+      {nextOpponents ? (
         <p className="seguents-rivals">
           El joc s’adapta a tu: els pròxims rivals seran{' '}
           <strong>{nextOpponents.map((key) => DIFFICULTIES[key].label).join(', ')}</strong>.
         </p>
+      ) : (
+        fixedRivals && (
+          <p className="seguents-rivals">
+            Rivals fixats a <strong>{fixedRivals}</strong>. Per tornar als automàtics,
+            canvia-ho al menú del teu jugador.
+          </p>
+        )
       )}
 
       <div className="row">

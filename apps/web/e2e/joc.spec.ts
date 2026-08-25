@@ -380,6 +380,31 @@ test.describe('la taula de joc', () => {
     await expect(nivell).toContainText('(Fàcil)');
   });
 
+  test('fixar el nivell dels rivals es veu i es recorda; treure’l, també', async ({ page }) => {
+    await comencaDeZero(page);
+    // En mode automàtic no es diu res dels rivals: s'adapten sols.
+    await expect(page.locator('.nivell-jugador')).not.toContainText('fixats');
+
+    // Es fixa el nivell Mitjà i es comença una partida.
+    await obreMenu(page);
+    await page.locator('.menu-nivell select').selectOption('medium');
+    await expect(page.locator('.menu-usuari .suggestion')).toContainText('Rivals fixats a Mitjà');
+    await page.getByRole('button', { name: '1', exact: true }).click();
+    await page.getByRole('button', { name: 'Partida nova' }).click();
+
+    // La tria s'ha aplicat, i es veu per tres bandes: la píndola de dalt,
+    // l'etiqueta del bot, i el menú que la recorda en reobrir-lo.
+    await expect(page.locator('.nivell-jugador')).toContainText('rivals fixats: Mitjà');
+    await expect(page.locator('.player[data-bot] .tag').first()).toHaveText('Mitjà');
+    await obreMenu(page);
+    await expect(page.locator('.menu-nivell select')).toHaveValue('medium');
+
+    // I tornar a l'automàtic també es veu: la píndola calla.
+    await page.locator('.menu-nivell select').selectOption('auto');
+    await page.getByRole('button', { name: 'Partida nova' }).click();
+    await expect(page.locator('.nivell-jugador')).not.toContainText('fixats');
+  });
+
   test('els rivals tenen nom propi i avatar, diferents entre ells', async ({ page }) => {
     await comencaDeZero(page);
     await jugaContra(page, 3);

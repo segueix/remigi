@@ -185,7 +185,11 @@ surt en text: al títol emergent de la jugada i al costat del color, a la llista
 
 El teu nivell es veu sempre **a dalt a la dreta** — «Nivell 1240 (Mitjà)» — i
 és el nivell de bot amb l'habilitat més propera a la teva
-(`state/playerLevel.ts`), així que puja i baixa amb els resultats.
+(`state/playerLevel.ts`), així que puja i baixa amb els resultats. Si has
+**fixat** el nivell dels rivals al menú, la mateixa píndola ho diu («· rivals
+fixats: Mitjà»); si no, no diu res dels rivals, perquè llavors s'adapten sols
+al teu. El menú recorda la tria en reobrir-se, i les opcions fixes porten
+«(fixat)» perquè no es confonguin mai amb el nivell propi.
 
 En acabar cada partida, `useRecordResult` la registra al perfil amb els nivells
 que s'han jugat de debò, i l'habilitat puja o baixa segons el resultat i la

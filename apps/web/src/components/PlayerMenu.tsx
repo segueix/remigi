@@ -33,7 +33,14 @@ export function PlayerMenu({ profile, current, onNewGame, onHistory, onClose }: 
   const [count, setCount] = useState<OpponentCount>(
     Math.min(3, Math.max(1, current.opponents.length)) as OpponentCount,
   );
-  const [level, setLevel] = useState<LevelChoice>('auto');
+  /*
+   * La tria es llegeix de la partida en curs: si els rivals estan fixats, el
+   * desplegable s'obre mostrant el nivell fixat, no «automàtic». Sense això
+   * semblava que la tria no s'hagués aplicat.
+   */
+  const [level, setLevel] = useState<LevelChoice>(
+    current.auto === false ? (current.opponents[0] ?? 'auto') : 'auto',
+  );
   const [adapt, setAdapt] = useState(Boolean(current.adaptDuringGame));
 
   const suggested = profile.profile ? suggestOpponents(profile.profile, count) : [];
@@ -111,21 +118,31 @@ export function PlayerMenu({ profile, current, onNewGame, onHistory, onClose }: 
         </div>
 
         <label className="menu-nivell">
-          Nivell:{' '}
+          Nivell dels rivals:{' '}
           <select
             value={level}
             onChange={(event) => setLevel(event.target.value as LevelChoice)}
           >
-            <option value="auto">automàtic (segons la teva habilitat)</option>
+            <option value="auto">automàtic: puja i baixa amb tu</option>
             {DIFFICULTY_ORDER.map((key) => (
               <option key={key} value={key}>
-                {DIFFICULTIES[key].label}
+                {DIFFICULTIES[key].label} (fixat)
               </option>
             ))}
           </select>
         </label>
-        {level === 'auto' && suggested.length > 0 && (
-          <p className="suggestion">{describeSuggestion(suggested)}</p>
+        {level === 'auto' ? (
+          suggested.length > 0 && (
+            <p className="suggestion">
+              {describeSuggestion(suggested)} Aniran canviant a mesura que milloris o
+              empitjoris.
+            </p>
+          )
+        ) : (
+          <p className="suggestion">
+            Rivals fixats a <strong>{DIFFICULTIES[level].label}</strong>: no canviaran
+            encara que el teu nivell es mogui. S’aplica a la partida nova.
+          </p>
         )}
 
         <label className="check">
