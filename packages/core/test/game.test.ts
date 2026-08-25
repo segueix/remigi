@@ -165,3 +165,28 @@ describe('final de partida', () => {
     expectRulesError(() => applyMove(finished, { type: 'draw' }), 'GAME_FINISHED');
   });
 });
+
+describe('la taula no admet mai jugades incompletes', () => {
+  // Regressió d'un informe de jugador: «fitxes soles al tauler sense error».
+  // El motor no pot acceptar mai una taula amb jugades de menys de 3 fitxes;
+  // el que es veu a mig torn és la còpia de treball, que la interfície marca.
+  it('rebutja una fitxa sola i una parella, encara que la resta sigui vàlida', () => {
+    const state = makeState({
+      racks: [[t('red', 10), t('blue', 10), t('black', 10), t('orange', 5)], [t('blue', 2)]],
+    });
+
+    expect(() =>
+      applyMove(state, { type: 'play', board: [[t('red', 10)]] }),
+    ).toThrowError(/com a mínim 3/);
+
+    expect(() =>
+      applyMove(state, {
+        type: 'play',
+        board: [
+          [t('red', 10), t('blue', 10), t('black', 10)],
+          [t('orange', 5)],
+        ],
+      }),
+    ).toThrowError(/com a mínim 3/);
+  });
+});
