@@ -1022,6 +1022,27 @@ el final de partida anuncia els pròxims rivals.
 
 *(cap: la migració de l'estat d'ordenació i el tret `auto` han sortit nets)*
 
+### El nivell del jugador, a la vista ✅ Feta (2026-08-25)
+
+Demanat pel jugador: veure a dalt a la dreta el nivell que té assignat, amb el
+nom entre parèntesis (Novell, Fàcil…), perquè es vegi pujar i baixar amb els
+resultats.
+
+- [x] `state/playerLevel.ts`: el nivell «amb nom» del jugador és el nivell de
+      bot amb l'habilitat més propera a la seva, amb el mateix criteri d'empat
+      que el motor (en cas de dubte, el més fluix). Amb tests.
+- [x] A dalt a la dreta, al costat de la línia de torn: «Nivell 1100 (Fàcil)».
+      En apaïsat és una píndola com la del torn; el menú del jugador també
+      afegeix el nom del nivell a la línia d'habilitat.
+
+**Criteris d'acceptació (verificats)**: 66 proves de navegador i 160 tests en
+verd (la prova nova comprova el text exacte amb l'habilitat inicial), i
+captures d'escriptori i apaïsat.
+
+### Problemes trobats
+
+*(cap)*
+
 ---
 
 ## Riscos coneguts (a vigilar quan toqui)
