@@ -416,6 +416,16 @@ test.describe('la taula de joc', () => {
     const faristol = (await page.locator('.rack').boundingBox())!;
     expect(taula.y).toBeLessThan(faristol.y);
     expect(taula.height).toBeGreaterThan(80);
+
+    // La taula s'ho queda gairebé tot: amplada sencera i més de mitja alçada.
+    const finestra = page.viewportSize()!;
+    expect(taula.width).toBeGreaterThan(finestra.width * 0.93);
+    expect(taula.height).toBeGreaterThan(finestra.height * 0.55);
+    // Els jugadors floten per sobre del feltre, no tenen columna pròpia.
+    const tira = (await page.locator('.game-top').boundingBox())!;
+    expect(tira.y).toBeGreaterThanOrEqual(taula.y);
+    // I la fila d'«Ordena» no hi és: l'espai és per a les fitxes.
+    await expect(page.locator('.rack-header')).toBeHidden();
     for (const alçada of await page
       .locator('.actions button')
       .evaluateAll((b) => b.map((el) => el.getBoundingClientRect().height))) {

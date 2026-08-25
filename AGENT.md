@@ -965,6 +965,35 @@ pausa real de 3 segons).
   servir el selector complet dins del bloc. Mateixa lliçó que les rajoles de
   l'historial: dins d'un media query l'especificitat compta igual.
 
+### Apaïsat: la taula s'ho queda tot ✅ Feta (2026-08-25)
+
+Proposta demanada pel jugador (amb captura del seu mòbil): que en apaïsat la
+taula es vegi molt més gran i s'hi puguin veure totes les fitxes, amagant els
+usuaris de l'esquerra i reduint l'espai sobre el faristol i els botons.
+
+- [x] La columna de jugadors desapareix: els jugadors **floten sobre el
+      feltre** com a fitxetes translúcides (avatar i compte de fitxes; el nom
+      ja el diu l'avís de torn de 3 segons), amb la línia de torn com a
+      píndola a la dreta. La teva fitxeta continua obrint el menú.
+- [x] La fila d'«Ordena» no hi és en apaïsat (queda en vertical i escriptori).
+- [x] Els botons del torn passen **al costat del faristol**, no a sota: la
+      fila de baix és faristol + botons, i la taula guanya tota aquella alçada.
+- [x] Resultat: la taula ocupa tota l'amplada i més de mitja alçada de la
+      pantalla (fixat amb asserts: ≥93% i ≥55%).
+
+**Criteris d'acceptació (verificats)**: 63 proves de navegador en verd, amb la
+d'apaïsat reforçada (mides mínimes de la taula, tira flotant sobre el feltre,
+«Ordena» amagat); captures a la mida del mòbil de l'usuari (969×432) i al
+Pixel 5 girat, amb 9 jugades a la taula i el faristol ple.
+
+### Problemes trobats
+
+- [2026-08-25] **El menú del jugador va quedar sense tacte**: la tira flotant
+  porta `pointer-events: none` perquè el feltre de sota continuï rebent tocs, i
+  el menú, que n'és fill, ho heretava — no es podia clicar «Desa el nom». La
+  prova d'apaïsat el va caçar. Resolt retornant `pointer-events: auto` al menú
+  i al seu fons.
+
 ---
 
 ## Riscos coneguts (a vigilar quan toqui)
