@@ -40,6 +40,7 @@ export function App() {
   const setup: GameSetup = savedGame.saved?.setup ?? {
     playerName: profile.profile.name,
     opponents: suggestOpponents(profile.profile, 2),
+    auto: true,
   };
 
   return (

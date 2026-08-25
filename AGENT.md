@@ -965,6 +965,113 @@ pausa real de 3 segons).
   servir el selector complet dins del bloc. Mateixa lliçó que les rajoles de
   l'historial: dins d'un media query l'especificitat compta igual.
 
+### Apaïsat: la taula s'ho queda tot ✅ Feta (2026-08-25)
+
+Proposta demanada pel jugador (amb captura del seu mòbil): que en apaïsat la
+taula es vegi molt més gran i s'hi puguin veure totes les fitxes, amagant els
+usuaris de l'esquerra i reduint l'espai sobre el faristol i els botons.
+
+- [x] La columna de jugadors desapareix: els jugadors **floten sobre el
+      feltre** com a fitxetes translúcides (avatar i compte de fitxes; el nom
+      ja el diu l'avís de torn de 3 segons), amb la línia de torn com a
+      píndola a la dreta. La teva fitxeta continua obrint el menú.
+- [x] La fila d'«Ordena» no hi és en apaïsat (queda en vertical i escriptori).
+- [x] Els botons del torn passen **al costat del faristol**, no a sota: la
+      fila de baix és faristol + botons, i la taula guanya tota aquella alçada.
+- [x] Resultat: la taula ocupa tota l'amplada i més de mitja alçada de la
+      pantalla (fixat amb asserts: ≥93% i ≥55%).
+
+**Criteris d'acceptació (verificats)**: 63 proves de navegador en verd, amb la
+d'apaïsat reforçada (mides mínimes de la taula, tira flotant sobre el feltre,
+«Ordena» amagat); captures a la mida del mòbil de l'usuari (969×432) i al
+Pixel 5 girat, amb 9 jugades a la taula i el faristol ple.
+
+### Problemes trobats
+
+- [2026-08-25] **El menú del jugador va quedar sense tacte**: la tira flotant
+  porta `pointer-events: none` perquè el feltre de sota continuï rebent tocs, i
+  el menú, que n'és fill, ho heretava — no es podia clicar «Desa el nom». La
+  prova d'apaïsat el va caçar. Resolt retornant `pointer-events: auto` al menú
+  i al seu fons.
+
+### Ordenació en apaïsat, fitxes grans a l'ordinador i adaptació tancada ✅ Feta (2026-08-25)
+
+Tres demandes del jugador:
+
+- [x] **«números / colors» sobre els botons en apaïsat**: l'estat d'ordenació
+      del faristol puja a `GameScreen` i es controla des de dos llocs — la
+      capçalera de sempre (vertical i escriptori) i el bloc compacte
+      `.sort-mini` sobre els botons (només apaïsat). Tocar l'opció activa la
+      desfà (torna a «com està»).
+- [x] **Fitxes de taula més grans a l'ordinador**: 2,95 × 3,85 rem — més grans
+      que les del faristol i tot; en pantalles petites i apaïsat, els seus
+      blocs les tornen a empetitir. Fixat amb un assert (≥45 px d'amplada).
+- [x] **El sistema adaptatiu, tancat**: ja existia (Elo + proposta de rivals),
+      però «Una altra partida» repetia els mateixos rivals per sempre. Ara la
+      configuració porta el tret `auto` i, quan és actiu, **cada partida nova
+      surt de l'habilitat d'aquell moment**, també des del final de partida —
+      que a més anuncia els rivals següents («El joc s'adapta a tu: els
+      pròxims rivals seran…»).
+
+**Criteris d'acceptació (verificats)**: 64 proves de navegador en verd — les
+noves: l'ordenació compacta apaïsada mana de debò sobre el faristol (es
+comprova l'ordre de les fitxes), les fitxes de taula d'escriptori fan ≥45 px, i
+el final de partida anuncia els pròxims rivals.
+
+### Problemes trobats
+
+*(cap: la migració de l'estat d'ordenació i el tret `auto` han sortit nets)*
+
+### El nivell del jugador, a la vista ✅ Feta (2026-08-25)
+
+Demanat pel jugador: veure a dalt a la dreta el nivell que té assignat, amb el
+nom entre parèntesis (Novell, Fàcil…), perquè es vegi pujar i baixar amb els
+resultats.
+
+- [x] `state/playerLevel.ts`: el nivell «amb nom» del jugador és el nivell de
+      bot amb l'habilitat més propera a la seva, amb el mateix criteri d'empat
+      que el motor (en cas de dubte, el més fluix). Amb tests.
+- [x] A dalt a la dreta, al costat de la línia de torn: «Nivell 1100 (Fàcil)».
+      En apaïsat és una píndola com la del torn; el menú del jugador també
+      afegeix el nom del nivell a la línia d'habilitat.
+
+**Criteris d'acceptació (verificats)**: 66 proves de navegador i 160 tests en
+verd (la prova nova comprova el text exacte amb l'habilitat inicial), i
+captures d'escriptori i apaïsat.
+
+### Problemes trobats
+
+*(cap)*
+
+### Nivell propi i nivell dels rivals, sense confusió ✅ Feta (2026-08-25)
+
+El jugador va assenyalar que en triar una dificultat no quedava clar si
+s'aplicava de debò, i que es barrejava el seu nivell amb el que triava. Dues
+arrels: el menú deia «Nivell:» a seques (semblava el nivell propi) i, en
+reobrir-lo, sempre tornava a mostrar «automàtic» encara que haguessis fixat
+una dificultat.
+
+- [x] El menú diu **«Nivell dels rivals»**, les opcions fixes porten
+      «(fixat)», i en triar-ne una surt la confirmació: «Rivals fixats a X: no
+      canviaran encara que el teu nivell es mogui. S'aplica a la partida
+      nova». En automàtic, la proposta diu també que aniran canviant amb tu.
+- [x] **El menú recorda la tria**: s'obre mostrant el mode de la partida en
+      curs (el nivell fixat o «automàtic»), llegit de la configuració viva.
+- [x] **A dalt a la dreta es diferencien els dos nivells**: sempre el teu
+      («Nivell 1100 (Fàcil)») i, només si els has fixat, «· rivals fixats:
+      Mitjà». En automàtic no es diu res dels rivals: s'adapten sols.
+- [x] El final de partida, en mode fixat, ho recorda i diu com tornar a
+      l'automàtic.
+
+**Criteris d'acceptació (verificats)**: 68 proves de navegador en verd; la
+nova recorre el cicle sencer — fixar Mitjà (confirmació al menú, píndola de
+dalt, etiqueta del bot, menú que ho recorda en reobrir-se) i tornar a
+l'automàtic (la píndola calla).
+
+### Problemes trobats
+
+*(cap: el gruix era d'etiquetes i d'estat que no es rellegia)*
+
 ---
 
 ## Riscos coneguts (a vigilar quan toqui)

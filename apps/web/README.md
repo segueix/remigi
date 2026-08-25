@@ -81,6 +81,11 @@ El feltre és fosc en tots dos temes, com una taula de debò. Per això tot el q
 s'hi posa a sobre —marcs dels bots, jugades invàlides, destinacions— fa servir
 sempre les **versions clares** dels colors (variables amb sufix `-taula`).
 
+A l'ordinador, les fitxes de la taula es veuen **més grans que les del
+faristol**: hi ha lloc de sobres. En pantalles petites i en apaïsat s'empetiteixen
+per encabir el màxim de joc, i en apaïsat l'ordenació del faristol («números /
+colors») viu a sobre dels botons del torn, que és on queda lloc.
+
 Els botons del torn van sempre en **una sola línia**, amb icona de traç
 (`components/icons.tsx`, SVG en línia, sense llibreries) i rètol; quan el rètol
 no hi cap s'amaga i queda la icona, com en una app. El nom accessible el porta
@@ -178,9 +183,20 @@ surt en text: al títol emergent de la jugada i al costat del color, a la llista
 
 ## Com s'adapta al jugador
 
+El teu nivell es veu sempre **a dalt a la dreta** — «Nivell 1240 (Mitjà)» — i
+és el nivell de bot amb l'habilitat més propera a la teva
+(`state/playerLevel.ts`), així que puja i baixa amb els resultats. Si has
+**fixat** el nivell dels rivals al menú, la mateixa píndola ho diu («· rivals
+fixats: Mitjà»); si no, no diu res dels rivals, perquè llavors s'adapten sols
+al teu. El menú recorda la tria en reobrir-se, i les opcions fixes porten
+«(fixat)» perquè no es confonguin mai amb el nivell propi.
+
 En acabar cada partida, `useRecordResult` la registra al perfil amb els nivells
 que s'han jugat de debò, i l'habilitat puja o baixa segons el resultat i la
-força dels rivals. A l'inici, aquesta habilitat és la que proposa els oponents
+força dels rivals. Amb rivals automàtics (el mode per defecte), **cada partida
+nova es proposa amb l'habilitat d'aquell moment** — també «Una altra partida»
+des del final, que abans repetia els mateixos rivals per sempre — i el final de
+partida anuncia els rivals següents, perquè es vegi que el joc s'adapta. A l'inici, aquesta habilitat és la que proposa els oponents
 de la partida següent, de manera que les partides tendeixin a estar igualades;
 sempre es poden triar a mà.
 

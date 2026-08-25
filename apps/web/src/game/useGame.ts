@@ -29,6 +29,11 @@ const BOT_DELAY_MS = Number(import.meta.env.VITE_BOT_DELAY ?? 3000);
 export interface GameSetup {
   playerName: string;
   opponents: DifficultyKey[];
+  /**
+   * Els rivals són automàtics: surten de l'habilitat del perfil i es tornen a
+   * triar a cada partida nova. Absent (partides desades velles) val com a cert.
+   */
+  auto?: boolean;
   /** Ajusta la dificultat dels bots durant la partida segons com et va. */
   adaptDuringGame?: boolean;
 }

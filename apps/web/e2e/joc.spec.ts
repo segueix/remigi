@@ -370,6 +370,41 @@ test.describe('qui ha jugat què', () => {
 });
 
 test.describe('la taula de joc', () => {
+  test('el nivell del jugador es veu a dalt, amb el nom entre parèntesis', async ({ page }) => {
+    await comencaDeZero(page);
+
+    // Amb l'habilitat inicial (1100), el nivell amb nom és «Fàcil».
+    const nivell = page.locator('.nivell-jugador');
+    await expect(nivell).toBeVisible();
+    await expect(nivell).toContainText('1100');
+    await expect(nivell).toContainText('(Fàcil)');
+  });
+
+  test('fixar el nivell dels rivals es veu i es recorda; treure’l, també', async ({ page }) => {
+    await comencaDeZero(page);
+    // En mode automàtic no es diu res dels rivals: s'adapten sols.
+    await expect(page.locator('.nivell-jugador')).not.toContainText('fixats');
+
+    // Es fixa el nivell Mitjà i es comença una partida.
+    await obreMenu(page);
+    await page.locator('.menu-nivell select').selectOption('medium');
+    await expect(page.locator('.menu-usuari .suggestion')).toContainText('Rivals fixats a Mitjà');
+    await page.getByRole('button', { name: '1', exact: true }).click();
+    await page.getByRole('button', { name: 'Partida nova' }).click();
+
+    // La tria s'ha aplicat, i es veu per tres bandes: la píndola de dalt,
+    // l'etiqueta del bot, i el menú que la recorda en reobrir-lo.
+    await expect(page.locator('.nivell-jugador')).toContainText('rivals fixats: Mitjà');
+    await expect(page.locator('.player[data-bot] .tag').first()).toHaveText('Mitjà');
+    await obreMenu(page);
+    await expect(page.locator('.menu-nivell select')).toHaveValue('medium');
+
+    // I tornar a l'automàtic també es veu: la píndola calla.
+    await page.locator('.menu-nivell select').selectOption('auto');
+    await page.getByRole('button', { name: 'Partida nova' }).click();
+    await expect(page.locator('.nivell-jugador')).not.toContainText('fixats');
+  });
+
   test('els rivals tenen nom propi i avatar, diferents entre ells', async ({ page }) => {
     await comencaDeZero(page);
     await jugaContra(page, 3);
@@ -416,6 +451,26 @@ test.describe('la taula de joc', () => {
     const faristol = (await page.locator('.rack').boundingBox())!;
     expect(taula.y).toBeLessThan(faristol.y);
     expect(taula.height).toBeGreaterThan(80);
+
+    // La taula s'ho queda gairebé tot: amplada sencera i més de mitja alçada.
+    const finestra = page.viewportSize()!;
+    expect(taula.width).toBeGreaterThan(finestra.width * 0.93);
+    expect(taula.height).toBeGreaterThan(finestra.height * 0.55);
+    // Els jugadors floten per sobre del feltre, no tenen columna pròpia.
+    const tira = (await page.locator('.game-top').boundingBox())!;
+    expect(tira.y).toBeGreaterThanOrEqual(taula.y);
+    // I la fila d'«Ordena» no hi és: l'espai és per a les fitxes.
+    await expect(page.locator('.rack-header')).toBeHidden();
+
+    // Al seu lloc, «números / colors» sobre els botons, i mana de debò.
+    const perNumeros = page.locator('.sort-mini button', { hasText: 'números' });
+    await expect(perNumeros).toBeVisible();
+    await perNumeros.click();
+    await expect(perNumeros).toHaveAttribute('aria-pressed', 'true');
+    const valors = await page
+      .locator('.rack .tile')
+      .evaluateAll((tiles) => tiles.map((el) => parseInt(el.textContent ?? '', 10)));
+    expect([...valors].sort((a, b) => a - b)).toEqual(valors);
     for (const alçada of await page
       .locator('.actions button')
       .evaluateAll((b) => b.map((el) => el.getBoundingClientRect().height))) {
@@ -438,6 +493,20 @@ test.describe('la taula de joc', () => {
     await boto.click();
     await expect(page.locator('.rack .tile').first()).toBeVisible();
     await expect(boto).toBeVisible();
+  });
+
+  test('a l’ordinador, les fitxes de la taula es veuen ben grans', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'als mòbils mana encabir-hi el màxim de joc');
+    await entraAmbPartida(page, {
+      rack: [f('orange', 7), f('blue', 2)],
+      board: [[f('red', 7), f('blue', 7), f('black', 7)]],
+      haObert: true,
+    });
+
+    const fitxa = (await page.locator('.board .tile').first().boundingBox())!;
+    // 2.95rem = 47 px: més grans i tot que les del faristol.
+    expect(fitxa.width).toBeGreaterThanOrEqual(45);
+    expect(fitxa.height).toBeGreaterThanOrEqual(58);
   });
 
   test('la partida cap a la pantalla, sense desplaçament de pàgina', async ({ page }) => {

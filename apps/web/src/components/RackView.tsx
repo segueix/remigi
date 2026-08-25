@@ -1,6 +1,8 @@
 import { isJoker, type Tile } from '@remigi/core';
-import { useState } from 'react';
 import { TileView } from './TileView';
+
+/** Ordre de presentació del faristol (només visual). */
+export type Order = 'cap' | 'numero' | 'color';
 
 interface Props {
   rack: Tile[];
@@ -11,13 +13,17 @@ interface Props {
   /** Fitxa acabada de robar del sac, per trobar-la de seguida entre les altres. */
   drawnTileId?: string | null;
   interactive?: boolean;
+  /*
+   * L'ordre viu a fora (GameScreen): en apaïsat es controla des d'un altre
+   * lloc de la pantalla, i l'estat ha de ser el mateix.
+   */
+  order: Order;
+  onOrderChange(order: Order): void;
   onTileClick?(tileId: string): void;
   onTilePointerDown?(event: React.PointerEvent, tileId: string): void;
   /** Tornar al faristol la fitxa triada. */
   onReturnToRack?(): void;
 }
-
-type Order = 'cap' | 'numero' | 'color';
 
 const COLOR_ORDER = ['red', 'blue', 'black', 'orange'];
 
@@ -29,11 +35,12 @@ export function RackView({
   isOver,
   drawnTileId,
   interactive,
+  order,
+  onOrderChange,
   onTileClick,
   onTilePointerDown,
   onReturnToRack,
 }: Props) {
-  const [order, setOrder] = useState<Order>('cap');
   const tiles = sortTiles(rack, order);
 
   return (
@@ -46,7 +53,7 @@ export function RackView({
               key={option}
               type="button"
               className="link"
-              onClick={() => setOrder(option)}
+              onClick={() => onOrderChange(option)}
               disabled={order === option}
             >
               {option === 'cap' ? 'com està' : option === 'numero' ? 'per número' : 'per color'}
