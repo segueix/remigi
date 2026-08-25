@@ -426,6 +426,16 @@ test.describe('la taula de joc', () => {
     expect(tira.y).toBeGreaterThanOrEqual(taula.y);
     // I la fila d'«Ordena» no hi és: l'espai és per a les fitxes.
     await expect(page.locator('.rack-header')).toBeHidden();
+
+    // Al seu lloc, «números / colors» sobre els botons, i mana de debò.
+    const perNumeros = page.locator('.sort-mini button', { hasText: 'números' });
+    await expect(perNumeros).toBeVisible();
+    await perNumeros.click();
+    await expect(perNumeros).toHaveAttribute('aria-pressed', 'true');
+    const valors = await page
+      .locator('.rack .tile')
+      .evaluateAll((tiles) => tiles.map((el) => parseInt(el.textContent ?? '', 10)));
+    expect([...valors].sort((a, b) => a - b)).toEqual(valors);
     for (const alçada of await page
       .locator('.actions button')
       .evaluateAll((b) => b.map((el) => el.getBoundingClientRect().height))) {
@@ -448,6 +458,20 @@ test.describe('la taula de joc', () => {
     await boto.click();
     await expect(page.locator('.rack .tile').first()).toBeVisible();
     await expect(boto).toBeVisible();
+  });
+
+  test('a l’ordinador, les fitxes de la taula es veuen ben grans', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'als mòbils mana encabir-hi el màxim de joc');
+    await entraAmbPartida(page, {
+      rack: [f('orange', 7), f('blue', 2)],
+      board: [[f('red', 7), f('blue', 7), f('black', 7)]],
+      haObert: true,
+    });
+
+    const fitxa = (await page.locator('.board .tile').first().boundingBox())!;
+    // 2.95rem = 47 px: més grans i tot que les del faristol.
+    expect(fitxa.width).toBeGreaterThanOrEqual(45);
+    expect(fitxa.height).toBeGreaterThanOrEqual(58);
   });
 
   test('la partida cap a la pantalla, sense desplaçament de pàgina', async ({ page }) => {

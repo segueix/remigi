@@ -48,6 +48,7 @@ export function PlayerMenu({ profile, current, onNewGame, onHistory, onClose }: 
     onNewGame({
       playerName: name.trim() || profile.profile?.name || 'Jugador',
       opponents,
+      auto: level === 'auto',
       adaptDuringGame: adapt,
     });
   }

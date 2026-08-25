@@ -1,9 +1,16 @@
-import { difficultyByKey, finalScores, type Tile } from '@remigi/core';
+import {
+  DIFFICULTIES,
+  difficultyByKey,
+  finalScores,
+  suggestOpponents,
+  type DifficultyKey,
+  type Tile,
+} from '@remigi/core';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { BoardView } from '../components/BoardView';
 import { CheckIcon, DrawIcon, PassIcon, RotateIcon, UndoIcon } from '../components/icons';
 import { PlayerMenu } from '../components/PlayerMenu';
-import { RackView } from '../components/RackView';
+import { RackView, type Order } from '../components/RackView';
 import { TileView } from '../components/TileView';
 import { useDragTile } from '../game/useDragTile';
 import { botPersona } from '../game/bots';
@@ -40,6 +47,7 @@ export function GameScreen({ setup, resume, resumeOwners, profile, savedGame, on
   const { game, draft, selectedTileId, error, highlighted, drawnTileId, isHumanTurn } = handle;
   const change = useRecordResult(game, currentSetup.opponents, profile);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [rackOrder, setRackOrder] = useState<Order>('cap');
   const rotation = useScreenRotation();
 
   const { moveTileTo } = handle;
@@ -62,6 +70,25 @@ export function GameScreen({ setup, resume, resumeOwners, profile, savedGame, on
     },
     [handle],
   );
+
+  /*
+   * Amb rivals automàtics, els de la partida següent surten de l'habilitat
+   * d'ARA: si guanyes, pugen; si perds, baixen. També des d'«Una altra
+   * partida», que abans repetia els mateixos rivals per sempre.
+   */
+  const nextOpponents: DifficultyKey[] | null =
+    currentSetup.auto !== false && profile.profile
+      ? suggestOpponents(
+          profile.profile,
+          Math.min(3, Math.max(1, currentSetup.opponents.length)) as 1 | 2 | 3,
+        )
+      : null;
+
+  const restartAdapted = useCallback(() => {
+    startNewGame(
+      nextOpponents ? { ...currentSetup, opponents: nextOpponents } : currentSetup,
+    );
+  }, [startNewGame, nextOpponents, currentSetup]);
 
   /*
    * La taula que es veu és la del torn en curs mentre jugues tu, i la del motor
@@ -93,7 +120,15 @@ export function GameScreen({ setup, resume, resumeOwners, profile, savedGame, on
   );
 
   if (game.status === 'finished') {
-    return <GameOver handle={handle} change={change} onHistory={onHistory} />;
+    return (
+      <GameOver
+        handle={handle}
+        change={change}
+        nextOpponents={nextOpponents}
+        onRestart={restartAdapted}
+        onHistory={onHistory}
+      />
+    );
   }
 
   const human = game.players[0];
@@ -243,6 +278,8 @@ export function GameScreen({ setup, resume, resumeOwners, profile, savedGame, on
         isOver={drag.dragging?.over?.kind === 'rack'}
         drawnTileId={drawnTileId}
         interactive={isHumanTurn}
+        order={rackOrder}
+        onOrderChange={setRackOrder}
         onTileClick={(tileId) => handleTileClick(tileId, null)}
         onTilePointerDown={drag.start}
         onReturnToRack={() => handle.placeSelected({ kind: 'rack' })}
@@ -251,8 +288,23 @@ export function GameScreen({ setup, resume, resumeOwners, profile, savedGame, on
       {/*
         * Els botons del torn, sempre en una sola línia. El nom el porta
         * `aria-label` perquè no canviï mai: en pantalles estretes el rètol
-        * s'amaga i queda la icona, com en una app.
+        * s'amaga i queda la icona, com en una app. L'embolcall només pren cos
+        * en apaïsat, on porta l'ordenació compacta a sobre dels botons.
         */}
+      <div className="accions-costat">
+        <div className="sort-mini" role="group" aria-label="Ordena les fitxes">
+          {(['numero', 'color'] as Order[]).map((option) => (
+            <button
+              key={option}
+              type="button"
+              className="link"
+              aria-pressed={rackOrder === option}
+              onClick={() => setRackOrder(rackOrder === option ? 'cap' : option)}
+            >
+              {option === 'numero' ? 'números' : 'colors'}
+            </button>
+          ))}
+        </div>
       <div className="row actions">
         <button
           onClick={handle.commit}
@@ -294,6 +346,7 @@ export function GameScreen({ setup, resume, resumeOwners, profile, savedGame, on
             <RotateIcon />
           </button>
         )}
+      </div>
       </div>
 
       {/*
@@ -347,10 +400,15 @@ function initialOf(name: string): string {
 function GameOver({
   handle,
   change,
+  nextOpponents,
+  onRestart,
   onHistory,
 }: {
   handle: GameHandle;
   change: RatingChange | null;
+  /** Rivals de la partida següent, si són automàtics (adaptats a l'habilitat). */
+  nextOpponents: DifficultyKey[] | null;
+  onRestart(): void;
   onHistory(): void;
 }) {
   const { game } = handle;
@@ -444,8 +502,15 @@ function GameOver({
         </p>
       )}
 
+      {nextOpponents && (
+        <p className="seguents-rivals">
+          El joc s’adapta a tu: els pròxims rivals seran{' '}
+          <strong>{nextOpponents.map((key) => DIFFICULTIES[key].label).join(', ')}</strong>.
+        </p>
+      )}
+
       <div className="row">
-        <button onClick={() => handle.restart()}>Una altra partida</button>
+        <button onClick={onRestart}>Una altra partida</button>
         <button className="secondary" onClick={onHistory}>
           Historial
         </button>

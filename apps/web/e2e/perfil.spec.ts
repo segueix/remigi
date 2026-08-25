@@ -36,6 +36,9 @@ test('cada partida mou l’habilitat i queda a l’historial', async ({ page }) 
   const desprésDeJugar = await habilitat(page);
   expect(desprésDeJugar).not.toBe(1100);
 
+  // El sistema s'adapta: el final anuncia els rivals de la partida següent.
+  await expect(page.locator('.seguents-rivals')).toContainText('pròxims rivals');
+
   // Del final de la partida s'entra directament a l'historial.
   await page.getByRole('button', { name: 'Historial' }).click();
   await expect(page.locator('.stats')).toContainText(String(desprésDeJugar));

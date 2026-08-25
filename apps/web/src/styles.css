@@ -732,11 +732,15 @@ input {
   cursor: default;
 }
 
-/* A la taula són un pèl més petites: hi caben més jugades sense desplaçar-se. */
+/*
+ * A l'ordinador la taula té lloc de sobres: les fitxes s'hi veuen ben grans
+ * (més que les del faristol i tot). En pantalles petites i en apaïsat, els
+ * seus blocs les tornen a empetitir perquè hi càpiga el màxim de joc.
+ */
 .board .tile {
-  width: 2.25rem;
-  height: 2.95rem;
-  font-size: 1.2rem;
+  width: 2.95rem;
+  height: 3.85rem;
+  font-size: 1.55rem;
 }
 
 .tile:not(:disabled) {
@@ -861,6 +865,18 @@ input {
 .rack > .muted {
   color: rgb(255 244 214 / 0.85);
   margin: auto;
+}
+
+/*
+ * L'embolcall dels botons només pren cos en apaïsat, on porta l'ordenació
+ * compacta a sobre; a la resta de mides és transparent i tot queda com sempre.
+ */
+.accions-costat {
+  display: contents;
+}
+
+.sort-mini {
+  display: none;
 }
 
 /* Els botons del torn: sempre una sola línia, amb icona i rètol. */
@@ -1558,9 +1574,26 @@ button.link.danger {
     grid-column: 1;
   }
 
-  .app-joc .game > .actions {
+  .app-joc .game > .accions-costat {
     grid-column: 2;
     align-self: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+  }
+
+  /* «números / colors»: la manera d'ordenar el faristol quan no hi ha capçalera. */
+  .sort-mini {
+    display: flex;
+    gap: 0.7rem;
+    font-size: 0.75rem;
+  }
+
+  .sort-mini .link[aria-pressed='true'] {
+    color: var(--text);
+    font-weight: 700;
+    text-decoration: none;
   }
 
   /* La tira de jugadors, flotant sobre el feltre. */

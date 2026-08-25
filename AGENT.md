@@ -994,6 +994,34 @@ Pixel 5 girat, amb 9 jugades a la taula i el faristol ple.
   prova d'apaïsat el va caçar. Resolt retornant `pointer-events: auto` al menú
   i al seu fons.
 
+### Ordenació en apaïsat, fitxes grans a l'ordinador i adaptació tancada ✅ Feta (2026-08-25)
+
+Tres demandes del jugador:
+
+- [x] **«números / colors» sobre els botons en apaïsat**: l'estat d'ordenació
+      del faristol puja a `GameScreen` i es controla des de dos llocs — la
+      capçalera de sempre (vertical i escriptori) i el bloc compacte
+      `.sort-mini` sobre els botons (només apaïsat). Tocar l'opció activa la
+      desfà (torna a «com està»).
+- [x] **Fitxes de taula més grans a l'ordinador**: 2,95 × 3,85 rem — més grans
+      que les del faristol i tot; en pantalles petites i apaïsat, els seus
+      blocs les tornen a empetitir. Fixat amb un assert (≥45 px d'amplada).
+- [x] **El sistema adaptatiu, tancat**: ja existia (Elo + proposta de rivals),
+      però «Una altra partida» repetia els mateixos rivals per sempre. Ara la
+      configuració porta el tret `auto` i, quan és actiu, **cada partida nova
+      surt de l'habilitat d'aquell moment**, també des del final de partida —
+      que a més anuncia els rivals següents («El joc s'adapta a tu: els
+      pròxims rivals seran…»).
+
+**Criteris d'acceptació (verificats)**: 64 proves de navegador en verd — les
+noves: l'ordenació compacta apaïsada mana de debò sobre el faristol (es
+comprova l'ordre de les fitxes), les fitxes de taula d'escriptori fan ≥45 px, i
+el final de partida anuncia els pròxims rivals.
+
+### Problemes trobats
+
+*(cap: la migració de l'estat d'ordenació i el tret `auto` han sortit nets)*
+
 ---
 
 ## Riscos coneguts (a vigilar quan toqui)

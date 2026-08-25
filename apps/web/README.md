@@ -81,6 +81,11 @@ El feltre és fosc en tots dos temes, com una taula de debò. Per això tot el q
 s'hi posa a sobre —marcs dels bots, jugades invàlides, destinacions— fa servir
 sempre les **versions clares** dels colors (variables amb sufix `-taula`).
 
+A l'ordinador, les fitxes de la taula es veuen **més grans que les del
+faristol**: hi ha lloc de sobres. En pantalles petites i en apaïsat s'empetiteixen
+per encabir el màxim de joc, i en apaïsat l'ordenació del faristol («números /
+colors») viu a sobre dels botons del torn, que és on queda lloc.
+
 Els botons del torn van sempre en **una sola línia**, amb icona de traç
 (`components/icons.tsx`, SVG en línia, sense llibreries) i rètol; quan el rètol
 no hi cap s'amaga i queda la icona, com en una app. El nom accessible el porta
@@ -180,7 +185,10 @@ surt en text: al títol emergent de la jugada i al costat del color, a la llista
 
 En acabar cada partida, `useRecordResult` la registra al perfil amb els nivells
 que s'han jugat de debò, i l'habilitat puja o baixa segons el resultat i la
-força dels rivals. A l'inici, aquesta habilitat és la que proposa els oponents
+força dels rivals. Amb rivals automàtics (el mode per defecte), **cada partida
+nova es proposa amb l'habilitat d'aquell moment** — també «Una altra partida»
+des del final, que abans repetia els mateixos rivals per sempre — i el final de
+partida anuncia els rivals següents, perquè es vegi que el joc s'adapta. A l'inici, aquesta habilitat és la que proposa els oponents
 de la partida següent, de manera que les partides tendeixin a estar igualades;
 sempre es poden triar a mà.
 
