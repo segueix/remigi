@@ -590,6 +590,17 @@ input {
   white-space: nowrap;
 }
 
+/* El nivell del jugador, a dalt a la dreta, al costat de la línia de torn. */
+.nivell-jugador {
+  color: var(--text-suau);
+  font-size: 0.88rem;
+  white-space: nowrap;
+}
+
+.nivell-jugador strong {
+  color: var(--text);
+}
+
 /*
  * El feltre. La taula es queda tot l'alt que sobra (flex: 1 dins de la
  * partida), i és l'únic tros amb desplaçament propi si mai s'omple més del
@@ -1523,7 +1534,8 @@ button.link.danger {
     max-width: 5.5rem;
   }
 
-  .turn-line {
+  .turn-line,
+  .nivell-jugador {
     font-size: 0.78rem;
     white-space: normal;
   }
@@ -1655,8 +1667,8 @@ button.link.danger {
     color: rgb(255 255 255 / 0.7);
   }
 
-  .turn-line {
-    margin: 0 0 0 auto;
+  .turn-line,
+  .nivell-jugador {
     padding: 0.12rem 0.55rem;
     border-radius: 999px;
     background: rgb(10 28 22 / 0.45);
@@ -1665,6 +1677,14 @@ button.link.danger {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  .turn-line {
+    margin: 0 0 0 auto;
+  }
+
+  .nivell-jugador strong {
+    color: rgb(255 255 255 / 0.95);
   }
 
   .board .tile {

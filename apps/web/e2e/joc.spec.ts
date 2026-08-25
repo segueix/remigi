@@ -370,6 +370,16 @@ test.describe('qui ha jugat què', () => {
 });
 
 test.describe('la taula de joc', () => {
+  test('el nivell del jugador es veu a dalt, amb el nom entre parèntesis', async ({ page }) => {
+    await comencaDeZero(page);
+
+    // Amb l'habilitat inicial (1100), el nivell amb nom és «Fàcil».
+    const nivell = page.locator('.nivell-jugador');
+    await expect(nivell).toBeVisible();
+    await expect(nivell).toContainText('1100');
+    await expect(nivell).toContainText('(Fàcil)');
+  });
+
   test('els rivals tenen nom propi i avatar, diferents entre ells', async ({ page }) => {
     await comencaDeZero(page);
     await jugaContra(page, 3);

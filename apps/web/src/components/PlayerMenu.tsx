@@ -7,6 +7,7 @@ import {
 } from '@remigi/core';
 import { useState } from 'react';
 import type { GameSetup } from '../game/useGame';
+import { playerLevelLabel } from '../state/playerLevel';
 import type { ProfileHandle } from '../state/useProfile';
 import { ComEsJuga } from './ComEsJuga';
 
@@ -87,7 +88,8 @@ export function PlayerMenu({ profile, current, onNewGame, onHistory, onClose }: 
 
         {profile.profile && (
           <p className="muted small menu-habilitat">
-            Habilitat: <strong>{profile.profile.rating}</strong> · {profile.profile.gamesPlayed}{' '}
+            Habilitat: <strong>{profile.profile.rating}</strong> (
+            {playerLevelLabel(profile.profile.rating)}) · {profile.profile.gamesPlayed}{' '}
             {profile.profile.gamesPlayed === 1 ? 'partida' : 'partides'}
           </p>
         )}

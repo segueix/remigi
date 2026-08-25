@@ -21,6 +21,7 @@ import type { RatingChange } from '../state/gameOutcome';
 import type { SavedGame } from '../state/savedGame';
 import type { SavedGameHandle } from '../state/useSavedGame';
 import type { ProfileHandle } from '../state/useProfile';
+import { playerLevelLabel } from '../state/playerLevel';
 import { useRecordResult } from '../state/useRecordResult';
 import type { GameState } from '@remigi/core';
 
@@ -212,6 +213,17 @@ export function GameScreen({ setup, resume, resumeOwners, profile, savedGame, on
           {isHumanTurn ? 'et toca a tu' : `juga ${game.players[game.currentPlayer].name}…`} ·{' '}
           {game.bag.length} fitxes al sac
         </p>
+
+        {/* El teu nivell, sempre a la vista: puja i baixa amb els resultats. */}
+        {profile.profile && (
+          <span
+            className="nivell-jugador"
+            title="El teu nivell puja i baixa segons els resultats de les partides"
+          >
+            Nivell {profile.profile.rating}{' '}
+            (<strong>{playerLevelLabel(profile.profile.rating)}</strong>)
+          </span>
+        )}
       </header>
 
       <BoardView
