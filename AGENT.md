@@ -1100,6 +1100,29 @@ fitxes canvia el color del número a l'instant i sobreviu a recarregar.
 
 *(cap)*
 
+### Tres retocs al menú del jugador ✅ Feta (2026-08-26)
+
+- [x] **La mostra clàssica ja no es contagia**: amb l'estil invertit actiu, la
+      classe de l'arrel arribava per herència fins a les mostres del menú i
+      totes dues es veien invertides — no sabies què triaves en tornar enrere.
+      La mostra clàssica porta ara una regla pròpia més específica que la
+      desfà.
+- [x] **«Desa el nom» sense desplaçament al mòbil**: en pantalla estreta el
+      camp del nom ocupa la fila sencera i el botó queda a sota, a l'esquerra.
+- [x] **«Tanca la finestra» a baix de tot** del menú, d'amplada sencera, a més
+      del toc fora de sempre.
+
+**Criteris d'acceptació (verificats)**: 72 proves de navegador en verd — la
+de l'estil de fitxes comprova ara també que, amb l'invertit actiu, la mostra
+clàssica continua clàssica i que el botó de baix tanca el menú. Captures del
+menú al mòbil, a dalt i a baix.
+
+### Problemes trobats
+
+- [2026-08-26] La prova reobria el menú després de triar l'estil, però el menú
+  ja quedava obert i el clic el tancava (o el fons l'interceptava). La prova
+  s'ha adaptat al comportament real: triar l'estil no tanca el menú.
+
 ---
 
 ## Riscos coneguts (a vigilar quan toqui)

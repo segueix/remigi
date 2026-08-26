@@ -171,7 +171,7 @@ export function PlayerMenu({
           <span className="muted">Fitxes:</span>
           <button
             type="button"
-            className="mostra-fitxa"
+            className="mostra-fitxa classica"
             aria-pressed={tileStyle === 'classic'}
             aria-label="Fitxes de crema amb el número de color"
             onClick={() => onTileStyle('classic')}
@@ -197,6 +197,10 @@ export function PlayerMenu({
         </div>
 
         <ComEsJuga obertPerDefecte={(profile.profile?.gamesPlayed ?? 0) === 0} />
+
+        <button type="button" className="secondary menu-tanca" onClick={onClose}>
+          Tanca la finestra
+        </button>
       </div>
     </>
   );
