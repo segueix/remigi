@@ -11,6 +11,7 @@ import { playerLevelLabel } from '../state/playerLevel';
 import type { ProfileHandle } from '../state/useProfile';
 import type { TileStyle } from '../state/useTileStyle';
 import { ComEsJuga } from './ComEsJuga';
+import { ColorShape } from './TileView';
 
 interface Props {
   profile: ProfileHandle;
@@ -166,26 +167,35 @@ export function PlayerMenu({
         </label>
         </div>
 
-        {/* L'aspecte de les fitxes: es tria mirant, amb una mostra de cada. */}
+        {/*
+          * L'aspecte de les fitxes: es tria mirant, amb una mostra de cada.
+          * El predeterminat (color amb número blanc) va primer.
+          */}
         <div className="tria-fitxes" role="group" aria-label="Aspecte de les fitxes">
           <span className="muted">Fitxes:</span>
           <button
             type="button"
-            className="mostra-fitxa classica"
-            aria-pressed={tileStyle === 'classic'}
-            aria-label="Fitxes de crema amb el número de color"
-            onClick={() => onTileStyle('classic')}
+            className="mostra-fitxa fitxes-inverses"
+            aria-pressed={tileStyle === 'invers'}
+            aria-label="Fitxes de color amb el número i la forma en blanc"
+            onClick={() => onTileStyle('invers')}
           >
-            <span className="tile tile-red mostra" aria-hidden="true">7</span>
+            <span className="tile tile-red mostra" aria-hidden="true">
+              7
+              <ColorShape color="red" />
+            </span>
           </button>
           <button
             type="button"
-            className="mostra-fitxa fitxes-inverses"
-            aria-pressed={tileStyle === 'invers'}
-            aria-label="Fitxes de color amb el número blanc"
-            onClick={() => onTileStyle('invers')}
+            className="mostra-fitxa classica"
+            aria-pressed={tileStyle === 'classic'}
+            aria-label="Fitxes de crema amb el número i la forma de color"
+            onClick={() => onTileStyle('classic')}
           >
-            <span className="tile tile-red mostra" aria-hidden="true">7</span>
+            <span className="tile tile-red mostra" aria-hidden="true">
+              7
+              <ColorShape color="red" />
+            </span>
           </button>
         </div>
 

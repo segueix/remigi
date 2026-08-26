@@ -54,6 +54,22 @@ export const UndoIcon = () => (
 );
 
 
+/** Corregir: un llapis, per tornar a tocar la jugada. */
+export const PencilIcon = () => (
+  <Icon>
+    <path d="M4 20l1-4.5L16.5 4a2.1 2.1 0 0 1 3 0l.5.5a2.1 2.1 0 0 1 0 3L8.5 19Z" />
+    <line x1="14.5" y1="6" x2="18" y2="9.5" />
+  </Icon>
+);
+
+/** Refer: el desfer, mirat al mirall. */
+export const RedoIcon = () => (
+  <Icon>
+    <polyline points="15 14 20 9 15 4" />
+    <path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13" />
+  </Icon>
+);
+
 /** Mostrar la solució: un ull que la mira. */
 export const EyeIcon = () => (
   <Icon>

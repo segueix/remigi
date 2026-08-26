@@ -1,9 +1,10 @@
 import { RulesError, applyMove, type Tile } from '@remigi/core';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { BoardView } from '../components/BoardView';
-import { CheckIcon, EyeIcon, NextIcon, UndoIcon } from '../components/icons';
-import { TileView } from '../components/TileView';
+import { CheckIcon, EyeIcon, NextIcon, PencilIcon, RedoIcon, UndoIcon } from '../components/icons';
+import { TileView, type TileMark } from '../components/TileView';
 import {
+  meldKeysByTile,
   movedBoardTileIds,
   solutionTileIds,
   stateFromMiss,
@@ -29,36 +30,54 @@ interface Props {
   onClose(): void;
 }
 
-/** Com està cada oportunitat: buscant-la, trobada, o ensenyada sense trobar. */
+/** Com està cada oportunitat: buscant-la, comprovada, o ensenyada. */
 type Phase = 'prova' | 'trobada' | 'ensenyada';
 
 /**
  * El quiz del repàs: cada cop que vas robar havent-hi jugada, la taula i el
  * faristol tornen a ser exactament com eren i la jugada és teva per trobar.
- * Es juga igual que la partida (tocar o arrossegar), i «Comprova» pregunta al
- * mateix motor de sempre; si no surt, la solució s'ensenya sobre el tauler.
+ * Les fitxes que calia moure van marcades i un comptador diu quantes queden;
+ * es juga igual que la partida (tocar o arrossegar), amb desfer i refer pas a
+ * pas. «Comprova» pregunta al motor de sempre i després corregeix contra la
+ * millor jugada: marc verd les fitxes ben col·locades, vermell les que no.
  */
 export function QuizScreen({ misses, playerName, onClose }: Props) {
   const [index, setIndex] = useState(0);
   const [phase, setPhase] = useState<Phase>('prova');
-  const [attempt, setAttempt] = useState<TurnDraft>(() =>
+  /*
+   * L'intent és una història de passos, no un sol estat: així desfer torna
+   * enrere moviment a moviment i refer els recupera. Un moviment nou després
+   * de desfer estronca el que hi havia per davant, com a tot arreu.
+   */
+  const [history, setHistory] = useState<TurnDraft[]>(() => [
     startTurn(stateFromMiss(misses[0], playerName), 0),
-  );
+  ]);
+  const [cursor, setCursor] = useState(0);
   const [selectedTileId, setSelectedTileId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [found, setFound] = useState(0);
   const [shown, setShown] = useState(0);
+  /* Cada oportunitat compta com a trobada un sol cop, corregeixis el que corregeixis. */
+  const [scored, setScored] = useState(false);
   const [done, setDone] = useState(false);
 
   const miss = misses[Math.min(index, misses.length - 1)];
-  const solutionIds = useMemo(() => solutionTileIds(miss), [miss]);
+  const attempt = history[cursor];
+  const solutionIds = solutionTileIds(miss);
   const trying = phase === 'prova' && !done;
 
-  const moveTileTo = useCallback((tileId: string, destination: Destination) => {
-    setAttempt((current) => moveTile(current, tileId, destination));
-    setSelectedTileId(null);
-    setError(null);
-  }, []);
+  const moveTileTo = useCallback(
+    (tileId: string, destination: Destination) => {
+      setHistory((current) => {
+        const kept = current.slice(0, cursor + 1);
+        return [...kept, moveTile(kept[kept.length - 1], tileId, destination)];
+      });
+      setCursor(cursor + 1);
+      setSelectedTileId(null);
+      setError(null);
+    },
+    [cursor],
+  );
 
   const drag = useDragTile(trying, moveTileTo);
 
@@ -81,18 +100,33 @@ export function QuizScreen({ misses, playerName, onClose }: Props) {
     [drag, trying, selectedTileId, placeSelected],
   );
 
+  const undo = useCallback(() => {
+    setCursor((at) => Math.max(0, at - 1));
+    setSelectedTileId(null);
+    setError(null);
+  }, []);
+
+  const redo = useCallback(() => {
+    setCursor((at) => Math.min(history.length - 1, at + 1));
+    setSelectedTileId(null);
+    setError(null);
+  }, [history.length]);
+
   const check = useCallback(() => {
     try {
-      // El motor de la partida és qui corregeix: cap regla duplicada aquí.
+      // El motor de la partida és qui valida: cap regla duplicada aquí.
       applyMove(stateFromMiss(miss, playerName), toMove(attempt));
       setPhase('trobada');
-      setFound((count) => count + 1);
+      if (!scored) {
+        setFound((count) => count + 1);
+        setScored(true);
+      }
       setError(null);
       setSelectedTileId(null);
     } catch (caught) {
       setError(caught instanceof RulesError ? caught.message : String(caught));
     }
-  }, [miss, playerName, attempt]);
+  }, [miss, playerName, attempt, scored]);
 
   const reveal = useCallback(() => {
     if (phase === 'prova') setShown((count) => count + 1);
@@ -101,17 +135,19 @@ export function QuizScreen({ misses, playerName, onClose }: Props) {
     setSelectedTileId(null);
   }, [phase]);
 
-  const resetAttempt = useCallback(() => {
-    setAttempt(startTurn(stateFromMiss(miss, playerName), 0));
-    setSelectedTileId(null);
+  /* Tornar de la correcció a l'intent, amb la història sencera intacta. */
+  const amend = useCallback(() => {
+    setPhase('prova');
     setError(null);
-  }, [miss, playerName]);
+  }, []);
 
   const goTo = useCallback(
     (nextIndex: number) => {
       setIndex(nextIndex);
       setPhase('prova');
-      setAttempt(startTurn(stateFromMiss(misses[nextIndex], playerName), 0));
+      setHistory([startTurn(stateFromMiss(misses[nextIndex], playerName), 0)]);
+      setCursor(0);
+      setScored(false);
       setSelectedTileId(null);
       setError(null);
     },
@@ -173,20 +209,49 @@ export function QuizScreen({ misses, playerName, onClose }: Props) {
     : phase === 'trobada'
       ? playedTileIds(attempt)
       : new Set<string>();
-  const placedCount = playedTileIds(attempt).size;
+
+  /* Les fitxes marcades (la jugada a fer) que encara són al faristol. */
+  const total = miss.tilesUsed;
+  const rackIds = new Set(attempt.rack.map((tile) => tile.id));
+  const remaining = [...solutionIds].filter((id) => rackIds.has(id)).length;
 
   /*
-   * Els marcs d'origen, quan la jugada ja està feta (trobada o ensenyada):
-   * turquesa per a les fitxes que baixaven del faristol, daurat per a les que
-   * ja eren a la taula però la jugada recol·locava. Les que no s'han mogut no
-   * porten res: així es veu de cop què era teu i què s'havia de remenar.
+   * Els marcs. Mentre proves: turquesa a les fitxes que la jugada baixava
+   * (siguin encara al faristol o ja col·locades) i daurat a les de la taula
+   * que caldrà recol·locar. Comprovada la jugada: verd les que han quedat amb
+   * les mateixes companyes que a la solució, vermell les que no. Ensenyada:
+   * els marcs d'origen de sempre.
    */
-  const marks = new Map<string, 'played' | 'moved'>();
-  const movedIds = phase === 'prova' ? new Set<string>() : movedBoardTileIds(miss.board, board);
-  if (phase !== 'prova') {
-    for (const id of revealed ? solutionIds : playedTileIds(attempt)) marks.set(id, 'played');
-    for (const id of movedIds) marks.set(id, 'moved');
+  const marks = new Map<string, TileMark>();
+  const futureMoved = movedBoardTileIds(miss.board, miss.solution);
+  let correctCount = 0;
+  let wrongCount = 0;
+  if (phase === 'prova') {
+    for (const id of solutionIds) marks.set(id, 'played');
+    for (const id of futureMoved) marks.set(id, 'moved');
+  } else if (phase === 'trobada') {
+    const attemptKeys = meldKeysByTile(attempt.board);
+    const solutionKeys = meldKeysByTile(miss.solution);
+    const graded = new Set([
+      ...playedTileIds(attempt),
+      ...movedBoardTileIds(miss.board, attempt.board),
+    ]);
+    for (const id of graded) {
+      const good = attemptKeys.get(id) !== undefined && attemptKeys.get(id) === solutionKeys.get(id);
+      marks.set(id, good ? 'correct' : 'wrong');
+      if (good) correctCount++;
+      else wrongCount++;
+    }
+    for (const id of solutionIds) {
+      if (rackIds.has(id)) marks.set(id, 'played');
+    }
+  } else {
+    for (const id of solutionIds) marks.set(id, 'played');
+    for (const id of futureMoved) marks.set(id, 'moved');
   }
+  const movedIds = revealed ? futureMoved : movedBoardTileIds(miss.board, attempt.board);
+  const perfect = phase === 'trobada' && wrongCount === 0 && remaining === 0;
+
   const lastOne = index + 1 >= misses.length;
   const draggedTile = drag.dragging
     ? findTile(attempt.board.flat(), attempt.rack, drag.dragging.tileId)
@@ -223,7 +288,16 @@ export function QuizScreen({ misses, playerName, onClose }: Props) {
 
       {phase === 'prova' && (
         <p className="hint">
-          Aquí hi havia jugada possible. Col·loca les fitxes com al joc i comprova-la.
+          La jugada d’aquí baixava <strong>{total}</strong>{' '}
+          {total === 1 ? 'fitxa: és la' : 'fitxes: són les'} del marc turquesa
+          {futureMoved.size > 0 && <> (i les de marc daurat s’hauran de recol·locar)</>}.{' '}
+          {remaining > 0 ? (
+            <>
+              Te’n queden <strong>{remaining}</strong> per col·locar.
+            </>
+          ) : (
+            <>Totes col·locades: comprova la jugada.</>
+          )}
           {!miss.hasOpened && (
             <>
               {' '}
@@ -233,26 +307,31 @@ export function QuizScreen({ misses, playerName, onClose }: Props) {
           )}
         </p>
       )}
-      {phase === 'trobada' && (
-        <p className="hint hint-be">
-          L’has trobada! Has baixat les <strong>{placedCount}</strong>{' '}
-          {placedCount === 1 ? 'fitxa' : 'fitxes'} de marc turquesa
-          {movedIds.size > 0 && (
-            <>
-              {' '}
-              (les de marc daurat ja eren a la taula i les has recol·locat)
-            </>
-          )}
-          {placedCount < miss.tilesUsed ? (
-            <>
-              {' '}
-              — la millor jugada en baixava <strong>{miss.tilesUsed}</strong>: mira-la si vols.
-            </>
-          ) : (
-            <> — tantes com la millor jugada que es va trobar.</>
-          )}
-        </p>
-      )}
+      {phase === 'trobada' &&
+        (perfect ? (
+          <p className="hint hint-be">
+            Perfecte! Les <strong>{correctCount}</strong> fitxes de la millor jugada, cadascuna
+            al seu lloc.
+          </p>
+        ) : (
+          <p className="hint hint-be">
+            Jugada vàlida: <strong>{correctCount}</strong>{' '}
+            {correctCount === 1 ? 'fitxa ben col·locada' : 'fitxes ben col·locades'} (marc verd)
+            {wrongCount > 0 && (
+              <>
+                , <strong>{wrongCount}</strong> en un altre lloc que la millor jugada (marc
+                vermell)
+              </>
+            )}
+            {remaining > 0 && (
+              <>
+                {' '}
+                — i en quedaven <strong>{remaining}</strong> per baixar
+              </>
+            )}
+            . Corregeix-la o mira la solució.
+          </p>
+        ))}
       {revealed && (
         <p className="hint hint-be">
           La jugada: es podien baixar les <strong>{solutionIds.size}</strong> fitxes de{' '}
@@ -288,6 +367,7 @@ export function QuizScreen({ misses, playerName, onClose }: Props) {
               tile={tile}
               selected={tile.id === selectedTileId}
               dragging={tile.id === drag.dragging?.tileId}
+              mark={marks.get(tile.id)}
               onClick={trying ? () => handleTileClick(tile.id, null) : undefined}
               onPointerDown={trying ? (event) => drag.start(event, tile.id) : undefined}
             />
@@ -313,17 +393,40 @@ export function QuizScreen({ misses, playerName, onClose }: Props) {
               <button
                 type="button"
                 className="secondary"
-                onClick={resetAttempt}
-                disabled={!hasChanges(attempt)}
+                onClick={undo}
+                disabled={cursor === 0}
                 aria-label="Desfés"
                 title="Desfés"
               >
                 <UndoIcon />
                 <span className="btn-text">Desfés</span>
               </button>
+              <button
+                type="button"
+                className="secondary"
+                onClick={redo}
+                disabled={cursor >= history.length - 1}
+                aria-label="Refés"
+                title="Refés"
+              >
+                <RedoIcon />
+                <span className="btn-text">Refés</span>
+              </button>
             </>
           )}
-          {(phase === 'prova' || (phase === 'trobada' && placedCount < miss.tilesUsed)) && (
+          {phase === 'trobada' && !perfect && (
+            <button
+              type="button"
+              className="secondary"
+              onClick={amend}
+              aria-label="Corregeix"
+              title="Corregeix"
+            >
+              <PencilIcon />
+              <span className="btn-text">Corregeix</span>
+            </button>
+          )}
+          {(phase === 'prova' || (phase === 'trobada' && !perfect)) && (
             <button
               type="button"
               className="secondary"

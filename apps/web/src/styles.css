@@ -53,6 +53,8 @@
   --accent-taula: #2dd4bf;
   --error-taula: #f87171;
   --error-taula-fons: rgb(127 29 29 / 0.5);
+  /* El verd dels encerts del repàs, clar perquè es vegi sobre el feltre. */
+  --encert-taula: #4ade80;
   /* La fitxa robada es marca en daurat: visible sobre la fusta del faristol. */
   --robada: #fde047;
   --bot-1-taula: #e879f9;
@@ -752,6 +754,7 @@ input {
 
 .tile {
   --tinta: var(--text);
+  position: relative; /* la forma del color s'ancora al racó de dalt a la dreta */
   display: grid;
   place-items: center;
   width: 2.5rem;
@@ -771,6 +774,24 @@ input {
     inset 0 -2px 3px rgb(0 0 0 / 0.06);
   text-shadow: 0 1px 0 rgb(255 255 255 / 0.55);
   cursor: default;
+}
+
+/*
+ * La forma del color, petita i al racó: cercle, triangle, quadrat o rombe
+ * segons el color (vegeu TileView), perquè amb daltonisme també es
+ * distingeixin. Es pinta amb el color de la tinta del número (currentColor):
+ * blanca a les fitxes de color, del color a les clàssiques. La mida va en em
+ * per escalar amb la fitxa a cada pantalla.
+ */
+.tile-forma {
+  position: absolute;
+  top: 0.16em;
+  right: 0.18em;
+  width: 0.42em;
+  height: 0.42em;
+  fill: currentColor;
+  opacity: 0.85;
+  pointer-events: none;
 }
 
 /*
@@ -890,6 +911,21 @@ input {
 
 .tile.moved {
   outline: 2px solid var(--robada);
+  outline-offset: 1px;
+}
+
+/*
+ * La correcció del repàs, un cop comprovada la jugada: marc gruixut verd per
+ * a les fitxes que han quedat com a la solució i vermell per a les que no.
+ * Més gruixuts que els d'origen, que són informació i no veredicte.
+ */
+.tile.correct {
+  outline: 3px solid var(--encert-taula);
+  outline-offset: 1px;
+}
+
+.tile.wrong {
+  outline: 3px solid var(--error-taula);
   outline-offset: 1px;
 }
 

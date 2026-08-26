@@ -1200,6 +1200,48 @@ trobada i a la solució; una prova nova força la reordenació (grup de sets +
 escala 8-11 desfent la 7-8-9) i comprova 4 turqueses, 3 daurades i la
 llegenda. Captures amb els dos marcs.
 
+### Formes per al daltonisme, quiz guiat amb correcció i desfer/refer ✅ Feta (2026-08-26)
+
+- [x] **Forma del color a cada fitxa** (`ColorShape` a TileView): al racó de
+      dalt a la dreta, petita i en `currentColor` — triangle el vermell,
+      cercle el blau, quadrat el negre, rombe el taronja — perquè amb
+      daltonisme els colors també es distingeixin. En `em`, escala amb la
+      fitxa; els jokers no en porten. Les mostres del menú també la duen.
+- [x] **Estil per defecte capgirat** (`useTileStyle`): ara surt la fitxa de
+      color amb número i forma en blanc; la clàssica (crema amb número i
+      forma del color) queda com a alternativa. La tria desada es respecta;
+      la mostra predeterminada va primera al menú.
+- [x] **Quiz guiat**: la pista diu quantes fitxes baixava la jugada, les
+      marca (turquesa al faristol, daurat les de la taula que caldrà
+      recol·locar) i el comptador va dient quantes queden per col·locar.
+- [x] **Correcció verd/vermell**: «Comprova» valida amb el motor i després
+      corregeix contra la millor jugada — marc gruixut verd
+      (`--encert-taula`) les fitxes amb les mateixes companyes que a la
+      solució (`meldKeysByTile`), vermell gruixut les que no; el text compta
+      encertades, mal col·locades i pendents. «Corregeix» (llapis) torna a
+      l'intent sense perdre res; cada oportunitat compta com a trobada un
+      sol cop (`scored`).
+- [x] **Desfer i refer de debò**: l'intent és una història de passos
+      (`history` + `cursor`); «Desfés» i «Refés» van moviment a moviment, i
+      un moviment nou després de desfer estronca el que hi havia per davant.
+
+### Problemes trobats
+
+- [2026-08-26] Les fitxes marcades porten la nota al `aria-label` («9 blau
+  (baixava del faristol)»), i el selector exacte `[aria-label="9 blau"]` de
+  `baixaGrup` no les troba: dins del quiz les proves cliquen amb el prefix
+  (`[aria-label^="9 blau"]`). El primer `.rack .tile` d'una partida real pot
+  ser un joker (sense color ni forma): les proves d'estil trien
+  `:not(.tile-joker)`.
+
+**Criteris d'acceptació (verificats)**: 174 tests i 81 proves de navegador.
+Les d'estil comproven el blanc per defecte, la forma a cada numèrica (14 −
+jokers), les mostres immunes en tots dos sentits i la persistència del
+clàssic triat. La del quiz fa el cicle sencer: comptador 3→2→3→2 amb
+desfer/refer, error del motor a mitges, «Perfecte!» amb 3 verds, grup de
+tres on tocava el de quatre (0 verds, 3 vermells, 1 pendent), «Corregeix» i
+4 verds, i resum «2 de 2» sense comptar dos cops la corregida.
+
 ---
 
 ## Riscos coneguts (a vigilar quan toqui)
