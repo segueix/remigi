@@ -130,26 +130,51 @@ test.describe('moure fitxes', () => {
     await expect(page.locator('.meld.invalid')).toHaveCount(0);
   });
 
-  test('l’aspecte de les fitxes es pot invertir des del menú, i es recorda', async ({ page }) => {
+  test('les fitxes surten de color amb número blanc, i cada color duu forma', async ({ page }) => {
     await comencaDeZero(page);
-    const fitxa = page.locator('.rack .tile').first();
-    const colorClassic = await fitxa.evaluate((el) => getComputedStyle(el).color);
 
+    // Per defecte, la fitxa és del color i el número (i la forma) en blanc os.
+    // (Una numèrica: el joker no té color, i per tant tampoc forma.)
+    const fitxa = page.locator('.rack .tile:not(.tile-joker)').first();
+    expect(await fitxa.evaluate((el) => getComputedStyle(el).color)).toBe('rgb(255, 253, 246)');
+
+    // Cada fitxa numèrica porta la forma del seu color, per al daltonisme.
+    await expect(fitxa.locator('.tile-forma')).toHaveCount(1);
+    const formes = await page.locator('.rack .tile .tile-forma').count();
+    const jokers = await page.locator('.rack .tile-joker').count();
+    expect(formes).toBe(14 - jokers);
+
+    // I la del menú de mostres també (una per mostra).
     await obreMenu(page);
-    await page.getByRole('button', { name: 'Fitxes de color amb el número blanc' }).click();
-    // El número passa a blanc os: la fitxa és ara del color.
-    await expect
-      .poll(() => fitxa.evaluate((el) => getComputedStyle(el).color))
-      .toBe('rgb(255, 253, 246)');
+    await expect(page.locator('.mostra-fitxa .tile-forma')).toHaveCount(2);
 
-    // Amb l'estil invertit actiu, la mostra clàssica continua sent clàssica:
-    // les dues opcions s'han de poder distingir sempre. (El menú segueix obert.)
-    const mostraClassica = page
-      .locator('.mostra-fitxa.classica .tile')
-      .first();
+    // Amb l'estil de color actiu, la mostra clàssica continua sent clàssica:
+    // les dues opcions s'han de poder distingir sempre.
+    const mostraClassica = page.locator('.mostra-fitxa.classica .tile').first();
     await expect
       .poll(() => mostraClassica.evaluate((el) => getComputedStyle(el).color))
       .not.toBe('rgb(255, 253, 246)');
+  });
+
+  test('l’aspecte clàssic es pot triar des del menú, i es recorda', async ({ page }) => {
+    await comencaDeZero(page);
+    const fitxa = page.locator('.rack .tile:not(.tile-joker)').first();
+
+    await obreMenu(page);
+    await page
+      .getByRole('button', { name: 'Fitxes de crema amb el número i la forma de color' })
+      .click();
+    // El número passa a ser del color sobre crema: ja no és blanc.
+    await expect
+      .poll(() => fitxa.evaluate((el) => getComputedStyle(el).color))
+      .not.toBe('rgb(255, 253, 246)');
+    const colorClassic = await fitxa.evaluate((el) => getComputedStyle(el).color);
+
+    // Amb el clàssic actiu, la mostra de color continua sent de color.
+    const mostraColor = page.locator('.mostra-fitxa.fitxes-inverses .tile').first();
+    await expect
+      .poll(() => mostraColor.evaluate((el) => getComputedStyle(el).color))
+      .toBe('rgb(255, 253, 246)');
     // El menú es tanca també des del botó de baix de tot.
     await page.getByRole('button', { name: 'Tanca la finestra' }).click();
     await expect(page.locator('.menu-usuari')).toHaveCount(0);
@@ -158,11 +183,11 @@ test.describe('moure fitxes', () => {
     await page.reload();
     await expect(page.locator('.rack .tile').first()).toBeVisible();
     const colorDespres = await page
-      .locator('.rack .tile')
+      .locator('.rack .tile:not(.tile-joker)')
       .first()
       .evaluate((el) => getComputedStyle(el).color);
-    expect(colorDespres).toBe('rgb(255, 253, 246)');
-    expect(colorDespres).not.toBe(colorClassic);
+    expect(colorDespres).toBe(colorClassic);
+    expect(colorDespres).not.toBe('rgb(255, 253, 246)');
   });
 
 

@@ -1,6 +1,7 @@
 import type { Destination } from '../game/turnDraft';
 import type { Meld } from '@remigi/core';
 import type { MeldAuthor } from '../game/meldOwners';
+import type { TileMark } from './TileView';
 import { MeldView } from './MeldView';
 
 interface Props {
@@ -11,8 +12,8 @@ interface Props {
   /** Destinació sota el punter mentre s'arrossega. */
   over?: Destination | null;
   highlighted?: ReadonlySet<string>;
-  /** Marc d'origen de cada fitxa, al repàs (vegeu TileView). */
-  marks?: ReadonlyMap<string, 'played' | 'moved'>;
+  /** Marc de cada fitxa, al repàs (vegeu TileView). */
+  marks?: ReadonlyMap<string, TileMark>;
   /** Bot autor de cada jugada, alineat per posició amb `board`. */
   authors?: ReadonlyArray<MeldAuthor | null>;
   /** Actiu només durant el torn del jugador. */

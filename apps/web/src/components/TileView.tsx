@@ -1,14 +1,18 @@
-import { COLOR_LABELS, type Tile } from '@remigi/core';
+import { COLOR_LABELS, type Tile, type TileColor } from '@remigi/core';
+
+/** Marc d'una fitxa al repàs: d'on venia, o com ha quedat un cop corregida. */
+export type TileMark = 'played' | 'moved' | 'correct' | 'wrong';
 
 interface Props {
   tile: Tile;
   selected?: boolean;
   highlighted?: boolean;
   /**
-   * Marc d'origen, al repàs: 'played' és una fitxa que baixava del faristol i
-   * 'moved' una que ja era a la taula però la jugada recol·locava.
+   * Marc del repàs: 'played' (baixava del faristol) i 'moved' (es
+   * recol·locava de la taula) diuen l'origen; 'correct' i 'wrong' diuen, un
+   * cop comprovada la jugada, si la fitxa ha quedat com a la solució.
    */
-  mark?: 'played' | 'moved';
+  mark?: TileMark;
   /** Acabada de robar del sac: es marca amb un recuadre fins que tornis a jugar. */
   drawn?: boolean;
   /** S'està arrossegant: es queda enrere, esmorteïda. */
@@ -19,7 +23,26 @@ interface Props {
   onPointerDown?(event: React.PointerEvent): void;
 }
 
-/** Una fitxa. Fons crema i número acolorit, com les de debò. */
+/**
+ * La forma de cada color, petita i al racó de dalt a la dreta: així el color
+ * també es pot llegir sense veure'l (daltonisme). Triangle per al vermell (el
+ * dels senyals), cercle per al blau, quadrat per al negre i rombe per al
+ * taronja: quatre siluetes que no s'assemblen gens entre elles. Es pinta amb
+ * `currentColor`: del color de la tinta a les fitxes clàssiques i blanca a
+ * les de color, com el número.
+ */
+export function ColorShape({ color }: { color: TileColor }) {
+  return (
+    <svg className="tile-forma" viewBox="0 0 10 10" aria-hidden="true">
+      {color === 'red' && <polygon points="5,0.8 9.5,9 0.5,9" />}
+      {color === 'blue' && <circle cx="5" cy="5" r="4.3" />}
+      {color === 'black' && <rect x="0.9" y="0.9" width="8.2" height="8.2" rx="1" />}
+      {color === 'orange' && <polygon points="5,0.2 9.8,5 5,9.8 0.2,5" />}
+    </svg>
+  );
+}
+
+/** Una fitxa, amb el número i la forma del seu color. */
 export function TileView({
   tile,
   selected,
@@ -46,12 +69,21 @@ export function TileView({
     drawn && 'acabada de robar',
     mark === 'played' && 'baixava del faristol',
     mark === 'moved' && 'es recol·locava de la taula',
+    mark === 'correct' && 'ben col·locada',
+    mark === 'wrong' && 'en un altre lloc que la millor jugada',
   ].filter(Boolean);
+
+  const contents = (
+    <>
+      {tile.kind === 'joker' ? '★' : tile.value}
+      {tile.kind === 'number' && <ColorShape color={tile.color} />}
+    </>
+  );
 
   if (floating) {
     return (
       <span className={classes.join(' ')} aria-hidden="true">
-        {tile.kind === 'joker' ? '★' : tile.value}
+        {contents}
       </span>
     );
   }
@@ -69,7 +101,7 @@ export function TileView({
       aria-pressed={selected}
       aria-label={notes.length > 0 ? `${label} (${notes.join(', ')})` : label}
     >
-      {tile.kind === 'joker' ? '★' : tile.value}
+      {contents}
     </button>
   );
 }

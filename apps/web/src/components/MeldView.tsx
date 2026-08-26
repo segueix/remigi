@@ -1,6 +1,6 @@
 import { analyzeMeld, type Meld } from '@remigi/core';
 import type { MeldAuthor } from '../game/meldOwners';
-import { TileView } from './TileView';
+import { TileView, type TileMark } from './TileView';
 
 interface Props {
   meld: Meld;
@@ -13,8 +13,8 @@ interface Props {
   selectedTileId?: string | null;
   draggingTileId?: string | null;
   highlighted?: ReadonlySet<string>;
-  /** Marc d'origen de cada fitxa, al repàs (vegeu TileView). */
-  marks?: ReadonlyMap<string, 'played' | 'moved'>;
+  /** Marc de cada fitxa, al repàs (vegeu TileView). */
+  marks?: ReadonlyMap<string, TileMark>;
   /** Bot que hi ha jugat per últim cop: dona color al marc de la jugada. */
   author?: MeldAuthor | null;
   onTileClick?(tileId: string): void;

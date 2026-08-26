@@ -75,6 +75,24 @@ export function addMiss(current: MissedChance[], miss: MissedChance): MissedChan
 }
 
 /**
+ * De quina jugada és cada fitxa, amb la jugada identificada pel conjunt de
+ * fitxes que la formen. Serveix per corregir un intent del quiz: una fitxa
+ * està «ben col·locada» si a l'intent té exactament les mateixes companyes
+ * que a la solució.
+ */
+export function meldKeysByTile(melds: Meld[]): Map<string, string> {
+  const keys = new Map<string, string>();
+  for (const meld of melds) {
+    const key = meld
+      .map((tile) => tile.id)
+      .sort()
+      .join('|');
+    for (const tile of meld) keys.set(tile.id, key);
+  }
+  return keys;
+}
+
+/**
  * Fitxes de la taula que la jugada recol·locava. Una fitxa «no es mou» si la
  * seva jugada d'origen sobreviu sencera dins de la mateixa jugada nova (encara
  * que s'hi afegeixin fitxes); si la jugada d'on venia s'ha desfet o repartit,
