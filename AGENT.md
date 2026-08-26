@@ -1123,6 +1123,83 @@ menú al mòbil, a dalt i a baix.
   ja quedava obert i el clic el tancava (o el fons l'interceptava). La prova
   s'ha adaptat al comportament real: triar l'estil no tanca el menú.
 
+### Prémer una fitxa al mòbil no selecciona text ✅ Feta (2026-08-26)
+
+- [x] **Selecció de text fora de la partida**: les fitxes ja eren
+      no-seleccionables, però la selecció llarga del mòbil s'estén al text
+      seleccionable més proper — mantenir premuda una fitxa (o fallar-la per un
+      pèl) acabava seleccionant noms de jugadors, «Ordena:» o la línia del
+      torn. Ara tota la pantalla de joc (`.app-joc`) porta `user-select: none`
+      (amb les variants `-webkit-`), `-webkit-touch-callout: none` i
+      `-webkit-tap-highlight-color: transparent`.
+- [x] **Els camps d'escriure segueixen vius**: `input` i `textarea` dins de la
+      partida tornen a `user-select: text` explícitament, que a WebKit
+      l'herència del `none` els deixaria sense cursor de selecció.
+
+**Criteris d'acceptació (verificats)**: 73 proves de navegador en verd. La
+nova (projecte mòbil) comprova per estil calculat que jugadors, «Ordena:» i
+les jugades de la taula són `user-select: none`, fa un manteniment llarg de
+debò (CDP, 700 ms) sobre una fitxa de la taula i confirma que no queda res
+seleccionat, i que el camp del nom del menú continua sent `text`.
+
+### El repàs: quiz de les oportunitats perdudes ✅ Feta (2026-08-26)
+
+- [x] **Detecció** (`missedChances.ts`): cada cop que el jugador roba (o
+      passa) havent-hi jugada possible, se'n guarda el moment sencer — taula,
+      faristol, torn, si havia obert — i la millor jugada trobada. Busca amb
+      `chooseBestPlay` sense limitacions (jokers, allargaments i reordenació:
+      el mateix que el nivell expert). Es desa amb la partida
+      (`SavedGame.misses`, validat com els autors) i sobreviu a recarregar.
+- [x] **La crida del final**: el resum diu «N cops has robat fitxa quan hi
+      havia jugada possible» amb el botó «Fes el quiz del repàs»; si no t'has
+      deixat res, felicita (`.quiz-crida` / `.quiz-crida-neta`).
+- [x] **El quiz** (`QuizScreen.tsx`): cada oportunitat torna a posar aquella
+      taula i aquell faristol **sobre el mateix tauler de sempre** (BoardView,
+      feltre, faristol de fusta, tocar i arrossegar): l'intent es corregeix
+      amb el mateix `applyMove` del motor (cap regla duplicada, errors amb les
+      seves paraules), «Mostra la solució» ensenya la jugada en acció (les
+      fitxes cauen il·luminades al tauler, `fitxa-revelada` +
+      `acabada-de-jugar`) i el resum final compta trobades i ensenyades.
+- [x] **Apaïsat**: la capçalera del repàs flota sobre el feltre com la tira de
+      jugadors (`.quiz-cap` amb `pointer-events: auto`).
+
+### Problemes trobats
+
+- Cap: el disseny va sortir net a la primera perquè tot era reutilitzable
+  (BoardView pur, `turnDraft` pur, `useDragTile` genèric, `chooseBestPlay`
+  amb `playerIndex` qualsevol). La partida sintètica d'un sol jugador i sense
+  sac (`stateFromMiss`) passa per `applyMove` sense tocs: només `createGame`
+  exigeix 2+ jugadors.
+
+### El repàs sense repeticions i amb marcs d'origen ✅ Feta (2026-08-26)
+
+- [x] **La mateixa jugada perduda no s'apunta dos cops** (`addMiss`): robar
+      torn rere torn amb el mateix grup a la mà apuntava el mateix error cada
+      vegada. La identitat d'una oportunitat és el conjunt de fitxes del
+      faristol que baixava (`missKey`); es guarda el primer torn, i els
+      següents només si la jugada possible ha canviat (s'hi ha sumat una altra
+      errada o la taula permet més coses).
+- [x] **Marcs d'origen al quiz**: quan la jugada està feta (trobada o
+      ensenyada), cada fitxa porta marc segons d'on venia — turquesa
+      (`--accent-taula`, el color de les teves jugades) per a les del
+      faristol, daurat sòlid (`--robada`) per a les que ja eren a la taula i
+      la jugada recol·locava; les que no es movien no porten res. La regla de
+      «moguda» (`movedBoardTileIds`): una fitxa no s'ha mogut si la seva
+      jugada d'origen sobreviu sencera dins de la mateixa jugada nova (encara
+      que creixi); si s'ha desfet, totes les seves fitxes compten com a
+      mogudes. Els textos del quiz diuen els colors i els comptes.
+- [x] **Ferramenta**: `TileView` accepta `mark` ('played' | 'moved', amb nota
+      per als lectors de pantalla) i `MeldView`/`BoardView` passen un
+      `marks: Map`. El sac de `entraAmbPartida` (e2e) ara es pot triar (`sac`).
+
+**Criteris d'acceptació (verificats)**: 174 tests (dedupe amb creixement
+d'oportunitat, allargar-no-mou, reordenació que mou l'escala sencera) i 79
+proves de navegador: el camí llarg ara roba tres cops (el segon idèntic no
+s'apunta: 2 al repàs, no 3) i comprova els marcs `played`/`moved` a la
+trobada i a la solució; una prova nova força la reordenació (grup de sets +
+escala 8-11 desfent la 7-8-9) i comprova 4 turqueses, 3 daurades i la
+llegenda. Captures amb els dos marcs.
+
 ---
 
 ## Riscos coneguts (a vigilar quan toqui)

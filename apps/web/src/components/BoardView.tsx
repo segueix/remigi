@@ -11,6 +11,8 @@ interface Props {
   /** Destinació sota el punter mentre s'arrossega. */
   over?: Destination | null;
   highlighted?: ReadonlySet<string>;
+  /** Marc d'origen de cada fitxa, al repàs (vegeu TileView). */
+  marks?: ReadonlyMap<string, 'played' | 'moved'>;
   /** Bot autor de cada jugada, alineat per posició amb `board`. */
   authors?: ReadonlyArray<MeldAuthor | null>;
   /** Actiu només durant el torn del jugador. */
@@ -28,6 +30,7 @@ export function BoardView({
   draggingTileId,
   over,
   highlighted,
+  marks,
   authors,
   interactive,
   onTileClick,
@@ -65,6 +68,7 @@ export function BoardView({
           selectedTileId={selectedTileId}
           draggingTileId={draggingTileId}
           highlighted={highlighted}
+          marks={marks}
           author={authors?.[index]}
           onTileClick={interactive ? (tileId) => onTileClick?.(tileId, index) : undefined}
           onTilePointerDown={interactive ? onTilePointerDown : undefined}

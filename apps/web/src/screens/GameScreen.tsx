@@ -15,6 +15,8 @@ import { TileView } from '../components/TileView';
 import { useDragTile } from '../game/useDragTile';
 import { botPersona } from '../game/bots';
 import { meldAuthors } from '../game/meldOwners';
+import type { MissedChance } from '../game/missedChances';
+import { QuizScreen } from './QuizScreen';
 import { invalidMeldIndexes, missingOpeningPoints, openingPoints } from '../game/turnDraft';
 import { useGame, type GameHandle, type GameSetup } from '../game/useGame';
 import type { RatingChange } from '../state/gameOutcome';
@@ -32,6 +34,8 @@ interface Props {
   resume?: GameState;
   /** Autors de les jugades de la partida represa, per no perdre'n els colors. */
   resumeOwners?: SavedGame['owners'];
+  /** Oportunitats perdudes de la partida represa, perquè el repàs no comenci coix. */
+  resumeMisses?: SavedGame['misses'];
   profile: ProfileHandle;
   savedGame: SavedGameHandle;
   /** Obre l'historial (les estadístiques). */
@@ -44,6 +48,7 @@ export function GameScreen({
   setup,
   resume,
   resumeOwners,
+  resumeMisses,
   profile,
   savedGame,
   onHistory,
@@ -56,11 +61,12 @@ export function GameScreen({
    * resultat i el desat fan servir aquesta, no la inicial.
    */
   const [currentSetup, setCurrentSetup] = useState(setup);
-  const handle = useGame(setup, resume, resumeOwners);
+  const handle = useGame(setup, resume, resumeOwners, resumeMisses);
   const { game, draft, selectedTileId, error, highlighted, drawnTileId, isHumanTurn } = handle;
   const change = useRecordResult(game, currentSetup.opponents, profile);
   const [menuOpen, setMenuOpen] = useState(false);
   const [rackOrder, setRackOrder] = useState<Order>('cap');
+  const [quizOpen, setQuizOpen] = useState(false);
   const rotation = useScreenRotation();
 
   const { moveTileTo } = handle;
@@ -69,16 +75,20 @@ export function GameScreen({
   // La partida es desa a cada moviment, i s'esborra quan s'acaba: així es pot
   // tancar la pestanya a mitges i continuar-la després.
   const { persist, clear } = savedGame;
-  const { meldOwners } = handle;
+  const { meldOwners, misses } = handle;
   useEffect(() => {
-    if (game.status === 'playing') persist({ setup: currentSetup, game, owners: [...meldOwners] });
-    else clear();
-  }, [game, currentSetup, meldOwners, persist, clear]);
+    if (game.status === 'playing') {
+      persist({ setup: currentSetup, game, owners: [...meldOwners], misses });
+    } else {
+      clear();
+    }
+  }, [game, currentSetup, meldOwners, misses, persist, clear]);
 
   const startNewGame = useCallback(
     (next: GameSetup) => {
       setCurrentSetup(next);
       setMenuOpen(false);
+      setQuizOpen(false);
       handle.restart(next);
     },
     [handle],
@@ -139,12 +149,23 @@ export function GameScreen({
   );
 
   if (game.status === 'finished') {
+    if (quizOpen && misses.length > 0) {
+      return (
+        <QuizScreen
+          misses={misses}
+          playerName={profile.profile?.name ?? game.players[0].name}
+          onClose={() => setQuizOpen(false)}
+        />
+      );
+    }
     return (
       <GameOver
         handle={handle}
         change={change}
         nextOpponents={nextOpponents}
         fixedRivals={fixedRivalsLabel}
+        misses={misses}
+        onQuiz={() => setQuizOpen(true)}
         onRestart={restartAdapted}
         onHistory={onHistory}
       />
@@ -448,6 +469,8 @@ function GameOver({
   change,
   nextOpponents,
   fixedRivals,
+  misses,
+  onQuiz,
   onRestart,
   onHistory,
 }: {
@@ -457,6 +480,9 @@ function GameOver({
   nextOpponents: DifficultyKey[] | null;
   /** Etiqueta dels rivals quan estan fixats a mà. */
   fixedRivals: string | null;
+  /** Oportunitats perdudes de la partida, per oferir-ne el repàs. */
+  misses: MissedChance[];
+  onQuiz(): void;
   onRestart(): void;
   onHistory(): void;
 }) {
@@ -548,6 +574,36 @@ function GameOver({
             ({change.delta >= 0 ? '+' : ''}
             {change.delta})
           </span>
+        </p>
+      )}
+
+      {/*
+        * El repàs: si has robat havent-hi jugada, el final t'ho diu i t'ofereix
+        * tornar-hi sobre el mateix tauler. I si no t'has deixat res, també es
+        * diu, que és la millor notícia de la partida.
+        */}
+      {misses.length > 0 ? (
+        <div className="quiz-crida">
+          <p>
+            {misses.length === 1 ? (
+              <>
+                <strong>1 cop</strong> has robat fitxa quan hi havia jugada possible.
+              </>
+            ) : (
+              <>
+                <strong>{misses.length} cops</strong> has robat fitxa quan hi havia jugada
+                possible.
+              </>
+            )}{' '}
+            Sabries trobar-les ara?
+          </p>
+          <button type="button" onClick={onQuiz}>
+            Fes el quiz del repàs
+          </button>
+        </div>
+      ) : (
+        <p className="quiz-crida-neta">
+          No t’has deixat cap jugada: sempre que es podia jugar, has jugat. 👏
         </p>
       )}
 

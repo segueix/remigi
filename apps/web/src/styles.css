@@ -161,6 +161,30 @@ body {
   display: none; /* dins de la partida, «Deixar la partida» és la sortida */
 }
 
+/*
+ * Dins de la partida no hi ha res per copiar: quan al mòbil es manté premuda
+ * una fitxa (o es falla per un pèl), el navegador no ha de seleccionar els
+ * textos del voltant (noms dels jugadors, «Ordena:», la línia del torn…) ni
+ * fer llampegar el requadre del toc. Les fitxes soles no n'hi ha prou, perquè
+ * la selecció llarga s'estén al text seleccionable més proper.
+ */
+.app-joc {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/*
+ * Els camps d'escriure (el nom, al menú del jugador) ho tornen a permetre
+ * explícitament: a WebKit, l'herència del `none` els deixaria sense cursor.
+ */
+.app-joc input,
+.app-joc textarea {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
 .app-joc .game {
   flex: 1;
   min-height: 0;
@@ -853,6 +877,22 @@ input {
   outline-offset: 1px;
 }
 
+/*
+ * Els marcs d'origen del repàs: turquesa per a les fitxes que baixaven del
+ * faristol (el color de les teves jugades) i daurat sòlid per a les que ja
+ * eren a la taula però la jugada recol·locava. Són `outline` com la robada, i
+ * no xoquen amb el focus perquè al repàs aquestes fitxes no es poden triar.
+ */
+.tile.played {
+  outline: 2px solid var(--accent-taula);
+  outline-offset: 1px;
+}
+
+.tile.moved {
+  outline: 2px solid var(--robada);
+  outline-offset: 1px;
+}
+
 @keyframes acabada-de-jugar {
   from {
     box-shadow: 0 0 0 3px var(--accent-taula);
@@ -1509,6 +1549,86 @@ button.link.danger {
     );
 }
 
+/* ---------- El repàs (quiz de les oportunitats perdudes) ---------- */
+
+/*
+ * La crida del final de partida: si has robat havent-hi jugada es diu amb un
+ * requadre d'acció, i si no t'has deixat res, amb una línia de felicitació.
+ */
+.quiz-crida {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-top: 1.25rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--vora));
+  border-radius: 0.6rem;
+  background: color-mix(in srgb, var(--accent) 9%, var(--superficie));
+}
+
+.quiz-crida p {
+  margin: 0;
+  flex: 1 1 14rem;
+}
+
+.quiz-crida-neta {
+  margin-top: 1.25rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--be) 30%, var(--vora));
+  border-radius: 0.6rem;
+  background: color-mix(in srgb, var(--be) 10%, var(--superficie));
+}
+
+/* La capçalera del repàs: què és, per on vas i la sortida. */
+.quiz-cap {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.8rem;
+}
+
+.quiz-torn {
+  font-size: 0.85rem;
+}
+
+.quiz-surt {
+  margin-left: auto;
+}
+
+/* La pista bona: mateix cos que .hint, però amb el verd dels encerts. */
+.hint-be {
+  border-color: color-mix(in srgb, var(--be) 40%, var(--vora));
+  background: color-mix(in srgb, var(--be) 10%, var(--taula-jugada));
+  color: var(--text);
+}
+
+/*
+ * La jugada «en acció»: les fitxes que baixaven cauen sobre el tauler amb un
+ * petit salt, a més del halo de fitxa acabada de jugar de sempre. També ho fan
+ * les del jugador quan el motor li dona la jugada per bona.
+ */
+.quiz .tile.highlighted {
+  animation:
+    fitxa-revelada 0.45s ease-out backwards,
+    acabada-de-jugar 1.8s ease-out;
+}
+
+@keyframes fitxa-revelada {
+  from {
+    transform: scale(0.5) translateY(-0.6rem);
+    opacity: 0;
+  }
+}
+
+.quiz-final .quiz-resultat {
+  margin: 0.3rem 0;
+  font-size: 1.15rem;
+}
+
 @keyframes victoria {
   from {
     transform: scale(0.96);
@@ -1697,7 +1817,8 @@ button.link.danger {
 
   .players,
   .menu-fons,
-  .menu-usuari {
+  .menu-usuari,
+  .quiz-cap {
     pointer-events: auto;
   }
 
@@ -1759,6 +1880,23 @@ button.link.danger {
 
   .nivell-jugador strong {
     color: rgb(255 255 255 / 0.95);
+  }
+
+  /* La capçalera del repàs flota sobre el feltre com la resta de la tira. */
+  .quiz-cap {
+    flex-wrap: nowrap;
+    align-items: center;
+    padding: 0.12rem 0.55rem;
+    border-radius: 999px;
+    background: rgb(10 28 22 / 0.45);
+    color: rgb(255 255 255 / 0.88);
+    font-size: 0.72rem;
+    white-space: nowrap;
+  }
+
+  .quiz-cap .muted,
+  .quiz-cap .link {
+    color: rgb(255 255 255 / 0.75);
   }
 
   .board .tile {

@@ -1,4 +1,5 @@
 import type { GameState } from '@remigi/core';
+import { validMisses, type MissedChance } from '../game/missedChances';
 import type { GameSetup } from '../game/useGame';
 import type { KeyValueStore } from '@remigi/core';
 
@@ -17,6 +18,12 @@ export interface SavedGame {
    * d'abans es queden sense marc.
    */
   owners?: [string, number][];
+  /**
+   * Oportunitats perdudes de la partida, per al repàs del final (vegeu
+   * `missedChances.ts`). Mateix criteri que els autors: si falten o venen
+   * malmeses, la partida es continua igual i el repàs començarà de zero.
+   */
+  misses?: MissedChance[];
 }
 
 export async function saveGame(store: KeyValueStore, saved: SavedGame): Promise<void> {
@@ -39,9 +46,11 @@ export async function loadGame(store: KeyValueStore): Promise<SavedGame | null> 
   const raw = await store.get(KEY);
   if (!raw) return null;
   try {
-    const saved = JSON.parse(raw) as SavedGame;
+    let saved = JSON.parse(raw) as SavedGame;
     if (!isResumable(saved)) return null;
-    return 'owners' in saved ? { ...saved, owners: validOwners(saved.owners) } : saved;
+    if ('owners' in saved) saved = { ...saved, owners: validOwners(saved.owners) };
+    if ('misses' in saved) saved = { ...saved, misses: validMisses(saved.misses) };
+    return saved;
   } catch {
     return null;
   }

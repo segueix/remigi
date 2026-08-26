@@ -13,6 +13,8 @@ interface Props {
   selectedTileId?: string | null;
   draggingTileId?: string | null;
   highlighted?: ReadonlySet<string>;
+  /** Marc d'origen de cada fitxa, al repàs (vegeu TileView). */
+  marks?: ReadonlyMap<string, 'played' | 'moved'>;
   /** Bot que hi ha jugat per últim cop: dona color al marc de la jugada. */
   author?: MeldAuthor | null;
   onTileClick?(tileId: string): void;
@@ -29,6 +31,7 @@ export function MeldView({
   selectedTileId,
   draggingTileId,
   highlighted,
+  marks,
   author,
   onTileClick,
   onTilePointerDown,
@@ -60,6 +63,7 @@ export function MeldView({
           selected={tile.id === selectedTileId}
           dragging={tile.id === draggingTileId}
           highlighted={highlighted?.has(tile.id)}
+          mark={marks?.get(tile.id)}
           onClick={onTileClick ? () => onTileClick(tile.id) : undefined}
           onPointerDown={
             onTilePointerDown ? (event) => onTilePointerDown(event, tile.id) : undefined
