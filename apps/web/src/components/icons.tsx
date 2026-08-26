@@ -54,6 +54,22 @@ export const UndoIcon = () => (
 );
 
 
+/** Mostrar la solució: un ull que la mira. */
+export const EyeIcon = () => (
+  <Icon>
+    <path d="M2.5 12s3.5-6.5 9.5-6.5S21.5 12 21.5 12s-3.5 6.5-9.5 6.5S2.5 12 2.5 12Z" />
+    <circle cx="12" cy="12" r="2.6" />
+  </Icon>
+);
+
+/** Següent: endavant, cap a la pròxima oportunitat. */
+export const NextIcon = () => (
+  <Icon>
+    <line x1="4" y1="12" x2="19" y2="12" />
+    <polyline points="13 5.5 19.5 12 13 18.5" />
+  </Icon>
+);
+
 /** Girar la pantalla: un mòbil dret i la fletxa que el tomba. */
 export const RotateIcon = () => (
   <Icon>

@@ -1533,6 +1533,86 @@ button.link.danger {
     );
 }
 
+/* ---------- El repàs (quiz de les oportunitats perdudes) ---------- */
+
+/*
+ * La crida del final de partida: si has robat havent-hi jugada es diu amb un
+ * requadre d'acció, i si no t'has deixat res, amb una línia de felicitació.
+ */
+.quiz-crida {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-top: 1.25rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--vora));
+  border-radius: 0.6rem;
+  background: color-mix(in srgb, var(--accent) 9%, var(--superficie));
+}
+
+.quiz-crida p {
+  margin: 0;
+  flex: 1 1 14rem;
+}
+
+.quiz-crida-neta {
+  margin-top: 1.25rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--be) 30%, var(--vora));
+  border-radius: 0.6rem;
+  background: color-mix(in srgb, var(--be) 10%, var(--superficie));
+}
+
+/* La capçalera del repàs: què és, per on vas i la sortida. */
+.quiz-cap {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.8rem;
+}
+
+.quiz-torn {
+  font-size: 0.85rem;
+}
+
+.quiz-surt {
+  margin-left: auto;
+}
+
+/* La pista bona: mateix cos que .hint, però amb el verd dels encerts. */
+.hint-be {
+  border-color: color-mix(in srgb, var(--be) 40%, var(--vora));
+  background: color-mix(in srgb, var(--be) 10%, var(--taula-jugada));
+  color: var(--text);
+}
+
+/*
+ * La jugada «en acció»: les fitxes que baixaven cauen sobre el tauler amb un
+ * petit salt, a més del halo de fitxa acabada de jugar de sempre. També ho fan
+ * les del jugador quan el motor li dona la jugada per bona.
+ */
+.quiz .tile.highlighted {
+  animation:
+    fitxa-revelada 0.45s ease-out backwards,
+    acabada-de-jugar 1.8s ease-out;
+}
+
+@keyframes fitxa-revelada {
+  from {
+    transform: scale(0.5) translateY(-0.6rem);
+    opacity: 0;
+  }
+}
+
+.quiz-final .quiz-resultat {
+  margin: 0.3rem 0;
+  font-size: 1.15rem;
+}
+
 @keyframes victoria {
   from {
     transform: scale(0.96);
@@ -1721,7 +1801,8 @@ button.link.danger {
 
   .players,
   .menu-fons,
-  .menu-usuari {
+  .menu-usuari,
+  .quiz-cap {
     pointer-events: auto;
   }
 
@@ -1783,6 +1864,23 @@ button.link.danger {
 
   .nivell-jugador strong {
     color: rgb(255 255 255 / 0.95);
+  }
+
+  /* La capçalera del repàs flota sobre el feltre com la resta de la tira. */
+  .quiz-cap {
+    flex-wrap: nowrap;
+    align-items: center;
+    padding: 0.12rem 0.55rem;
+    border-radius: 999px;
+    background: rgb(10 28 22 / 0.45);
+    color: rgb(255 255 255 / 0.88);
+    font-size: 0.72rem;
+    white-space: nowrap;
+  }
+
+  .quiz-cap .muted,
+  .quiz-cap .link {
+    color: rgb(255 255 255 / 0.75);
   }
 
   .board .tile {

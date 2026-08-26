@@ -8,6 +8,7 @@ import {
 } from '@remigi/core';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { pickPersonas } from './bots';
+import { detectMissedChance, type MissedChance } from './missedChances';
 import { updateOwners, type MeldOwners } from './meldOwners';
 import {
   hasChanges,
@@ -51,6 +52,8 @@ export interface GameHandle {
   drawnTileId: string | null;
   /** Qui ha tocat per últim cop cada jugada de la taula (vegeu `meldOwners.ts`). */
   meldOwners: MeldOwners;
+  /** Cops que el jugador ha robat havent-hi jugada, per al repàs del final. */
+  misses: MissedChance[];
   isHumanTurn: boolean;
   canCommit: boolean;
   selectTile(tileId: string | null): void;
@@ -96,6 +99,7 @@ export function useGame(
   initialSetup: GameSetup,
   initialGame?: GameState,
   initialOwners?: readonly (readonly [string, number])[],
+  initialMisses?: readonly MissedChance[],
 ): GameHandle {
   const setupRef = useRef(initialSetup);
   const [game, setGame] = useState<GameState>(() => initialGame ?? newGameState(initialSetup));
@@ -110,6 +114,7 @@ export function useGame(
    * comptes de posar-n'hi un d'inventat.
    */
   const [meldOwners, setMeldOwners] = useState<MeldOwners>(() => new Map(initialOwners ?? []));
+  const [misses, setMisses] = useState<MissedChance[]>(() => [...(initialMisses ?? [])]);
 
   // Cada vegada que el motor avança, el torn comença de zero.
   useEffect(() => {
@@ -180,6 +185,16 @@ export function useGame(
       const before = new Set(game.players[player].rack.map((tile) => tile.id));
       const next = applyMove(game, { type: 'draw' });
       /*
+       * Robar (o passar) havent-hi jugada possible és una oportunitat perduda:
+       * se'n guarda el moment per al repàs del final. Només compta per a
+       * l'humà, que és l'únic que roba des d'aquí: els bots ja roben
+       * expressament quan el seu nivell «no veu» la jugada.
+       */
+      if (game.players[player].kind === 'human') {
+        const missed = detectMissedChance(game, player);
+        if (missed) setMisses((current) => [...current, missed]);
+      }
+      /*
        * Amb el sac buit, «robar» és passar torn: no hi ha cap fitxa nova, i
        * llavors el que toca és treure la marca de la de l'últim cop.
        */
@@ -203,6 +218,7 @@ export function useGame(
     setHighlighted(new Set());
     setDrawnTileId(null);
     setMeldOwners(new Map());
+    setMisses([]);
     setGame(newGameState(setupRef.current));
   }, []);
 
@@ -214,6 +230,7 @@ export function useGame(
     highlighted,
     drawnTileId,
     meldOwners,
+    misses,
     isHumanTurn: isHumanTurn(game),
     canCommit: draft !== null && hasChanges(draft),
     selectTile,
