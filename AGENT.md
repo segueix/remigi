@@ -1072,6 +1072,34 @@ l'automàtic (la píndola calla).
 
 *(cap: el gruix era d'etiquetes i d'estat que no es rellegia)*
 
+### Fitxes al gust i escales que s'endrecen soles ✅ Feta (2026-08-26)
+
+Dues demandes del jugador:
+
+- [x] **Aspecte de les fitxes a triar**, al menú del jugador: crema amb el
+      número de color (com fins ara) o **fitxa del color amb el número blanc**.
+      Es tria mirant (dues mostres reals, la triada amb l'anell d'acció), és
+      una preferència del dispositiu (localStorage, `state/useTileStyle.ts`) i
+      s'aplica amb una classe a l'arrel: tot el que és per fitxa (`--tinta`)
+      continua manant, només canvia on s'aplica el color.
+- [x] **Les escales s'endrecen soles mentre es construeixen**. `insertSmart`
+      ja col·locava bé la fitxa quan la jugada resultant era vàlida; el forat
+      era el material d'escala a mig fer (1-2 fitxes, o desordenat), on cap
+      ordre no és «vàlid» i tot s'apilava per ordre d'arribada. Ara, si el que
+      hi ha és material d'escala (mateix color, valors sense repetir),
+      s'ordena per valor amb els jokers omplint forats (i els que sobren
+      allarguen per on es pot, 13 inclòs). Els grups no es toquen: el seu
+      ordre no vol dir res.
+
+**Criteris d'acceptació (verificats)**: 165 tests (5 de nous per a
+l'endreçament, jokers inclosos) i 72 proves de navegador en verd — les noves:
+baixar 7-5-6 desordenats acaba en 5-6-7 sense marca d'error, i la tria de
+fitxes canvia el color del número a l'instant i sobreviu a recarregar.
+
+### Problemes trobats
+
+*(cap)*
+
 ---
 
 ## Riscos coneguts (a vigilar quan toqui)

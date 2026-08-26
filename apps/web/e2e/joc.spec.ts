@@ -116,6 +116,44 @@ test.describe('qui mana és el motor', () => {
 });
 
 test.describe('moure fitxes', () => {
+  test('les fitxes d’una escala es col·loquen soles al lloc que toca', async ({ page }) => {
+    await entraAmbPartida(page, {
+      rack: [f('red', 7), f('red', 5), f('red', 6), f('blue', 2)],
+      haObert: true,
+    });
+
+    // Es baixen desordenades: 7, després 5, després 6.
+    await baixaGrup(page, ['7 vermell', '5 vermell', '6 vermell']);
+
+    // I l'escala queda 5-6-7 igualment: cada fitxa va al seu lloc tota sola.
+    await expect(page.locator('.board .meld').first().locator('.tile')).toHaveText(['5', '6', '7']);
+    await expect(page.locator('.meld.invalid')).toHaveCount(0);
+  });
+
+  test('l’aspecte de les fitxes es pot invertir des del menú, i es recorda', async ({ page }) => {
+    await comencaDeZero(page);
+    const fitxa = page.locator('.rack .tile').first();
+    const colorClassic = await fitxa.evaluate((el) => getComputedStyle(el).color);
+
+    await obreMenu(page);
+    await page.getByRole('button', { name: 'Fitxes de color amb el número blanc' }).click();
+    // El número passa a blanc os: la fitxa és ara del color.
+    await expect
+      .poll(() => fitxa.evaluate((el) => getComputedStyle(el).color))
+      .toBe('rgb(255, 253, 246)');
+
+    // I la tria sobreviu a tancar i tornar a obrir.
+    await page.reload();
+    await expect(page.locator('.rack .tile').first()).toBeVisible();
+    const colorDespres = await page
+      .locator('.rack .tile')
+      .first()
+      .evaluate((el) => getComputedStyle(el).color);
+    expect(colorDespres).toBe('rgb(255, 253, 246)');
+    expect(colorDespres).not.toBe(colorClassic);
+  });
+
+
   test('arrossegar del faristol a la taula', async ({ page }) => {
     await comencaDeZero(page);
     await jugaContra(page, 1);

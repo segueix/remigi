@@ -9,12 +9,15 @@ import { useState } from 'react';
 import type { GameSetup } from '../game/useGame';
 import { playerLevelLabel } from '../state/playerLevel';
 import type { ProfileHandle } from '../state/useProfile';
+import type { TileStyle } from '../state/useTileStyle';
 import { ComEsJuga } from './ComEsJuga';
 
 interface Props {
   profile: ProfileHandle;
   /** Configuració de la partida en curs, com a punt de partida del formulari. */
   current: GameSetup;
+  tileStyle: TileStyle;
+  onTileStyle(style: TileStyle): void;
   onNewGame(setup: GameSetup): void;
   onHistory(): void;
   onClose(): void;
@@ -28,7 +31,15 @@ type LevelChoice = 'auto' | DifficultyKey;
  * el nombre de rivals, partida nova, historial i com es juga. És l'antiga
  * pantalla d'inici feta menú, perquè l'app entri directament a la taula.
  */
-export function PlayerMenu({ profile, current, onNewGame, onHistory, onClose }: Props) {
+export function PlayerMenu({
+  profile,
+  current,
+  tileStyle,
+  onTileStyle,
+  onNewGame,
+  onHistory,
+  onClose,
+}: Props) {
   const [name, setName] = useState(profile.profile?.name ?? '');
   const [count, setCount] = useState<OpponentCount>(
     Math.min(3, Math.max(1, current.opponents.length)) as OpponentCount,
@@ -153,6 +164,29 @@ export function PlayerMenu({ profile, current, onNewGame, onHistory, onClose }: 
           />
           Que s’adaptin també durant la partida
         </label>
+        </div>
+
+        {/* L'aspecte de les fitxes: es tria mirant, amb una mostra de cada. */}
+        <div className="tria-fitxes" role="group" aria-label="Aspecte de les fitxes">
+          <span className="muted">Fitxes:</span>
+          <button
+            type="button"
+            className="mostra-fitxa"
+            aria-pressed={tileStyle === 'classic'}
+            aria-label="Fitxes de crema amb el número de color"
+            onClick={() => onTileStyle('classic')}
+          >
+            <span className="tile tile-red mostra" aria-hidden="true">7</span>
+          </button>
+          <button
+            type="button"
+            className="mostra-fitxa fitxes-inverses"
+            aria-pressed={tileStyle === 'invers'}
+            aria-label="Fitxes de color amb el número blanc"
+            onClick={() => onTileStyle('invers')}
+          >
+            <span className="tile tile-red mostra" aria-hidden="true">7</span>
+          </button>
         </div>
 
         <div className="row menu-accions">

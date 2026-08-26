@@ -162,3 +162,46 @@ describe('estat de la jugada en curs', () => {
     expect(toMove(d)).toEqual({ type: 'play', board: d.board });
   });
 });
+
+describe('les escales s’endrecen soles mentre es construeixen', () => {
+  const red = (value: number): Tile =>
+    ({ id: `red-${value}-a`, kind: 'number', color: 'red', value }) as Tile;
+  const jk = (id: string): Tile => ({ id, kind: 'joker' }) as Tile;
+
+  function build(tiles: Tile[]): Meld {
+    return tiles.slice(1).reduce<Meld>((meld, tile) => insertSmart(meld, tile), [tiles[0]]);
+  }
+
+  it('la segona fitxa ja queda al costat que toca', () => {
+    expect(build([red(7), red(5)]).map((t) => t.id)).toEqual(['red-5-a', 'red-7-a']);
+  });
+
+  it('una escala deixada en qualsevol ordre acaba ordenada per valor', () => {
+    expect(build([red(7), red(5), red(6), red(4)]).map((t) => t.id)).toEqual([
+      'red-4-a',
+      'red-5-a',
+      'red-6-a',
+      'red-7-a',
+    ]);
+  });
+
+  it('un joker omple el forat del mig', () => {
+    const meld = build([red(5), red(7), jk('joker-a')]);
+    expect(meld.map((t) => t.id)).toEqual(['red-5-a', 'joker-a', 'red-7-a']);
+  });
+
+  it('el joker que sobra allarga per davant si l’escala acaba en 13', () => {
+    const meld = build([red(12), red(13), jk('joker-a')]);
+    expect(meld.map((t) => t.id)).toEqual(['joker-a', 'red-12-a', 'red-13-a']);
+  });
+
+  it('els grups no es toquen: el seu ordre no vol dir res', () => {
+    const group: Meld = [
+      { id: 'red-7-a', kind: 'number', color: 'red', value: 7 } as Tile,
+      { id: 'blue-7-a', kind: 'number', color: 'blue', value: 7 } as Tile,
+    ];
+    const result = insertSmart(group, { id: 'red-7-b', kind: 'number', color: 'red', value: 7 } as Tile);
+    // Repetits: no és material d'escala; la fitxa va al final i au.
+    expect(result.map((t) => t.id)).toEqual(['red-7-a', 'blue-7-a', 'red-7-b']);
+  });
+});
