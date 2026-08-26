@@ -161,6 +161,30 @@ body {
   display: none; /* dins de la partida, «Deixar la partida» és la sortida */
 }
 
+/*
+ * Dins de la partida no hi ha res per copiar: quan al mòbil es manté premuda
+ * una fitxa (o es falla per un pèl), el navegador no ha de seleccionar els
+ * textos del voltant (noms dels jugadors, «Ordena:», la línia del torn…) ni
+ * fer llampegar el requadre del toc. Les fitxes soles no n'hi ha prou, perquè
+ * la selecció llarga s'estén al text seleccionable més proper.
+ */
+.app-joc {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/*
+ * Els camps d'escriure (el nom, al menú del jugador) ho tornen a permetre
+ * explícitament: a WebKit, l'herència del `none` els deixaria sense cursor.
+ */
+.app-joc input,
+.app-joc textarea {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
 .app-joc .game {
   flex: 1;
   min-height: 0;

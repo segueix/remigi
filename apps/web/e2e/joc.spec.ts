@@ -264,6 +264,45 @@ test.describe('amb el dit', () => {
     await expect(page.locator('.board .meld').first().locator('.tile')).toHaveCount(4);
     await expect(page.locator('.rack .tile')).toHaveCount(1);
   });
+
+  test('mantenir premuda una fitxa no selecciona cap text de la partida', async ({ page }) => {
+    await entraAmbPartida(page, {
+      rack: [f('orange', 5), f('orange', 6)],
+      board: [[f('red', 9), f('blue', 9), f('black', 9)]],
+      haObert: true,
+    });
+
+    // Tota la pantalla de joc és no-seleccionable: la selecció llarga del mòbil
+    // s'estén al text seleccionable més proper, així que no n'hi pot quedar cap
+    // al voltant de les fitxes (jugadors, «Ordena:», les jugades de la taula).
+    for (const selector of ['.players .player-nom', '.rack-tools .muted', '.board .meld']) {
+      expect(
+        await page
+          .locator(selector)
+          .first()
+          .evaluate((el) => getComputedStyle(el).userSelect),
+        selector,
+      ).toBe('none');
+    }
+
+    // I de debò: un manteniment llarg sobre una fitxa de la taula (més llarg
+    // que el de seleccionar text) acaba sense res seleccionat.
+    const cdp = await page.context().newCDPSession(page);
+    const fitxa = (await page.locator('.board .tile').first().boundingBox())!;
+    await cdp.send('Input.dispatchTouchEvent', {
+      type: 'touchStart',
+      touchPoints: [{ x: fitxa.x + fitxa.width / 2, y: fitxa.y + fitxa.height / 2 }],
+    });
+    await page.waitForTimeout(700);
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    expect(await page.evaluate(() => String(document.getSelection()))).toBe('');
+
+    // El camp del nom, al menú del jugador, continua deixant triar-hi text.
+    await obreMenu(page);
+    expect(
+      await page.locator('.menu-nom input').evaluate((el) => getComputedStyle(el).userSelect),
+    ).toBe('text');
+  });
 });
 
 test.describe('en pantalla petita', () => {

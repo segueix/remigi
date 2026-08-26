@@ -1123,6 +1123,25 @@ menú al mòbil, a dalt i a baix.
   ja quedava obert i el clic el tancava (o el fons l'interceptava). La prova
   s'ha adaptat al comportament real: triar l'estil no tanca el menú.
 
+### Prémer una fitxa al mòbil no selecciona text ✅ Feta (2026-08-26)
+
+- [x] **Selecció de text fora de la partida**: les fitxes ja eren
+      no-seleccionables, però la selecció llarga del mòbil s'estén al text
+      seleccionable més proper — mantenir premuda una fitxa (o fallar-la per un
+      pèl) acabava seleccionant noms de jugadors, «Ordena:» o la línia del
+      torn. Ara tota la pantalla de joc (`.app-joc`) porta `user-select: none`
+      (amb les variants `-webkit-`), `-webkit-touch-callout: none` i
+      `-webkit-tap-highlight-color: transparent`.
+- [x] **Els camps d'escriure segueixen vius**: `input` i `textarea` dins de la
+      partida tornen a `user-select: text` explícitament, que a WebKit
+      l'herència del `none` els deixaria sense cursor de selecció.
+
+**Criteris d'acceptació (verificats)**: 73 proves de navegador en verd. La
+nova (projecte mòbil) comprova per estil calculat que jugadors, «Ordena:» i
+les jugades de la taula són `user-select: none`, fa un manteniment llarg de
+debò (CDP, 700 ms) sobre una fitxa de la taula i confirma que no queda res
+seleccionat, i que el camp del nom del menú continua sent `text`.
+
 ---
 
 ## Riscos coneguts (a vigilar quan toqui)
