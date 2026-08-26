@@ -482,6 +482,12 @@ input {
   margin-top: 1.25rem;
 }
 
+.menu-tanca {
+  display: block;
+  width: 100%;
+  margin-top: 1rem;
+}
+
 .player-name {
   display: flex;
   min-width: 0;
@@ -758,6 +764,20 @@ input {
   border-color: color-mix(in srgb, var(--tinta) 55%, #000000);
   color: #fffdf6;
   text-shadow: 0 1px 2px rgb(0 0 0 / 0.45);
+}
+
+/*
+ * La mostra clàssica sempre es veu clàssica, encara que l'app sencera porti
+ * l'estil invertit (la classe de l'arrel arriba fins aquí per herència, i
+ * aquesta regla més específica la desfà). Si no, en triar l'estil invertit
+ * les dues mostres es veien iguals i no hi havia manera de tornar enrere
+ * sabent què triaves.
+ */
+.mostra-fitxa.classica .tile {
+  background: linear-gradient(180deg, #fffdf6, var(--fitxa) 45%, #f2e8cf);
+  border-color: var(--fitxa-vora);
+  color: var(--tinta);
+  text-shadow: 0 1px 0 rgb(255 255 255 / 0.55);
 }
 
 /* La tria al menú: dues mostres, la triada amb l'anell d'acció. */
@@ -1560,6 +1580,14 @@ button.link.danger {
 
   .rack {
     max-height: 30vh;
+  }
+
+  .menu-nom {
+    flex-wrap: wrap;
+  }
+
+  .menu-nom input {
+    flex: 1 1 100%;
   }
 
   /* Objectiu de toc als botons del torn, també si el punter no es detecta. */

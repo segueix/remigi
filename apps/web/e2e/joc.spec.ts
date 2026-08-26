@@ -142,6 +142,18 @@ test.describe('moure fitxes', () => {
       .poll(() => fitxa.evaluate((el) => getComputedStyle(el).color))
       .toBe('rgb(255, 253, 246)');
 
+    // Amb l'estil invertit actiu, la mostra clàssica continua sent clàssica:
+    // les dues opcions s'han de poder distingir sempre. (El menú segueix obert.)
+    const mostraClassica = page
+      .locator('.mostra-fitxa.classica .tile')
+      .first();
+    await expect
+      .poll(() => mostraClassica.evaluate((el) => getComputedStyle(el).color))
+      .not.toBe('rgb(255, 253, 246)');
+    // El menú es tanca també des del botó de baix de tot.
+    await page.getByRole('button', { name: 'Tanca la finestra' }).click();
+    await expect(page.locator('.menu-usuari')).toHaveCount(0);
+
     // I la tria sobreviu a tancar i tornar a obrir.
     await page.reload();
     await expect(page.locator('.rack .tile').first()).toBeVisible();
