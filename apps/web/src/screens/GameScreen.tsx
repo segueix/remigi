@@ -19,6 +19,7 @@ import { invalidMeldIndexes, missingOpeningPoints, openingPoints } from '../game
 import { useGame, type GameHandle, type GameSetup } from '../game/useGame';
 import type { RatingChange } from '../state/gameOutcome';
 import type { SavedGame } from '../state/savedGame';
+import type { TileStyle } from '../state/useTileStyle';
 import type { SavedGameHandle } from '../state/useSavedGame';
 import type { ProfileHandle } from '../state/useProfile';
 import { playerLevelLabel } from '../state/playerLevel';
@@ -35,9 +36,20 @@ interface Props {
   savedGame: SavedGameHandle;
   /** Obre l'historial (les estadístiques). */
   onHistory(): void;
+  tileStyle: TileStyle;
+  onTileStyle(style: TileStyle): void;
 }
 
-export function GameScreen({ setup, resume, resumeOwners, profile, savedGame, onHistory }: Props) {
+export function GameScreen({
+  setup,
+  resume,
+  resumeOwners,
+  profile,
+  savedGame,
+  onHistory,
+  tileStyle,
+  onTileStyle,
+}: Props) {
   /*
    * La configuració viva de la partida: comença amb la que arriba (nova o
    * represa) i canvia quan el menú engega una partida nova. El registre del
@@ -208,6 +220,8 @@ export function GameScreen({ setup, resume, resumeOwners, profile, savedGame, on
           <PlayerMenu
             profile={profile}
             current={currentSetup}
+            tileStyle={tileStyle}
+            onTileStyle={onTileStyle}
             onNewGame={startNewGame}
             onHistory={onHistory}
             onClose={() => setMenuOpen(false)}

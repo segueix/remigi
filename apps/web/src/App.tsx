@@ -4,6 +4,7 @@ import type { GameSetup } from './game/useGame';
 import { GameScreen } from './screens/GameScreen';
 import { StatsScreen } from './screens/StatsScreen';
 import { useProfile } from './state/useProfile';
+import { useTileStyle } from './state/useTileStyle';
 import { useSavedGame } from './state/useSavedGame';
 
 export type Screen = 'game' | 'stats';
@@ -18,6 +19,7 @@ export function App() {
   const [screen, setScreen] = useState<Screen>('game');
   const profile = useProfile();
   const savedGame = useSavedGame();
+  const [tileStyle, setTileStyle] = useTileStyle();
 
   /*
    * El perfil es crea sol la primera vegada, amb un nom de casa: demanar-lo
@@ -43,8 +45,11 @@ export function App() {
     auto: true,
   };
 
+  const classes = [screen === 'game' ? 'app app-joc' : 'app'];
+  if (tileStyle === 'invers') classes.push('fitxes-inverses');
+
   return (
-    <main className={screen === 'game' ? 'app app-joc' : 'app'}>
+    <main className={classes.join(' ')}>
       {/*
        * La partida no es desmunta mai en anar a l'historial: es continua veient
        * exactament on era en tornar (i els bots poden acabar la seva jugada
@@ -58,6 +63,8 @@ export function App() {
           profile={profile}
           savedGame={savedGame}
           onHistory={() => setScreen('stats')}
+          tileStyle={tileStyle}
+          onTileStyle={setTileStyle}
         />
       </div>
       {screen === 'stats' && (

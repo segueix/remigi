@@ -65,7 +65,50 @@ export function insertSmart(meld: Meld, tile: Tile): Meld {
     const candidate = [...meld.slice(0, i), tile, ...meld.slice(i)];
     if (isValidMeld(candidate)) return candidate;
   }
-  return [...meld, tile];
+  /*
+   * Cap posició no fa la jugada vàlida. Si el que hi ha és material d'escala
+   * (mateix color, valors sense repetir), s'endreça igualment per valor: una
+   * escala a mig fer amb una o dues fitxes mai no pot ser «vàlida», però el 5
+   * ha de quedar abans del 7 encara que el 6 arribi més tard.
+   */
+  return tidyRun([...meld, tile]) ?? [...meld, tile];
+}
+
+/**
+ * Endreça material d'escala: números del mateix color ordenats per valor, amb
+ * els jokers omplint els forats d'esquerra a dreta i els que sobren al final
+ * (o al principi, si l'escala ja acaba en 13). Retorna null si allò no és
+ * material d'escala (colors barrejats o valors repetits): llavors l'ordre no
+ * vol dir res i no s'ha de tocar.
+ */
+function tidyRun(meld: Meld): Meld | null {
+  const numbers = meld.filter((t): t is Tile & { kind: 'number' } => t.kind === 'number');
+  const jokers = meld.filter((t) => t.kind === 'joker');
+  if (numbers.length === 0) return null;
+  if (!numbers.every((t) => t.color === numbers[0].color)) return null;
+  const sorted = [...numbers].sort((a, b) => a.value - b.value);
+  if (new Set(sorted.map((t) => t.value)).size !== sorted.length) return null;
+
+  const pending = [...jokers];
+  const arranged: Meld = [sorted[0]];
+  for (let i = 1; i < sorted.length; i++) {
+    let gap = sorted[i].value - sorted[i - 1].value - 1;
+    while (gap > 0 && pending.length > 0) {
+      arranged.push(pending.shift()!);
+      gap--;
+    }
+    arranged.push(sorted[i]);
+  }
+  // Els jokers que sobren allarguen l'escala per on es pugui.
+  const last = sorted[sorted.length - 1].value;
+  while (pending.length > 0) {
+    if (last + (arranged.length - arranged.indexOf(sorted[sorted.length - 1])) <= 13) {
+      arranged.push(pending.shift()!);
+    } else {
+      arranged.unshift(pending.shift()!);
+    }
+  }
+  return arranged;
 }
 
 /**

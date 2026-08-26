@@ -744,6 +744,52 @@ input {
 }
 
 /*
+ * Fitxes invertides: la fitxa del color de la tinta i el número en blanc os.
+ * La classe va a l'arrel de l'app (o a la mostra del menú), i tot el que és
+ * per fitxa (--tinta) continua manant: només canvia on s'aplica el color.
+ */
+.fitxes-inverses .tile {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--tinta) 82%, #ffffff),
+    var(--tinta) 45%,
+    color-mix(in srgb, var(--tinta) 72%, #000000)
+  );
+  border-color: color-mix(in srgb, var(--tinta) 55%, #000000);
+  color: #fffdf6;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.45);
+}
+
+/* La tria al menú: dues mostres, la triada amb l'anell d'acció. */
+.tria-fitxes {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.9rem;
+}
+
+.mostra-fitxa {
+  padding: 0.25rem;
+  background: var(--fons);
+  border: 2px solid var(--vora);
+  border-radius: 0.5rem;
+  box-shadow: none;
+}
+
+.mostra-fitxa[aria-pressed='true'] {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.mostra-fitxa .tile.mostra {
+  width: 1.9rem;
+  height: 2.5rem;
+  font-size: 1rem;
+  cursor: pointer;
+  pointer-events: none; /* el clic és del botó, no de la fitxa de mostra */
+}
+
+/*
  * A l'ordinador la taula té lloc de sobres: les fitxes s'hi veuen ben grans
  * (més que les del faristol i tot). En pantalles petites i en apaïsat, els
  * seus blocs les tornen a empetitir perquè hi càpiga el màxim de joc.

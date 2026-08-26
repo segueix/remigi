@@ -125,7 +125,13 @@ Dues maneres, totes dues amb el mateix resultat:
   teclat, i per això no desapareix.
 
 En deixar-la sobre una jugada, s'insereix a la posició que la fa vàlida si n'hi
-ha cap: un 6 vermell entra sol a l'esquerra de 7-8-9.
+ha cap: un 6 vermell entra sol a l'esquerra de 7-8-9. I les escales a mig fer
+també s'endrecen soles: baixa el 7, el 5 i el 6 en l'ordre que sigui, i
+quedaran 5-6-7, amb els jokers omplint els forats.
+
+Al menú del jugador es tria l'**aspecte de les fitxes**: crema amb el número de
+color, o fitxa del color amb el número blanc. És una preferència del dispositiu
+(localStorage) i es tria mirant, amb una mostra de cada.
 
 Mentre dura el torn es treballa sobre una **còpia de la taula**, que pot quedar
 temporalment invàlida (per partir una escala en dues cal passar per estats
