@@ -4,6 +4,7 @@ import { BoardView } from '../components/BoardView';
 import { CheckIcon, EyeIcon, NextIcon, UndoIcon } from '../components/icons';
 import { TileView } from '../components/TileView';
 import {
+  movedBoardTileIds,
   solutionTileIds,
   stateFromMiss,
   type MissedChance,
@@ -173,6 +174,19 @@ export function QuizScreen({ misses, playerName, onClose }: Props) {
       ? playedTileIds(attempt)
       : new Set<string>();
   const placedCount = playedTileIds(attempt).size;
+
+  /*
+   * Els marcs d'origen, quan la jugada ja està feta (trobada o ensenyada):
+   * turquesa per a les fitxes que baixaven del faristol, daurat per a les que
+   * ja eren a la taula però la jugada recol·locava. Les que no s'han mogut no
+   * porten res: així es veu de cop què era teu i què s'havia de remenar.
+   */
+  const marks = new Map<string, 'played' | 'moved'>();
+  const movedIds = phase === 'prova' ? new Set<string>() : movedBoardTileIds(miss.board, board);
+  if (phase !== 'prova') {
+    for (const id of revealed ? solutionIds : playedTileIds(attempt)) marks.set(id, 'played');
+    for (const id of movedIds) marks.set(id, 'moved');
+  }
   const lastOne = index + 1 >= misses.length;
   const draggedTile = drag.dragging
     ? findTile(attempt.board.flat(), attempt.rack, drag.dragging.tileId)
@@ -199,6 +213,7 @@ export function QuizScreen({ misses, playerName, onClose }: Props) {
         draggingTileId={drag.dragging?.tileId ?? null}
         over={drag.dragging?.over ?? null}
         highlighted={highlighted}
+        marks={marks}
         interactive={trying}
         onTileClick={handleTileClick}
         onTilePointerDown={drag.start}
@@ -220,8 +235,14 @@ export function QuizScreen({ misses, playerName, onClose }: Props) {
       )}
       {phase === 'trobada' && (
         <p className="hint hint-be">
-          L’has trobada! Has baixat <strong>{placedCount}</strong>{' '}
-          {placedCount === 1 ? 'fitxa' : 'fitxes'}
+          L’has trobada! Has baixat les <strong>{placedCount}</strong>{' '}
+          {placedCount === 1 ? 'fitxa' : 'fitxes'} de marc turquesa
+          {movedIds.size > 0 && (
+            <>
+              {' '}
+              (les de marc daurat ja eren a la taula i les has recol·locat)
+            </>
+          )}
           {placedCount < miss.tilesUsed ? (
             <>
               {' '}
@@ -234,8 +255,16 @@ export function QuizScreen({ misses, playerName, onClose }: Props) {
       )}
       {revealed && (
         <p className="hint hint-be">
-          La jugada: es podien baixar les <strong>{solutionIds.size}</strong> fitxes
-          il·luminades.
+          La jugada: es podien baixar les <strong>{solutionIds.size}</strong> fitxes de{' '}
+          <strong>marc turquesa</strong>, del teu faristol
+          {movedIds.size > 0 ? (
+            <>
+              , recol·locant les <strong>{movedIds.size}</strong> de{' '}
+              <strong>marc daurat</strong> que ja eren a la taula.
+            </>
+          ) : (
+            <>. La resta de la taula es quedava com estava.</>
+          )}
         </p>
       )}
 

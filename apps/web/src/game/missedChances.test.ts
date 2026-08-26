@@ -1,7 +1,17 @@
-import { applyMove, type GameState, type Meld, type NumberTile, type TileColor } from '@remigi/core';
+import {
+  applyMove,
+  type GameState,
+  type Meld,
+  type NumberTile,
+  type Tile,
+  type TileColor,
+} from '@remigi/core';
 import { describe, expect, it } from 'vitest';
 import {
+  addMiss,
   detectMissedChance,
+  missKey,
+  movedBoardTileIds,
   solutionTileIds,
   stateFromMiss,
   validMisses,
@@ -13,7 +23,7 @@ function t(color: TileColor, value: number, copy = 'a'): NumberTile {
   return { id: `${color}-${value}-${copy}`, kind: 'number', color, value };
 }
 
-function state(rack: NumberTile[], board: Meld[] = [], hasOpened = true): GameState {
+function state(rack: Tile[], board: Meld[] = [], hasOpened = true): GameState {
   return {
     seed: 1,
     bag: [],
@@ -64,6 +74,56 @@ describe('detecció d’oportunitats perdudes', () => {
     expect(miss).not.toBeNull();
     expect(miss!.tilesUsed).toBe(1);
     expect([...solutionTileIds(miss!)]).toEqual(['red-10-a']);
+  });
+
+  it('la mateixa jugada perduda no s’apunta dos cops: només el primer torn', () => {
+    const game = state([t('red', 9), t('blue', 9), t('black', 9), t('orange', 13)]);
+    const primera = detectMissedChance(game, 0)!;
+    // El torn següent, amb una fitxa robada que no hi fa res, l'error és el mateix.
+    const despres = state([...game.players[0].rack, t('black', 2, 'b')]);
+    const repetida = detectMissedChance({ ...despres, turn: 9 }, 0)!;
+    expect(missKey(repetida)).toBe(missKey(primera));
+
+    let misses = addMiss([], primera);
+    misses = addMiss(misses, repetida);
+    expect(misses).toEqual([primera]);
+
+    // Però si l'oportunitat creix (s'hi suma un altre error), sí que s'apunta.
+    const creix = state([...game.players[0].rack, t('orange', 9)]);
+    const quarteta = detectMissedChance({ ...creix, turn: 11 }, 0)!;
+    expect(quarteta.tilesUsed).toBe(4);
+    misses = addMiss(misses, quarteta);
+    expect(misses.map((m) => m.turn)).toEqual([7, 11]);
+  });
+
+  it('distingeix les fitxes de la taula que la jugada recol·locava', () => {
+    // Allargar una escala no mou res: les fitxes velles es queden on eren.
+    const allarga = detectMissedChance(
+      state([t('red', 10), t('blue', 2)], [[t('red', 7), t('red', 8), t('red', 9)]]),
+      0,
+    )!;
+    expect(movedBoardTileIds(allarga.board, allarga.solution).size).toBe(0);
+
+    // Reordenar la taula sí: el 7 vermell se'n va a un grup i l'escala es refà.
+    const reordena = detectMissedChance(
+      state(
+        [t('blue', 7), t('black', 7), t('red', 10), t('red', 11)],
+        [[t('red', 7), t('red', 8), t('red', 9)]],
+      ),
+      0,
+    )!;
+    expect(reordena.tilesUsed).toBe(4);
+    expect([...solutionTileIds(reordena)].sort()).toEqual([
+      'black-7-a',
+      'blue-7-a',
+      'red-10-a',
+      'red-11-a',
+    ]);
+    expect([...movedBoardTileIds(reordena.board, reordena.solution)].sort()).toEqual([
+      'red-7-a',
+      'red-8-a',
+      'red-9-a',
+    ]);
   });
 
   it('el motor accepta la solució guardada tal qual (cap regla duplicada)', () => {

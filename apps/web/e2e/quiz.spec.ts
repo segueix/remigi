@@ -6,36 +6,45 @@ import { baixaGrup, entraAmbPartida, f } from './ajudants';
  * final ho diu, i el quiz torna a posar aquella taula i aquell faristol perquè
  * la jugada la trobis tu (o te l'ensenyi, sobre el mateix tauler).
  *
- * La partida preparada acaba de seguida: el sac té una sola fitxa i el bot no
- * pot jugar mai, així que robar i passar la deixen bloquejada en dos torns del
- * jugador — tots dos amb un grup de nous a la mà que es podia baixar.
+ * La partida preparada dona al jugador tres ocasions de robar amb el grup de
+ * nous a la mà: la segona és el mateix error (no s'apunta) i la tercera és més
+ * grossa (mentrestant ha robat el quart nou), així que el repàs en té DUES.
+ * El bot no pot jugar mai, i quan el sac s'acaba la partida queda bloquejada.
  */
 test('robar havent-hi jugada acaba en quiz sobre el mateix tauler', async ({ page }) => {
   await entraAmbPartida(page, {
     rack: [f('red', 9), f('blue', 9), f('black', 9), f('orange', 13)],
     board: [],
     haObert: true,
+    // Per ordre de robar: el jugador, el bot, i el quart nou per al jugador.
+    sac: [f('black', 2, 'b'), f('blue', 13, 'b'), f('orange', 9)],
   });
 
-  // Primer torn: robar tot i tenir el grup de nous és la primera oportunitat…
-  await page.getByRole('button', { name: 'Robar fitxa' }).click();
+  const roba = page.getByRole('button', { name: 'Robar fitxa' });
+  const misses = () =>
+    page.evaluate(() => {
+      const saved = localStorage.getItem('remigi:game');
+      return saved ? (JSON.parse(saved).misses?.length ?? 0) : -1;
+    });
 
-  // …i queda desada amb la partida, per si es tanca la pestanya a mitges.
-  await expect
-    .poll(() =>
-      page.evaluate(() => {
-        const saved = localStorage.getItem('remigi:game');
-        return saved ? (JSON.parse(saved).misses?.length ?? 0) : -1;
-      }),
-    )
-    .toBe(1);
+  // Primer torn: robar tot i tenir el grup de nous és la primera oportunitat,
+  // i queda desada amb la partida, per si es tanca la pestanya a mitges.
+  await roba.click();
+  await expect.poll(misses).toBe(1);
 
-  // Segon torn (el bot ha passat, el sac és buit): passar és la segona.
+  // Segon torn: el mateix error exacte NO s'apunta una altra vegada.
+  await expect(roba).toBeEnabled();
+  await roba.click();
+  await expect.poll(() => page.locator('.rack .tile').count()).toBe(6);
+  await expect.poll(misses).toBe(1);
+
+  // Tercer torn: ara el quart nou és a la mà, l'error ha crescut i sí que
+  // s'apunta. El sac és buit: passar bloqueja la partida i s'acaba.
   const passa = page.getByRole('button', { name: 'Passar torn' });
   await expect(passa).toBeEnabled();
   await passa.click();
 
-  // La partida queda bloquejada i el final ofereix el repàs, amb el compte.
+  // El final ofereix el repàs comptant errors diferents, no torns robats.
   const crida = page.locator('.quiz-crida');
   await expect(crida).toContainText('2 cops has robat fitxa quan hi havia jugada');
   await page.getByRole('button', { name: 'Fes el quiz del repàs' }).click();
@@ -51,22 +60,27 @@ test('robar havent-hi jugada acaba en quiz sobre el mateix tauler', async ({ pag
   await page.getByRole('button', { name: 'Comprova la jugada' }).click();
   await expect(page.locator('.error')).toContainText('com a mínim 3');
 
-  // Completada, el motor la dona per bona i el quiz ho celebra.
+  // Completada, el motor la dona per bona: les fitxes baixades, amb marc.
   await page.locator('.rack .tile[aria-label="9 negre"]').click();
   await page.locator('.board .meld').first().click();
   await page.getByRole('button', { name: 'Comprova la jugada' }).click();
   await expect(page.locator('.hint-be')).toContainText('L’has trobada!');
   await expect(page.locator('.hint-be')).toContainText('tantes com la millor jugada');
-  await expect(page.locator('.quiz .board .tile.highlighted')).toHaveCount(3);
+  await expect(page.locator('.quiz .board .tile.played')).toHaveCount(3);
+  await expect(page.locator('.quiz .board .tile.moved')).toHaveCount(0);
 
-  // Oportunitat 2: aquesta s'ensenya en comptes de trobar-la. Les fitxes de la
-  // solució apareixen il·luminades al tauler i desapareixen del faristol.
+  // Oportunitat 2 (el grup de quatre): aquesta s'ensenya en comptes de
+  // trobar-la. Les fitxes de la solució cauen al tauler amb el marc turquesa
+  // de «venia del faristol» i desapareixen del faristol.
   await page.getByRole('button', { name: 'Següent' }).click();
   await expect(page.locator('.quiz-cap')).toContainText('oportunitat 2 de 2');
-  await expect(page.locator('.quiz .rack .tile')).toHaveCount(5);
+  await expect(page.locator('.quiz-cap')).toContainText('al torn 9');
+  await expect(page.locator('.quiz .rack .tile')).toHaveCount(6);
   await page.getByRole('button', { name: 'Mostra la solució' }).click();
-  await expect(page.locator('.hint-be')).toContainText('es podien baixar les 3 fitxes');
-  await expect(page.locator('.quiz .board .tile.highlighted')).toHaveCount(3);
+  await expect(page.locator('.hint-be')).toContainText('es podien baixar les 4 fitxes');
+  await expect(page.locator('.hint-be')).toContainText('marc turquesa');
+  await expect(page.locator('.quiz .board .tile.played')).toHaveCount(4);
+  await expect(page.locator('.quiz .board .tile.moved')).toHaveCount(0);
   await expect(page.locator('.quiz .rack .tile')).toHaveCount(2);
 
   // El resum del repàs: una de trobada, una d'ensenyada. I tornar al final.
@@ -76,6 +90,36 @@ test('robar havent-hi jugada acaba en quiz sobre el mateix tauler', async ({ pag
   await page.getByRole('button', { name: 'Torna al resum' }).click();
   await expect(page.getByRole('button', { name: 'Una altra partida' })).toBeVisible();
   await expect(crida).toBeVisible();
+});
+
+/**
+ * Quan la jugada que hi havia demanava desfer una jugada de la taula, el marc
+ * ho diu: turquesa per a les fitxes que venien del faristol i daurat per a les
+ * de la taula que es recol·locaven. Aquí l'escala vermella 7-8-9 s'ha de
+ * desfer per fer el grup de sets i l'escala 8-9-10-11.
+ */
+test('la solució distingeix amb marcs les teves fitxes de les recol·locades', async ({ page }) => {
+  await entraAmbPartida(page, {
+    rack: [f('blue', 7), f('black', 7), f('red', 10), f('red', 11)],
+    board: [[f('red', 7), f('red', 8), f('red', 9)]],
+    haObert: true,
+  });
+
+  await page.getByRole('button', { name: 'Robar fitxa' }).click();
+  const passa = page.getByRole('button', { name: 'Passar torn' });
+  await expect(passa).toBeEnabled();
+  await passa.click();
+
+  await expect(page.locator('.quiz-crida')).toContainText('1 cop has robat fitxa');
+  await page.getByRole('button', { name: 'Fes el quiz del repàs' }).click();
+  await page.getByRole('button', { name: 'Mostra la solució' }).click();
+
+  await expect(page.locator('.quiz .board .meld')).toHaveCount(2);
+  await expect(page.locator('.quiz .board .tile.played')).toHaveCount(4);
+  await expect(page.locator('.quiz .board .tile.moved')).toHaveCount(3);
+  await expect(page.locator('.hint-be')).toContainText(
+    'recol·locant les 3 de marc daurat que ja eren a la taula',
+  );
 });
 
 /**

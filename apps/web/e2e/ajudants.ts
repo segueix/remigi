@@ -114,7 +114,14 @@ export function f(color: string, value: number, copia: 'a' | 'b' = 'a'): Fitxa {
  */
 export async function entraAmbPartida(
   page: import('@playwright/test').Page,
-  partida: { rack: Fitxa[]; board?: Fitxa[][]; haObert?: boolean; autors?: [string, number][] },
+  partida: {
+    rack: Fitxa[];
+    board?: Fitxa[][];
+    haObert?: boolean;
+    autors?: [string, number][];
+    /** Fitxes del sac, en ordre de robar. Per defecte, una de sola. */
+    sac?: Fitxa[];
+  },
 ): Promise<void> {
   // La partida s'injecta abans que l'app arrenqui (vegeu `comencaDeZero`).
   await page.addInitScript(
@@ -140,7 +147,7 @@ export async function entraAmbPartida(
           owners: dades.autors,
           game: {
             seed: 1,
-            bag: [{ id: 'black-1-b', kind: 'number', color: 'black', value: 1 }],
+            bag: dades.sac,
             board: dades.board,
             players: [
               { id: 'p1', name: 'Daniel', kind: 'human', rack: dades.rack, hasOpened: dades.haObert },
@@ -167,6 +174,7 @@ export async function entraAmbPartida(
         board: partida.board ?? [],
         haObert: partida.haObert ?? false,
         autors: partida.autors ?? [],
+        sac: partida.sac ?? [{ id: 'black-1-b', kind: 'number', color: 'black', value: 1 }],
       },
     ],
   );

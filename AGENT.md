@@ -1171,6 +1171,35 @@ seleccionat, i que el camp del nom del menú continua sent `text`.
   sac (`stateFromMiss`) passa per `applyMove` sense tocs: només `createGame`
   exigeix 2+ jugadors.
 
+### El repàs sense repeticions i amb marcs d'origen ✅ Feta (2026-08-26)
+
+- [x] **La mateixa jugada perduda no s'apunta dos cops** (`addMiss`): robar
+      torn rere torn amb el mateix grup a la mà apuntava el mateix error cada
+      vegada. La identitat d'una oportunitat és el conjunt de fitxes del
+      faristol que baixava (`missKey`); es guarda el primer torn, i els
+      següents només si la jugada possible ha canviat (s'hi ha sumat una altra
+      errada o la taula permet més coses).
+- [x] **Marcs d'origen al quiz**: quan la jugada està feta (trobada o
+      ensenyada), cada fitxa porta marc segons d'on venia — turquesa
+      (`--accent-taula`, el color de les teves jugades) per a les del
+      faristol, daurat sòlid (`--robada`) per a les que ja eren a la taula i
+      la jugada recol·locava; les que no es movien no porten res. La regla de
+      «moguda» (`movedBoardTileIds`): una fitxa no s'ha mogut si la seva
+      jugada d'origen sobreviu sencera dins de la mateixa jugada nova (encara
+      que creixi); si s'ha desfet, totes les seves fitxes compten com a
+      mogudes. Els textos del quiz diuen els colors i els comptes.
+- [x] **Ferramenta**: `TileView` accepta `mark` ('played' | 'moved', amb nota
+      per als lectors de pantalla) i `MeldView`/`BoardView` passen un
+      `marks: Map`. El sac de `entraAmbPartida` (e2e) ara es pot triar (`sac`).
+
+**Criteris d'acceptació (verificats)**: 174 tests (dedupe amb creixement
+d'oportunitat, allargar-no-mou, reordenació que mou l'escala sencera) i 79
+proves de navegador: el camí llarg ara roba tres cops (el segon idèntic no
+s'apunta: 2 al repàs, no 3) i comprova els marcs `played`/`moved` a la
+trobada i a la solució; una prova nova força la reordenació (grup de sets +
+escala 8-11 desfent la 7-8-9) i comprova 4 turqueses, 3 daurades i la
+llegenda. Captures amb els dos marcs.
+
 ---
 
 ## Riscos coneguts (a vigilar quan toqui)

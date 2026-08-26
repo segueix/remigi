@@ -57,6 +57,49 @@ export function solutionTileIds(miss: MissedChance): Set<string> {
   );
 }
 
+/** Identitat d'una oportunitat: les fitxes del faristol que baixava. */
+export function missKey(miss: MissedChance): string {
+  return [...solutionTileIds(miss)].sort().join('|');
+}
+
+/**
+ * Afegeix una oportunitat només si diu res de nou. Robar torn rere torn amb la
+ * mateixa jugada a la mà apuntaria el mateix error cada vegada i el repàs es
+ * faria pesat: es guarda el primer cop, i els torns següents només si la
+ * jugada possible ja no és la mateixa (perquè s'hi ha sumat una altra errada,
+ * o la taula ha canviat el que es podia fer).
+ */
+export function addMiss(current: MissedChance[], miss: MissedChance): MissedChance[] {
+  const key = missKey(miss);
+  return current.some((existing) => missKey(existing) === key) ? current : [...current, miss];
+}
+
+/**
+ * Fitxes de la taula que la jugada recol·locava. Una fitxa «no es mou» si la
+ * seva jugada d'origen sobreviu sencera dins de la mateixa jugada nova (encara
+ * que s'hi afegeixin fitxes); si la jugada d'on venia s'ha desfet o repartit,
+ * totes les seves fitxes compten com a mogudes, que és el que es veu quan es
+ * desfà un grup damunt la taula de debò.
+ */
+export function movedBoardTileIds(before: Meld[], after: Meld[]): Set<string> {
+  const originalMeldOf = new Map<string, Set<string>>();
+  for (const meld of before) {
+    const ids = new Set(meld.map((tile) => tile.id));
+    for (const id of ids) originalMeldOf.set(id, ids);
+  }
+
+  const moved = new Set<string>();
+  for (const meld of after) {
+    const ids = new Set(meld.map((tile) => tile.id));
+    for (const id of ids) {
+      const original = originalMeldOf.get(id);
+      if (!original) continue; // venia del faristol, no de la taula
+      if (![...original].every((companion) => ids.has(companion))) moved.add(id);
+    }
+  }
+  return moved;
+}
+
 /**
  * Una partida d'un sol jugador i sense sac, congelada al moment de
  * l'oportunitat. El quiz hi valida els intents amb el mateix `applyMove` de

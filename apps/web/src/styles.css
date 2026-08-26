@@ -877,6 +877,22 @@ input {
   outline-offset: 1px;
 }
 
+/*
+ * Els marcs d'origen del repàs: turquesa per a les fitxes que baixaven del
+ * faristol (el color de les teves jugades) i daurat sòlid per a les que ja
+ * eren a la taula però la jugada recol·locava. Són `outline` com la robada, i
+ * no xoquen amb el focus perquè al repàs aquestes fitxes no es poden triar.
+ */
+.tile.played {
+  outline: 2px solid var(--accent-taula);
+  outline-offset: 1px;
+}
+
+.tile.moved {
+  outline: 2px solid var(--robada);
+  outline-offset: 1px;
+}
+
 @keyframes acabada-de-jugar {
   from {
     box-shadow: 0 0 0 3px var(--accent-taula);
