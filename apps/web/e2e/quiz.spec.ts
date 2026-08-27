@@ -82,6 +82,8 @@ test('robar havent-hi jugada acaba en quiz sobre el mateix tauler', async ({ pag
   await page.locator('.rack .tile[aria-label^="9 negre"]').click();
   await page.locator('.board .meld').first().click();
   await page.getByRole('button', { name: 'Comprova la jugada' }).click();
+  // El gran símbol verd de correcte, al mig de la pantalla.
+  await expect(page.locator('.quiz-encert')).toBeVisible();
   await expect(page.locator('.hint-be')).toContainText('Perfecte!');
   await expect(page.locator('.quiz .board .tile.correct')).toHaveCount(3);
   await expect(page.locator('.quiz .board .tile.wrong')).toHaveCount(0);
@@ -242,6 +244,7 @@ test('una resposta correcta per un altre camí també és perfecta', async ({ pa
   }
   await page.getByRole('button', { name: 'Comprova la jugada' }).click();
 
+  await expect(page.locator('.quiz-encert')).toBeVisible();
   await expect(page.locator('.hint-be')).toContainText('Perfecte!');
   await expect(page.locator('.hint-be')).toContainText('un altre camí igual de bo');
   await expect(page.locator('.quiz .board .tile.correct')).toHaveCount(6);

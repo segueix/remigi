@@ -14,7 +14,6 @@ import { RackView, type Order } from '../components/RackView';
 import { TileView } from '../components/TileView';
 import { useDragTile } from '../game/useDragTile';
 import { botPersona } from '../game/bots';
-import { meldAuthors } from '../game/meldOwners';
 import type { MissedChance } from '../game/missedChances';
 import { MIN_JEROGLIFICS, useJeroglifics } from '../state/useJeroglifics';
 import { QuizScreen } from './QuizScreen';
@@ -78,14 +77,14 @@ export function GameScreen({
   // La partida es desa a cada moviment, i s'esborra quan s'acaba: així es pot
   // tancar la pestanya a mitges i continuar-la després.
   const { persist, clear } = savedGame;
-  const { meldOwners, misses } = handle;
+  const { tileOwners, misses } = handle;
   useEffect(() => {
     if (game.status === 'playing') {
-      persist({ setup: currentSetup, game, owners: [...meldOwners], misses });
+      persist({ setup: currentSetup, game, owners: [...tileOwners], misses });
     } else {
       clear();
     }
-  }, [game, currentSetup, meldOwners, misses, persist, clear]);
+  }, [game, currentSetup, tileOwners, misses, persist, clear]);
 
   /* Cada jeroglífic nou de la partida va també a la col·lecció del menú. */
   const { add: addJeroglifics } = jeroglifics;
@@ -129,16 +128,13 @@ export function GameScreen({
   }, [startNewGame, nextOpponents, currentSetup]);
 
   /*
-   * La taula que es veu és la del torn en curs mentre jugues tu, i la del motor
-   * la resta del temps. Els marcs de color surten d'aquesta mateixa taula: una
-   * jugada que toques deixa de coincidir amb la que hi havia i perd el color a
-   * l'instant, que és justament el senyal que se'n vol.
+   * La taula que es veu és la del torn en curs mentre jugues tu, i la del
+   * motor la resta del temps. Els marcs de color van fitxa a fitxa (les que
+   * el bot de l'últim moviment ha posat) i segueixen la fitxa per
+   * identificador: moure-la durant el teu torn no li treu el marc, perquè
+   * continua sent la fitxa que el bot va posar.
    */
   const board = draft ? draft.board : game.board;
-  const authors = useMemo(
-    () => meldAuthors(board, meldOwners, game.players),
-    [board, meldOwners, game.players],
-  );
 
   /**
    * Un sol gest per a tot: si no hi ha res triat, el clic tria la fitxa; si n'hi
@@ -319,7 +315,7 @@ export function GameScreen({
         draggingTileId={drag.dragging?.tileId ?? null}
         over={drag.dragging?.over ?? null}
         highlighted={highlighted}
-        authors={authors}
+        bots={tileOwners}
         interactive={isHumanTurn}
         onTileClick={handleTileClick}
         onTilePointerDown={drag.start}

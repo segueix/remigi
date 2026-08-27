@@ -1305,6 +1305,38 @@ amb una de nova: l'escala de sis partida en dues de tres és «Perfecte!» amb
 recol·locació comprova que durant la prova el tauler no porta cap marc
 (0 daurats, 0 turqueses a la taula) i que la solució ensenyada sí.
 
+### El ✓ verd d'encert, i marcs fitxa a fitxa només per als bots ✅ Feta (2026-08-27)
+
+- [x] **Símbol verd de correcte al mig de la pantalla** (`.quiz-encert`): en
+      resoldre un jeroglífic (legal + tantes fitxes com la millor jugada),
+      un gran ✓ dins d'un cercle verd apareix centrat, com l'avís de torn
+      (fix, sense clics, decoratiu), amb un pop d'entrada i esvaïment sol
+      (1,5 s). Es neteja en canviar de jeroglífic o mirar la solució.
+- [x] **Marcs del tauler, fitxa a fitxa i només dels bots**
+      (`meldOwners.ts` reescrit): fora els marcs de jugada sencera
+      (`.meld.owned`); ara cada fitxa que un bot acaba de posar porta el marc
+      del seu color individualment (`.board .tile[data-bot]`) — si només ha
+      allargat una escala, només es marca la fitxa afegida. La clau és
+      l'identificador de la fitxa, així que el marc la segueix encara que la
+      taula es reordeni o el jugador la mogui al seu torn. Les jugades del
+      jugador humà no es marquen (només netegen les marques velles), i robar
+      o passar no esborra res. El desat (`SavedGame.owners`) conserva la
+      forma `[string, number][]`: claus velles de jugada simplement no
+      casen i les partides antigues es reprenen sense marc.
+
+### Problemes trobats
+
+- Cap; el canvi de granularitat va sortir net perquè el color per `--marc`
+  ja anava per selector d'atribut (`.board [data-bot='N']`), que serveix
+  igual per a fitxes que per a jugades.
+
+**Criteris d'acceptació (verificats)**: 172 tests (updateOwners reescrit:
+allargar marca només l'afegida, l'humà neteja, la reordenació del bot marca
+només les de la seva mà) i 85 proves de navegador reescrites: un sol bot per
+moviment i cap `.meld[data-bot]`, les teves jugades sense marc, la partida
+represa amb autors per fitxa, el marc que segueix la fitxa quan tu jugues, i
+el `.quiz-encert` visible en resoldre (al camí normal i a l'alternatiu).
+
 ---
 
 ## Riscos coneguts (a vigilar quan toqui)

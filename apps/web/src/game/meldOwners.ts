@@ -1,77 +1,41 @@
-import type { Meld, PlayerState } from '@remigi/core';
+import type { Meld } from '@remigi/core';
 
 /**
- * Qui ha tocat cada jugada de la taula per últim cop.
+ * Qui ha posat cada fitxa de la taula: només els bots, i només l'últim
+ * moviment que ha tocat la taula.
  *
- * El motor no ho desa: per a ell una jugada són tres fitxes vàlides i prou, i
- * `packages/core` es manté pur. Però qui les hi ha posat és informació útil per
- * seguir la partida, així que es dedueix aquí comparant la taula d'abans i la
- * de després de cada moviment.
+ * El motor no ho desa: per a ell una fitxa a la taula és una fitxa i prou, i
+ * `packages/core` es manté pur. Però quines fitxes acaba de posar un bot és
+ * informació útil per seguir la partida, així que es dedueix aquí comparant
+ * la taula d'abans i la de després de cada moviment.
  *
- * La clau és **la jugada mateixa** —els identificadors de les seves fitxes,
- * ordenats— i no la posició: la taula es reordena sencera a cada jugada, i una
- * jugada que no ha canviat ha de conservar el seu autor encara que hagi canviat
- * de lloc. Com que cada fitxa té un identificador únic, dues jugades no poden
- * compartir clau mai.
+ * La clau és **l'identificador de la fitxa**: el marc marca fitxes concretes,
+ * no jugades senceres — un bot que allarga una escala només marca la fitxa
+ * que hi ha afegit — i segueix la fitxa encara que la taula es reordeni o el
+ * jugador la mogui durant el seu torn (continua sent la que el bot va posar).
  */
-export type MeldOwners = ReadonlyMap<string, number>;
-
-/** Identitat d'una jugada: les seves fitxes, sense importar-ne l'ordre. */
-export function meldKey(meld: Meld): string {
-  return meld
-    .map((tile) => tile.id)
-    .sort()
-    .join(' ');
-}
+export type TileOwners = ReadonlyMap<string, number>;
 
 /**
- * Recalcula els autors després d'un moviment del jugador `playerIndex`.
+ * Recalcula les marques després d'un moviment del jugador `playerIndex`.
  *
- * Només es marca **l'últim moviment**: les jugades noves o modificades (que
- * són claus noves) passen a ser de qui acaba de jugar, i totes les marques
- * anteriors s'esborren. Així el marc respon a la pregunta que importa —«què
- * ha canviat des que no miro?»— en comptes d'anar acumulant colors per tota
- * la taula.
- *
- * Un moviment que no toca la taula (robar o passar) no esborra res: l'últim
- * moviment amb fitxes continua sent el d'abans, i el seu marc es queda.
+ * Només es marca **l'últim moviment amb fitxes**: les que acaba de posar un
+ * bot substitueixen totes les marques d'abans. Les jugades del jugador humà
+ * (sempre al lloc 0) no es marquen: el seu moviment només neteja, que ell ja
+ * sap què acaba de fer. Robar o passar no toca la taula i no esborra res.
  */
 export function updateOwners(
-  previous: MeldOwners,
+  previous: TileOwners,
   previousBoard: readonly Meld[],
   nextBoard: readonly Meld[],
   playerIndex: number,
-): MeldOwners {
-  const before = new Set(previousBoard.map(meldKey));
-  const changed = nextBoard.filter((meld) => !before.has(meldKey(meld)));
-  if (changed.length === 0) return previous;
-  return new Map(changed.map((meld) => [meldKey(meld), playerIndex]));
-}
-
-/** Bot autor d'una jugada: el número que li dona color. */
-export interface MeldAuthor {
-  /** Índex del jugador, que també és el número de bot (l'humà és sempre el 0). */
-  slot: number;
-  name: string;
-}
-
-/**
- * Autor de cada jugada de la taula, alineat per posició i llest per pintar.
- *
- * En tenen els bots i també el jugador humà (les jugades que acabes de baixar
- * es marquen amb el teu color); les d'autor desconegut van sense marc. Tocar
- * una jugada durant el torn li canvia la clau, així que perd el marc a
- * l'instant, com sempre.
- */
-export function meldAuthors(
-  board: readonly Meld[],
-  owners: MeldOwners,
-  players: readonly PlayerState[],
-): (MeldAuthor | null)[] {
-  return board.map((meld) => {
-    const slot = owners.get(meldKey(meld));
-    if (slot === undefined) return null;
-    const player = players[slot];
-    return player ? { slot, name: player.name } : null;
-  });
+): TileOwners {
+  const before = new Set(previousBoard.flat().map((tile) => tile.id));
+  const added = nextBoard
+    .flat()
+    .map((tile) => tile.id)
+    .filter((id) => !before.has(id));
+  if (added.length === 0) return previous;
+  if (playerIndex === 0) return new Map();
+  return new Map(added.map((id) => [id, playerIndex]));
 }

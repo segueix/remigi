@@ -1,5 +1,5 @@
 import { RulesError, applyMove, type Tile } from '@remigi/core';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { BoardView } from '../components/BoardView';
 import { CheckIcon, EyeIcon, NextIcon, PencilIcon, RedoIcon, UndoIcon } from '../components/icons';
 import { TileView, type TileMark } from '../components/TileView';
@@ -61,6 +61,14 @@ export function QuizScreen({ misses, playerName, closeLabel, onClose }: Props) {
   /* Cada oportunitat compta com a trobada un sol cop, corregeixis el que corregeixis. */
   const [scored, setScored] = useState(false);
   const [done, setDone] = useState(false);
+  /* El gran símbol verd del mig de la pantalla, quan resols el jeroglífic. */
+  const [celebrate, setCelebrate] = useState(false);
+
+  useEffect(() => {
+    if (!celebrate) return;
+    const timer = setTimeout(() => setCelebrate(false), 1500);
+    return () => clearTimeout(timer);
+  }, [celebrate]);
 
   const miss = misses[Math.min(index, misses.length - 1)];
   const attempt = history[cursor];
@@ -118,6 +126,8 @@ export function QuizScreen({ misses, playerName, closeLabel, onClose }: Props) {
       // El motor de la partida és qui valida: cap regla duplicada aquí.
       applyMove(stateFromMiss(miss, playerName), toMove(attempt));
       setPhase('trobada');
+      // Resolt de debò (tantes fitxes com la millor jugada): el gran ✓ verd.
+      setCelebrate(playedTileIds(attempt).size >= miss.tilesUsed);
       if (!scored) {
         setFound((count) => count + 1);
         setScored(true);
@@ -132,6 +142,7 @@ export function QuizScreen({ misses, playerName, closeLabel, onClose }: Props) {
   const reveal = useCallback(() => {
     if (phase === 'prova') setShown((count) => count + 1);
     setPhase('ensenyada');
+    setCelebrate(false);
     setError(null);
     setSelectedTileId(null);
   }, [phase]);
@@ -149,6 +160,7 @@ export function QuizScreen({ misses, playerName, closeLabel, onClose }: Props) {
       setHistory([startTurn(stateFromMiss(misses[nextIndex], playerName), 0)]);
       setCursor(0);
       setScored(false);
+      setCelebrate(false);
       setSelectedTileId(null);
       setError(null);
     },
@@ -479,6 +491,15 @@ export function QuizScreen({ misses, playerName, closeLabel, onClose }: Props) {
           )}
         </div>
       </div>
+
+      {/* L'encert, al mig de la pantalla: un gran ✓ verd que s'apaga sol. */}
+      {celebrate && (
+        <div className="quiz-encert" aria-hidden="true">
+          <div className="quiz-encert-cercle">
+            <CheckIcon />
+          </div>
+        </div>
+      )}
 
       {/* Còpia que segueix el punter, com al joc. */}
       {drag.dragging && draggedTile && (
