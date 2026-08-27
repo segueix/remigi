@@ -1337,6 +1337,27 @@ moviment i cap `.meld[data-bot]`, les teves jugades sense marc, la partida
 represa amb autors per fitxa, el marc que segueix la fitxa quan tu jugues, i
 el `.quiz-encert` visible en resoldre (al camí normal i a l'alternatiu).
 
+### El «glitch» de robar i rebre quatre fitxes ✅ Feta (2026-08-27)
+
+- [x] **Diagnòstic**: el motor roba sempre exactament una fitxa (cobert pels
+      tests de nucli). El que passava: «Robar fitxa» estava actiu amb
+      l'esborrany a mitges, la robada s'aplicava sobre l'estat del motor
+      (que no veu l'esborrany) i el torn següent totes les fitxes que el
+      jugador tenia col·locades sense acabar la jugada tornaven de cop al
+      faristol juntament amb la robada — la il·lusió de «m'han donat 4 o 5
+      fitxes noves», sobretot al final de partida, quan es fan proves.
+- [x] **Arranjament** (`useGame.draw`): amb canvis a l'esborrany
+      (`hasChanges`), robar no roba — surt l'avís «Tens fitxes a mig
+      col·locar: acaba la jugada o desfés els canvis abans de robar», i no
+      es perd ni es guanya res, com a la taula de debò. Reordenar només
+      fitxes de la taula (sense baixar-ne cap) no bloqueja: allà robar
+      restaura la taula i no toca el faristol.
+
+**Criteris d'acceptació (verificats)**: 171 tests i 87 proves de navegador,
+amb la regressió nova: col·locar una fitxa, robar → avís i res no es mou
+(faristol 3, taula 1, torn teu); desfer canvis i robar → una fitxa i només
+una, amb la marca de robada.
+
 ---
 
 ## Riscos coneguts (a vigilar quan toqui)
