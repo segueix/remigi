@@ -1358,6 +1358,25 @@ amb la regressió nova: col·locar una fitxa, robar → avís i res no es mou
 (faristol 3, taula 1, torn teu); desfer canvis i robar → una fitxa i només
 una, amb la marca de robada.
 
+### Invariants del motor i actualització automàtica de l'app ✅ Feta (2026-08-27)
+
+- [x] **Prova d'invariants** (`core/test/invariants.test.ts`): 5 partides
+      senceres simulades (3 jugadors, expert amb reordenació inclòs) i, a
+      cada moviment: robar dona exactament una fitxa (cap amb el sac buit) al
+      faristol de qui roba i a ningú més, el sac baixa d'una, i el conjunt
+      global de fitxes és sempre el mateix — cap duplicada, cap perduda. Si
+      això passa, qualsevol «m'han donat quatre fitxes» és percepció de la
+      interfície, no del motor.
+- [x] **L'app instal·lada s'actualitza sola** (`main.tsx`): el registre del
+      service worker ara comprova si hi ha versió nova cada cop que l'app
+      torna a ser visible (`registration.update()` a `visibilitychange`), i
+      quan la versió nova pren el control (skipWaiting + claim) la pàgina es
+      recarrega un sol cop — la partida es desa a cada moviment, així que es
+      reprèn on era. El primer registre de la vida no recarrega
+      (`hadController`). Abans, una PWA oberta dies seguits no rebia mai les
+      correccions publicades: el probable motiu que el glitch de robar «tornés
+      a passar» després d'arreglat.
+
 ---
 
 ## Riscos coneguts (a vigilar quan toqui)
