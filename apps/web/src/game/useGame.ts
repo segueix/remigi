@@ -8,7 +8,7 @@ import {
 } from '@remigi/core';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { pickPersonas } from './bots';
-import { addMiss, detectMissedChance, type MissedChance } from './missedChances';
+import { addMiss, detectMissedChances, type MissedChance } from './missedChances';
 import { updateOwners, type MeldOwners } from './meldOwners';
 import {
   hasChanges,
@@ -185,15 +185,17 @@ export function useGame(
       const before = new Set(game.players[player].rack.map((tile) => tile.id));
       const next = applyMove(game, { type: 'draw' });
       /*
-       * Robar (o passar) havent-hi jugada possible és una oportunitat perduda:
-       * se'n guarda el moment per al repàs del final (sense repetir la mateixa
-       * jugada torn rere torn, vegeu `addMiss`). Només compta per a l'humà,
-       * que és l'únic que roba des d'aquí: els bots ja roben expressament quan
-       * el seu nivell «no veu» la jugada.
+       * Robar (o passar) havent-hi jugada que valgués la pena és deixar
+       * escapar jeroglífics: se'n guarden els grups interrelacionats (sense
+       * repetir el mateix grup torn rere torn, vegeu `addMiss`). Només compta
+       * per a l'humà, que és l'únic que roba des d'aquí: els bots ja roben
+       * expressament quan el seu nivell «no veu» la jugada.
        */
       if (game.players[player].kind === 'human') {
-        const missed = detectMissedChance(game, player);
-        if (missed) setMisses((current) => addMiss(current, missed));
+        const found = detectMissedChances(game, player);
+        if (found.length > 0) {
+          setMisses((current) => found.reduce((acc, miss) => addMiss(acc, miss), current));
+        }
       }
       /*
        * Amb el sac buit, «robar» és passar torn: no hi ha cap fitxa nova, i

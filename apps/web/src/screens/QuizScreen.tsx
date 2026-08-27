@@ -26,7 +26,8 @@ import { useDragTile } from '../game/useDragTile';
 interface Props {
   misses: MissedChance[];
   playerName: string;
-  /** Torna al resum del final de partida. */
+  /** Rètol del botó de sortir: on tornes depèn d'on vens (resum o partida). */
+  closeLabel: string;
   onClose(): void;
 }
 
@@ -34,14 +35,14 @@ interface Props {
 type Phase = 'prova' | 'trobada' | 'ensenyada';
 
 /**
- * El quiz del repàs: cada cop que vas robar havent-hi jugada, la taula i el
+ * Els jeroglífics: cada cop que vas robar havent-hi una jugada que valia la pena, la taula i el
  * faristol tornen a ser exactament com eren i la jugada és teva per trobar.
  * Les fitxes que calia moure van marcades i un comptador diu quantes queden;
  * es juga igual que la partida (tocar o arrossegar), amb desfer i refer pas a
  * pas. «Comprova» pregunta al motor de sempre i després corregeix contra la
  * millor jugada: marc verd les fitxes ben col·locades, vermell les que no.
  */
-export function QuizScreen({ misses, playerName, onClose }: Props) {
+export function QuizScreen({ misses, playerName, closeLabel, onClose }: Props) {
   const [index, setIndex] = useState(0);
   const [phase, setPhase] = useState<Phase>('prova');
   /*
@@ -174,16 +175,15 @@ export function QuizScreen({ misses, playerName, onClose }: Props) {
           <span className="final-emoji" aria-hidden="true">
             {found === misses.length ? '🏅' : '🔍'}
           </span>
-          <h2>Repàs acabat</h2>
+          <h2>Jeroglífics fets</h2>
           <p className="quiz-resultat">
-            Has trobat <strong>{found}</strong> de <strong>{misses.length}</strong>{' '}
-            {misses.length === 1 ? 'jugada' : 'jugades'}
-            {shown > 0 && <> ({shown} {shown === 1 ? 'ensenyada' : 'ensenyades'})</>}.
+            N’has resolt <strong>{found}</strong> de <strong>{misses.length}</strong>
+            {shown > 0 && <> ({shown} {shown === 1 ? 'ensenyat' : 'ensenyats'})</>}.
           </p>
           <p className="muted">
             {found === misses.length
-              ? 'Totes trobades: la pròxima partida, baixa-les quan toqui!'
-              : 'Ara ja les has vist: la pròxima vegada seran teves.'}
+              ? 'Tots resolts: la pròxima partida, baixa-les quan toqui!'
+              : 'Ara ja els has vist: la pròxima vegada seran teus.'}
           </p>
         </div>
         <div className="row">
@@ -191,7 +191,7 @@ export function QuizScreen({ misses, playerName, onClose }: Props) {
             Torna-ho a provar
           </button>
           <button type="button" className="secondary" onClick={onClose}>
-            Torna al resum
+            {closeLabel}
           </button>
         </div>
       </section>
@@ -262,11 +262,11 @@ export function QuizScreen({ misses, playerName, onClose }: Props) {
       <header className="game-top">
         <div className="quiz-cap">
           <span className="quiz-titol">
-            <strong>Repàs</strong> · oportunitat {index + 1} de {misses.length}
+            <strong>Jeroglífic</strong> {index + 1} de {misses.length}
           </span>
           <span className="muted quiz-torn">al torn {miss.turn} vas robar</span>
           <button type="button" className="link quiz-surt" onClick={onClose}>
-            Surt del repàs
+            Surt dels jeroglífics
           </button>
         </div>
       </header>
@@ -442,11 +442,11 @@ export function QuizScreen({ misses, playerName, onClose }: Props) {
             <button
               type="button"
               onClick={next}
-              aria-label={lastOne ? 'Acaba el repàs' : 'Següent'}
-              title={lastOne ? 'Acaba el repàs' : 'Següent'}
+              aria-label={lastOne ? 'Acaba els jeroglífics' : 'Següent'}
+              title={lastOne ? 'Acaba els jeroglífics' : 'Següent'}
             >
               <NextIcon />
-              <span className="btn-text">{lastOne ? 'Acaba el repàs' : 'Següent'}</span>
+              <span className="btn-text">{lastOne ? 'Acaba els jeroglífics' : 'Següent'}</span>
             </button>
           )}
         </div>

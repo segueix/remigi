@@ -16,6 +16,7 @@ import { useDragTile } from '../game/useDragTile';
 import { botPersona } from '../game/bots';
 import { meldAuthors } from '../game/meldOwners';
 import type { MissedChance } from '../game/missedChances';
+import { MIN_JEROGLIFICS, useJeroglifics } from '../state/useJeroglifics';
 import { QuizScreen } from './QuizScreen';
 import { invalidMeldIndexes, missingOpeningPoints, openingPoints } from '../game/turnDraft';
 import { useGame, type GameHandle, type GameSetup } from '../game/useGame';
@@ -66,7 +67,9 @@ export function GameScreen({
   const change = useRecordResult(game, currentSetup.opponents, profile);
   const [menuOpen, setMenuOpen] = useState(false);
   const [rackOrder, setRackOrder] = useState<Order>('cap');
-  const [quizOpen, setQuizOpen] = useState(false);
+  /* Els jeroglífics es poden jugar des del final de partida o des del menú. */
+  const [quiz, setQuiz] = useState<'partida' | 'col·lecció' | null>(null);
+  const jeroglifics = useJeroglifics();
   const rotation = useScreenRotation();
 
   const { moveTileTo } = handle;
@@ -84,11 +87,17 @@ export function GameScreen({
     }
   }, [game, currentSetup, meldOwners, misses, persist, clear]);
 
+  /* Cada jeroglífic nou de la partida va també a la col·lecció del menú. */
+  const { add: addJeroglifics } = jeroglifics;
+  useEffect(() => {
+    if (misses.length > 0) addJeroglifics(misses);
+  }, [misses, addJeroglifics]);
+
   const startNewGame = useCallback(
     (next: GameSetup) => {
       setCurrentSetup(next);
       setMenuOpen(false);
-      setQuizOpen(false);
+      setQuiz(null);
       handle.restart(next);
     },
     [handle],
@@ -148,13 +157,30 @@ export function GameScreen({
     [drag, handle, selectedTileId],
   );
 
+  /*
+   * La col·lecció de jeroglífics es juga des del menú, en qualsevol moment:
+   * la partida continua viva a sota (els bots acaben la jugada) i hi tornes
+   * en sortir.
+   */
+  if (quiz === 'col·lecció' && jeroglifics.items.length > 0) {
+    return (
+      <QuizScreen
+        misses={jeroglifics.items}
+        playerName={profile.profile?.name ?? game.players[0].name}
+        closeLabel="Torna a la partida"
+        onClose={() => setQuiz(null)}
+      />
+    );
+  }
+
   if (game.status === 'finished') {
-    if (quizOpen && misses.length > 0) {
+    if (quiz === 'partida' && misses.length > 0) {
       return (
         <QuizScreen
           misses={misses}
           playerName={profile.profile?.name ?? game.players[0].name}
-          onClose={() => setQuizOpen(false)}
+          closeLabel="Torna al resum"
+          onClose={() => setQuiz(null)}
         />
       );
     }
@@ -165,7 +191,7 @@ export function GameScreen({
         nextOpponents={nextOpponents}
         fixedRivals={fixedRivalsLabel}
         misses={misses}
-        onQuiz={() => setQuizOpen(true)}
+        onQuiz={() => setQuiz('partida')}
         onRestart={restartAdapted}
         onHistory={onHistory}
       />
@@ -243,6 +269,11 @@ export function GameScreen({
             current={currentSetup}
             tileStyle={tileStyle}
             onTileStyle={onTileStyle}
+            jeroglifics={jeroglifics.items.length}
+            onJeroglifics={() => {
+              setMenuOpen(false);
+              setQuiz('col·lecció');
+            }}
             onNewGame={startNewGame}
             onHistory={onHistory}
             onClose={() => setMenuOpen(false)}
@@ -578,32 +609,34 @@ function GameOver({
       )}
 
       {/*
-        * El repàs: si has robat havent-hi jugada, el final t'ho diu i t'ofereix
-        * tornar-hi sobre el mateix tauler. I si no t'has deixat res, també es
-        * diu, que és la millor notícia de la partida.
+        * Els jeroglífics de la partida: si has robat quan hi havia una jugada
+        * de dues fitxes o més per fer, el final t'ho diu i t'ofereix
+        * resoldre-la sobre el mateix tauler. I si no t'has deixat res, també
+        * es diu, que és la millor notícia de la partida.
         */}
       {misses.length > 0 ? (
         <div className="quiz-crida">
           <p>
+            D’aquesta partida{' '}
             {misses.length === 1 ? (
               <>
-                <strong>1 cop</strong> has robat fitxa quan hi havia jugada possible.
+                n’ha sortit <strong>1 jeroglífic</strong>: una jugada que se t’ha escapat.
               </>
             ) : (
               <>
-                <strong>{misses.length} cops</strong> has robat fitxa quan hi havia jugada
-                possible.
+                n’han sortit <strong>{misses.length} jeroglífics</strong>: jugades que se
+                t’han escapat.
               </>
             )}{' '}
-            Sabries trobar-les ara?
+            Els saps resoldre?
           </p>
           <button type="button" onClick={onQuiz}>
-            Fes el quiz del repàs
+            Fes els jeroglífics
           </button>
         </div>
       ) : (
         <p className="quiz-crida-neta">
-          No t’has deixat cap jugada: sempre que es podia jugar, has jugat. 👏
+          No se t’ha escapat cap jugada que valgués un jeroglífic. 👏
         </p>
       )}
 

@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { baixaGrup, entraAmbPartida, f } from './ajudants';
+import { baixaGrup, entraAmbPartida, f, obreMenu } from './ajudants';
 
 /**
  * El repàs de després de la partida: robar havent-hi jugada queda apuntat, el
@@ -46,12 +46,12 @@ test('robar havent-hi jugada acaba en quiz sobre el mateix tauler', async ({ pag
 
   // El final ofereix el repàs comptant errors diferents, no torns robats.
   const crida = page.locator('.quiz-crida');
-  await expect(crida).toContainText('2 cops has robat fitxa quan hi havia jugada');
-  await page.getByRole('button', { name: 'Fes el quiz del repàs' }).click();
+  await expect(crida).toContainText('n’han sortit 2 jeroglífics');
+  await page.getByRole('button', { name: 'Fes els jeroglífics' }).click();
 
   // Oportunitat 1: la taula i el faristol tornen a ser els d'aquell moment,
   // el quiz diu quantes fitxes baixava la jugada i les marca al faristol.
-  await expect(page.locator('.quiz-cap')).toContainText('oportunitat 1 de 2');
+  await expect(page.locator('.quiz-cap')).toContainText('Jeroglífic 1 de 2');
   await expect(page.locator('.quiz-cap')).toContainText('al torn 5');
   await expect(page.locator('.quiz .rack .tile')).toHaveCount(4);
   await expect(page.locator('.quiz .board .meld')).toHaveCount(0);
@@ -90,7 +90,7 @@ test('robar havent-hi jugada acaba en quiz sobre el mateix tauler', async ({ pag
   // però no és la millor jugada. La correcció ho diu, marca les tres en
   // vermell i el que faltava, i «Corregeix» deixa refer-ho fins al verd.
   await page.getByRole('button', { name: 'Següent' }).click();
-  await expect(page.locator('.quiz-cap')).toContainText('oportunitat 2 de 2');
+  await expect(page.locator('.quiz-cap')).toContainText('Jeroglífic 2 de 2');
   await expect(page.locator('.quiz-cap')).toContainText('al torn 9');
   await expect(page.locator('.quiz .rack .tile')).toHaveCount(6);
   await expect(page.locator('.hint')).toContainText('baixava 4 fitxes');
@@ -117,8 +117,8 @@ test('robar havent-hi jugada acaba en quiz sobre el mateix tauler', async ({ pag
   await expect(page.locator('.quiz .board .tile.correct')).toHaveCount(4);
 
   // El resum: totes dues trobades (corregir no la compta dos cops).
-  await page.getByRole('button', { name: 'Acaba el repàs' }).click();
-  await expect(page.locator('.quiz-final')).toContainText('Has trobat 2 de 2');
+  await page.getByRole('button', { name: 'Acaba els jeroglífics' }).click();
+  await expect(page.locator('.quiz-final')).toContainText('N’has resolt 2 de 2');
   await page.getByRole('button', { name: 'Torna al resum' }).click();
   await expect(page.getByRole('button', { name: 'Una altra partida' })).toBeVisible();
   await expect(crida).toBeVisible();
@@ -142,8 +142,8 @@ test('la solució distingeix amb marcs les teves fitxes de les recol·locades', 
   await expect(passa).toBeEnabled();
   await passa.click();
 
-  await expect(page.locator('.quiz-crida')).toContainText('1 cop has robat fitxa');
-  await page.getByRole('button', { name: 'Fes el quiz del repàs' }).click();
+  await expect(page.locator('.quiz-crida')).toContainText('n’ha sortit 1 jeroglífic');
+  await page.getByRole('button', { name: 'Fes els jeroglífics' }).click();
 
   // Ja mentre proves es veu la feina: les teves marcades en turquesa al
   // faristol, i en daurat les de la taula que s'hauran de recol·locar.
@@ -176,6 +176,38 @@ test('sense oportunitats perdudes no hi ha quiz, i es felicita', async ({ page }
   await baixaGrup(page, ['9 vermell', '9 blau', '9 negre']);
   await page.getByRole('button', { name: 'Acabar jugada' }).click();
 
-  await expect(page.locator('.quiz-crida-neta')).toContainText('No t’has deixat cap jugada');
+  await expect(page.locator('.quiz-crida-neta')).toContainText('No se t’ha escapat cap jugada');
   await expect(page.locator('.quiz-crida')).toHaveCount(0);
+});
+
+/**
+ * La col·lecció: els jeroglífics de totes les partides es guarden, i quan n'hi
+ * ha prou el menú del jugador ofereix triar entre jugar o fer jeroglífics —
+ * en qualsevol moment, no cal esperar el final de la partida.
+ */
+test('amb prou jeroglífics guardats, el menú ofereix jugar-los', async ({ page }) => {
+  const jero = (value: number) => ({
+    turn: value,
+    board: [],
+    rack: [f('red', value), f('blue', value), f('black', value)],
+    hasOpened: true,
+    solution: [[f('red', value), f('blue', value), f('black', value)]],
+    tilesUsed: 3,
+  });
+  await entraAmbPartida(page, {
+    rack: [f('orange', 13)],
+    haObert: true,
+    jeroglifics: [jero(4), jero(5), jero(6)],
+  });
+
+  await obreMenu(page);
+  await page.getByRole('button', { name: 'Jeroglífics (3)' }).click();
+
+  // S'obre el primer de la col·lecció, sobre el tauler de sempre.
+  await expect(page.locator('.quiz-cap')).toContainText('Jeroglífic 1 de 3');
+  await expect(page.locator('.quiz .rack .tile.played')).toHaveCount(3);
+
+  // I sortir-ne torna a la partida, que continuava allà mateix.
+  await page.getByRole('button', { name: 'Surt dels jeroglífics' }).click();
+  await expect(page.locator('.rack .tile[aria-label="13 taronja"]')).toBeVisible();
 });

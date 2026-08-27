@@ -1242,6 +1242,46 @@ desfer/refer, error del motor a mitges, «Perfecte!» amb 3 verds, grup de
 tres on tocava el de quatre (0 verds, 3 vermells, 1 pendent), «Corregeix» i
 4 verds, i resum «2 de 2» sense comptar dos cops la corregida.
 
+### Jeroglífics de debò: interrelacionats, sense regals, i col·lecció al menú ✅ Feta (2026-08-27)
+
+- [x] **Un jeroglífic ha de valer la pena** (`detectMissedChances`, plural):
+      la millor jugada es parteix en grups interrelacionats — jugades de la
+      solució que comparteixen fitxes d'una mateixa jugada original van
+      juntes (union-find sobre les jugades canviades) — i cada grup és un
+      trencaclosques independent amb la seva solució (la resta de la taula,
+      intacta, també per validar-la amb el motor). Els grups d'una sola
+      fitxa (el quart color d'un grup, allargar una escala amb una fitxa) es
+      descarten: mínim 2 fitxes. Abans d'obrir no es parteix res: els 30
+      punts lliguen totes les jugades noves.
+- [x] **Dedupe per grup**: `addMiss` ja treballa amb la clau del grup
+      (fitxes del faristol que baixa); el mateix grup en torns diferents
+      només s'apunta el primer cop, i si creix (s'hi suma una altra errada)
+      és un jeroglífic nou.
+- [x] **Col·lecció persistent** (`useJeroglifics`, `remigi:jeroglifics`):
+      cada jeroglífic nou de la partida va també a la col·lecció (dedupe per
+      clau, els 30 més nous). Amb 3 o més, el menú del jugador ofereix
+      «Jeroglífics (N)» al costat de «Partida nova»: jugar o fer
+      jeroglífics, en qualsevol moment; la partida continua viva a sota.
+- [x] **Rebatejat a la interfície**: crida del final («N'han sortit N
+      jeroglífics»), capçalera («Jeroglífic i de N»), resum («N'has resolt X
+      de N») i botons; `QuizScreen` pren `closeLabel` («Torna al resum» /
+      «Torna a la partida»).
+
+### Problemes trobats
+
+- Cap de nou; la partició en grups va encaixar amb la resta perquè la
+  solució de cada grup continua sent una taula sencera legal (les jugades no
+  tocades hi són tal qual), i tot el que ja hi havia (marcs, comptador,
+  correcció, validació amb el motor) funciona per diferència entre taula i
+  solució sense saber res de la partició.
+
+**Criteris d'acceptació (verificats)**: 176 tests (el quart color i
+l'allargament d'una fitxa no són jeroglífics; dues fitxes que s'aguanten sí;
+grups independents separats i cadascun legal; el regal del costat no
+s'endú l'escala; la sortida sencera com un sol jeroglífic) i 83 proves de
+navegador, amb una de nova: col·lecció de 3 sembrada, «Jeroglífics (3)» al
+menú, se n'obre el primer i es torna a la partida.
+
 ---
 
 ## Riscos coneguts (a vigilar quan toqui)
