@@ -1282,6 +1282,29 @@ s'endú l'escala; la sortida sencera com un sol jeroglífic) i 83 proves de
 navegador, amb una de nova: col·lecció de 3 sembrada, «Jeroglífics (3)» al
 menú, se n'obre el primer i es torna a la partida.
 
+### Respostes alternatives bones, i el tauler del jeroglífic net ✅ Feta (2026-08-27)
+
+- [x] **Una resposta correcta val encara que no sigui la programada**: si
+      l'intent és legal i baixa tantes fitxes com la millor jugada (o més),
+      és «Perfecte!» — tot verd, res de vermell — encara que l'arranjament
+      sigui un altre (partir l'escala de sis en dues de tres, o fer-ho amb
+      altres fitxes de la mà). El text distingeix els tres casos: clavada a
+      la solució, «per un altre camí igual de bo», o «més i tot». La
+      comparació fitxa a fitxa amb la solució queda només com a pista quan
+      la resposta es queda curta.
+- [x] **Cap marc previ sobre la taula**: mentre proves el jeroglífic, només
+      les teves fitxes (faristol) van marcades en turquesa; les de la taula
+      queden netes — dins de la partida els marcs de taula volen dir altres
+      coses (autors, robada) i confonien. L'avís que caldrà recol·locar el
+      diu el text de la pista; el marc daurat es queda per a «Mostra la
+      solució».
+
+**Criteris d'acceptació (verificats)**: 176 tests i 85 proves de navegador,
+amb una de nova: l'escala de sis partida en dues de tres és «Perfecte!» amb
+6 verds, sense «Corregeix» ni «Mostra la solució»; i la del jeroglífic amb
+recol·locació comprova que durant la prova el tauler no porta cap marc
+(0 daurats, 0 turqueses a la taula) i que la solució ensenyada sí.
+
 ---
 
 ## Riscos coneguts (a vigilar quan toqui)
