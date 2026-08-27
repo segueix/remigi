@@ -9,6 +9,7 @@ import { useState } from 'react';
 import type { GameSetup } from '../game/useGame';
 import { playerLevelLabel } from '../state/playerLevel';
 import type { ProfileHandle } from '../state/useProfile';
+import { MIN_JEROGLIFICS } from '../state/useJeroglifics';
 import type { TileStyle } from '../state/useTileStyle';
 import { ComEsJuga } from './ComEsJuga';
 import { ColorShape } from './TileView';
@@ -19,6 +20,9 @@ interface Props {
   current: GameSetup;
   tileStyle: TileStyle;
   onTileStyle(style: TileStyle): void;
+  /** Jeroglífics a la col·lecció; amb prou n'apareix l'opció de jugar-los. */
+  jeroglifics: number;
+  onJeroglifics(): void;
   onNewGame(setup: GameSetup): void;
   onHistory(): void;
   onClose(): void;
@@ -37,6 +41,8 @@ export function PlayerMenu({
   current,
   tileStyle,
   onTileStyle,
+  jeroglifics,
+  onJeroglifics,
   onNewGame,
   onHistory,
   onClose,
@@ -204,6 +210,16 @@ export function PlayerMenu({
           <button className="secondary" onClick={onHistory}>
             Historial
           </button>
+          {/*
+            * Jugar o fer jeroglífics: quan la col·lecció en té prou, aquí es
+            * tria. Els trencaclosques venen de les jugades que se t'han
+            * escapat a les partides.
+            */}
+          {jeroglifics >= MIN_JEROGLIFICS && (
+            <button className="secondary" onClick={onJeroglifics}>
+              Jeroglífics ({jeroglifics})
+            </button>
+          )}
         </div>
 
         <ComEsJuga obertPerDefecte={(profile.profile?.gamesPlayed ?? 0) === 0} />

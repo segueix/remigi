@@ -121,6 +121,8 @@ export async function entraAmbPartida(
     autors?: [string, number][];
     /** Fitxes del sac, en ordre de robar. Per defecte, una de sola. */
     sac?: Fitxa[];
+    /** Col·lecció de jeroglífics ja guardada, per provar el menú. */
+    jeroglifics?: unknown[];
   },
 ): Promise<void> {
   // La partida s'injecta abans que l'app arrenqui (vegeu `comencaDeZero`).
@@ -129,6 +131,9 @@ export async function entraAmbPartida(
       if (localStorage.getItem('e2e:llavor')) return;
       localStorage.clear();
       localStorage.setItem('e2e:llavor', '1');
+      if (dades.jeroglifics.length > 0) {
+        localStorage.setItem('remigi:jeroglifics', JSON.stringify(dades.jeroglifics));
+      }
       localStorage.setItem(
         'remigi:profile:local',
         JSON.stringify({
@@ -175,6 +180,7 @@ export async function entraAmbPartida(
         haObert: partida.haObert ?? false,
         autors: partida.autors ?? [],
         sac: partida.sac ?? [{ id: 'black-1-b', kind: 'number', color: 'black', value: 1 }],
+        jeroglifics: partida.jeroglifics ?? [],
       },
     ],
   );
