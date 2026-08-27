@@ -82,6 +82,8 @@ test('robar havent-hi jugada acaba en quiz sobre el mateix tauler', async ({ pag
   await page.locator('.rack .tile[aria-label^="9 negre"]').click();
   await page.locator('.board .meld').first().click();
   await page.getByRole('button', { name: 'Comprova la jugada' }).click();
+  // El gran símbol verd de correcte, al mig de la pantalla.
+  await expect(page.locator('.quiz-encert')).toBeVisible();
   await expect(page.locator('.hint-be')).toContainText('Perfecte!');
   await expect(page.locator('.quiz .board .tile.correct')).toHaveCount(3);
   await expect(page.locator('.quiz .board .tile.wrong')).toHaveCount(0);
@@ -145,12 +147,14 @@ test('la solució distingeix amb marcs les teves fitxes de les recol·locades', 
   await expect(page.locator('.quiz-crida')).toContainText('n’ha sortit 1 jeroglífic');
   await page.getByRole('button', { name: 'Fes els jeroglífics' }).click();
 
-  // Ja mentre proves es veu la feina: les teves marcades en turquesa al
-  // faristol, i en daurat les de la taula que s'hauran de recol·locar.
+  // Mentre proves, només les teves fitxes van marcades: la pista de la
+  // recol·locació la diu el text, i les fitxes de la taula queden netes
+  // (dins de la partida els marcs de taula volen dir altres coses).
   await expect(page.locator('.hint')).toContainText('baixava 4 fitxes');
   await expect(page.locator('.hint')).toContainText('recol·locar');
   await expect(page.locator('.quiz .rack .tile.played')).toHaveCount(4);
-  await expect(page.locator('.quiz .board .tile.moved')).toHaveCount(3);
+  await expect(page.locator('.quiz .board .tile.moved')).toHaveCount(0);
+  await expect(page.locator('.quiz .board .tile.played')).toHaveCount(0);
 
   await page.getByRole('button', { name: 'Mostra la solució' }).click();
 
@@ -210,4 +214,44 @@ test('amb prou jeroglífics guardats, el menú ofereix jugar-los', async ({ page
   // I sortir-ne torna a la partida, que continuava allà mateix.
   await page.getByRole('button', { name: 'Surt dels jeroglífics' }).click();
   await expect(page.locator('.rack .tile[aria-label="13 taronja"]')).toBeVisible();
+});
+
+/**
+ * Una resposta diferent de la programada però igual de bona val igual: la
+ * millor jugada era l'escala sencera del 5 al 10, i partir-la en dues escales
+ * de tres és legal i baixa les mateixes sis fitxes. Res de marcs vermells.
+ */
+test('una resposta correcta per un altre camí també és perfecta', async ({ page }) => {
+  await entraAmbPartida(page, {
+    rack: [f('red', 5), f('red', 6), f('red', 7), f('red', 8), f('red', 9), f('red', 10)],
+    board: [],
+    haObert: true,
+  });
+
+  await page.getByRole('button', { name: 'Robar fitxa' }).click();
+  const passa = page.getByRole('button', { name: 'Passar torn' });
+  await expect(passa).toBeEnabled();
+  await passa.click();
+
+  await page.getByRole('button', { name: 'Fes els jeroglífics' }).click();
+  await expect(page.locator('.hint')).toContainText('baixava 6 fitxes');
+
+  // Dues escales de tres, en comptes de l'escala de sis de la solució.
+  for (const [value, dest] of [[5, 'nova'], [6, 0], [7, 0], [8, 'nova'], [9, 1], [10, 1]] as const) {
+    await page.locator(`.rack .tile[aria-label^="${value} vermell"]`).click();
+    if (dest === 'nova') await page.getByRole('button', { name: '+ Jugada nova' }).click();
+    else await page.locator('.board .meld').nth(dest).click();
+  }
+  await page.getByRole('button', { name: 'Comprova la jugada' }).click();
+
+  await expect(page.locator('.quiz-encert')).toBeVisible();
+  await expect(page.locator('.hint-be')).toContainText('Perfecte!');
+  await expect(page.locator('.hint-be')).toContainText('un altre camí igual de bo');
+  await expect(page.locator('.quiz .board .tile.correct')).toHaveCount(6);
+  await expect(page.locator('.quiz .board .tile.wrong')).toHaveCount(0);
+  // Resolt de debò: només queda passar al següent (aquí, acabar).
+  await expect(page.getByRole('button', { name: 'Corregeix' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Mostra la solució' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Acaba els jeroglífics' }).click();
+  await expect(page.locator('.quiz-final')).toContainText('N’has resolt 1 de 1');
 });

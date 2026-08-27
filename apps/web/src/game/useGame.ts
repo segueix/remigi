@@ -9,7 +9,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { pickPersonas } from './bots';
 import { addMiss, detectMissedChances, type MissedChance } from './missedChances';
-import { updateOwners, type MeldOwners } from './meldOwners';
+import { updateOwners, type TileOwners } from './meldOwners';
 import {
   hasChanges,
   moveTile,
@@ -50,8 +50,8 @@ export interface GameHandle {
   highlighted: ReadonlySet<string>;
   /** Fitxa que el jugador acaba de robar del sac, per marcar-la al faristol. */
   drawnTileId: string | null;
-  /** Qui ha tocat per últim cop cada jugada de la taula (vegeu `meldOwners.ts`). */
-  meldOwners: MeldOwners;
+  /** Fitxes de la taula posades pel bot de l'últim moviment (vegeu `meldOwners.ts`). */
+  tileOwners: TileOwners;
   /** Cops que el jugador ha robat havent-hi jugada, per al repàs del final. */
   misses: MissedChance[];
   isHumanTurn: boolean;
@@ -113,7 +113,7 @@ export function useGame(
    * antiga, no, i llavors les jugades que ja hi havia es queden sense marc en
    * comptes de posar-n'hi un d'inventat.
    */
-  const [meldOwners, setMeldOwners] = useState<MeldOwners>(() => new Map(initialOwners ?? []));
+  const [tileOwners, setTileOwners] = useState<TileOwners>(() => new Map(initialOwners ?? []));
   const [misses, setMisses] = useState<MissedChance[]>(() => [...(initialMisses ?? [])]);
 
   // Cada vegada que el motor avança, el torn comença de zero.
@@ -140,7 +140,7 @@ export function useGame(
           }),
         );
         setHighlighted(new Set(next.board.flat().map((t) => t.id).filter((id) => !before.has(id))));
-        setMeldOwners((owners) => updateOwners(owners, current.board, next.board, mover));
+        setTileOwners((owners) => updateOwners(owners, current.board, next.board, mover));
         return next;
       });
     }, BOT_DELAY_MS);
@@ -169,7 +169,7 @@ export function useGame(
     if (!draft) return;
     try {
       const next = applyMove(game, toMove(draft));
-      setMeldOwners((owners) => updateOwners(owners, game.board, next.board, game.currentPlayer));
+      setTileOwners((owners) => updateOwners(owners, game.board, next.board, game.currentPlayer));
       setGame(next);
       setHighlighted(new Set());
       // La fitxa robada deixa de ser «la que acabes de robar» quan tornes a jugar.
@@ -220,7 +220,7 @@ export function useGame(
     if (setup) setupRef.current = setup;
     setHighlighted(new Set());
     setDrawnTileId(null);
-    setMeldOwners(new Map());
+    setTileOwners(new Map());
     setMisses([]);
     setGame(newGameState(setupRef.current));
   }, []);
@@ -232,7 +232,7 @@ export function useGame(
     error,
     highlighted,
     drawnTileId,
-    meldOwners,
+    tileOwners,
     misses,
     isHumanTurn: isHumanTurn(game),
     canCommit: draft !== null && hasChanges(draft),

@@ -9,13 +9,14 @@ export interface SavedGame {
   setup: GameSetup;
   game: GameState;
   /**
-   * Qui ha jugat cada jugada de la taula, en parelles `[jugada, jugador]`
-   * perquè un `Map` no es pot desar tal qual en JSON (vegeu `meldOwners.ts`).
+   * Fitxes de la taula posades pel bot de l'últim moviment, en parelles
+   * `[fitxa, jugador]` perquè un `Map` no es pot desar tal qual en JSON
+   * (vegeu `meldOwners.ts`).
    *
    * És informació només visual, i per això no forma part de l'estat del motor.
-   * Es desa perquè continuar una partida no faci desaparèixer els colors de la
-   * taula; si falta o ve malmesa, la partida es continua igual i les jugades
-   * d'abans es queden sense marc.
+   * Es desa perquè continuar una partida no faci desaparèixer els marcs; si
+   * falta o ve malmesa (o ve d'una versió antiga amb claus de jugada), la
+   * partida es continua igual i les fitxes es queden sense marc.
    */
   owners?: [string, number][];
   /**

@@ -1,6 +1,5 @@
 import type { Destination } from '../game/turnDraft';
 import type { Meld } from '@remigi/core';
-import type { MeldAuthor } from '../game/meldOwners';
 import type { TileMark } from './TileView';
 import { MeldView } from './MeldView';
 
@@ -14,8 +13,8 @@ interface Props {
   highlighted?: ReadonlySet<string>;
   /** Marc de cada fitxa, al repàs (vegeu TileView). */
   marks?: ReadonlyMap<string, TileMark>;
-  /** Bot autor de cada jugada, alineat per posició amb `board`. */
-  authors?: ReadonlyArray<MeldAuthor | null>;
+  /** Bot que ha posat cada fitxa (per identificador), per al marc del seu color. */
+  bots?: ReadonlyMap<string, number>;
   /** Actiu només durant el torn del jugador. */
   interactive?: boolean;
   onTileClick?(tileId: string, meldIndex: number): void;
@@ -32,7 +31,7 @@ export function BoardView({
   over,
   highlighted,
   marks,
-  authors,
+  bots,
   interactive,
   onTileClick,
   onTilePointerDown,
@@ -70,7 +69,7 @@ export function BoardView({
           draggingTileId={draggingTileId}
           highlighted={highlighted}
           marks={marks}
-          author={authors?.[index]}
+          bots={bots}
           onTileClick={interactive ? (tileId) => onTileClick?.(tileId, index) : undefined}
           onTilePointerDown={interactive ? onTilePointerDown : undefined}
           onMeldClick={interactive && selectedTileId ? () => onMeldClick?.(index) : undefined}

@@ -1,5 +1,4 @@
 import { analyzeMeld, type Meld } from '@remigi/core';
-import type { MeldAuthor } from '../game/meldOwners';
 import { TileView, type TileMark } from './TileView';
 
 interface Props {
@@ -15,8 +14,8 @@ interface Props {
   highlighted?: ReadonlySet<string>;
   /** Marc de cada fitxa, al repàs (vegeu TileView). */
   marks?: ReadonlyMap<string, TileMark>;
-  /** Bot que hi ha jugat per últim cop: dona color al marc de la jugada. */
-  author?: MeldAuthor | null;
+  /** Bot que ha posat cada fitxa (per identificador). */
+  bots?: ReadonlyMap<string, number>;
   onTileClick?(tileId: string): void;
   onTilePointerDown?(event: React.PointerEvent, tileId: string): void;
   onMeldClick?(): void;
@@ -32,7 +31,7 @@ export function MeldView({
   draggingTileId,
   highlighted,
   marks,
-  author,
+  bots,
   onTileClick,
   onTilePointerDown,
   onMeldClick,
@@ -42,7 +41,6 @@ export function MeldView({
   if (invalid) classes.push('invalid');
   if (isTarget) classes.push('target');
   if (isOver) classes.push('over');
-  if (author) classes.push('owned');
 
   const state = info.valid ? `${info.points} punts` : info.reason;
 
@@ -50,11 +48,9 @@ export function MeldView({
     <div
       className={classes.join(' ')}
       data-drop={`meld:${index}`}
-      /* El color del marc també s'ha de poder llegir: qui hi ha jugat, en text. */
-      data-bot={author ? author.slot : undefined}
       onClick={onMeldClick}
       role={isTarget ? 'button' : undefined}
-      title={author ? `${state} · hi ha jugat ${author.name}` : state}
+      title={state}
     >
       {meld.map((tile) => (
         <TileView
@@ -64,6 +60,7 @@ export function MeldView({
           dragging={tile.id === draggingTileId}
           highlighted={highlighted?.has(tile.id)}
           mark={marks?.get(tile.id)}
+          bot={bots?.get(tile.id)}
           onClick={onTileClick ? () => onTileClick(tile.id) : undefined}
           onPointerDown={
             onTilePointerDown ? (event) => onTilePointerDown(event, tile.id) : undefined

@@ -13,6 +13,11 @@ interface Props {
    * cop comprovada la jugada, si la fitxa ha quedat com a la solució.
    */
   mark?: TileMark;
+  /**
+   * Bot que acaba de posar aquesta fitxa a la taula (l'últim moviment): el
+   * número li dona el marc del seu color, fitxa a fitxa.
+   */
+  bot?: number;
   /** Acabada de robar del sac: es marca amb un recuadre fins que tornis a jugar. */
   drawn?: boolean;
   /** S'està arrossegant: es queda enrere, esmorteïda. */
@@ -48,6 +53,7 @@ export function TileView({
   selected,
   highlighted,
   mark,
+  bot,
   drawn,
   dragging,
   floating,
@@ -67,6 +73,7 @@ export function TileView({
   // El que es veu amb un cop d'ull s'ha de poder sentir també.
   const notes = [
     drawn && 'acabada de robar',
+    bot !== undefined && 'acabada de posar per un rival',
     mark === 'played' && 'baixava del faristol',
     mark === 'moved' && 'es recol·locava de la taula',
     mark === 'correct' && 'ben col·locada',
@@ -92,6 +99,7 @@ export function TileView({
     <button
       type="button"
       className={classes.join(' ')}
+      data-bot={bot}
       onClick={(event) => {
         event.stopPropagation();
         onClick?.();

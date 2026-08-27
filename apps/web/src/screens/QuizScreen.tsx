@@ -1,5 +1,5 @@
 import { RulesError, applyMove, type Tile } from '@remigi/core';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { BoardView } from '../components/BoardView';
 import { CheckIcon, EyeIcon, NextIcon, PencilIcon, RedoIcon, UndoIcon } from '../components/icons';
 import { TileView, type TileMark } from '../components/TileView';
@@ -61,6 +61,14 @@ export function QuizScreen({ misses, playerName, closeLabel, onClose }: Props) {
   /* Cada oportunitat compta com a trobada un sol cop, corregeixis el que corregeixis. */
   const [scored, setScored] = useState(false);
   const [done, setDone] = useState(false);
+  /* El gran símbol verd del mig de la pantalla, quan resols el jeroglífic. */
+  const [celebrate, setCelebrate] = useState(false);
+
+  useEffect(() => {
+    if (!celebrate) return;
+    const timer = setTimeout(() => setCelebrate(false), 1500);
+    return () => clearTimeout(timer);
+  }, [celebrate]);
 
   const miss = misses[Math.min(index, misses.length - 1)];
   const attempt = history[cursor];
@@ -118,6 +126,8 @@ export function QuizScreen({ misses, playerName, closeLabel, onClose }: Props) {
       // El motor de la partida és qui valida: cap regla duplicada aquí.
       applyMove(stateFromMiss(miss, playerName), toMove(attempt));
       setPhase('trobada');
+      // Resolt de debò (tantes fitxes com la millor jugada): el gran ✓ verd.
+      setCelebrate(playedTileIds(attempt).size >= miss.tilesUsed);
       if (!scored) {
         setFound((count) => count + 1);
         setScored(true);
@@ -132,6 +142,7 @@ export function QuizScreen({ misses, playerName, closeLabel, onClose }: Props) {
   const reveal = useCallback(() => {
     if (phase === 'prova') setShown((count) => count + 1);
     setPhase('ensenyada');
+    setCelebrate(false);
     setError(null);
     setSelectedTileId(null);
   }, [phase]);
@@ -149,6 +160,7 @@ export function QuizScreen({ misses, playerName, closeLabel, onClose }: Props) {
       setHistory([startTurn(stateFromMiss(misses[nextIndex], playerName), 0)]);
       setCursor(0);
       setScored(false);
+      setCelebrate(false);
       setSelectedTileId(null);
       setError(null);
     },
@@ -214,21 +226,31 @@ export function QuizScreen({ misses, playerName, closeLabel, onClose }: Props) {
   const total = miss.tilesUsed;
   const rackIds = new Set(attempt.rack.map((tile) => tile.id));
   const remaining = [...solutionIds].filter((id) => rackIds.has(id)).length;
+  const placedNow = playedTileIds(attempt).size;
+
+  /*
+   * La resposta és bona si baixa tantes fitxes com la millor jugada (o més),
+   * encara que l'arranjament sigui un altre: partir una escala llarga en
+   * dues, o fer-ho amb altres fitxes de la mà, val exactament igual. El motor
+   * ja ha dit que és legal; aquí només es compara la mida.
+   */
+  const solved = phase === 'trobada' && placedNow >= total;
 
   /*
    * Els marcs. Mentre proves: turquesa a les fitxes que la jugada baixava
-   * (siguin encara al faristol o ja col·locades) i daurat a les de la taula
-   * que caldrà recol·locar. Comprovada la jugada: verd les que han quedat amb
-   * les mateixes companyes que a la solució, vermell les que no. Ensenyada:
-   * els marcs d'origen de sempre.
+   * (siguin encara al faristol o ja col·locades); les de la taula no porten
+   * res, que dins de la partida els marcs de taula volen dir altres coses.
+   * Comprovada la jugada: tot verd si la resposta és bona; si es queda curta,
+   * verd les que coincideixen amb la solució i vermell les que no, com a
+   * pista. Ensenyada: els marcs d'origen (turquesa/daurat) de sempre.
    */
   const marks = new Map<string, TileMark>();
   const futureMoved = movedBoardTileIds(miss.board, miss.solution);
   let correctCount = 0;
   let wrongCount = 0;
+  let matchesSolution = true;
   if (phase === 'prova') {
     for (const id of solutionIds) marks.set(id, 'played');
-    for (const id of futureMoved) marks.set(id, 'moved');
   } else if (phase === 'trobada') {
     const attemptKeys = meldKeysByTile(attempt.board);
     const solutionKeys = meldKeysByTile(miss.solution);
@@ -237,20 +259,23 @@ export function QuizScreen({ misses, playerName, closeLabel, onClose }: Props) {
       ...movedBoardTileIds(miss.board, attempt.board),
     ]);
     for (const id of graded) {
-      const good = attemptKeys.get(id) !== undefined && attemptKeys.get(id) === solutionKeys.get(id);
+      const same = attemptKeys.get(id) !== undefined && attemptKeys.get(id) === solutionKeys.get(id);
+      if (!same) matchesSolution = false;
+      const good = solved || same;
       marks.set(id, good ? 'correct' : 'wrong');
       if (good) correctCount++;
       else wrongCount++;
     }
-    for (const id of solutionIds) {
-      if (rackIds.has(id)) marks.set(id, 'played');
+    if (!solved) {
+      for (const id of solutionIds) {
+        if (rackIds.has(id)) marks.set(id, 'played');
+      }
     }
   } else {
     for (const id of solutionIds) marks.set(id, 'played');
     for (const id of futureMoved) marks.set(id, 'moved');
   }
   const movedIds = revealed ? futureMoved : movedBoardTileIds(miss.board, attempt.board);
-  const perfect = phase === 'trobada' && wrongCount === 0 && remaining === 0;
 
   const lastOne = index + 1 >= misses.length;
   const draggedTile = drag.dragging
@@ -290,7 +315,7 @@ export function QuizScreen({ misses, playerName, closeLabel, onClose }: Props) {
         <p className="hint">
           La jugada d’aquí baixava <strong>{total}</strong>{' '}
           {total === 1 ? 'fitxa: és la' : 'fitxes: són les'} del marc turquesa
-          {futureMoved.size > 0 && <> (i les de marc daurat s’hauran de recol·locar)</>}.{' '}
+          {futureMoved.size > 0 && <> (i caldrà recol·locar fitxes de la taula)</>}.{' '}
           {remaining > 0 ? (
             <>
               Te’n queden <strong>{remaining}</strong> per col·locar.
@@ -308,10 +333,25 @@ export function QuizScreen({ misses, playerName, closeLabel, onClose }: Props) {
         </p>
       )}
       {phase === 'trobada' &&
-        (perfect ? (
+        (solved ? (
           <p className="hint hint-be">
-            Perfecte! Les <strong>{correctCount}</strong> fitxes de la millor jugada, cadascuna
-            al seu lloc.
+            Perfecte!{' '}
+            {placedNow > total ? (
+              <>
+                Has baixat <strong>{placedNow}</strong> fitxes: més i tot que la millor jugada
+                que es va trobar.
+              </>
+            ) : matchesSolution && remaining === 0 ? (
+              <>
+                Les <strong>{correctCount}</strong> fitxes de la millor jugada, cadascuna al
+                seu lloc.
+              </>
+            ) : (
+              <>
+                Has baixat <strong>{placedNow}</strong> fitxes — tantes com la millor jugada,
+                per un altre camí igual de bo.
+              </>
+            )}
           </p>
         ) : (
           <p className="hint hint-be">
@@ -414,7 +454,7 @@ export function QuizScreen({ misses, playerName, closeLabel, onClose }: Props) {
               </button>
             </>
           )}
-          {phase === 'trobada' && !perfect && (
+          {phase === 'trobada' && !solved && (
             <button
               type="button"
               className="secondary"
@@ -426,7 +466,7 @@ export function QuizScreen({ misses, playerName, closeLabel, onClose }: Props) {
               <span className="btn-text">Corregeix</span>
             </button>
           )}
-          {(phase === 'prova' || (phase === 'trobada' && !perfect)) && (
+          {(phase === 'prova' || (phase === 'trobada' && !solved)) && (
             <button
               type="button"
               className="secondary"
@@ -451,6 +491,15 @@ export function QuizScreen({ misses, playerName, closeLabel, onClose }: Props) {
           )}
         </div>
       </div>
+
+      {/* L'encert, al mig de la pantalla: un gran ✓ verd que s'apaga sol. */}
+      {celebrate && (
+        <div className="quiz-encert" aria-hidden="true">
+          <div className="quiz-encert-cercle">
+            <CheckIcon />
+          </div>
+        </div>
+      )}
 
       {/* Còpia que segueix el punter, com al joc. */}
       {drag.dragging && draggedTile && (
