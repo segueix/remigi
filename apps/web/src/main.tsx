@@ -44,8 +44,34 @@ createRoot(container).render(
  */
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch((error) => {
-      console.warn('No s’ha pogut registrar el service worker:', error);
+    navigator.serviceWorker
+      .register(`${import.meta.env.BASE_URL}sw.js`)
+      .then((registration) => {
+        /*
+         * L'app instal·lada pot quedar-se oberta dies sense recarregar mai, i
+         * llavors les correccions publicades no li arriben. Cada cop que s'hi
+         * torna (canvi de visibilitat), es comprova si hi ha versió nova.
+         */
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') void registration.update();
+        });
+      })
+      .catch((error) => {
+        console.warn('No s’ha pogut registrar el service worker:', error);
+      });
+
+    /*
+     * Quan una versió nova pren el control (el service worker fa skipWaiting i
+     * claim), es recarrega la pàgina un sol cop per executar-la: la partida es
+     * desa a cada moviment, així que es reprèn exactament on era. El primer
+     * registre de la vida no recarrega: llavors no hi havia controlador.
+     */
+    const hadController = Boolean(navigator.serviceWorker.controller);
+    let reloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!hadController || reloaded) return;
+      reloaded = true;
+      location.reload();
     });
   });
 }

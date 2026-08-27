@@ -410,6 +410,36 @@ test.describe('qui ha jugat què', () => {
     await expect(page.locator('.rack .tile.drawn')).toHaveCount(0);
   });
 
+  test('robar amb fitxes a mig col·locar avisa i no descarta res', async ({ page }) => {
+    /*
+     * El glitch de «he robat i m'han donat quatre fitxes»: robar amb
+     * l'esborrany a mitges l'esborrava en silenci, i totes les fitxes
+     * col·locades tornaven de cop al faristol juntament amb la robada.
+     */
+    await entraAmbPartida(page, {
+      rack: [f('red', 12), f('blue', 12), f('black', 12), f('orange', 5)],
+      haObert: true,
+    });
+
+    await page.locator('.rack .tile[aria-label="12 vermell"]').click();
+    await page.getByRole('button', { name: '+ Jugada nova' }).click();
+    await expect(page.locator('.rack .tile')).toHaveCount(3);
+
+    // Robar ara no roba: avisa, i no es perd ni es guanya cap fitxa.
+    await page.getByRole('button', { name: 'Robar fitxa' }).click();
+    await expect(page.locator('.error')).toContainText('a mig col·locar');
+    await expect(page.locator('.rack .tile')).toHaveCount(3);
+    await expect(page.locator('.board .meld .tile')).toHaveCount(1);
+    await expect(page.locator('.turn-line')).toContainText('et toca a tu');
+
+    // Desfets els canvis, robar torna a donar una fitxa i només una.
+    await page.getByRole('button', { name: 'Desfer canvis' }).click();
+    await expect(page.locator('.rack .tile')).toHaveCount(4);
+    await page.getByRole('button', { name: 'Robar fitxa' }).click();
+    await expect(page.locator('.rack .tile')).toHaveCount(5);
+    await expect(page.locator('.rack .tile.drawn')).toHaveCount(1);
+  });
+
   test('les fitxes que posa un bot porten el marc del seu color, una per una', async ({ page }) => {
     await comencaDeZero(page);
     await jugaContra(page, 2);

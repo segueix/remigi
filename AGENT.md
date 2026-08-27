@@ -1337,6 +1337,46 @@ moviment i cap `.meld[data-bot]`, les teves jugades sense marc, la partida
 represa amb autors per fitxa, el marc que segueix la fitxa quan tu jugues, i
 el `.quiz-encert` visible en resoldre (al camí normal i a l'alternatiu).
 
+### El «glitch» de robar i rebre quatre fitxes ✅ Feta (2026-08-27)
+
+- [x] **Diagnòstic**: el motor roba sempre exactament una fitxa (cobert pels
+      tests de nucli). El que passava: «Robar fitxa» estava actiu amb
+      l'esborrany a mitges, la robada s'aplicava sobre l'estat del motor
+      (que no veu l'esborrany) i el torn següent totes les fitxes que el
+      jugador tenia col·locades sense acabar la jugada tornaven de cop al
+      faristol juntament amb la robada — la il·lusió de «m'han donat 4 o 5
+      fitxes noves», sobretot al final de partida, quan es fan proves.
+- [x] **Arranjament** (`useGame.draw`): amb canvis a l'esborrany
+      (`hasChanges`), robar no roba — surt l'avís «Tens fitxes a mig
+      col·locar: acaba la jugada o desfés els canvis abans de robar», i no
+      es perd ni es guanya res, com a la taula de debò. Reordenar només
+      fitxes de la taula (sense baixar-ne cap) no bloqueja: allà robar
+      restaura la taula i no toca el faristol.
+
+**Criteris d'acceptació (verificats)**: 171 tests i 87 proves de navegador,
+amb la regressió nova: col·locar una fitxa, robar → avís i res no es mou
+(faristol 3, taula 1, torn teu); desfer canvis i robar → una fitxa i només
+una, amb la marca de robada.
+
+### Invariants del motor i actualització automàtica de l'app ✅ Feta (2026-08-27)
+
+- [x] **Prova d'invariants** (`core/test/invariants.test.ts`): 5 partides
+      senceres simulades (3 jugadors, expert amb reordenació inclòs) i, a
+      cada moviment: robar dona exactament una fitxa (cap amb el sac buit) al
+      faristol de qui roba i a ningú més, el sac baixa d'una, i el conjunt
+      global de fitxes és sempre el mateix — cap duplicada, cap perduda. Si
+      això passa, qualsevol «m'han donat quatre fitxes» és percepció de la
+      interfície, no del motor.
+- [x] **L'app instal·lada s'actualitza sola** (`main.tsx`): el registre del
+      service worker ara comprova si hi ha versió nova cada cop que l'app
+      torna a ser visible (`registration.update()` a `visibilitychange`), i
+      quan la versió nova pren el control (skipWaiting + claim) la pàgina es
+      recarrega un sol cop — la partida es desa a cada moviment, així que es
+      reprèn on era. El primer registre de la vida no recarrega
+      (`hadController`). Abans, una PWA oberta dies seguits no rebia mai les
+      correccions publicades: el probable motiu que el glitch de robar «tornés
+      a passar» després d'arreglat.
+
 ---
 
 ## Riscos coneguts (a vigilar quan toqui)

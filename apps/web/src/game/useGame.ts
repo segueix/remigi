@@ -180,6 +180,19 @@ export function useGame(
   }, [draft, game]);
 
   const draw = useCallback(() => {
+    /*
+     * Robar amb fitxes a mig col·locar les descartaria en silenci: la robada
+     * s'aplica sobre l'estat del motor, que no ha vist l'esborrany, i el torn
+     * següent totes les fitxes col·locades tornarien de cop al faristol amb
+     * la robada — la sensació de «m'han donat quatre fitxes». Com a la taula
+     * de debò: primer es desfà (o s'acaba) la jugada, i llavors es roba.
+     */
+    if (draft && hasChanges(draft)) {
+      setError(
+        'Tens fitxes a mig col·locar: acaba la jugada o desfés els canvis abans de robar.',
+      );
+      return;
+    }
     try {
       const player = game.currentPlayer;
       const before = new Set(game.players[player].rack.map((tile) => tile.id));
@@ -208,7 +221,7 @@ export function useGame(
     } catch (caught) {
       setError(caught instanceof RulesError ? caught.message : String(caught));
     }
-  }, [game]);
+  }, [game, draft]);
 
   const resetTurn = useCallback(() => {
     setDraft(draftFor(game));
