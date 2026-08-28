@@ -29,7 +29,10 @@ acabar-la.
      tot estat immutable i serialitzable; l'única API pública és `src/index.ts`
      (i `persistence/jsonFileStore.ts` importat a banda, perquè depèn de Node).
    - Les capes només depenen en aquesta direcció:
-     `core ← ai ← adaptive ← (persistence, cli, web)`.
+     `core ← ai ← engine` i `core ← adaptive`, amb `(persistence, cli, web)`
+     al capdamunt. La IA es demana **sempre** a través del motor
+     (`engine/`, vegeu `docs/ENGINE.md`); cap codi nou no importa `ai/`
+     directament.
    - Identificadors de codi en anglès; comentaris, docs, missatges d'error i UI
      en **català**.
    - Documentació de referència: `docs/ARQUITECTURA.md`, `docs/REGLES.md`,
@@ -1376,6 +1379,85 @@ una, amb la marca de robada.
       (`hadController`). Abans, una PWA oberta dies seguits no rebia mai les
       correccions publicades: el probable motiu que el glitch de robar «tornés
       a passar» després d'arreglat.
+
+### El motor de la IA, encapsulat i substituïble (remigi-engine) ✅ Feta (2026-08-28)
+
+Demanat pel jugador: abans de cap laboratori d'evolució de la IA, separar-la
+completament de la resta de l'app com un **motor independent amb API estable**,
+a l'estil Stockfish — sense Campió/Challenger encara, sense self-play, sense
+canviar ni una jugada de cap nivell.
+
+- [x] **Capa pública `src/engine/`**: `createEngine({seed|rng})` amb
+      `engine.play(state, {playerIndex, level, rubberBanding, overrides,
+      maxNodes})` → `{move, engineVersion, level, thinkingTimeMs, nodes,
+      searchLimited, rearrangeUsed, foundPlay, tilesPlayed}`, i
+      `engine.analyze` (millor jugada sense errors humans, determinista; l'usa
+      la detecció de jeroglífics). `ENGINE_VERSION = "1.0.0"` a `version.ts`.
+      Les implementacions segueixen modulars a `ai/` — el motor és la porta,
+      no una còpia.
+- [x] **Diagnòstic sense canviar cap decisió**: `stats` opcional que travessa
+      `decideAiMove` → `chooseBestPlay` → `bestRearrangement` (nodes,
+      sostre tocat, reordenació usada, jugada trobada), i `maxNodes`
+      configurable des de fora.
+- [x] **Artefacte `dist/remigi-engine.js`** (`npm run build:engine`): un únic
+      fitxer ESM autocontingut (esbuild, plataforma «neutral»: importar res de
+      Node o del navegador fa fallar el build), amb `remigi-engine.d.ts` i
+      banner de versió. Reproduïble; `dist/` no es versiona.
+- [x] **La web i el simulador parlen només amb el motor**: `useGame` fa
+      `engine.play`, `missedChances` fa `engine.analyze`, `simulate.ts` crea
+      un motor per partida (mateixa llavor → mateixa partida) i imprimeix
+      versió i nodes. `decideAiMove`/`chooseBestPlay` queden exportats per
+      compatibilitat i tests.
+- [x] **Regressió comportamental**: 25 partides de referència (5 nivells × 5
+      llavors) capturades ABANS de la refactorització cridant la IA d'abans;
+      `engineRegression.test.ts` les torna a jugar per l'API del motor i
+      exigeix el mateix moviment a cada torn (hash de trajectòria,
+      `test/fixtures/engine-baseline.json`).
+- [x] **Tests del motor** (24 de nous): instanciació sense UI, jugada amb
+      Node, mateixa llavor = mateixa jugada, novell i expert com abans,
+      `play` ≡ `decideAiMove` amb el mateix RNG, diagnòstic de reordenació,
+      bundle en memòria sense React/DOM/Node i que juga una partida sencera
+      carregat com a mòdul.
+- [x] **Prova de fum de l'artefacte** (`npm run smoke:engine -w @remigi/core`):
+      Node pelat carrega el `.js` generat, hi juga dues vegades la mateixa
+      partida i exigeix resultats idèntics.
+- [x] **Docs**: `docs/ENGINE.md` (API, exemples Node i Web Worker, build,
+      versionat, què és públic i què intern, com regenerar el baseline) i
+      `docs/ARQUITECTURA.md` i README actualitzats.
+
+**Criteris d'acceptació (verificats)**:
+
+- `npm run typecheck`, `npm test` (123 core + 73 web) i `npm run build` en
+  verd; `npm run build:engine` genera l'artefacte i `smoke:engine` el fa
+  jugar amb Node.
+- El simulador (`--games 30 --seed 42` i `--duel 20 --seed 7`) dona
+  **exactament els mateixos resultats** abans i després de la refactorització
+  (mateixes victòries, mateixes puntuacions, mateixos torns), ara passant per
+  l'API del motor.
+- Les 25 empremtes de trajectòria del baseline coincideixen moviment a
+  moviment amb el que juga el motor nou: cap nivell no ha canviat ni una
+  jugada.
+
+**Decisions**:
+
+- **L'artefacte inclou les regles mínimes** (`createGame`, `applyMove`,
+  `finalScores`…): el contracte estable del motor és `createEngine` +
+  `ENGINE_VERSION`, però un `remigi-engine.js` que pot fer anar partides tot
+  sol és el que farà possibles les simulacions massives amb Node pelat.
+- **El RNG és del motor, no de la crida**: `createEngine({seed})` arrossega la
+  seqüència entre decisions, que és com es reprodueix una partida sencera; per
+  a una decisió aïllada es crea un motor nou amb la llavor.
+- **Cap Web Worker encara**: l'API és pura i síncrona sobre JSON (res del
+  DOM), així que el pas a worker és un embolcall de missatges documentat a
+  `docs/ENGINE.md`; fer-lo ara seria codi mort (el pitjor torn de l'expert és
+  ~176 ms).
+
+### Problemes trobats
+
+- [2026-08-28] Cap regressió: la migració del simulador i de la web al motor
+  ha sortit neta a la primera (sortida del simulador idèntica byte a byte i
+  els 196 tests en verd), perquè el motor crida exactament el mateix
+  `decideAiMove` de sempre amb el mateix consum de RNG.
 
 ---
 

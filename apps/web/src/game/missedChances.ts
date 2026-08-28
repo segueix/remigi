@@ -1,4 +1,7 @@
-import { chooseBestPlay, type GameState, type Meld, type Tile } from '@remigi/core';
+import { createEngine, type GameState, type Meld, type Tile } from '@remigi/core';
+
+/** Motor només per analitzar posicions: l'anàlisi és determinista (sense RNG). */
+const engine = createEngine();
 
 /**
  * Els jeroglífics: cada cop que el jugador roba fitxa (o passa) havent-hi una
@@ -38,11 +41,7 @@ const MIN_PUZZLE_TILES = 2;
  * jugades noves, així que totes s'aguanten entre elles.
  */
 export function detectMissedChances(game: GameState, playerIndex: number): MissedChance[] {
-  const best = chooseBestPlay(game, playerIndex, {
-    allowJokers: true,
-    allowExtensions: true,
-    allowRearrange: true,
-  });
+  const best = engine.analyze(game, { playerIndex }).bestPlay;
   if (!best) return [];
 
   const player = game.players[playerIndex];

@@ -10,6 +10,14 @@ export * from './core/board';
 export * from './core/game';
 export * from './core/scoring';
 
+/*
+ * El motor: la porta per demanar jugades a la IA (vegeu docs/ENGINE.md).
+ * Les peces d'ai/ de sota queden exportades per compatibilitat i per als
+ * tests, però el codi nou ha de parlar amb el motor.
+ */
+export * from './engine/version';
+export * from './engine/engine';
+
 export * from './ai/difficulty';
 export * from './ai/solver';
 export * from './ai/rearrange';

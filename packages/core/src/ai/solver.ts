@@ -22,6 +22,18 @@ export interface SolverOptions {
   allowRearrange?: boolean;
   /** Sostre de nodes de la cerca de reordenació. */
   maxNodes?: number;
+  /** Sortida de diagnòstic per al motor: no canvia cap decisió. */
+  stats?: SearchStats;
+}
+
+/** Diagnòstic de la cerca, per a les mètriques del motor. */
+export interface SearchStats {
+  /** Nodes explorats per la cerca de reordenació (0 si no s'ha engegat). */
+  nodes: number;
+  /** La cerca de reordenació ha tocat el sostre de nodes i s'ha abandonat. */
+  searchLimited: boolean;
+  /** La proposta final ve de la reordenació completa, no de l'heurística voraç. */
+  rearrangeUsed: boolean;
 }
 
 export interface PlayCandidate {
@@ -178,6 +190,12 @@ export function chooseBestPlay(
   playerIndex: number,
   options: SolverOptions,
 ): PlayCandidate | null {
+  const { stats } = options;
+  if (stats) {
+    stats.nodes = 0;
+    stats.searchLimited = false;
+    stats.rearrangeUsed = false;
+  }
   const player = state.players[playerIndex];
   const candidates = findRackMelds(player.rack, options.allowJokers);
 
@@ -213,9 +231,18 @@ export function chooseBestPlay(
    * partida. Per això es comprova abans de fer-la servir i, si no convenç, es
    * juga la de l'heurística voraç.
    */
-  const rearranged = bestRearrangement(state.board, player.rack, { maxNodes: options.maxNodes });
+  const rearrangeStats = stats ? { nodes: 0, limited: false } : undefined;
+  const rearranged = bestRearrangement(state.board, player.rack, {
+    maxNodes: options.maxNodes,
+    stats: rearrangeStats,
+  });
+  if (stats && rearrangeStats) {
+    stats.nodes = rearrangeStats.nodes;
+    stats.searchLimited = rearrangeStats.limited;
+  }
   if (!rearranged || rearranged.tilesUsed <= (greedy?.tilesUsed ?? 0)) return greedy;
   if (!isSoundProposal(state.board, player.rack, rearranged.board)) return greedy;
+  if (stats) stats.rearrangeUsed = true;
   return { board: rearranged.board, tilesUsed: rearranged.tilesUsed, points };
 }
 

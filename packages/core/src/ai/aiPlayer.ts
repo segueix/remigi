@@ -1,7 +1,7 @@
 import type { Rng } from '../core/random';
 import type { GameState, Move } from '../core/types';
 import { difficultyByKey, type AiParams } from './difficulty';
-import { chooseBestPlay } from './solver';
+import { chooseBestPlay, type SearchStats } from './solver';
 
 /** Paràmetres d'IA del jugador (segons el seu `aiLevel`, o el nivell per defecte). */
 export function aiParamsForPlayer(state: GameState, playerIndex: number): AiParams {
@@ -17,6 +17,19 @@ export interface AiMoveOptions {
   rubberBanding?: boolean;
   /** Substitueix paràmetres del nivell (proves i comparatives). */
   overrides?: Partial<AiParams>;
+  /** Sostre de nodes de la cerca de reordenació (per defecte, el del cercador). */
+  maxNodes?: number;
+  /** Sortida de diagnòstic per al motor: no canvia cap decisió. */
+  stats?: AiDecisionStats;
+}
+
+/** Diagnòstic d'una decisió, per a les mètriques del motor. */
+export interface AiDecisionStats extends SearchStats {
+  /**
+   * El cercador havia trobat jugada. Si tot i això el moviment és robar, és
+   * l'error humà simulat del nivell («no veure» la jugada).
+   */
+  foundPlay: boolean;
 }
 
 /** Com de lluny pot arribar l'ajust dins de la partida. */
@@ -62,7 +75,10 @@ export function decideAiMove(
     allowJokers: params.usesJokers,
     allowExtensions: params.extendsBoard,
     allowRearrange: params.rearrangesTable,
+    maxNodes: options.maxNodes,
+    stats: options.stats,
   });
+  if (options.stats) options.stats.foundPlay = best !== null;
   if (!best) return { type: 'draw' };
 
   const mistakeRate = options.rubberBanding

@@ -45,6 +45,18 @@ export interface RearrangeOptions {
    * mica pitjor que fer esperar el jugador.
    */
   maxNodes?: number;
+  /**
+   * Sortida de diagnòstic: si es passa, s'hi escriuen els nodes explorats i si
+   * la cerca ha tocat el sostre. No canvia cap decisió.
+   */
+  stats?: RearrangeStats;
+}
+
+export interface RearrangeStats {
+  /** Nodes explorats per la cerca. */
+  nodes: number;
+  /** La cerca ha tocat el sostre de nodes i s'ha abandonat. */
+  limited: boolean;
 }
 
 const DEFAULT_MAX_NODES = 120_000;
@@ -140,6 +152,10 @@ export function bestRearrangement(
   }
 
   const solution = solve(0, totalJokers);
+  if (options.stats) {
+    options.stats.nodes = nodes;
+    options.stats.limited = exhausted;
+  }
   if (!solution || exhausted) return null;
 
   const tilesUsed = rack.length - solution.cost;
