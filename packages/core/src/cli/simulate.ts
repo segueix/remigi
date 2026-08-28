@@ -7,15 +7,13 @@
  *   npm run simulate -- --no-rearrange   # expert sense reordenació de taula
  *   npm run simulate -- --duel 200       # expert nou contra expert antic
  *
+ * Les jugades es demanen a l'API pública del motor (engine/), la mateixa que fa
+ * servir l'app: el que es mesura aquí és exactament el que jugarà la web.
  * A cada torn es comprova l'invariant de conservació: sac + taula + mans = 106,
- * i es mesura el temps que triga a decidir cada jugada.
+ * i es recull el temps i els nodes de cada decisió del jugador mesurat.
  */
-import { decideAiMove } from '../ai/aiPlayer';
-import { TOTAL_TILES } from '../core/constants';
-import { applyMove, createGame } from '../core/game';
-import { createRng } from '../core/random';
-import { finalScores } from '../core/scoring';
-import type { GameState } from '../core/types';
+import { ENGINE_VERSION, TOTAL_TILES, applyMove, createEngine, createGame, finalScores } from '../engine';
+import type { GameState } from '../engine';
 
 const MAX_TURNS = 1000;
 
@@ -38,6 +36,8 @@ function countTiles(state: GameState): number {
 interface Timing {
   /** Mil·lisegons de cada decisió del jugador que ens interessa mesurar. */
   samples: number[];
+  /** Nodes de cerca de cada decisió del mateix jugador. */
+  nodes: number[];
 }
 
 /** Juga una partida sencera i retorna l'estat final. */
@@ -53,16 +53,20 @@ function playGame(
     seed,
     players: names.map((name, i) => ({ name, kind: 'ai' as const, aiLevel: levels[i] })),
   });
-  const rng = createRng(seed + 1);
+  // Mateixa llavor, mateixa partida: el motor arrossega el RNG dels errors
+  // humans, així que un motor nou per partida la fa reproduïble de cap a cap.
+  const engine = createEngine({ seed: seed + 1 });
 
   while (state.status === 'playing' && state.turn <= MAX_TURNS) {
     const player = state.currentPlayer;
     const overrides = rearrangeFor[player] ? undefined : { rearrangesTable: false };
-    const started = performance.now();
-    const move = decideAiMove(state, player, rng, { overrides });
-    if (player === measuredPlayer) timing.samples.push(performance.now() - started);
+    const decision = engine.play(state, { playerIndex: player, overrides });
+    if (player === measuredPlayer) {
+      timing.samples.push(decision.thinkingTimeMs);
+      timing.nodes.push(decision.nodes);
+    }
 
-    state = applyMove(state, move);
+    state = applyMove(state, decision.move);
     if (countTiles(state) !== TOTAL_TILES) {
       throw new Error(`S'ha trencat la conservació de fitxes al torn ${state.turn}`);
     }
@@ -81,10 +85,17 @@ function summariseTiming(timing: Timing): string {
   return `mitjana ${mean.toFixed(1)} ms · p95 ${p95.toFixed(1)} ms · pitjor ${sorted.at(-1)!.toFixed(1)} ms`;
 }
 
+function summariseNodes(timing: Timing): string {
+  const explored = timing.nodes.filter((n) => n > 0);
+  if (explored.length === 0) return 'cap cerca de reordenació';
+  const mean = explored.reduce((a, b) => a + b, 0) / explored.length;
+  return `mitjana ${Math.round(mean)} · màxim ${Math.max(...explored)} (en ${explored.length} cerques)`;
+}
+
 /** Expert amb reordenació contra expert sense, a igualtat de repartiment. */
 function duel(games: number, baseSeed: number): void {
-  const timing: Timing = { samples: [] };
-  const timingOld: Timing = { samples: [] };
+  const timing: Timing = { samples: [], nodes: [] };
+  const timingOld: Timing = { samples: [], nodes: [] };
   const wins = { nou: 0, antic: 0 };
 
   for (let i = 0; i < games; i++) {
@@ -114,6 +125,7 @@ function duel(games: number, baseSeed: number): void {
 }
 
 function main(): void {
+  console.log(`Motor remigi-engine v${ENGINE_VERSION}\n`);
   const baseSeed = argValue('seed', 42);
   const duelGames = argValue('duel', 0);
   if (duelGames > 0) return duel(duelGames, baseSeed);
@@ -121,7 +133,7 @@ function main(): void {
   const games = argValue('games', 20);
   const rearrange = !hasFlag('no-rearrange');
   const wins = new Map<string, number>();
-  const timing: Timing = { samples: [] };
+  const timing: Timing = { samples: [], nodes: [] };
   let totalTurns = 0;
 
   for (let i = 0; i < games; i++) {
@@ -157,6 +169,7 @@ function main(): void {
   }
   console.log(`Mitjana de torns per partida: ${(totalTurns / games).toFixed(1)}`);
   console.log(`Temps de decisió de l'expert: ${summariseTiming(timing)}`);
+  console.log(`Nodes de reordenació de l'expert: ${summariseNodes(timing)}`);
 }
 
 main();

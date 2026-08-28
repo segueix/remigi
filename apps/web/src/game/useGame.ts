@@ -1,8 +1,8 @@
 import {
   RulesError,
   applyMove,
+  createEngine,
   createGame,
-  decideAiMove,
   type DifficultyKey,
   type GameState,
 } from '@remigi/core';
@@ -26,6 +26,12 @@ import {
  * desenvolupa o es fan proves automatitzades.
  */
 const BOT_DELAY_MS = Number(import.meta.env.VITE_BOT_DELAY ?? 3000);
+
+/**
+ * El motor que juga pels bots: l'única porta de la web cap a la IA (vegeu
+ * docs/ENGINE.md). Sense llavor perquè cada partida real sigui diferent.
+ */
+const engine = createEngine();
 
 export interface GameSetup {
   playerName: string;
@@ -133,12 +139,11 @@ export function useGame(
         if (current.status !== 'playing' || isHumanTurn(current)) return current;
         const before = new Set(current.board.flat().map((tile) => tile.id));
         const mover = current.currentPlayer;
-        const next = applyMove(
-          current,
-          decideAiMove(current, mover, Math.random, {
-            rubberBanding: setupRef.current.adaptDuringGame,
-          }),
-        );
+        const decision = engine.play(current, {
+          playerIndex: mover,
+          rubberBanding: setupRef.current.adaptDuringGame,
+        });
+        const next = applyMove(current, decision.move);
         setHighlighted(new Set(next.board.flat().map((t) => t.id).filter((id) => !before.has(id))));
         setTileOwners((owners) => updateOwners(owners, current.board, next.board, mover));
         return next;

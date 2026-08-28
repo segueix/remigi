@@ -41,20 +41,25 @@ remigi/
 │       │   │   ├── board.ts       # Validació de la taula
 │       │   │   ├── game.ts        # Estat de partida i moviments (funcions pures)
 │       │   │   └── scoring.ts     # Punts pendents i puntuació final
-│       │   ├── ai/            # Oponents artificials
+│       │   ├── ai/            # Oponents artificials (implementació interna)
 │       │   │   ├── difficulty.ts  # 5 nivells: novell, fàcil, mitjà, avançat, expert
 │       │   │   ├── solver.ts      # Cerca de jugades possibles
 │       │   │   ├── rearrange.ts   # Repartiment òptim de la taula (nivell expert)
 │       │   │   └── aiPlayer.ts    # Decisió de moviment segons el nivell
+│       │   ├── engine/        # El motor: API pública i versionada de la IA
+│       │   │   ├── version.ts     # ENGINE_VERSION
+│       │   │   ├── engine.ts      # createEngine → play / analyze
+│       │   │   └── index.ts       # Entrada del build de dist/remigi-engine.js
 │       │   ├── adaptive/      # Dificultat adaptativa
 │       │   │   ├── rating.ts               # Càlcul Elo
 │       │   │   ├── experience.ts           # Perfil i historial del jugador
 │       │   │   └── adaptiveDifficulty.ts   # Tria d'oponents segons l'habilitat
 │       │   ├── persistence/   # Desat del perfil (memòria i fitxer JSON)
 │       │   ├── cli/
-│       │   │   └── simulate.ts    # Simulador IA contra IA per validar el motor
+│       │   │   └── simulate.ts    # Simulador IA contra IA (usa l'API del motor)
 │       │   └── index.ts       # API pública del paquet
-│       └── test/              # Tests (vitest)
+│       ├── scripts/           # Build de l'artefacte del motor i prova de fum
+│       └── test/              # Tests (vitest), amb la regressió del motor
 ├── apps/
 │   └── web/                   # Aplicació web (Vite + React + TypeScript)
 │       ├── src/
@@ -69,6 +74,7 @@ remigi/
 ├── AGENT.md                   # Pla de fases i registre de problemes
 └── docs/
     ├── ARQUITECTURA.md        # Decisions de disseny i mapa de mòduls
+    ├── ENGINE.md              # El motor de la IA: API, artefacte i versionat
     ├── REGLES.md              # Regles implementades i pendents
     └── IA-ADAPTATIVA.md       # Com s'adapta la dificultat al jugador
 ```
@@ -92,6 +98,8 @@ npm test            # tests del motor i de la web
 npm run test:e2e    # proves de navegador sobre el build de producció
 npm run typecheck   # comprovació de tipus
 npm run build       # build de producció de la web
+npm run build:engine # genera dist/remigi-engine.js (el motor de la IA, sol)
+npm run test:engine  # només els tests del motor (API, artefacte i regressió)
 npm run simulate    # partides IA contra IA (mostra que els nivells estan ordenats)
 ```
 
@@ -132,10 +140,14 @@ el codi.
 
 ## Fer servir el motor des de codi
 
-`@remigi/core` és independent de la interfície i es pot fer servir sol:
+La IA és un **motor independent** amb API estable i versionada (vegeu
+[`docs/ENGINE.md`](docs/ENGINE.md)): l'app li passa l'estat i ell retorna la
+jugada, com un motor d'escacs.
 
 ```ts
-import { createGame, applyMove, decideAiMove } from '@remigi/core';
+import { createEngine, createGame, applyMove } from '@remigi/core';
+
+const engine = createEngine({ seed: 7 }); // amb llavor: partides reproduïbles
 
 let state = createGame({
   players: [
@@ -146,9 +158,15 @@ let state = createGame({
   seed: 42,
 });
 
-// Torn d'una IA:
-state = applyMove(state, decideAiMove(state, state.currentPlayer));
+// Torn d'una IA: el motor decideix i diu què ha costat decidir-ho.
+const decision = engine.play(state);
+state = applyMove(state, decision.move);
+// decision → { move, engineVersion, level, thinkingTimeMs, nodes, ... }
 ```
+
+`npm run build:engine` empaqueta exactament aquest motor en un únic fitxer
+(`packages/core/dist/remigi-engine.js`) executable amb Node pelat o des d'un
+Web Worker, sense React ni DOM.
 
 ## Full de ruta
 
@@ -176,3 +194,7 @@ state = applyMove(state, decideAiMove(state, state.currentPlayer));
 - [x] Directes a la taula: sense pantalla d'inici, amb el nom, el nivell, la
       partida nova i l'historial en un menú que s'obre tocant el teu jugador, i
       rivals amb nom d'usuari i avatar de colors.
+- [x] La IA encapsulada com a motor independent i substituïble
+      (`remigi-engine`): API pública versionada, artefacte d'un sol fitxer per
+      a Node o Web Worker, i regressió comportamental que garanteix que cada
+      nivell juga exactament igual que abans.

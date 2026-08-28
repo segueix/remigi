@@ -14,10 +14,17 @@ El projecte és un monorepo amb workspaces d'npm:
 Dependències entre capes (sempre en aquesta direcció, mai al revés):
 
 ```
-core  ◄──  ai  ◄──  adaptive
-  ▲          ▲          ▲
-  └──────────┴──────────┴──  persistence · cli · app web
+core  ◄──  ai  ◄──  engine      core ◄── adaptive
+  ▲          ▲        ▲            ▲        ▲
+  └──────────│────────┴────────────┴────────┴──  persistence · cli · app web
+             └─ (només el motor importa ai/)
 ```
+
+La capa **`engine/`** és la porta pública de la IA (vegeu
+[`docs/ENGINE.md`](ENGINE.md)): la resta del projecte demana jugades a
+`createEngine(...).play(...)` i no importa mai `ai/` directament. És també
+l'entrada del build que genera l'artefacte independent
+`dist/remigi-engine.js`.
 
 ## Decisions principals
 
@@ -59,6 +66,17 @@ els jokers (`usesJokers`), si reparteix de nou la taula (`rearrangesTable`)...
 Ajustar la corba de dificultat és tocar números, no
 reescriure lògica. La capa adaptativa (`adaptive/`) tria aquests paràmetres
 segons el perfil del jugador; vegeu `docs/IA-ADAPTATIVA.md`.
+
+### El motor de la IA, encapsulat i substituïble
+
+Tota aquesta IA queda darrere d'una API petita i versionada, `engine/`
+(`createEngine`, `ENGINE_VERSION`), pensada com un motor d'escacs: rep l'estat
+i retorna la jugada amb el seu diagnòstic (temps, nodes, si la cerca s'ha
+limitat). L'app, el simulador i l'artefacte `dist/remigi-engine.js` (un únic
+fitxer ESM, executable amb Node o en un Web Worker, sense React ni DOM) surten
+del mateix codi font, i un test de regressió amb partides de referència
+garanteix que la frontera no canvia cap jugada. Tot el detall, a
+[`docs/ENGINE.md`](ENGINE.md).
 
 ### Reordenar la taula: recomptes, no fitxes
 
@@ -106,9 +124,10 @@ comprova de debò si es pot escriure i degrada a memòria si no.
 - L'estat de React és directament el `GameState`; cada acció de l'usuari
   construeix un `Move` i crida `applyMove` dins d'un `try/catch` que mostra el
   missatge del `RulesError` si el moviment no és legal.
-- Els torns dels bots criden `decideAiMove` (síncron i prou ràpid: el pitjor
-  torn d'un expert mesurat va ser de 176 ms) amb un petit retard perquè es
-  puguin seguir visualment.
+- Els torns dels bots demanen la jugada al motor (`engine.play`, síncron i
+  prou ràpid: el pitjor torn d'un expert mesurat va ser de 176 ms) amb un
+  petit retard perquè es puguin seguir visualment; la detecció de jeroglífics
+  fa servir `engine.analyze`.
 - En acabar, `finalScores` + `recordGame` actualitzen el perfil, i
   `suggestOpponents` proposa els rivals de la partida següent.
 - **El que és només visual es queda a la web.** Qui ha posat cada jugada, per
