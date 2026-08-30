@@ -34,6 +34,12 @@ export function ComEsJuga({ obertPerDefecte }: { obertPerDefecte?: boolean }) {
     <details className="rules" open={obertPerDefecte}>
       <summary>Com es juga al Remigi (i com s’obre)</summary>
 
+      <p>
+        <strong>Remigi</strong> és un joc de combinacions pensat per jugar online gratis. Si hi
+        has arribat cercant <strong>«remigio»</strong>, aquesta versió de Remigi es juga formant
+        grups i escales i fent una obertura inicial de 30 punts.
+      </p>
+
       <p>Només hi ha dues jugades vàlides, i tota la resta no compta:</p>
       <ul className="exemples">
         <Exemple
