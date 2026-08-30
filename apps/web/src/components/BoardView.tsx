@@ -48,7 +48,33 @@ export function BoardView({
      * un lloc buit n'obre una. Com que es busca la zona des de l'element de sota
      * cap amunt, deixar-la sobre una jugada concreta hi té preferència.
      */
-    <div className="board" data-drop="new">
+    <div className="board" data-drop="new" style={{ position: 'relative' }}>
+      {/*
+       * Marca d'aigua del joc: queda integrada al feltre, a baix a la dreta,
+       * sense ocupar espai ni interceptar cap clic o gest de les fitxes.
+       * Va abans de les jugades perquè, si coincideixen, les fitxes es pintin
+       * per sobre i el nom continuï fent de marca del tauler, no d'etiqueta.
+       */}
+      <span
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          right: '0.85rem',
+          bottom: '0.65rem',
+          pointerEvents: 'none',
+          userSelect: 'none',
+          color: 'color-mix(in srgb, var(--feltre-1) 78%, #d8f3e8)',
+          fontSize: '1.15rem',
+          fontWeight: 700,
+          letterSpacing: '0.07em',
+          lineHeight: 1,
+          opacity: 0.72,
+          textShadow: '0 1px 1px rgb(0 0 0 / 0.18)',
+        }}
+      >
+        Remigi
+      </span>
+
       {board.length === 0 && !choosing && <p className="muted board-empty">La taula és buida.</p>}
 
       {board.map((meld, index) => (
