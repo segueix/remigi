@@ -32,7 +32,7 @@ function Exemple({ fitxes, nota, malament }: { fitxes: Tile[]; nota: string; mal
 export function ComEsJuga({ obertPerDefecte }: { obertPerDefecte?: boolean }) {
   return (
     <details className="rules" open={obertPerDefecte}>
-      <summary>Com es juga (i com s’obre)</summary>
+      <summary>Com es juga al Remigi (i com s’obre)</summary>
 
       <p>Només hi ha dues jugades vàlides, i tota la resta no compta:</p>
       <ul className="exemples">
