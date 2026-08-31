@@ -77,18 +77,18 @@ La partida ocupa **tota la pantalla**, com un joc i no com una pàgina: a dalt l
 tira de jugadors i el torn, al mig la taula de feltre verd —que es queda tot
 l'espai que sobra—, i a baix el faristol de fusta amb les fitxes i els botons
 del torn. La pàgina no es desplaça mai; si mai cal, es desplacen per dins la
-taula o el faristol. Les fitxes de la taula són un pèl més petites que les del
-faristol perquè s'hi vegin més jugades de cop; les del faristol conserven els
-44 px de toc al mòbil.
+taula o el faristol. Les fitxes de la taula són **grosses**, tant com les del
+faristol: és on es juga, i el que costa de llegir són les jugades dels altres.
+Les del faristol conserven els 44 px de toc al mòbil.
 
 El feltre és fosc en tots dos temes, com una taula de debò. Per això tot el que
 s'hi posa a sobre —marcs dels bots, jugades invàlides, destinacions— fa servir
 sempre les **versions clares** dels colors (variables amb sufix `-taula`).
 
 A l'ordinador, les fitxes de la taula es veuen **més grans que les del
-faristol**: hi ha lloc de sobres. En pantalles petites i en apaïsat s'empetiteixen
-per encabir el màxim de joc, i en apaïsat l'ordenació del faristol («números /
-colors») viu a sobre dels botons del torn, que és on queda lloc.
+faristol**: hi ha lloc de sobres. En pantalles petites i en apaïsat, la mida de
+partida és una mica més continguda, i en apaïsat l'ordenació del faristol
+(«números / colors») viu a sobre dels botons del torn, que és on queda lloc.
 
 A més, **les fitxes s'empetiteixen soles quan ja no hi caben** —i només
 llavors— (`game/boardDensity.ts` i `game/useBoardFit.ts`). Jugar bé demana veure
@@ -96,16 +96,15 @@ la taula **sencera**, però encongir abans d'hora fa el joc més petit del compt
 i deixa mig feltre buit. Per això no es compten fitxes: després de cada canvi de
 la taula (i quan el feltre canvia de mida) es **mesura** si el contingut hi cap
 (`scrollHeight` contra `clientHeight`) i es baixa de tres en tres per cent fins
-al primer pas que hi càpiga tot, amb un terra del 60 %. Quan la taula es buida,
+al primer pas que hi càpiga tot, amb un terra de la meitat. Quan la taula es buida,
 les fitxes tornen a créixer soles. Va en un efecte de disposició, així que el
 navegador no arriba a pintar mai la mida equivocada, i l'escala s'escriu com a
 variable CSS a l'element: qui decideix és una mesura del DOM, i tornar-la a
 l'estat de React només serviria per repintar un altre cop el mateix.
 
-Sobre el feltre, i sense desplaçar-s'hi, hi ha dos avisos (`.board-zona`): el
-**rellotge del torn** i **què acaba de fer l'últim rival** («GuineuAstuta ha
-baixat 4 fitxes»), amb el seu color i el seu avatar. En apaïsat van a baix, que
-és on no hi ha la tira de jugadors.
+Sobre el feltre, i sense desplaçar-s'hi, només hi ha el **rellotge del torn**
+(`.board-zona`), petit i en un racó: la resta de l'espai és per a les fitxes.
+En apaïsat va a baix, que és on no hi ha la tira de jugadors.
 
 Els botons del torn van sempre en **una sola línia**, amb icona de traç
 (`components/icons.tsx`, SVG en línia, sense llibreries) i rètol; quan el rètol
@@ -300,7 +299,7 @@ El que abans era una llista per repassar a mà ara ho comprova `npm run test:e2e
 - El rellotge del torn es veu a la taula, el menú en canvia la durada i, quan
   s'acaba, es desfà el que no s'havia validat i es roba.
 - Les fitxes de la taula es queden a mida natural mentre hi caben i només
-  s'encongeixen quan ja no, i la taula diu què acaba de fer cada rival.
+  s'encongeixen quan ja no.
 - Rutes correctes sota `/remigi/`, manifest i icones, i jugar sense connexió.
 - En pantalla petita: res no desborda i els objectius de toc fan 44 px.
 

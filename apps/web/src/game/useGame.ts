@@ -33,20 +33,6 @@ export const BOT_DELAY_MS = Number(import.meta.env.VITE_BOT_DELAY ?? 3000);
  */
 const engine = createEngine();
 
-/**
- * L'última jugada d'un rival, per poder-la explicar a la taula: qui, què i
- * quantes fitxes. És informació de la pantalla (com els colors dels autors):
- * no forma part de l'estat del motor, es dedueix del moviment que acaba de fer.
- */
-export interface BotAction {
-  /** Lloc del jugador a la tira (és el que li dona el color). */
-  slot: number;
-  name: string;
-  kind: 'play' | 'draw';
-  /** Fitxes que ha deixat a la taula, si ha jugat. */
-  tiles: number;
-}
-
 export interface GameSetup {
   playerName: string;
   opponents: DifficultyKey[];
@@ -74,8 +60,6 @@ export interface GameHandle {
   tileOwners: TileOwners;
   /** Cops que el jugador ha robat havent-hi jugada, per al repàs del final. */
   misses: MissedChance[];
-  /** Què acaba de fer l'últim rival que ha mogut, per dir-ho a la taula. */
-  lastAction: BotAction | null;
   isHumanTurn: boolean;
   canCommit: boolean;
   selectTile(tileId: string | null): void;
@@ -142,7 +126,6 @@ export function useGame(
    */
   const [tileOwners, setTileOwners] = useState<TileOwners>(() => new Map(initialOwners ?? []));
   const [misses, setMisses] = useState<MissedChance[]>(() => [...(initialMisses ?? [])]);
-  const [lastAction, setLastAction] = useState<BotAction | null>(null);
 
   // Cada vegada que el motor avança, el torn comença de zero.
   useEffect(() => {
@@ -166,16 +149,8 @@ export function useGame(
           rubberBanding: setupRef.current.adaptDuringGame,
         });
         const next = applyMove(current, decision.move);
-        const played = new Set(next.board.flat().map((t) => t.id).filter((id) => !before.has(id)));
-        setHighlighted(played);
+        setHighlighted(new Set(next.board.flat().map((t) => t.id).filter((id) => !before.has(id))));
         setTileOwners((owners) => updateOwners(owners, current.board, next.board, mover));
-        /* Qui ha mogut i què ha fet: la taula ho explica fins que tornis a jugar tu. */
-        setLastAction({
-          slot: mover,
-          name: current.players[mover].name,
-          kind: decision.move.type === 'play' ? 'play' : 'draw',
-          tiles: played.size,
-        });
         return next;
       });
     }, BOT_DELAY_MS);
@@ -207,7 +182,6 @@ export function useGame(
       setTileOwners((owners) => updateOwners(owners, game.board, next.board, game.currentPlayer));
       setGame(next);
       setHighlighted(new Set());
-      setLastAction(null);
       // La fitxa robada deixa de ser «la que acabes de robar» quan tornes a jugar.
       setDrawnTileId(null);
     } catch (caught) {
@@ -258,7 +232,6 @@ export function useGame(
         setDrawnTileId(drawn?.id ?? null);
         setGame(next);
         setHighlighted(new Set());
-        setLastAction(null);
       } catch (caught) {
         setError(caught instanceof RulesError ? caught.message : String(caught));
       }
@@ -285,7 +258,6 @@ export function useGame(
     if (setup) setupRef.current = setup;
     setHighlighted(new Set());
     setDrawnTileId(null);
-    setLastAction(null);
     setTileOwners(new Map());
     setMisses([]);
     setGame(newGameState(setupRef.current));
@@ -300,7 +272,6 @@ export function useGame(
     drawnTileId,
     tileOwners,
     misses,
-    lastAction,
     isHumanTurn: isHumanTurn(game),
     canCommit: draft !== null && hasChanges(draft),
     selectTile,

@@ -652,9 +652,9 @@ input {
 }
 
 .board {
-  --fitxa-ampla: 2.95rem;
-  --fitxa-alta: 3.85rem;
-  --fitxa-lletra: 1.55rem;
+  --fitxa-ampla: 3.2rem;
+  --fitxa-alta: 4.15rem;
+  --fitxa-lletra: 1.7rem;
   /*
    * `--densitat` la posa la taula mateixa quan mesura si tot hi cap (vegeu
    * `game/boardDensity.ts`): val 1 mentre no calgui encongir res.
@@ -915,11 +915,10 @@ input {
 }
 
 /*
- * A l'ordinador la taula té lloc de sobres: les fitxes s'hi veuen ben grans
- * (més que les del faristol i tot). En pantalles petites i en apaïsat, els
- * seus blocs canvien les variables de mida perquè hi càpiga el màxim de joc,
- * i a sobre hi actua `--escala-fitxa`, que les encongeix un pèl més només
- * quan la taula ja no dona més de si.
+ * Les fitxes de la taula són **grosses**: és on es juga, i el que costa de
+ * llegir són les jugades dels altres, no la teva mà. Cada mida de pantalla té
+ * la seva mesura de partida, i a sobre hi actua `--escala-fitxa`, que només
+ * les encongeix quan la taula ja no dona més de si.
  */
 .board .tile {
   width: calc(var(--fitxa-ampla) * var(--escala-fitxa));
@@ -1523,71 +1522,29 @@ button.link.danger {
   }
 }
 
-/* ---------- Avisos de la taula: rellotge i última jugada ---------- */
+/* ---------- El rellotge, sobre el feltre ---------- */
 
 /*
- * Van sobre el feltre però fora de la taula que es desplaça: així el rellotge
- * i l'avís de l'últim rival es veuen sempre, encara que estiguis mirant una
- * escala del final de la taula. No reben cap gest (els fills tampoc en
- * necessiten).
+ * Va sobre el feltre però fora de la taula que es desplaça: així el compte
+ * enrere es veu sempre, encara que estiguis mirant una escala del final de la
+ * taula. No rep cap gest.
  */
 .taula-avisos {
   position: absolute;
-  top: 0.45rem;
-  right: 0.6rem;
-  left: 0.6rem;
+  top: 0.35rem;
+  right: 0.5rem;
   z-index: 6;
   display: flex;
   align-items: flex-start;
-  gap: 0.5rem;
   pointer-events: none;
 }
 
-/* Sobre el feltre fosc, els colors dels bots van en versió clara. */
-.taula-avisos [data-bot='1'] {
-  --marc: var(--bot-1-taula);
-}
-.taula-avisos [data-bot='2'] {
-  --marc: var(--bot-2-taula);
-}
-.taula-avisos [data-bot='3'] {
-  --marc: var(--bot-3-taula);
-}
-
-/* Amb avisos, la taula deixa lloc a dalt perquè no en tapin les jugades. */
+/*
+ * La taula deixa just el lloc del rellotge a dalt a la dreta perquè no en tapi
+ * cap jugada. És l'únic que hi ha a sobre: les fitxes manen.
+ */
 .board-zona.amb-avisos .board {
-  padding-top: 2.9rem;
-}
-
-/* Què acaba de fer el rival, amb el seu color, fins que tornes a jugar tu. */
-.ultima-jugada {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  margin: 0;
-  padding: 0.15rem 0.7rem 0.15rem 0.2rem;
-  border: 1px solid var(--marc, rgb(255 255 255 / 0.25));
-  border-radius: 999px;
-  background: rgb(8 30 22 / 0.72);
-  color: rgb(255 255 255 / 0.93);
-  font-size: 0.8rem;
-  line-height: 1.3;
-  box-shadow: 0 4px 12px rgb(0 0 0 / 0.3);
-  animation: entra-avis-taula 0.35s ease-out;
-}
-
-.ultima-avatar {
-  width: 1.55rem;
-  height: 1.55rem;
-  border-width: 1px;
-  font-size: 0.9rem;
-}
-
-@keyframes entra-avis-taula {
-  from {
-    opacity: 0;
-    transform: translateY(-6px);
-  }
+  padding-top: 2.6rem;
 }
 
 /*
@@ -1597,11 +1554,10 @@ button.link.danger {
 .rellotge-torn {
   position: relative;
   flex: none;
-  margin-left: auto;
   display: grid;
   place-items: center;
-  width: 2.9rem;
-  height: 2.9rem;
+  width: 2.4rem;
+  height: 2.4rem;
   border-radius: 50%;
   background: rgb(8 30 22 / 0.72);
   box-shadow: 0 4px 12px rgb(0 0 0 / 0.3);
@@ -1632,7 +1588,7 @@ button.link.danger {
 .rellotge-segons {
   position: relative;
   color: rgb(255 255 255 / 0.95);
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
@@ -2170,9 +2126,9 @@ button.link.danger {
    * de la taula, mai desquadra la pàgina.
    */
   .board {
-    --fitxa-ampla: 2.2rem;
-    --fitxa-alta: 2.85rem;
-    --fitxa-lletra: 1.1rem;
+    --fitxa-ampla: 2.65rem;
+    --fitxa-alta: 3.45rem;
+    --fitxa-lletra: 1.35rem;
   }
 
   .rack {
@@ -2256,10 +2212,10 @@ button.link.danger {
     gap: 0.35rem 0.4rem;
   }
 
-  /* A dalt hi ha la tira de jugadors: els avisos de la taula van a baix. */
+  /* A dalt hi ha la tira de jugadors: el rellotge va a baix. */
   .board-zona.amb-avisos .board {
     padding-top: 2.5rem;
-    padding-bottom: 2.6rem;
+    padding-bottom: 2.2rem;
   }
 
   .taula-avisos {
@@ -2396,9 +2352,9 @@ button.link.danger {
   }
 
   .board {
-    --fitxa-ampla: 2rem;
-    --fitxa-alta: 2.6rem;
-    --fitxa-lletra: 1rem;
+    --fitxa-ampla: 2.3rem;
+    --fitxa-alta: 3rem;
+    --fitxa-lletra: 1.2rem;
   }
 
   .hint,

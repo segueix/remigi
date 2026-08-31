@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { avanca, comencaDeZero, entraAmbPartida, f, jugaContra, obreMenu } from './ajudants';
+import { avanca, entraAmbPartida, f, obreMenu } from './ajudants';
 
 /**
  * El torn del jugador: el faristol que es col·loca a mà, el botó únic
@@ -175,22 +175,5 @@ test.describe('la taula plena', () => {
     // Encongides just el que calia: tot es veu i continuen essent fitxes.
     expect(await desborda()).toBe(false);
     expect(petita).toBeGreaterThan(gran * 0.6);
-  });
-});
-
-test.describe('el torn dels rivals', () => {
-  test('la taula diu què acaba de fer cadascun', async ({ page }) => {
-    await comencaDeZero(page);
-    await jugaContra(page, 2);
-
-    // Avançar sense posar res: roben els rivals i la taula ho explica.
-    await avanca(page).click();
-    const avis = page.locator('.ultima-jugada');
-    await expect(avis).toBeVisible();
-    await expect(avis).toContainText(/ha (robat|baixat|recol·locat)/);
-
-    // Porta el color del rival que ha mogut, com les seves fitxes.
-    const bot = await avis.getAttribute('data-bot');
-    expect(Number(bot)).toBeGreaterThan(0);
   });
 });

@@ -14,18 +14,22 @@
  * cadascú.
  */
 
-/** Passos de mida que es proven, del natural cap avall (un 3 % cada un). */
-export const TILE_SCALES: readonly number[] = buildScales();
+/**
+ * Per sota d'això no s'empetiteixen més: deixarien de llegir-se. Amb les mides
+ * de partida d'ara, la meitat encara deixa la fitxa de la taula com era abans
+ * de fer-les grosses, que és el mínim que s'havia comprovat que es llegeix.
+ */
+const MIN_SCALE = 0.5;
 
-/** Per sota d'això no s'empetiteixen més: deixarien de llegir-se. */
-const MIN_SCALE = 0.6;
-
-/** Un pas de 3 % es nota poc i deixa la taula ben plena. */
+/** Un pas del 3 % es nota poc i deixa la taula ben plena. */
 const STEP = 0.03;
+
+/** Passos de mida que es proven, del natural cap avall. */
+export const TILE_SCALES: readonly number[] = buildScales();
 
 function buildScales(): number[] {
   const scales: number[] = [];
-  for (let scale = 1; scale >= 0.6 - 0.0001; scale -= 0.03) {
+  for (let scale = 1; scale >= MIN_SCALE - 0.0001; scale -= STEP) {
     scales.push(Math.round(scale * 100) / 100);
   }
   return scales;
