@@ -43,8 +43,11 @@ src/
 │   ├── useDragTile.ts        # arrossegar amb ratolí, dit o llapis
 │   ├── bots.ts               # el planter de rivals: noms i avatars
 │   ├── bots.test.ts
+│   ├── boardDensity.ts       # com s'encongeixen les fitxes quan la taula s'omple
 │   ├── meldOwners.ts         # qui ha jugat cada jugada de la taula
 │   ├── meldOwners.test.ts
+│   ├── rackOrder.ts          # l'ordre del faristol, que el posa el jugador
+│   ├── useTurnClock.ts       # el compte enrere del torn
 │   └── useGame.ts            # estat de la partida i torns dels bots
 ├── components/
 │   ├── icons.tsx             # icones dels botons del torn
@@ -52,7 +55,7 @@ src/
 │   ├── TileView.tsx          # una fitxa
 │   ├── MeldView.tsx          # una jugada
 │   ├── BoardView.tsx         # la taula
-│   └── RackView.tsx          # el faristol, amb ordenació i compte de fitxes
+│   └── RackView.tsx          # el faristol, que es col·loca a mà
 └── screens/
     ├── GameScreen.tsx        # la partida, el menú del jugador i el resultat
     └── StatsScreen.tsx       # historial: habilitat, gràfic i reinici
@@ -85,6 +88,19 @@ A l'ordinador, les fitxes de la taula es veuen **més grans que les del
 faristol**: hi ha lloc de sobres. En pantalles petites i en apaïsat s'empetiteixen
 per encabir el màxim de joc, i en apaïsat l'ordenació del faristol («números /
 colors») viu a sobre dels botons del torn, que és on queda lloc.
+
+Al mòbil, a més, **la mida va baixant a mesura que la taula s'omple**
+(`game/boardDensity.ts`): a partir d'unes vint fitxes, cada fitxa nova encongeix
+totes les altres un pèl, fins a un mínim on encara es llegeixen. Jugar bé demana
+veure la taula **sencera** —la fitxa que et falta pot ser a qualsevol escala—, i
+amb això hi cap una partida sencera sense desplaçar res. L'escala surt del
+**nombre de fitxes** i no de mesurar el navegador: així el canvi és gradual i
+previsible, una fitxa un pas, i no balla a cada moviment.
+
+Sobre el feltre, i sense desplaçar-s'hi, hi ha dos avisos (`.board-zona`): el
+**rellotge del torn** i **què acaba de fer l'últim rival** («GuineuAstuta ha
+baixat 4 fitxes»), amb el seu color i el seu avatar. En apaïsat van a baix, que
+és on no hi ha la tira de jugadors.
 
 Els botons del torn van sempre en **una sola línia**, amb icona de traç
 (`components/icons.tsx`, SVG en línia, sense llibreries) i rètol; quan el rètol
@@ -128,6 +144,28 @@ En deixar-la sobre una jugada, s'insereix a la posició que la fa vàlida si n'h
 ha cap: un 6 vermell entra sol a l'esquerra de 7-8-9. I les escales a mig fer
 també s'endrecen soles: baixa el 7, el 5 i el 6 en l'ordre que sigui, i
 quedaran 5-6-7, amb els jokers omplint els forats.
+
+**El faristol el col·loques tu.** Les fitxes es mouen com les de la taula
+(arrossegant-les, o tocant primer la que mous i després el lloc), i mentre
+s'arrossega una barra diu per quin forat entrarà; la meitat de la fitxa on la
+deixes decideix si va abans o després. «Per número» i «per color» no són cap
+mode: escriuen l'ordre d'una vegada i a partir d'allà es continua retocant a mà.
+L'ordre és **cosa de la vista** (`game/rackOrder.ts`: una llista
+d'identificadors), no de l'estat del motor, i es desa amb la partida, així que
+sobreviu al canvi de torn, a robar i a tancar la pestanya. La fitxa que acabes
+de robar entra sempre al final, que és on se la busca.
+
+**Un sol botó tanca el torn.** «Avançar» comprova la jugada si has posat fitxes
+a la taula i, si no n'has posat cap, roba una fitxa i passa el torn; per això
+**no s'apaga mai** mentre et toqui a tu. Abans hi havia un botó de robar a
+part, i robar era massa fàcil de prémer sense voler.
+
+**El temps per torn** (30, 60 o 120 segons, o sense límit) es tria al menú del
+jugador i s'aplica de seguida, també a la partida que estàs jugant. El compte
+enrere es veu a la taula i, els últims deu segons, es posa vermell i batega.
+Quan s'acaba, el que tinguessis a mig col·locar **torna al faristol** i robes:
+la jugada no validada no ha passat mai, perquè la robada s'aplica sobre l'estat
+del motor, que no ha vist mai l'esborrany.
 
 Al menú del jugador es tria l'**aspecte de les fitxes**: crema amb el número de
 color, o fitxa del color amb el número blanc. És una preferència del dispositiu
@@ -174,12 +212,21 @@ i la de després de cada moviment. La jugada s'identifica per **les seves fitxes
 i no per la posició: una jugada es proposa reordenant la taula sencera, i una
 que no ha canviat ha de conservar el color encara que hagi canviat de lloc.
 
-**La tinta dels números** també està mesurada. El vermell i el taronja
+**La tinta dels números** també està mesurada. El vermell i el que era taronja
 s'assemblaven massa a la pantalla —ΔE 23, i només 6 amb daltonisme simulat, que
-és tant com dir el mateix color—: ara el vermell és més intens i fosc i el
-taronja tira cap al groc, i la distància entre tots dos passa a ΔE 46 (13 amb
-daltonisme). El vermell, a més, contrasta més amb el crema de la fitxa que abans
-(5.5:1 en comptes de 4.5:1) i el taronja es queda igual (3.3:1).
+és tant com dir el mateix color—: el vermell es va fer més intens i fosc
+(`#cc0000`, 5.5:1 sobre el crema en comptes de 4.5:1) i el quart color va anar
+cap al groc.
+
+Ara ja **és groc** (i així se'n diu a la interfície: «7 groc»), i com que un
+groc que llueix de fitxa és massa clar per escriure-hi a sobre, en porta un de
+cada: `--pintura` `#f5c518` per a la fitxa sencera, amb el número gairebé negre
+(8.4:1 al pla de la fitxa, 4.4:1 al punt més fosc del degradat), i `--tinta`
+`#b58900` per al número sobre el crema de les fitxes clàssiques (3.1:1, el
+mínim per a text gran). La distància amb el vermell puja a ΔE 64 —17 amb
+daltonisme simulat, més que els 14 que hi havia—, i els marcs daurats (la fitxa
+robada, la recol·locada) es fosqueixen sobre les fitxes grogues, que si no s'hi
+perdrien.
 
 Els colors dels bots estan mesurats igual, no triats a ull: es distingeixen entre ells també amb
 daltonisme simulat (separació mínima ΔE 36 en tema clar i 33 en fosc), no es
@@ -228,7 +275,8 @@ El que abans era una llista per repassar a mà ara ho comprova `npm run test:e2e
 - Partida sencera contra 1, 2 i 3 bots, sense errors de consola.
 - El motor rebutja la sortida de menys de 30 punts i la jugada de menys de 3
   fitxes, i no deixa endur-se al faristol una fitxa que ja era a la taula.
-- «Desfer canvis» retorna el torn a com estava.
+- «Desfer canvis» retorna el torn a com estava, i «Avançar» acaba la jugada si
+  n'hi ha cap i roba si no n'hi ha (mai les dues coses).
 - Arrossegar del faristol a la taula amb el ratolí; amb tocs de debò, lliscar
   sobre les fitxes desplaça la taula i mantenir premut arrossega.
 - L'app entra directament a la partida; el nom, els rivals i la partida nova es
@@ -242,6 +290,12 @@ El que abans era una llista per repassar a mà ara ho comprova `npm run test:e2e
   s'encaixa a la pantalla sense desplaçament de pàgina.
 - Els botons del torn van en una sola línia a totes les mides, i al mòbil
   apaïsat tot cap a la pantalla amb objectius de toc de 44 px.
+- El faristol es col·loca a mà (tocant i arrossegant), ordenar-lo de cop no és
+  cap mode, i l'ordre sobreviu al canvi de torn i a recarregar la pàgina.
+- El rellotge del torn es veu a la taula, el menú en canvia la durada i, quan
+  s'acaba, es desfà el que no s'havia validat i es roba.
+- Les fitxes de la taula s'encongeixen a mesura que s'omple, i la taula diu què
+  acaba de fer cada rival.
 - Rutes correctes sota `/remigi/`, manifest i icones, i jugar sense connexió.
 - En pantalla petita: res no desborda i els objectius de toc fan 44 px.
 

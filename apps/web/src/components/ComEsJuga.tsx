@@ -80,6 +80,20 @@ export function ComEsJuga({ obertPerDefecte }: { obertPerDefecte?: boolean }) {
         Ja pots allargar les jugades que hi ha a la taula i remenar-les com vulguis, sempre que en
         acabar el torn tot siguin grups i escales vàlids i hi hagis posat almenys una fitxa teva.
       </p>
+
+      <h4>El teu torn</h4>
+      <p className="muted small">
+        <strong>El faristol és teu</strong>: col·loca-hi les fitxes on vulguis, arrossegant-les o
+        tocant primer la que mous i després el lloc on ha d’anar. Els botons d’ordenar («per
+        número», «per color») només són una empenta per començar, i l’ordre es manté torn rere
+        torn.
+      </p>
+      <p className="muted small">
+        <strong>Avançar</strong> és l’únic botó per acabar: si has posat fitxes a la taula, en
+        comprova la jugada; si no n’has posat cap, roba una fitxa i passa el torn. I si has posat
+        el <strong>temps per torn</strong> (al menú del teu jugador), el rellotge de la taula el
+        va comptant: quan s’acaba, el que tinguessis a mig col·locar torna al faristol i robes.
+      </p>
     </details>
   );
 }

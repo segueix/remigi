@@ -31,7 +31,13 @@ test('es pot instal·lar com a aplicació', async ({ page, request }) => {
   expect(resposta.ok()).toBe(true);
 
   const manifest = await resposta.json();
-  expect(manifest.name).toBe('Remigi');
+  /*
+   * El nom llarg del manifest és el de la fitxa de la botiga («Remigi online
+   * gratis», que és com es busca el joc); el que queda sota la icona de l'app
+   * instal·lada és el curt, i aquest sí que ha de ser el nom de casa.
+   */
+  expect(manifest.name).toContain('Remigi');
+  expect(manifest.short_name).toBe('Remigi');
   expect(manifest.display).toBe('standalone');
   expect(manifest.icons.length).toBeGreaterThanOrEqual(2);
 

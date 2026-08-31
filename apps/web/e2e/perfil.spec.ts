@@ -1,5 +1,13 @@
 import { expect, test } from '@playwright/test';
-import { PROFILE_KEY, comencaDeZero, jugaContra, obreMenu, robaFinsAlFinal, tancaMenu } from './ajudants';
+import {
+  PROFILE_KEY,
+  avanca,
+  comencaDeZero,
+  jugaContra,
+  obreMenu,
+  robaFinsAlFinal,
+  tancaMenu,
+} from './ajudants';
 
 const habilitat = (page: import('@playwright/test').Page) =>
   page.evaluate((clau) => JSON.parse(localStorage.getItem(clau) ?? 'null')?.rating, PROFILE_KEY);
@@ -54,7 +62,7 @@ test('una partida a mitges es continua sola en tornar a obrir', async ({ page })
   await jugaContra(page, 1);
 
   for (let i = 0; i < 4; i++) {
-    await page.getByRole('button', { name: /Robar fitxa|Passar torn/ }).click();
+    await avanca(page).click();
     await page.waitForTimeout(60);
   }
   const torn = await page.locator('.turn-line').textContent();

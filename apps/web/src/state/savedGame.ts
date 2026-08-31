@@ -1,5 +1,6 @@
 import type { GameState } from '@remigi/core';
 import { validMisses, type MissedChance } from '../game/missedChances';
+import { validRackOrder } from '../game/rackOrder';
 import type { GameSetup } from '../game/useGame';
 import type { KeyValueStore } from '@remigi/core';
 
@@ -25,6 +26,13 @@ export interface SavedGame {
    * malmeses, la partida es continua igual i el repàs començarà de zero.
    */
   misses?: MissedChance[];
+  /**
+   * Com tens col·locades les fitxes al faristol: els identificadors, en
+   * l'ordre en què les vols veure (vegeu `rackOrder.ts`). Com els autors, és
+   * només visual; si falta o ve malmès, el faristol es veu en l'ordre del
+   * motor i la partida continua igual.
+   */
+  rackOrder?: string[];
 }
 
 export async function saveGame(store: KeyValueStore, saved: SavedGame): Promise<void> {
@@ -51,6 +59,7 @@ export async function loadGame(store: KeyValueStore): Promise<SavedGame | null> 
     if (!isResumable(saved)) return null;
     if ('owners' in saved) saved = { ...saved, owners: validOwners(saved.owners) };
     if ('misses' in saved) saved = { ...saved, misses: validMisses(saved.misses) };
+    if ('rackOrder' in saved) saved = { ...saved, rackOrder: validRackOrder(saved.rackOrder) };
     return saved;
   } catch {
     return null;

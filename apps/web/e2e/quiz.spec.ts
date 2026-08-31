@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { baixaGrup, entraAmbPartida, f, obreMenu } from './ajudants';
+import { avanca, baixaGrup, entraAmbPartida, f, obreMenu } from './ajudants';
 
 /**
  * El repàs de després de la partida: robar havent-hi jugada queda apuntat, el
@@ -20,7 +20,7 @@ test('robar havent-hi jugada acaba en quiz sobre el mateix tauler', async ({ pag
     sac: [f('black', 2, 'b'), f('blue', 13, 'b'), f('orange', 9)],
   });
 
-  const roba = page.getByRole('button', { name: 'Robar fitxa' });
+  const roba = avanca(page);
   const misses = () =>
     page.evaluate(() => {
       const saved = localStorage.getItem('remigi:game');
@@ -40,7 +40,7 @@ test('robar havent-hi jugada acaba en quiz sobre el mateix tauler', async ({ pag
 
   // Tercer torn: ara el quart nou és a la mà, l'error ha crescut i sí que
   // s'apunta. El sac és buit: passar bloqueja la partida i s'acaba.
-  const passa = page.getByRole('button', { name: 'Passar torn' });
+  const passa = avanca(page);
   await expect(passa).toBeEnabled();
   await passa.click();
 
@@ -112,7 +112,7 @@ test('robar havent-hi jugada acaba en quiz sobre el mateix tauler', async ({ pag
   await expect(page.locator('.quiz .board .tile.correct')).toHaveCount(0);
 
   await page.getByRole('button', { name: 'Corregeix' }).click();
-  await page.locator('.rack .tile[aria-label^="9 taronja"]').click();
+  await page.locator('.rack .tile[aria-label^="9 groc"]').click();
   await page.locator('.board .meld').first().click();
   await page.getByRole('button', { name: 'Comprova la jugada' }).click();
   await expect(page.locator('.hint-be')).toContainText('Perfecte!');
@@ -139,8 +139,8 @@ test('la solució distingeix amb marcs les teves fitxes de les recol·locades', 
     haObert: true,
   });
 
-  await page.getByRole('button', { name: 'Robar fitxa' }).click();
-  const passa = page.getByRole('button', { name: 'Passar torn' });
+  await avanca(page).click();
+  const passa = avanca(page);
   await expect(passa).toBeEnabled();
   await passa.click();
 
@@ -213,7 +213,7 @@ test('amb prou jeroglífics guardats, el menú ofereix jugar-los', async ({ page
 
   // I sortir-ne torna a la partida, que continuava allà mateix.
   await page.getByRole('button', { name: 'Surt dels jeroglífics' }).click();
-  await expect(page.locator('.rack .tile[aria-label="13 taronja"]')).toBeVisible();
+  await expect(page.locator('.rack .tile[aria-label="13 groc"]')).toBeVisible();
 });
 
 /**
@@ -228,8 +228,8 @@ test('una resposta correcta per un altre camí també és perfecta', async ({ pa
     haObert: true,
   });
 
-  await page.getByRole('button', { name: 'Robar fitxa' }).click();
-  const passa = page.getByRole('button', { name: 'Passar torn' });
+  await avanca(page).click();
+  const passa = avanca(page);
   await expect(passa).toBeEnabled();
   await passa.click();
 

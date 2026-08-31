@@ -57,6 +57,15 @@ describe('desar i continuar la partida', () => {
     expect((await loadGame(store))!.owners).toEqual(owners);
   });
 
+  it('conserva com tenies col·locat el faristol', async () => {
+    const store = new MemoryStore();
+    const saved = playing();
+    const rackOrder = saved.game.players[0].rack.map((tile) => tile.id).reverse();
+    await saveGame(store, { ...saved, rackOrder });
+
+    expect((await loadGame(store))!.rackOrder).toEqual(rackOrder);
+  });
+
   it('esborrar-la deixa de oferir-la', async () => {
     const store = new MemoryStore();
     await saveGame(store, playing());
@@ -92,6 +101,16 @@ describe('el que hi ha desat no és de fiar', () => {
     expect(loaded).not.toBeNull();
     expect(loaded!.owners).toEqual([['bona', 1]]);
     expect(await stored(JSON.stringify({ ...saved, owners: 'ni tan sols una llista' }))).not.toBeNull();
+  });
+
+  it('un ordre del faristol malmès es neteja, però la partida es continua igual', async () => {
+    const saved = playing();
+    const loaded = await stored(JSON.stringify({ ...saved, rackOrder: ['bona', 7, null] }));
+    expect(loaded).not.toBeNull();
+    expect(loaded!.rackOrder).toEqual(['bona']);
+    expect(
+      await stored(JSON.stringify({ ...saved, rackOrder: 'ni tan sols una llista' })),
+    ).not.toBeNull();
   });
 
   it('descarta estats incomplets o incoherents', async () => {

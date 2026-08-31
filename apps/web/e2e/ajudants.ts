@@ -2,6 +2,14 @@ import { expect, type Page } from '@playwright/test';
 
 export const PROFILE_KEY = 'remigi:profile:local';
 
+/**
+ * El botó que fa avançar el torn: acaba la jugada si has posat fitxes a la
+ * taula i, si no n'has posat cap, roba (o passa amb el sac buit). És l'únic
+ * botó per acabar el torn —el de robar ja no hi és— i sempre està actiu.
+ */
+export const avanca = (page: Page) =>
+  page.getByRole('button', { name: /^(Avançar|Acabar jugada)$/ });
+
 /** Obre el menú del jugador (tocar la teva targeta, a dalt). */
 export async function obreMenu(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'El teu jugador' }).click();
@@ -18,18 +26,29 @@ export async function tancaMenu(page: Page): Promise<void> {
  * Entra al joc amb un perfil net: l'app reparteix una partida directament, i
  * el nom es posa pel menú del jugador (la pantalla d'inici ja no existeix).
  */
-export async function comencaDeZero(page: Page, nom = 'Daniel'): Promise<void> {
+export async function comencaDeZero(
+  page: Page,
+  nom = 'Daniel',
+  /*
+   * El temps per torn de la prova. Per defecte, sense límit: una prova que no
+   * va del rellotge no ha de tenir un rellotge corrent-hi al darrere, que
+   * robaria fitxes tot sol enmig del que s'estigui comprovant. Amb `null` no
+   * es toca res i val el que porta el joc de sèrie.
+   */
+  temps: string | null = 'cap',
+): Promise<void> {
   /*
    * L'emmagatzematge es neteja ABANS que l'app arrenqui: com que ara reparteix
    * una partida només arribar i la desa a cada moviment, esborrar després de
    * carregar era una cursa contra els bots. El senyal evita que una recàrrega
    * posterior de la mateixa prova ho torni a esborrar.
    */
-  await page.addInitScript(() => {
+  await page.addInitScript(([segons]) => {
     if (localStorage.getItem('e2e:net')) return;
     localStorage.clear();
     localStorage.setItem('e2e:net', '1');
-  });
+    if (segons !== null) localStorage.setItem('remigi:temps-torn', segons);
+  }, [temps]);
   await page.goto('./');
   await expect(page.locator('.rack .tile').first()).toBeVisible();
   if (nom !== 'Jugador') {
@@ -59,8 +78,8 @@ const finalPartida = (page: Page) => page.getByRole('button', { name: 'Una altra
 export async function robaFinsAlFinal(page: Page, maxTorns = 400): Promise<boolean> {
   for (let i = 0; i < maxTorns; i++) {
     if (await finalPartida(page).isVisible().catch(() => false)) return true;
-    const roba = page.getByRole('button', { name: /Robar fitxa|Passar torn/ });
-    if (await roba.isEnabled().catch(() => false)) await roba.click();
+    const boto = avanca(page);
+    if (await boto.isEnabled().catch(() => false)) await boto.click();
     await page.waitForTimeout(20);
   }
   return finalPartida(page).isVisible();
@@ -74,13 +93,13 @@ export async function robaFinsQueUnBotJugui(page: Page, maxTorns = 40): Promise<
   for (let i = 0; i < maxTorns; i++) {
     if ((await page.locator('.board .meld').count()) > 0) break;
     if (await finalPartida(page).isVisible().catch(() => false)) break;
-    const roba = page.getByRole('button', { name: /Robar fitxa|Passar torn/ });
-    if (await roba.isEnabled().catch(() => false)) await roba.click();
+    const boto = avanca(page);
+    if (await boto.isEnabled().catch(() => false)) await boto.click();
     await page.waitForTimeout(40);
   }
   if ((await page.locator('.board .meld').count()) === 0) return false;
   // Els bots poden estar jugant encara: cal esperar el torn per poder tocar res.
-  await expect(page.getByRole('button', { name: /Robar fitxa|Passar torn/ })).toBeEnabled();
+  await expect(avanca(page)).toBeEnabled();
   return true;
 }
 
@@ -123,6 +142,8 @@ export async function entraAmbPartida(
     sac?: Fitxa[];
     /** Col·lecció de jeroglífics ja guardada, per provar el menú. */
     jeroglifics?: unknown[];
+    /** Temps per torn de la prova; per defecte, sense límit (vegeu `comencaDeZero`). */
+    temps?: string;
   },
 ): Promise<void> {
   // La partida s'injecta abans que l'app arrenqui (vegeu `comencaDeZero`).
@@ -131,6 +152,7 @@ export async function entraAmbPartida(
       if (localStorage.getItem('e2e:llavor')) return;
       localStorage.clear();
       localStorage.setItem('e2e:llavor', '1');
+      localStorage.setItem('remigi:temps-torn', dades.temps);
       if (dades.jeroglifics.length > 0) {
         localStorage.setItem('remigi:jeroglifics', JSON.stringify(dades.jeroglifics));
       }
@@ -181,6 +203,7 @@ export async function entraAmbPartida(
         autors: partida.autors ?? [],
         sac: partida.sac ?? [{ id: 'black-1-b', kind: 'number', color: 'black', value: 1 }],
         jeroglifics: partida.jeroglifics ?? [],
+        temps: partida.temps ?? 'cap',
       },
     ],
   );

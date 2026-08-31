@@ -25,13 +25,27 @@ import {
  * abaixar amb `VITE_BOT_DELAY` per veure partides senceres de pressa mentre es
  * desenvolupa o es fan proves automatitzades.
  */
-const BOT_DELAY_MS = Number(import.meta.env.VITE_BOT_DELAY ?? 3000);
+export const BOT_DELAY_MS = Number(import.meta.env.VITE_BOT_DELAY ?? 3000);
 
 /**
  * El motor que juga pels bots: l'única porta de la web cap a la IA (vegeu
  * docs/ENGINE.md). Sense llavor perquè cada partida real sigui diferent.
  */
 const engine = createEngine();
+
+/**
+ * L'última jugada d'un rival, per poder-la explicar a la taula: qui, què i
+ * quantes fitxes. És informació de la pantalla (com els colors dels autors):
+ * no forma part de l'estat del motor, es dedueix del moviment que acaba de fer.
+ */
+export interface BotAction {
+  /** Lloc del jugador a la tira (és el que li dona el color). */
+  slot: number;
+  name: string;
+  kind: 'play' | 'draw';
+  /** Fitxes que ha deixat a la taula, si ha jugat. */
+  tiles: number;
+}
 
 export interface GameSetup {
   playerName: string;
@@ -60,6 +74,8 @@ export interface GameHandle {
   tileOwners: TileOwners;
   /** Cops que el jugador ha robat havent-hi jugada, per al repàs del final. */
   misses: MissedChance[];
+  /** Què acaba de fer l'últim rival que ha mogut, per dir-ho a la taula. */
+  lastAction: BotAction | null;
   isHumanTurn: boolean;
   canCommit: boolean;
   selectTile(tileId: string | null): void;
@@ -68,6 +84,11 @@ export interface GameHandle {
   moveTileTo(tileId: string, destination: Destination): void;
   commit(): void;
   draw(): void;
+  /**
+   * S'ha acabat el temps del torn: es desfà el que no s'hagi validat i es roba
+   * (o es passa, si el sac és buit).
+   */
+  timeUp(): void;
   resetTurn(): void;
   restart(setup?: GameSetup): void;
 }
@@ -121,6 +142,7 @@ export function useGame(
    */
   const [tileOwners, setTileOwners] = useState<TileOwners>(() => new Map(initialOwners ?? []));
   const [misses, setMisses] = useState<MissedChance[]>(() => [...(initialMisses ?? [])]);
+  const [lastAction, setLastAction] = useState<BotAction | null>(null);
 
   // Cada vegada que el motor avança, el torn comença de zero.
   useEffect(() => {
@@ -144,8 +166,16 @@ export function useGame(
           rubberBanding: setupRef.current.adaptDuringGame,
         });
         const next = applyMove(current, decision.move);
-        setHighlighted(new Set(next.board.flat().map((t) => t.id).filter((id) => !before.has(id))));
+        const played = new Set(next.board.flat().map((t) => t.id).filter((id) => !before.has(id)));
+        setHighlighted(played);
         setTileOwners((owners) => updateOwners(owners, current.board, next.board, mover));
+        /* Qui ha mogut i què ha fet: la taula ho explica fins que tornis a jugar tu. */
+        setLastAction({
+          slot: mover,
+          name: current.players[mover].name,
+          kind: decision.move.type === 'play' ? 'play' : 'draw',
+          tiles: played.size,
+        });
         return next;
       });
     }, BOT_DELAY_MS);
@@ -177,6 +207,7 @@ export function useGame(
       setTileOwners((owners) => updateOwners(owners, game.board, next.board, game.currentPlayer));
       setGame(next);
       setHighlighted(new Set());
+      setLastAction(null);
       // La fitxa robada deixa de ser «la que acabes de robar» quan tornes a jugar.
       setDrawnTileId(null);
     } catch (caught) {
@@ -184,49 +215,65 @@ export function useGame(
     }
   }, [draft, game]);
 
-  const draw = useCallback(() => {
-    /*
-     * Robar amb fitxes a mig col·locar les descartaria en silenci: la robada
-     * s'aplica sobre l'estat del motor, que no ha vist l'esborrany, i el torn
-     * següent totes les fitxes col·locades tornarien de cop al faristol amb
-     * la robada — la sensació de «m'han donat quatre fitxes». Com a la taula
-     * de debò: primer es desfà (o s'acaba) la jugada, i llavors es roba.
-     */
-    if (draft && hasChanges(draft)) {
-      setError(
-        'Tens fitxes a mig col·locar: acaba la jugada o desfés els canvis abans de robar.',
-      );
-      return;
-    }
-    try {
-      const player = game.currentPlayer;
-      const before = new Set(game.players[player].rack.map((tile) => tile.id));
-      const next = applyMove(game, { type: 'draw' });
-      /*
-       * Robar (o passar) havent-hi jugada que valgués la pena és deixar
-       * escapar jeroglífics: se'n guarden els grups interrelacionats (sense
-       * repetir el mateix grup torn rere torn, vegeu `addMiss`). Només compta
-       * per a l'humà, que és l'únic que roba des d'aquí: els bots ja roben
-       * expressament quan el seu nivell «no veu» la jugada.
-       */
-      if (game.players[player].kind === 'human') {
-        const found = detectMissedChances(game, player);
-        if (found.length > 0) {
-          setMisses((current) => found.reduce((acc, miss) => addMiss(acc, miss), current));
-        }
+  /**
+   * Roba una fitxa (o passa, si el sac és buit) i tanca el torn.
+   *
+   * `discardDraft` només l'engega el final del temps. La resta del temps,
+   * robar amb fitxes a mig col·locar les descartaria en silenci: la robada
+   * s'aplica sobre l'estat del motor, que no ha vist l'esborrany, i el torn
+   * següent totes les fitxes col·locades tornarien de cop al faristol amb la
+   * robada — la sensació de «m'han donat quatre fitxes». Com a la taula de
+   * debò: primer es desfà (o s'acaba) la jugada, i llavors es roba.
+   */
+  const drawTile = useCallback(
+    (discardDraft: boolean) => {
+      if (!discardDraft && draft && hasChanges(draft)) {
+        setError(
+          'Tens fitxes a mig col·locar: acaba la jugada o desfés els canvis abans de robar.',
+        );
+        return;
       }
-      /*
-       * Amb el sac buit, «robar» és passar torn: no hi ha cap fitxa nova, i
-       * llavors el que toca és treure la marca de la de l'últim cop.
-       */
-      const drawn = next.players[player].rack.find((tile) => !before.has(tile.id));
-      setDrawnTileId(drawn?.id ?? null);
-      setGame(next);
-      setHighlighted(new Set());
-    } catch (caught) {
-      setError(caught instanceof RulesError ? caught.message : String(caught));
-    }
-  }, [game, draft]);
+      try {
+        const player = game.currentPlayer;
+        const before = new Set(game.players[player].rack.map((tile) => tile.id));
+        const next = applyMove(game, { type: 'draw' });
+        /*
+         * Robar (o passar) havent-hi jugada que valgués la pena és deixar
+         * escapar jeroglífics: se'n guarden els grups interrelacionats (sense
+         * repetir el mateix grup torn rere torn, vegeu `addMiss`). Només compta
+         * per a l'humà, que és l'únic que roba des d'aquí: els bots ja roben
+         * expressament quan el seu nivell «no veu» la jugada.
+         */
+        if (game.players[player].kind === 'human') {
+          const found = detectMissedChances(game, player);
+          if (found.length > 0) {
+            setMisses((current) => found.reduce((acc, miss) => addMiss(acc, miss), current));
+          }
+        }
+        /*
+         * Amb el sac buit, «robar» és passar torn: no hi ha cap fitxa nova, i
+         * llavors el que toca és treure la marca de la de l'últim cop.
+         */
+        const drawn = next.players[player].rack.find((tile) => !before.has(tile.id));
+        setDrawnTileId(drawn?.id ?? null);
+        setGame(next);
+        setHighlighted(new Set());
+        setLastAction(null);
+      } catch (caught) {
+        setError(caught instanceof RulesError ? caught.message : String(caught));
+      }
+    },
+    [game, draft],
+  );
+
+  const draw = useCallback(() => drawTile(false), [drawTile]);
+
+  /*
+   * S'ha acabat el temps: el que estiguessis col·locant no s'ha validat, i per
+   * tant no ha passat mai. La robada s'aplica sobre l'estat del motor, que no
+   * ha vist res de l'esborrany, i l'esborrany es refà sol amb el torn nou.
+   */
+  const timeUp = useCallback(() => drawTile(true), [drawTile]);
 
   const resetTurn = useCallback(() => {
     setDraft(draftFor(game));
@@ -238,6 +285,7 @@ export function useGame(
     if (setup) setupRef.current = setup;
     setHighlighted(new Set());
     setDrawnTileId(null);
+    setLastAction(null);
     setTileOwners(new Map());
     setMisses([]);
     setGame(newGameState(setupRef.current));
@@ -252,6 +300,7 @@ export function useGame(
     drawnTileId,
     tileOwners,
     misses,
+    lastAction,
     isHumanTurn: isHumanTurn(game),
     canCommit: draft !== null && hasChanges(draft),
     selectTile,
@@ -259,6 +308,7 @@ export function useGame(
     moveTileTo,
     commit,
     draw,
+    timeUp,
     resetTurn,
     restart,
   };

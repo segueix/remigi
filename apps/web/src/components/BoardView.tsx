@@ -1,6 +1,7 @@
 import type { Destination } from '../game/turnDraft';
 import type { Meld } from '@remigi/core';
 import type { TileMark } from './TileView';
+import { boardScale, countBoardTiles } from '../game/boardDensity';
 import { MeldView } from './MeldView';
 
 interface Props {
@@ -17,6 +18,12 @@ interface Props {
   bots?: ReadonlyMap<string, number>;
   /** Actiu només durant el torn del jugador. */
   interactive?: boolean;
+  /**
+   * Avisos que van sobre el feltre sense desplaçar-s'hi (el rellotge del torn,
+   * què acaba de fer el rival). Van en una capa a part perquè es vegin sempre,
+   * encara que la taula estigui desplaçada.
+   */
+  overlay?: React.ReactNode;
   onTileClick?(tileId: string, meldIndex: number): void;
   onTilePointerDown?(event: React.PointerEvent, tileId: string): void;
   onMeldClick?(index: number): void;
@@ -33,6 +40,7 @@ export function BoardView({
   marks,
   bots,
   interactive,
+  overlay,
   onTileClick,
   onTilePointerDown,
   onMeldClick,
@@ -42,36 +50,32 @@ export function BoardView({
   // com si se n'està arrossegant una.
   const choosing = Boolean(selectedTileId) || Boolean(draggingTileId);
 
+  /*
+   * Com més plena està la taula, més petites es veuen les fitxes, perquè no
+   * en quedi cap fora de la pantalla (vegeu `boardDensity.ts`). El full
+   * d'estil decideix on s'aplica: als mòbils, que és on l'espai és or.
+   */
+  const density = boardScale(countBoardTiles(board));
+
   return (
-    /*
+    <div className={overlay ? 'board-zona amb-avisos' : 'board-zona'}>
+    {/*
      * Tota la taula és zona per crear jugada nova: deixar-hi anar una fitxa en
      * un lloc buit n'obre una. Com que es busca la zona des de l'element de sota
      * cap amunt, deixar-la sobre una jugada concreta hi té preferència.
-     */
-    <div className="board" data-drop="new" style={{ position: 'relative' }}>
+     */}
+    <div
+      className="board"
+      data-drop="new"
+      style={{ position: 'relative', '--densitat': density } as React.CSSProperties}
+    >
       {/*
        * Marca d'aigua del joc: queda integrada al feltre, a baix a la dreta,
        * sense ocupar espai ni interceptar cap clic o gest de les fitxes.
        * Va abans de les jugades perquè, si coincideixen, les fitxes es pintin
        * per sobre i el nom continuï fent de marca del tauler, no d'etiqueta.
        */}
-      <span
-        aria-hidden="true"
-        style={{
-          position: 'absolute',
-          right: '0.85rem',
-          bottom: '0.65rem',
-          pointerEvents: 'none',
-          userSelect: 'none',
-          color: 'color-mix(in srgb, var(--feltre-1) 78%, #d8f3e8)',
-          fontSize: '1.15rem',
-          fontWeight: 700,
-          letterSpacing: '0.07em',
-          lineHeight: 1,
-          opacity: 0.72,
-          textShadow: '0 1px 1px rgb(0 0 0 / 0.18)',
-        }}
-      >
+      <span className="marca-taula" aria-hidden="true">
         Remigi
       </span>
 
@@ -113,6 +117,8 @@ export function BoardView({
           + Jugada nova
         </button>
       )}
+    </div>
+    {overlay}
     </div>
   );
 }

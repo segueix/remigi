@@ -7,7 +7,9 @@ que retorna el motor quan es trenca la regla.
 ## Material
 
 - **106 fitxes**: números de l'1 al 13 en 4 colors (vermell, blau, negre,
-  taronja), 2 còpies de cada, més 2 jokers.
+  groc), 2 còpies de cada, més 2 jokers. El quart color es diu `orange` dins
+  del motor —la clau que hi ha desada a totes les partides—, i **groc** a tot
+  el que es veu i es llegeix.
 - Cada jugador comença amb **14 fitxes**. La resta queda al **sac**.
 - Partides de **2 a 4 jugadors** (`BAD_PLAYER_COUNT`); l'ús previst és 1 humà
   contra 1–3 IA.
