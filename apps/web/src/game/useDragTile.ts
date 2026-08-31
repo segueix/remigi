@@ -48,11 +48,22 @@ export interface DragHandle {
 
 /** Llegeix la destinació de l'element que hi ha sota unes coordenades. */
 export function dropTargetAt(x: number, y: number): Destination | null {
-  const element = document.elementFromPoint(x, y);
-  const zone = element?.closest('[data-drop]')?.getAttribute('data-drop');
-  if (!zone) return null;
+  const element = document.elementFromPoint(x, y)?.closest('[data-drop]');
+  const zone = element?.getAttribute('data-drop');
+  if (!element || !zone) return null;
   if (zone === 'rack') return { kind: 'rack' };
   if (zone === 'new') return { kind: 'new' };
+  /*
+   * Un lloc concret del faristol: la fitxa hi entra abans o després de la que
+   * hi ha, segons per quina meitat s'hi deixi. Sense això, deixar-la «just a
+   * la dreta» d'una fitxa la posaria a la seva esquerra i col·locar-les a mà
+   * seria una baralla.
+   */
+  const slot = /^rack:(\d+)$/.exec(zone);
+  if (slot) {
+    const box = element.getBoundingClientRect();
+    return { kind: 'rack', index: Number(slot[1]) + (x > box.left + box.width / 2 ? 1 : 0) };
+  }
   const meld = /^meld:(\d+)$/.exec(zone);
   return meld ? { kind: 'meld', index: Number(meld[1]) } : null;
 }

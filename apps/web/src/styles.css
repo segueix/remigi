@@ -63,7 +63,7 @@
   /* La firma de la casa (menú, final i historial): els colors de les fitxes. */
   --franja-1: #cc0000;
   --franja-2: #1d4ed8;
-  --franja-3: #c47504;
+  --franja-3: #e8b400;
   --franja-4: #7c3aed;
   /* Or per a victòries i corones, i bé/malament per a punts i resultats. */
   --or: #a16207;
@@ -106,7 +106,7 @@
     --fusta-vora: #38230f;
     --franja-1: #f87171;
     --franja-2: #93c5fd;
-    --franja-3: #fdba74;
+    --franja-3: #fde047;
     --franja-4: #c4b5fd;
     --or: #fbbf24;
     --be: #4ade80;
@@ -637,9 +637,27 @@ input {
  * El feltre. La taula es queda tot l'alt que sobra (flex: 1 dins de la
  * partida), i és l'únic tros amb desplaçament propi si mai s'omple més del
  * que hi cap: la pàgina no es mou mai.
+ *
+ * La zona és l'embolcall: la taula a dins i, a sobre, els avisos que no s'han
+ * de desplaçar amb les jugades (el rellotge del torn i què acaba de fer el
+ * rival). La mida de les fitxes viu aquí en variables perquè cada pantalla
+ * només n'hagi de canviar el valor, i perquè s'hi pugui aplicar l'escala que
+ * les empetiteix a mesura que la taula s'omple.
  */
-.board {
+.board-zona {
+  position: relative;
   flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+}
+
+.board {
+  --fitxa-ampla: 2.95rem;
+  --fitxa-alta: 3.85rem;
+  --fitxa-lletra: 1.55rem;
+  --escala-fitxa: 1;
+  flex: 1 1 auto;
+  min-width: 0;
   min-height: 8rem;
   overflow: auto;
   display: flex;
@@ -678,6 +696,25 @@ input {
   color: var(--feltre-suau);
 }
 
+/*
+ * La marca de la casa, integrada al feltre: a baix a la dreta, sense ocupar
+ * espai ni interceptar cap gest. En apaïsat no hi és: allà cada píxel és joc.
+ */
+.marca-taula {
+  position: absolute;
+  right: 0.85rem;
+  bottom: 0.65rem;
+  pointer-events: none;
+  user-select: none;
+  color: color-mix(in srgb, var(--feltre-1) 78%, #d8f3e8);
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  line-height: 1;
+  opacity: 0.72;
+  text-shadow: 0 1px 1px rgb(0 0 0 / 0.18);
+}
+
 /* Sobre el feltre fosc, els marcs van sempre en versió clara. */
 .board [data-bot='1'] {
   --marc: var(--bot-1-taula);
@@ -702,23 +739,27 @@ input {
 
 .meld {
   display: flex;
-  gap: 0.18rem;
-  padding: 0.3rem;
+  gap: calc(0.18rem * var(--escala-fitxa, 1));
+  padding: calc(0.3rem * var(--escala-fitxa, 1));
   border: 1px solid rgb(255 255 255 / 0.08);
   border-radius: 0.55rem;
   background: rgb(0 20 12 / 0.25);
   box-shadow: inset 0 1px 3px rgb(0 0 0 / 0.25);
 }
 
+/*
+ * La jugada com a destinació. Abans, triar una fitxa encenia amb marc de
+ * ratlles TOTES les jugades de la taula alhora: el que es veia era la taula
+ * sencera parpellejant, no la fitxa que tenies a la mà. Ara la destinació
+ * només s'assenyala on ets a sobre —el ratolí per damunt, o el dit que hi
+ * arrossega—, i la fitxa triada es queda sent l'única cosa marcada.
+ */
 .meld.target {
   cursor: pointer;
-  border-style: dashed;
-  border-color: rgb(255 255 255 / 0.45);
 }
 
 .meld.target:hover {
   border-color: var(--accent-taula);
-  border-style: solid;
 }
 
 .meld.invalid {
@@ -751,6 +792,10 @@ input {
 
 .tile {
   --tinta: var(--text);
+  /* El color amb què es pinta la fitxa sencera; per defecte, el de la tinta. */
+  --pintura: var(--tinta);
+  --numero-invers: #fffdf6;
+  --ombra-invers: 0 1px 2px rgb(0 0 0 / 0.45);
   position: relative; /* la forma del color s'ancora al racó de dalt a la dreta */
   display: grid;
   place-items: center;
@@ -799,13 +844,13 @@ input {
 .fitxes-inverses .tile {
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--tinta) 82%, #ffffff),
-    var(--tinta) 45%,
-    color-mix(in srgb, var(--tinta) 72%, #000000)
+    color-mix(in srgb, var(--pintura) 82%, #ffffff),
+    var(--pintura) 45%,
+    color-mix(in srgb, var(--pintura) 72%, #000000)
   );
-  border-color: color-mix(in srgb, var(--tinta) 55%, #000000);
-  color: #fffdf6;
-  text-shadow: 0 1px 2px rgb(0 0 0 / 0.45);
+  border-color: color-mix(in srgb, var(--pintura) 55%, #000000);
+  color: var(--numero-invers);
+  text-shadow: var(--ombra-invers);
 }
 
 /*
@@ -820,6 +865,20 @@ input {
   border-color: var(--fitxa-vora);
   color: var(--tinta);
   text-shadow: 0 1px 0 rgb(255 255 255 / 0.55);
+}
+
+/* El temps per torn: quatre botons, el triat amb el color d'acció. */
+.temps-torn {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.9rem;
+}
+
+.temps-torn button {
+  padding: 0.3rem 0.7rem;
+  font-size: 0.9rem;
 }
 
 /* La tria al menú: dues mostres, la triada amb l'anell d'acció. */
@@ -854,12 +913,26 @@ input {
 /*
  * A l'ordinador la taula té lloc de sobres: les fitxes s'hi veuen ben grans
  * (més que les del faristol i tot). En pantalles petites i en apaïsat, els
- * seus blocs les tornen a empetitir perquè hi càpiga el màxim de joc.
+ * seus blocs canvien les variables de mida perquè hi càpiga el màxim de joc,
+ * i a sobre hi actua `--escala-fitxa`, que les va encongint a mesura que la
+ * taula s'omple.
  */
 .board .tile {
-  width: 2.95rem;
-  height: 3.85rem;
-  font-size: 1.55rem;
+  width: calc(var(--fitxa-ampla) * var(--escala-fitxa));
+  height: calc(var(--fitxa-alta) * var(--escala-fitxa));
+  font-size: calc(var(--fitxa-lletra) * var(--escala-fitxa));
+}
+
+/*
+ * Als mòbils (i en apaïsat) és on cal veure-ho tot alhora, i per això és on
+ * s'aplica l'escala que ve de la pantalla de partida (`--densitat`, calculada
+ * a `boardDensity.ts`). A l'ordinador la taula no s'acaba mai i les fitxes es
+ * queden sempre de mida natural.
+ */
+@media (max-width: 48rem), (orientation: landscape) and (max-height: 32rem) {
+  .board {
+    --escala-fitxa: var(--densitat, 1);
+  }
 }
 
 .tile:not(:disabled) {
@@ -874,13 +947,24 @@ input {
   opacity: 1; /* les fitxes de la taula no són "inactives", només no es toquen */
 }
 
+/* La fitxa triada s'aixeca, creix i s'anella: no hi ha d'haver dubte de quina és. */
 .tile.selected {
-  transform: translateY(-6px);
+  z-index: 3;
+  transform: translateY(-8px) scale(1.06);
   border-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--accent);
+  box-shadow:
+    0 0 0 3px var(--accent),
+    0 10px 16px rgb(0 0 0 / 0.32);
 }
 
+/*
+ * Les fitxes que el rival acaba de posar: entren fent un salt i amb el marc
+ * del seu color, i s'assenten soles. Amb el marc de color que els queda
+ * després (vegeu `.board .tile[data-bot]`), d'un cop d'ull ja se sap qui ha
+ * jugat què.
+ */
 .tile.highlighted {
+  z-index: 2;
   animation: acabada-de-jugar 1.6s ease-out;
 }
 
@@ -912,6 +996,17 @@ input {
 }
 
 /*
+ * Els marcs daurats (la fitxa robada i la recol·locada) es perdrien sobre una
+ * fitxa groga, que és gairebé del mateix color: sobre les grogues, el daurat
+ * es fosqueix fins a un to d'or vell que continua sent el mateix senyal però
+ * es veu. A les fitxes clàssiques no cal: allà la fitxa és crema.
+ */
+.fitxes-inverses .tile-orange.drawn,
+.fitxes-inverses .tile-orange.moved {
+  outline-color: #6b4a00;
+}
+
+/*
  * La correcció del repàs, un cop comprovada la jugada: marc gruixut verd per
  * a les fitxes que han quedat com a la solució i vermell per a les que no.
  * Més gruixuts que els d'origen, que són informació i no veredicte.
@@ -927,10 +1022,20 @@ input {
 }
 
 @keyframes acabada-de-jugar {
-  from {
-    box-shadow: 0 0 0 3px var(--accent-taula);
+  0% {
+    transform: translateY(-0.55rem) scale(1.16);
+    box-shadow:
+      0 0 0 4px var(--marc, var(--accent-taula)),
+      0 14px 22px rgb(0 0 0 / 0.4);
   }
-  to {
+  35% {
+    transform: none;
+    box-shadow:
+      0 0 0 4px var(--marc, var(--accent-taula)),
+      0 6px 12px rgb(0 0 0 / 0.3);
+  }
+  100% {
+    transform: none;
     box-shadow:
       0 2px 3px rgb(0 0 0 / 0.28),
       inset 0 1px 0 rgb(255 255 255 / 0.8),
@@ -939,12 +1044,21 @@ input {
 }
 
 /*
- * La tinta dels números. El vermell i el taronja s'assemblaven massa a la
- * pantalla —ΔE 23, i només 6 amb daltonisme simulat, o sigui pràcticament el
- * mateix color—: ara el vermell és més intens i fosc, i el taronja tira cap al
- * groc. La distància entre tots dos passa a ΔE 46 (13 amb daltonisme). El
- * vermell, a més, contrasta més amb el crema de la fitxa que abans (5.5:1 en
- * comptes de 4.5:1), i el taronja es queda igual (3.3:1).
+ * La tinta dels números i la pintura de la fitxa.
+ *
+ * `--tinta` és el color del número sobre el crema (les fitxes clàssiques) i
+ * `--pintura` el de la fitxa sencera (les de color, que són les de sèrie).
+ * Normalment són el mateix, però el groc no ho permet: el groc que llueix de
+ * fitxa és massa clar per escriure-hi a sobre, i el groc que es llegeix escrit
+ * és massa fosc per fer de fitxa. Per això el quart color en porta un de cada,
+ * i el número, en comptes de blanc, hi va gairebé negre.
+ *
+ * Tot són colors mesurats, no triats a ull:
+ * - Groc de fitxa `#f5c518` amb número `#3a2c00`: 8.4:1 al pla de la fitxa i
+ *   4.4:1 al punt més fosc del degradat.
+ * - Groc de tinta `#b58900` sobre el crema: 3.1:1 (el mínim per a text gran) i
+ *   ΔE 64 amb el vermell —17 amb daltonisme simulat—, que és **més** lluny que
+ *   el taronja d'abans (ΔE 46, i 14 amb daltonisme).
  */
 .tile-red {
   --tinta: #cc0000;
@@ -956,7 +1070,11 @@ input {
   --tinta: #1c1917;
 }
 .tile-orange {
-  --tinta: #c47504;
+  --tinta: #b58900;
+  --pintura: #f5c518;
+  --numero-invers: #3a2c00;
+  /* Número fosc: l'ombra que el separa de la fitxa ha de ser clara, no negra. */
+  --ombra-invers: 0 1px 0 rgb(255 255 255 / 0.4);
 }
 .tile-joker {
   --tinta: #7c3aed;
@@ -1015,6 +1133,38 @@ input {
 .rack > .muted {
   color: rgb(255 244 214 / 0.85);
   margin: auto;
+}
+
+/*
+ * Cada fitxa del faristol és també un lloc on deixar-ne una altra: així les
+ * fitxes es col·loquen on el jugador vulgui, arrossegant-les o tocant primer
+ * la que es mou i després on ha d'anar. Mentre s'arrossega, una barra diu
+ * exactament per quin forat entrarà (la meitat de la fitxa on ets mana).
+ */
+.rack-lloc {
+  position: relative;
+  display: flex;
+  flex: none;
+}
+
+.rack-lloc.cau-abans::before,
+.rack-lloc.cau-despres::after {
+  content: '';
+  position: absolute;
+  top: -0.2rem;
+  bottom: -0.2rem;
+  width: 3px;
+  border-radius: 999px;
+  background: var(--accent-taula);
+  box-shadow: 0 0 8px var(--accent-taula);
+}
+
+.rack-lloc.cau-abans::before {
+  left: -0.25rem;
+}
+
+.rack-lloc.cau-despres::after {
+  right: -0.25rem;
 }
 
 /*
@@ -1108,6 +1258,22 @@ input {
   background: var(--error-fons);
   border: 1px solid var(--error);
   color: var(--error-text);
+}
+
+/*
+ * El temps exhaurit no és cap error teu: va al mateix lloc que els errors
+ * (perquè es llegeixi de seguida i no salti res de lloc) però amb els colors
+ * d'avís, no amb els de mal fet.
+ */
+.avis-temps {
+  display: block;
+  margin: 0.4rem 0 0;
+  padding: 0.6rem 0.85rem;
+  border: 1px solid var(--avis-vora);
+  border-radius: 0.5rem;
+  background: var(--avis);
+  color: var(--avis-text);
+  font-size: 0.9rem;
 }
 
 /* ---------- Configuració de la partida ---------- */
@@ -1365,6 +1531,138 @@ button.link.danger {
   }
 }
 
+/* ---------- Avisos de la taula: rellotge i última jugada ---------- */
+
+/*
+ * Van sobre el feltre però fora de la taula que es desplaça: així el rellotge
+ * i l'avís de l'últim rival es veuen sempre, encara que estiguis mirant una
+ * escala del final de la taula. No reben cap gest (els fills tampoc en
+ * necessiten).
+ */
+.taula-avisos {
+  position: absolute;
+  top: 0.45rem;
+  right: 0.6rem;
+  left: 0.6rem;
+  z-index: 6;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  pointer-events: none;
+}
+
+/* Sobre el feltre fosc, els colors dels bots van en versió clara. */
+.taula-avisos [data-bot='1'] {
+  --marc: var(--bot-1-taula);
+}
+.taula-avisos [data-bot='2'] {
+  --marc: var(--bot-2-taula);
+}
+.taula-avisos [data-bot='3'] {
+  --marc: var(--bot-3-taula);
+}
+
+/* Amb avisos, la taula deixa lloc a dalt perquè no en tapin les jugades. */
+.board-zona.amb-avisos .board {
+  padding-top: 2.9rem;
+}
+
+/* Què acaba de fer el rival, amb el seu color, fins que tornes a jugar tu. */
+.ultima-jugada {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0.15rem 0.7rem 0.15rem 0.2rem;
+  border: 1px solid var(--marc, rgb(255 255 255 / 0.25));
+  border-radius: 999px;
+  background: rgb(8 30 22 / 0.72);
+  color: rgb(255 255 255 / 0.93);
+  font-size: 0.8rem;
+  line-height: 1.3;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.3);
+  animation: entra-avis-taula 0.35s ease-out;
+}
+
+.ultima-avatar {
+  width: 1.55rem;
+  height: 1.55rem;
+  border-width: 1px;
+  font-size: 0.9rem;
+}
+
+@keyframes entra-avis-taula {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+/*
+ * El compte enrere del torn: un anell que es va buidant i els segons al mig.
+ * Els últims deu segons es posa vermell i batega, que és quan cal mirar-lo.
+ */
+.rellotge-torn {
+  position: relative;
+  flex: none;
+  margin-left: auto;
+  display: grid;
+  place-items: center;
+  width: 2.9rem;
+  height: 2.9rem;
+  border-radius: 50%;
+  background: rgb(8 30 22 / 0.72);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.3);
+}
+
+.rellotge-torn svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg); /* el compte comença a dalt */
+}
+
+.rellotge-fons {
+  fill: none;
+  stroke: rgb(255 255 255 / 0.18);
+  stroke-width: 3;
+}
+
+.rellotge-arc {
+  fill: none;
+  stroke: var(--accent-taula);
+  stroke-width: 3;
+  stroke-linecap: round;
+  transition: stroke-dasharray 0.3s linear;
+}
+
+.rellotge-segons {
+  position: relative;
+  color: rgb(255 255 255 / 0.95);
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.rellotge-torn.urgent {
+  animation: rellotge-batec 1s ease-in-out infinite;
+}
+
+.rellotge-torn.urgent .rellotge-arc {
+  stroke: var(--error-taula);
+}
+
+.rellotge-torn.urgent .rellotge-segons {
+  color: var(--error-taula);
+}
+
+@keyframes rellotge-batec {
+  50% {
+    transform: scale(1.12);
+  }
+}
+
 /* ---------- Avís de torn: qui està jugant ---------- */
 
 .torn-avis {
@@ -1376,18 +1674,38 @@ button.link.danger {
   pointer-events: none; /* només informa: no tapa mai res que es pugui tocar */
 }
 
+/* Sobre el fons fosc de l'avís, el color del bot també va en versió clara. */
+.torn-avis[data-bot='1'] {
+  --marc: var(--bot-1-taula);
+}
+.torn-avis[data-bot='2'] {
+  --marc: var(--bot-2-taula);
+}
+.torn-avis[data-bot='3'] {
+  --marc: var(--bot-3-taula);
+}
+
+/*
+ * La caixa pren el color del rival que juga: marc, resplendor i barra del
+ * temps que s'hi està pensant. El torn dels altres es veu passar, que és
+ * justament el que abans no passava.
+ */
 .torn-avis-caixa {
+  position: relative;
+  overflow: hidden;
   display: flex;
   align-items: center;
   gap: 0.8rem;
-  padding: 0.85rem 1.4rem;
-  border: 1px solid rgb(255 255 255 / 0.16);
+  padding: 0.85rem 1.4rem 0.95rem;
+  border: 1px solid color-mix(in srgb, var(--marc, #ffffff) 60%, transparent);
   border-radius: 1rem;
   background: color-mix(in srgb, var(--feltre-3) 90%, black);
   color: rgb(255 255 255 / 0.93);
   font-size: 1.15rem;
   font-weight: 600;
-  box-shadow: 0 18px 50px rgb(0 0 0 / 0.45);
+  box-shadow:
+    0 18px 50px rgb(0 0 0 / 0.45),
+    0 0 34px color-mix(in srgb, var(--marc, #ffffff) 30%, transparent);
   animation: apareix-avis 0.3s ease-out;
 }
 
@@ -1395,12 +1713,91 @@ button.link.danger {
   width: 2.6rem;
   height: 2.6rem;
   font-size: 1.4rem;
+  animation: avatar-batec 1.4s ease-in-out infinite;
+}
+
+.torn-avis-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.25;
+}
+
+.torn-avis-estat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  opacity: 0.85;
+}
+
+/* Els tres punts de «està jugant…», que pugen l'un darrere l'altre. */
+.punts-pensant {
+  display: inline-flex;
+  gap: 0.18rem;
+}
+
+.punts-pensant i {
+  width: 0.28rem;
+  height: 0.28rem;
+  border-radius: 50%;
+  background: currentColor;
+  animation: punt-pensant 1.1s ease-in-out infinite;
+}
+
+.punts-pensant i:nth-child(2) {
+  animation-delay: 0.18s;
+}
+
+.punts-pensant i:nth-child(3) {
+  animation-delay: 0.36s;
+}
+
+/* La barra s'omple just el temps que el rival s'està pensant la jugada. */
+.torn-avis-barra {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 3px;
+  transform-origin: left;
+  background: var(--marc, var(--accent-taula));
+  animation: barra-pensada var(--pensada, 3000ms) linear forwards;
 }
 
 @keyframes apareix-avis {
   from {
     opacity: 0;
     transform: translateY(10px) scale(0.95);
+  }
+}
+
+@keyframes avatar-batec {
+  50% {
+    transform: scale(1.08);
+  }
+}
+
+@keyframes punt-pensant {
+  0%,
+  60%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-0.15rem);
+  }
+}
+
+@keyframes barra-pensada {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
   }
 }
 
@@ -1780,10 +2177,10 @@ button.link.danger {
    * jugades de cop. Una escala llarga que no hi càpiga es desplaça per dins
    * de la taula, mai desquadra la pàgina.
    */
-  .board .tile {
-    width: 2.2rem;
-    height: 2.85rem;
-    font-size: 1.1rem;
+  .board {
+    --fitxa-ampla: 2.2rem;
+    --fitxa-alta: 2.85rem;
+    --fitxa-lletra: 1.1rem;
   }
 
   .rack {
@@ -1854,13 +2251,32 @@ button.link.danger {
     grid-column: 1 / -1;
   }
 
-  .board {
+  .board-zona {
     grid-row: 1;
+    margin-top: 0.4rem;
+  }
+
+  .board {
     margin-top: 0;
     padding: 0.5rem;
     /* Lloc per a la tira flotant de jugadors, que viu a sobre. */
     padding-top: 2.5rem;
     gap: 0.35rem 0.4rem;
+  }
+
+  /* A dalt hi ha la tira de jugadors: els avisos de la taula van a baix. */
+  .board-zona.amb-avisos .board {
+    padding-top: 2.5rem;
+    padding-bottom: 2.6rem;
+  }
+
+  .taula-avisos {
+    top: auto;
+    bottom: 0.45rem;
+  }
+
+  .marca-taula {
+    display: none;
   }
 
   /* El faristol i els botons comparteixen l'última fila. */
@@ -1987,10 +2403,10 @@ button.link.danger {
     color: rgb(255 255 255 / 0.75);
   }
 
-  .board .tile {
-    width: 2rem;
-    height: 2.6rem;
-    font-size: 1rem;
+  .board {
+    --fitxa-ampla: 2rem;
+    --fitxa-alta: 2.6rem;
+    --fitxa-lletra: 1rem;
   }
 
   .hint,

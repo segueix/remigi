@@ -11,6 +11,7 @@ import { playerLevelLabel } from '../state/playerLevel';
 import type { ProfileHandle } from '../state/useProfile';
 import { MIN_JEROGLIFICS } from '../state/useJeroglifics';
 import type { TileStyle } from '../state/useTileStyle';
+import { TURN_OPTIONS, type TurnSeconds } from '../state/useTurnSeconds';
 import { ComEsJuga } from './ComEsJuga';
 import { ColorShape } from './TileView';
 
@@ -20,6 +21,9 @@ interface Props {
   current: GameSetup;
   tileStyle: TileStyle;
   onTileStyle(style: TileStyle): void;
+  /** Temps per torn; s'aplica de seguida, també a la partida que jugues ara. */
+  turnSeconds: TurnSeconds;
+  onTurnSeconds(seconds: TurnSeconds): void;
   /** Jeroglífics a la col·lecció; amb prou n'apareix l'opció de jugar-los. */
   jeroglifics: number;
   onJeroglifics(): void;
@@ -41,6 +45,8 @@ export function PlayerMenu({
   current,
   tileStyle,
   onTileStyle,
+  turnSeconds,
+  onTurnSeconds,
   jeroglifics,
   onJeroglifics,
   onNewGame,
@@ -171,6 +177,34 @@ export function PlayerMenu({
           />
           Que s’adaptin també durant la partida
         </label>
+        </div>
+
+        {/*
+          * El temps de cada torn. Es canvia en calent (no espera cap partida
+          * nova) perquè es vegi de seguida al rellotge de la taula. Quan
+          * s'acaba, el que tinguessis a mig col·locar es desfà i robes.
+          */}
+        <div className="temps-torn" role="group" aria-label="Temps per torn">
+          <span className="muted">Temps per torn:</span>
+          {TURN_OPTIONS.map((option) => (
+            <button
+              key={option}
+              type="button"
+              className={turnSeconds === option ? '' : 'secondary'}
+              aria-pressed={turnSeconds === option}
+              onClick={() => onTurnSeconds(option)}
+            >
+              {option} s
+            </button>
+          ))}
+          <button
+            type="button"
+            className={turnSeconds === null ? '' : 'secondary'}
+            aria-pressed={turnSeconds === null}
+            onClick={() => onTurnSeconds(null)}
+          >
+            sense límit
+          </button>
         </div>
 
         {/*

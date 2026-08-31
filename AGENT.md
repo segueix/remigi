@@ -1459,6 +1459,112 @@ canviar ni una jugada de cap nivell.
   els 196 tests en verd), perquè el motor crida exactament el mateix
   `decideAiMove` de sempre amb el mateix consum de RNG.
 
+### El torn, a mida del mòbil ✅ Feta (2026-08-31)
+
+Demanat pel jugador, tot d'una tirada: «Fes que a mesura que s'hagi omplert el
+tauler a la versió mòbil les fitxes es vagin veient més petites per veure-les
+totes, fes que el jugador pugui ordenar el dock manualment. Treu el botó de
+robar i es robi si no has posat i dones al botó d'avançar que sempre ha d'estar
+actiu. Canvia color taronja per groc fort. Fes que quan es seleccioni una fitxa
+del dock, només es vegi la selecció d'aquesta. Posa opció de 30, 60 o 120
+segons, fes que sigui visible al tauler. Quan s'acabi el temps roba i desfés el
+que hagi fet l'usuari si no ho ha validat. Fes que quan juguin els contrincants
+sigui més vistós.»
+
+- [x] **Les fitxes de la taula s'encongeixen a mesura que s'omple**
+      (`game/boardDensity.ts`): a partir de 22 fitxes, cada fitxa nova les
+      empetiteix un 0,9 %, fins a un terra del 60 %. L'escala surt del nombre
+      de fitxes (gradual i previsible) i el full d'estil només l'aplica als
+      mòbils i en apaïsat, que és on l'espai s'acaba. Amb això, una partida
+      **sencera** (102 fitxes a la taula) cap en un mòbil vertical sense
+      desplaçar res.
+- [x] **El faristol el col·loca el jugador** (`game/rackOrder.ts`): arrossegant
+      una fitxa fins al seu lloc (amb barra que diu per quin forat entrarà,
+      segons la meitat on la deixis) o tocant primer la que mous i després on
+      ha d'anar. «Per número» i «per color» deixen de ser modes: escriuen
+      l'ordre d'una vegada i després es continua a mà. L'ordre és una llista
+      d'identificadors de la **vista** (el motor no en sap res) i es desa amb
+      la partida, així que sobreviu al torn, a robar i a tancar la pestanya.
+- [x] **Un sol botó tanca el torn**: «Avançar» acaba la jugada si has posat
+      fitxes i, si no n'has posat cap, roba (o passa amb el sac buit). No
+      s'apaga mai mentre et toqui. El botó de robar ja no hi és — era massa
+      fàcil de prémer sense voler.
+- [x] **El quart color passa de taronja a groc fort**: `#f5c518` de fitxa amb
+      el número gairebé negre (8,4:1) i `#b58900` de tinta sobre el crema de
+      les clàssiques (3,1:1). La clau interna continua sent `orange` (és la que
+      hi ha desada a totes les partides), però tot el que es veu i es llegeix
+      diu **groc**.
+- [x] **La selecció és només de la fitxa triada**: triar-ne una ja no encén amb
+      marc de ratlles totes les jugades de la taula; la fitxa s'aixeca, creix i
+      s'anella, i la destinació només s'assenyala on ets a sobre.
+- [x] **Temps per torn de 30, 60 o 120 segons** (o sense límit) al menú del
+      jugador, aplicat en calent, amb el **compte enrere sobre el feltre**: un
+      anell que es buida i, els últims deu segons, vermell i bategant.
+- [x] **Quan s'acaba el temps**, el que tinguessis a mig col·locar torna al
+      faristol i es roba (o es passa): la robada s'aplica sobre l'estat del
+      motor, que no ha vist mai l'esborrany, i un avís explica què ha passat.
+- [x] **El torn dels rivals es veu passar**: l'avís del mig de la pantalla pren
+      els colors del bot que juga, amb l'avatar bategant, els punts de «està
+      jugant…» i una barra que s'omple amb el temps que s'hi està; les fitxes
+      que acaba de posar entren fent un salt amb el seu color; i a la taula
+      queda una pastilla que diu què ha fet («GuineuAstuta ha baixat 4
+      fitxes») fins que tornes a jugar tu.
+
+**Criteris d'acceptació (verificats)**:
+
+- `npm run typecheck` net, `npm test` en verd (123 del motor i **104** de la
+  web, 31 de nous: ordre del faristol, densitat de la taula, rellotge i temps
+  per torn desat) i `npm run build` correcte.
+- `npm run test:e2e` en verd: **102 proves** en escriptori i mòbil sobre el
+  build de producció, amb un fitxer nou (`e2e/torn.spec.ts`, 8 proves × 2
+  projectes) per al faristol a mà, el rellotge, el temps exhaurit, la taula que
+  s'omple i l'avís de l'últim rival.
+- Comprovat també mirant-ho, amb captures en mòbil vertical (taula buida i
+  taula plena, fitxa triada, temps exhaurit), en apaïsat i en escriptori.
+
+**Decisions**:
+
+- **L'ordre del faristol no entra al motor.** `packages/core` es manté pur: com
+  els colors dels autors, l'ordre és informació de la pantalla, i per això viu
+  a `GameScreen` i es desa amb la partida (`rackOrder`), no dins de l'estat del
+  joc. L'esborrany del torn tampoc no el mira: només li importa quines fitxes
+  tens, no en quin ordre.
+- **El temps per torn és una preferència del dispositiu**, com l'aspecte de les
+  fitxes, i no part de la configuració de la partida: així es canvia en calent
+  i no cal començar-ne una de nova per provar-lo. Ve de sèrie a **60 segons**
+  perquè la funció es vegi (el jugador la volia visible a la taula), i qui no
+  la vulgui té «sense límit» al mateix menú.
+- **El temps exhaurit compta com a oportunitat perduda**: si hi havia jugada i
+  el rellotge t'ha fet robar, el jeroglífic s'apunta igual que si haguessis
+  premut robar. La jugada se t'ha escapat de totes maneres, i el repàs del
+  final és justament per veure-la.
+- **L'escala de les fitxes es calcula del nombre de fitxes**, no mesurant el
+  navegador. Un bucle de mesura i reajust seria exacte, però faria ballar la
+  mida a cada moviment i costaria un repintat de més per pas; el compte és
+  gradual, previsible i es pot provar sense navegador.
+
+### Problemes trobats
+
+- [2026-08-31] **La prova del gest de lliscar es va quedar sense taula per
+  desplaçar.** Comprovava que amb el dit sobre una fitxa la taula es desplaça,
+  i per fer-ho omplia la taula fins que no cabés a la pantalla. Amb les fitxes
+  que s'encongeixen, ni 102 fitxes desborden un mòbil vertical: la prova ara fa
+  servir un mòbil curt (393×600), on la taula plena continua desbordant i el
+  gest torna a tenir sentit.
+- [2026-08-31] **La prova del manifest ja fallava abans d'aquesta feina**: el
+  commit que va canviar el nom PWA a «Remigi online gratis» (6546c8b) no la va
+  actualitzar, i `npm run test:e2e` estava vermell a `main`. Corregida aquí:
+  el nom llarg ha de contenir «Remigi» i el curt —el que queda sota la icona
+  de l'app— ha de ser exactament «Remigi».
+- [2026-08-31] **L'avís de temps exhaurit no s'arribava a llegir.** S'esborrava
+  quan et tornava a tocar jugar, i amb rivals ràpids (o amb `VITE_BOT_DELAY=0`
+  a les proves) això passava de seguida. Ara s'apaga sol al cap de sis segons,
+  independentment de qui jugui.
+- [2026-08-31] **El daurat de la fitxa robada es perdia sobre el groc**: són
+  gairebé el mateix color. Sobre les fitxes grogues, els marcs daurats (robada
+  i recol·locada) es fosqueixen fins a un to d'or vell; a les clàssiques no cal,
+  perquè allà la fitxa és crema.
+
 ---
 
 ## Riscos coneguts (a vigilar quan toqui)

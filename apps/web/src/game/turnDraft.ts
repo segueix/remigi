@@ -27,7 +27,16 @@ export interface TurnDraft {
 }
 
 export type Destination =
-  | { kind: 'rack' }
+  | {
+      kind: 'rack';
+      /**
+       * Forat del faristol on deixar-la (0 = davant de tot). És **cosa de la
+       * vista**: l'esborrany només mira quines fitxes tens a la mà, no en quin
+       * ordre les tens escampades (vegeu `rackOrder.ts`), i per això aquí
+       * s'ignora.
+       */
+      index?: number;
+    }
   | { kind: 'meld'; index: number }
   /** Una jugada nova, al final de la taula. */
   | { kind: 'new' };

@@ -1,62 +1,57 @@
-import { isJoker, type Tile } from '@remigi/core';
+import type { Tile } from '@remigi/core';
+import type { SortBy } from '../game/rackOrder';
 import { TileView } from './TileView';
 
-/** Ordre de presentació del faristol (només visual). */
-export type Order = 'cap' | 'numero' | 'color';
-
 interface Props {
+  /** Les fitxes ja en l'ordre en què s'han de veure (vegeu `rackOrder.ts`). */
   rack: Tile[];
   selectedTileId?: string | null;
   draggingTileId?: string | null;
-  /** El punter que arrossega és sobre el faristol. */
+  /** El punter que arrossega és sobre el faristol, però no sobre cap lloc concret. */
   isOver?: boolean;
+  /** Forat del faristol on cauria la fitxa que s'arrossega (0 = davant de tot). */
+  overIndex?: number | null;
   /** Fitxa acabada de robar del sac, per trobar-la de seguida entre les altres. */
   drawnTileId?: string | null;
   interactive?: boolean;
-  /*
-   * L'ordre viu a fora (GameScreen): en apaïsat es controla des d'un altre
-   * lloc de la pantalla, i l'estat ha de ser el mateix.
-   */
-  order: Order;
-  onOrderChange(order: Order): void;
-  onTileClick?(tileId: string): void;
+  /** Ordena-ho tot de cop; a partir d'aquí el jugador ho retoca fitxa a fitxa. */
+  onSort(by: SortBy): void;
+  /** Un toc a la fitxa que fa `index` dins del faristol. */
+  onTileClick?(tileId: string, index: number): void;
   onTilePointerDown?(event: React.PointerEvent, tileId: string): void;
   /** Tornar al faristol la fitxa triada. */
   onReturnToRack?(): void;
 }
 
-const COLOR_ORDER = ['red', 'blue', 'black', 'orange'];
-
-/** El faristol del jugador, amb ordenació opcional (només visual). */
+/**
+ * El faristol del jugador.
+ *
+ * L'ordre de les fitxes és seu: les col·loca on vol arrossegant-les (o tocant
+ * la fitxa i després el lloc), i els botons d'ordenar només són una empenta
+ * per començar. Cada fitxa és un lloc on se'n pot deixar una altra, i mentre
+ * s'arrossega una barra diu exactament on caurà.
+ */
 export function RackView({
   rack,
   selectedTileId,
   draggingTileId,
   isOver,
+  overIndex,
   drawnTileId,
   interactive,
-  order,
-  onOrderChange,
+  onSort,
   onTileClick,
   onTilePointerDown,
   onReturnToRack,
 }: Props) {
-  const tiles = sortTiles(rack, order);
-
   return (
     <section className="rack-area">
       <header className="rack-header">
         <div className="rack-tools">
           <span className="muted">Ordena:</span>
-          {(['cap', 'numero', 'color'] as Order[]).map((option) => (
-            <button
-              key={option}
-              type="button"
-              className="link"
-              onClick={() => onOrderChange(option)}
-              disabled={order === option}
-            >
-              {option === 'cap' ? 'com està' : option === 'numero' ? 'per número' : 'per color'}
+          {(['numero', 'color'] as SortBy[]).map((option) => (
+            <button key={option} type="button" className="link" onClick={() => onSort(option)}>
+              {option === 'numero' ? 'per número' : 'per color'}
             </button>
           ))}
           <span className="muted rack-count">
@@ -66,22 +61,32 @@ export function RackView({
       </header>
 
       <div className={isOver ? 'rack over' : 'rack'} data-drop="rack">
-        {tiles.map((tile) => (
-          <TileView
-            key={tile.id}
-            tile={tile}
-            selected={tile.id === selectedTileId}
-            dragging={tile.id === draggingTileId}
-            drawn={tile.id === drawnTileId}
-            onClick={interactive ? () => onTileClick?.(tile.id) : undefined}
-            onPointerDown={
-              interactive && onTilePointerDown
-                ? (event) => onTilePointerDown(event, tile.id)
-                : undefined
-            }
-          />
-        ))}
-        {tiles.length === 0 && <p className="muted">Cap fitxa: has guanyat!</p>}
+        {rack.map((tile, index) => {
+          const places = ['rack-lloc'];
+          if (overIndex === index) places.push('cau-abans');
+          if (overIndex === index + 1 && index === rack.length - 1) places.push('cau-despres');
+          return (
+            /*
+             * Cada fitxa és també el seu lloc: deixar-n'hi una a sobre la posa
+             * al costat, per la meitat per on s'hi ha deixat.
+             */
+            <div key={tile.id} className={places.join(' ')} data-drop={`rack:${index}`}>
+              <TileView
+                tile={tile}
+                selected={tile.id === selectedTileId}
+                dragging={tile.id === draggingTileId}
+                drawn={tile.id === drawnTileId}
+                onClick={interactive ? () => onTileClick?.(tile.id, index) : undefined}
+                onPointerDown={
+                  interactive && onTilePointerDown
+                    ? (event) => onTilePointerDown(event, tile.id)
+                    : undefined
+                }
+              />
+            </div>
+          );
+        })}
+        {rack.length === 0 && <p className="muted">Cap fitxa: has guanyat!</p>}
       </div>
 
       {/*
@@ -96,15 +101,4 @@ export function RackView({
       )}
     </section>
   );
-}
-
-function sortTiles(rack: Tile[], order: Order): Tile[] {
-  if (order === 'cap') return rack;
-  return [...rack].sort((a, b) => {
-    // Els jokers sempre al final, que és on són més fàcils de trobar.
-    if (isJoker(a) || isJoker(b)) return Number(isJoker(a)) - Number(isJoker(b));
-    return order === 'numero'
-      ? a.value - b.value || COLOR_ORDER.indexOf(a.color) - COLOR_ORDER.indexOf(b.color)
-      : COLOR_ORDER.indexOf(a.color) - COLOR_ORDER.indexOf(b.color) || a.value - b.value;
-  });
 }

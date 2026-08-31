@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import {
+  avanca,
   baixaGrup,
   comencaDeZero,
   entraAmbPartida,
@@ -91,7 +92,7 @@ test.describe('qui mana és el motor', () => {
       haObert: true,
     });
 
-    await page.locator('.rack .tile[aria-label="7 taronja"]').click();
+    await page.locator('.rack .tile[aria-label="7 groc"]').click();
     await page.locator('.board .meld').first().click();
     await expect(page.locator('.board .meld .tile')).toHaveCount(4);
     await expect(page.locator('.meld.invalid')).toHaveCount(0);
@@ -132,8 +133,9 @@ test.describe('moure fitxes', () => {
     await comencaDeZero(page);
 
     // Per defecte, la fitxa és del color i el número (i la forma) en blanc os.
-    // (Una numèrica: el joker no té color, i per tant tampoc forma.)
-    const fitxa = page.locator('.rack .tile:not(.tile-joker)').first();
+    // (Una numèrica: el joker no té color, i per tant tampoc forma. I no groga:
+    // el groc és massa clar per escriure-hi en blanc, i hi porta número fosc.)
+    const fitxa = page.locator('.rack .tile:not(.tile-joker):not(.tile-orange)').first();
     expect(await fitxa.evaluate((el) => getComputedStyle(el).color)).toBe('rgb(255, 253, 246)');
 
     // Cada fitxa numèrica porta la forma del seu color, per al daltonisme.
@@ -156,7 +158,7 @@ test.describe('moure fitxes', () => {
 
   test('l’aspecte clàssic es pot triar des del menú, i es recorda', async ({ page }) => {
     await comencaDeZero(page);
-    const fitxa = page.locator('.rack .tile:not(.tile-joker)').first();
+    const fitxa = page.locator('.rack .tile:not(.tile-joker):not(.tile-orange)').first();
 
     await obreMenu(page);
     await page
@@ -181,7 +183,7 @@ test.describe('moure fitxes', () => {
     await page.reload();
     await expect(page.locator('.rack .tile').first()).toBeVisible();
     const colorDespres = await page
-      .locator('.rack .tile:not(.tile-joker)')
+      .locator('.rack .tile:not(.tile-joker):not(.tile-orange)')
       .first()
       .evaluate((el) => getComputedStyle(el).color);
     expect(colorDespres).toBe(colorClassic);
@@ -215,8 +217,13 @@ test.describe('amb el dit', () => {
   test.skip(({ isMobile }) => !isMobile, 'només té sentit al projecte de mòbil');
 
   test('lliscar desplaça la taula i mantenir premut arrossega la fitxa', async ({ page }) => {
-    // Una taula ben plena, que no capiga a la pantalla: el desplaçament hi és
-    // imprescindible per arribar a les jugades de baix.
+    /*
+     * Una taula ben plena en un mòbil petit: com que les fitxes s'encongeixen
+     * a mesura que la taula s'omple, en una pantalla normal hi cabria tot i no
+     * hi hauria res per desplaçar. En una de curta, sí — i és allà on el gest
+     * de lliscar ha de continuar movent la taula i no endur-se cap fitxa.
+     */
+    await page.setViewportSize({ width: 393, height: 600 });
     const grups: ReturnType<typeof f>[][] = [];
     for (let v = 1; v <= 13; v++) grups.push([f('red', v), f('blue', v), f('black', v)]);
     for (let v = 2; v <= 13; v++) grups.push([f('red', v, 'b'), f('blue', v, 'b'), f('black', v, 'b')]);
@@ -385,7 +392,9 @@ test.describe('qui ha jugat què', () => {
     await entraAmbPartida(page, { rack: [f('red', 3), f('blue', 8)] });
     await expect(page.locator('.rack .tile.drawn')).toHaveCount(0);
 
-    await page.getByRole('button', { name: 'Robar fitxa' }).click();
+    // Sense res posat a la taula, avançar és robar.
+    await expect(avanca(page)).toHaveAccessibleName('Avançar');
+    await avanca(page).click();
     await expect(page.locator('.rack .tile')).toHaveCount(3);
 
     // Al sac només hi ha un 1 negre: la fitxa marcada ha de ser aquesta.
@@ -398,7 +407,7 @@ test.describe('qui ha jugat què', () => {
     await entraAmbPartida(page, {
       rack: [f('red', 12), f('blue', 12), f('black', 12)],
     });
-    await page.getByRole('button', { name: 'Robar fitxa' }).click();
+    await avanca(page).click();
     await expect(page.locator('.rack .tile.drawn')).toHaveCount(1);
 
     // Robar acaba el torn: cal esperar que torni.
@@ -410,11 +419,13 @@ test.describe('qui ha jugat què', () => {
     await expect(page.locator('.rack .tile.drawn')).toHaveCount(0);
   });
 
-  test('robar amb fitxes a mig col·locar avisa i no descarta res', async ({ page }) => {
+  test('avançar amb fitxes a mig col·locar acaba la jugada, no roba', async ({ page }) => {
     /*
      * El glitch de «he robat i m'han donat quatre fitxes»: robar amb
      * l'esborrany a mitges l'esborrava en silenci, i totes les fitxes
-     * col·locades tornaven de cop al faristol juntament amb la robada.
+     * col·locades tornaven de cop al faristol juntament amb la robada. Ara ni
+     * tan sols hi ha manera de demanar-ho: amb fitxes a la taula, el botó
+     * comprova la jugada, i el sac no s'obre fins que no hi ha res a mitges.
      */
     await entraAmbPartida(page, {
       rack: [f('red', 12), f('blue', 12), f('black', 12), f('orange', 5)],
@@ -425,17 +436,20 @@ test.describe('qui ha jugat què', () => {
     await page.getByRole('button', { name: '+ Jugada nova' }).click();
     await expect(page.locator('.rack .tile')).toHaveCount(3);
 
-    // Robar ara no roba: avisa, i no es perd ni es guanya cap fitxa.
-    await page.getByRole('button', { name: 'Robar fitxa' }).click();
-    await expect(page.locator('.error')).toContainText('a mig col·locar');
+    // Amb fitxes posades, avançar és acabar la jugada: el motor la rebutja i
+    // no es perd ni es guanya cap fitxa.
+    await expect(avanca(page)).toHaveAccessibleName('Acabar jugada');
+    await avanca(page).click();
+    await expect(page.locator('.error')).toContainText('com a mínim 3 fitxes');
     await expect(page.locator('.rack .tile')).toHaveCount(3);
     await expect(page.locator('.board .meld .tile')).toHaveCount(1);
     await expect(page.locator('.turn-line')).toContainText('et toca a tu');
 
-    // Desfets els canvis, robar torna a donar una fitxa i només una.
+    // Desfets els canvis, avançar roba una fitxa i només una.
     await page.getByRole('button', { name: 'Desfer canvis' }).click();
     await expect(page.locator('.rack .tile')).toHaveCount(4);
-    await page.getByRole('button', { name: 'Robar fitxa' }).click();
+    await expect(avanca(page)).toHaveAccessibleName('Avançar');
+    await avanca(page).click();
     await expect(page.locator('.rack .tile')).toHaveCount(5);
     await expect(page.locator('.rack .tile.drawn')).toHaveCount(1);
   });
@@ -560,14 +574,16 @@ test.describe('la taula de joc', () => {
 
     // Al mòbil hi ha també el botó de girar la pantalla; a l'escriptori, no.
     const botons = page.locator('.actions button');
-    await expect(botons).toHaveCount(isMobile ? 4 : 3);
+    await expect(botons).toHaveCount(isMobile ? 3 : 2);
     const altures = await botons.evaluateAll((b) => b.map((el) => el.getBoundingClientRect().top));
     // Tots comencen a la mateixa alçada: cap no ha saltat de línia.
     expect(new Set(altures.map((v) => Math.round(v))).size).toBe(1);
 
     // Encara que el rètol s'amagui i quedi la icona, el nom no canvia.
-    await expect(page.getByRole('button', { name: 'Acabar jugada' })).toBeVisible();
+    await expect(avanca(page)).toBeVisible();
     await expect(page.getByRole('button', { name: 'Desfer canvis' })).toBeVisible();
+    // I el d'avançar mai no s'apaga mentre et toqui: és el que tanca el torn.
+    await expect(avanca(page)).toBeEnabled();
   });
 
   test('al mòbil apaïsat tot cap a la pantalla', async ({ page, isMobile }) => {
@@ -603,7 +619,6 @@ test.describe('la taula de joc', () => {
     const perNumeros = page.locator('.sort-mini button', { hasText: 'números' });
     await expect(perNumeros).toBeVisible();
     await perNumeros.click();
-    await expect(perNumeros).toHaveAttribute('aria-pressed', 'true');
     const valors = await page
       .locator('.rack .tile')
       .evaluateAll((tiles) => tiles.map((el) => parseInt(el.textContent ?? '', 10)));

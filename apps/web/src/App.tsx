@@ -61,6 +61,7 @@ export function App() {
           resume={savedGame.saved?.game}
           resumeOwners={savedGame.saved?.owners}
           resumeMisses={savedGame.saved?.misses}
+          resumeRackOrder={savedGame.saved?.rackOrder}
           profile={profile}
           savedGame={savedGame}
           onHistory={() => setScreen('stats')}
