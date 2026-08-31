@@ -1,36 +1,48 @@
 import { describe, expect, it } from 'vitest';
-import { boardScale, countBoardTiles } from './boardDensity';
+import { largestFittingScale, TILE_SCALES } from './boardDensity';
 
-describe('quantes fitxes hi ha a la taula', () => {
-  it('les compta de totes les jugades', () => {
-    expect(countBoardTiles([])).toBe(0);
-    expect(countBoardTiles([[1, 2, 3], [1, 2, 3, 4]].map((m) => m.map(String)))).toBe(7);
+describe('els passos de mida de les fitxes', () => {
+  it('van de la natural cap avall, sense passar del mínim llegible', () => {
+    expect(TILE_SCALES[0]).toBe(1);
+    expect(TILE_SCALES[TILE_SCALES.length - 1]).toBeCloseTo(0.61, 2);
+    expect(TILE_SCALES.every((scale, i) => i === 0 || scale < TILE_SCALES[i - 1])).toBe(true);
+  });
+
+  it('cada pas és petit: encongir no ha de saltar a la vista', () => {
+    for (let i = 1; i < TILE_SCALES.length; i++) {
+      expect(TILE_SCALES[i - 1] - TILE_SCALES[i]).toBeLessThanOrEqual(0.031);
+    }
   });
 });
 
-describe('l’escala de les fitxes de la taula', () => {
-  it('amb la taula poc plena, mida natural', () => {
-    expect(boardScale(0)).toBe(1);
-    expect(boardScale(22)).toBe(1);
+describe('quina mida hi cap', () => {
+  it('amb espai de sobres, la natural: no s’encongeix res', () => {
+    const provades: number[] = [];
+    const escala = largestFittingScale(TILE_SCALES, (scale) => {
+      provades.push(scale);
+      return true;
+    });
+    expect(escala).toBe(1);
+    // I no s'ha provat res més: la primera que hi cap ja val.
+    expect(provades).toEqual([1]);
   });
 
-  it('a partir d’aquí, cada fitxa nova les empetiteix una mica', () => {
-    expect(boardScale(23)).toBeCloseTo(0.99, 5);
-    expect(boardScale(42)).toBeCloseTo(0.82, 5);
+  it('encongeix just un pas si amb un n’hi ha prou', () => {
+    // La taula no dona per a la mida natural, però sí per a la següent.
+    const escala = largestFittingScale(TILE_SCALES, (scale) => scale <= TILE_SCALES[1]);
+    expect(escala).toBe(TILE_SCALES[1]);
   });
 
-  it('no baixa mai del mínim que encara es llegeix', () => {
-    expect(boardScale(70)).toBeGreaterThanOrEqual(0.6);
-    expect(boardScale(106)).toBe(0.6);
-    expect(boardScale(1000)).toBe(0.6);
+  it('amb la taula plena de gom a gom, la mínima (i la taula ja es desplaça)', () => {
+    const escala = largestFittingScale(TILE_SCALES, () => false);
+    expect(escala).toBe(TILE_SCALES[TILE_SCALES.length - 1]);
   });
 
-  it('mai creix, per moltes fitxes que hi hagi', () => {
-    let previous = boardScale(0);
-    for (let tiles = 1; tiles <= 106; tiles++) {
-      const scale = boardScale(tiles);
-      expect(scale).toBeLessThanOrEqual(previous);
-      previous = scale;
-    }
+  it('torna a créixer quan la taula es buida', () => {
+    // Mateixa taula, dos moments: plena (només hi cap la petita) i buida.
+    const plena = largestFittingScale(TILE_SCALES, (scale) => scale <= 0.7);
+    const buida = largestFittingScale(TILE_SCALES, () => true);
+    expect(plena).toBeLessThan(buida);
+    expect(buida).toBe(1);
   });
 });

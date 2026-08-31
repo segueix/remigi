@@ -78,9 +78,15 @@ const finalPartida = (page: Page) => page.getByRole('button', { name: 'Una altra
 export async function robaFinsAlFinal(page: Page, maxTorns = 400): Promise<boolean> {
   for (let i = 0; i < maxTorns; i++) {
     if (await finalPartida(page).isVisible().catch(() => false)) return true;
-    const boto = avanca(page);
-    if (await boto.isEnabled().catch(() => false)) await boto.click();
-    await page.waitForTimeout(20);
+    /*
+     * Un clic per torn: el botó s'espera sol a estar actiu (mentre juguen els
+     * rivals no ho està), i si la partida s'acaba mentrestant, el clic falla i
+     * la volta següent ja veu el final. Esperar amb pauses fixes gastava el
+     * pressupost de la prova en no res.
+     */
+    await avanca(page)
+      .click({ timeout: 3000 })
+      .catch(() => {});
   }
   return finalPartida(page).isVisible();
 }
@@ -93,9 +99,9 @@ export async function robaFinsQueUnBotJugui(page: Page, maxTorns = 40): Promise<
   for (let i = 0; i < maxTorns; i++) {
     if ((await page.locator('.board .meld').count()) > 0) break;
     if (await finalPartida(page).isVisible().catch(() => false)) break;
-    const boto = avanca(page);
-    if (await boto.isEnabled().catch(() => false)) await boto.click();
-    await page.waitForTimeout(40);
+    await avanca(page)
+      .click({ timeout: 3000 })
+      .catch(() => {});
   }
   if ((await page.locator('.board .meld').count()) === 0) return false;
   // Els bots poden estar jugant encara: cal esperar el torn per poder tocar res.

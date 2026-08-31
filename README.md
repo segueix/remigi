@@ -198,7 +198,8 @@ Web Worker, sense React ni DOM.
       (`remigi-engine`): API pública versionada, artefacte d'un sol fitxer per
       a Node o Web Worker, i regressió comportamental que garanteix que cada
       nivell juga exactament igual que abans.
-- [x] El torn, a mida del mòbil: les fitxes de la taula s'encongeixen a mesura
-      que s'omple perquè es vegin totes, el faristol el col·loques tu, un sol
-      botó tanca el torn, i un rellotge de 30, 60 o 120 segons compta a la
-      taula (quan s'acaba, es desfà el que no has validat i robes).
+- [x] El torn, a mida del mòbil: les fitxes de la taula s'encongeixen just
+      quan ja no hi caben, perquè es vegin totes sense desplaçar res; el
+      faristol el col·loques tu, un sol botó tanca el torn, i un rellotge de
+      30, 60 o 120 segons compta a la taula (quan s'acaba, es desfà el que no
+      has validat i robes).

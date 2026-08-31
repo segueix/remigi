@@ -136,36 +136,45 @@ test.describe('el rellotge del torn', () => {
 });
 
 test.describe('la taula plena', () => {
-  test('les fitxes s’empetiteixen a mesura que s’omple', async ({ page, isMobile }) => {
-    test.skip(!isMobile, 'a l’ordinador la taula no s’acaba mai: les fitxes no s’encongeixen');
+  test('les fitxes només s’empetiteixen quan ja no hi caben', async ({ page, isMobile }) => {
+    test.skip(!isMobile, 'a l’ordinador la taula té lloc de sobres i no s’encongeix mai');
 
     /*
-     * Una taula de 20 fitxes (encara hi caben totes de mida natural) i una mà
-     * de 10 per anar-hi deixant. No es valida cap jugada: el que es mira és
-     * que, a mesura que la taula s'omple, les fitxes es facin petites soles.
+     * Nou jugades de tres fitxes: en un mòbil vertical encara hi caben totes
+     * de mida natural, i encongir-les aquí només faria el joc més petit del
+     * compte. En baixar-n'hi més, la taula ja no dona de si i les fitxes es
+     * fan un pèl més petites perquè no en quedi cap fora de la vista.
      */
-    const escala = (color: string, desde: number) =>
-      [desde, desde + 1, desde + 2, desde + 3, desde + 4].map((v) => f(color, v, 'b'));
-    const ma = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((v) => f('red', v));
-    await entraAmbPartida(page, {
-      rack: ma,
-      haObert: true,
-      board: [escala('red', 1), escala('blue', 1), escala('black', 1), escala('orange', 1)],
-    });
-    await expect(page.locator('.board .tile')).toHaveCount(20);
-    const gran = (await page.locator('.board .tile').first().boundingBox())!.width;
+    const taula = page.locator('.board');
+    const desborda = () =>
+      taula.evaluate((el) => el.scrollHeight > el.clientHeight + 1 || el.scrollWidth > el.clientWidth + 1);
+    const midaFitxa = async () => (await taula.locator('.tile').first().boundingBox())!.width;
 
-    // Les deu fitxes de la mà, a la taula: ara n'hi ha trenta.
+    const jugades = [];
+    for (const color of ['red', 'blue', 'black']) {
+      for (const desde of [1, 5, 9]) {
+        jugades.push([f(color, desde, 'b'), f(color, desde + 1, 'b'), f(color, desde + 2, 'b')]);
+      }
+    }
+    const ma = [1, 2, 3, 4].map((v) => f('orange', v));
+    await entraAmbPartida(page, { rack: ma, board: jugades, haObert: true });
+    await expect(taula.locator('.tile')).toHaveCount(27);
+
+    const gran = await midaFitxa();
+    expect(await desborda()).toBe(false);
+
+    // Quatre fitxes més, cadascuna en una jugada nova: ara ja no hi caben.
     for (const fitxa of ma) {
-      await page.locator(`.rack .tile[aria-label="${fitxa.value} vermell"]`).first().click();
+      await page.locator(`.rack .tile[aria-label="${fitxa.value} groc"]`).first().click();
       await page.getByRole('button', { name: '+ Jugada nova' }).click();
     }
-    await expect(page.locator('.board .tile')).toHaveCount(30);
+    await expect(taula.locator('.tile')).toHaveCount(31);
 
-    const petita = (await page.locator('.board .tile').first().boundingBox())!.width;
-    expect(petita).toBeLessThan(gran - 1);
-    // Però continuen essent fitxes, no confeti: no s'encongeixen sense fons.
-    expect(petita).toBeGreaterThan(gran * 0.55);
+    const petita = await midaFitxa();
+    expect(petita).toBeLessThan(gran);
+    // Encongides just el que calia: tot es veu i continuen essent fitxes.
+    expect(await desborda()).toBe(false);
+    expect(petita).toBeGreaterThan(gran * 0.6);
   });
 });
 

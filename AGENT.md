@@ -1471,13 +1471,13 @@ segons, fes que sigui visible al tauler. Quan s'acabi el temps roba i desfés el
 que hagi fet l'usuari si no ho ha validat. Fes que quan juguin els contrincants
 sigui més vistós.»
 
-- [x] **Les fitxes de la taula s'encongeixen a mesura que s'omple**
-      (`game/boardDensity.ts`): a partir de 22 fitxes, cada fitxa nova les
-      empetiteix un 0,9 %, fins a un terra del 60 %. L'escala surt del nombre
-      de fitxes (gradual i previsible) i el full d'estil només l'aplica als
-      mòbils i en apaïsat, que és on l'espai s'acaba. Amb això, una partida
-      **sencera** (102 fitxes a la taula) cap en un mòbil vertical sense
-      desplaçar res.
+- [x] **Les fitxes de la taula s'encongeixen quan ja no hi caben**
+      (`game/boardDensity.ts` i `game/useBoardFit.ts`): després de cada canvi
+      de la taula es mesura si el contingut hi cap i es baixa de 3 % en 3 %
+      fins al primer pas que hi càpiga tot, amb un terra del 60 %; quan la
+      taula es buida, tornen a créixer soles. Amb això, una partida **sencera**
+      cap en un mòbil vertical sense desplaçar res, i mentre hi hagi lloc les
+      fitxes es queden ben grosses.
 - [x] **El faristol el col·loca el jugador** (`game/rackOrder.ts`): arrossegant
       una fitxa fins al seu lloc (amb barra que diu per quin forat entrarà,
       segons la meitat on la deixis) o tocant primer la que mous i després on
@@ -1512,13 +1512,13 @@ sigui més vistós.»
 
 **Criteris d'acceptació (verificats)**:
 
-- `npm run typecheck` net, `npm test` en verd (123 del motor i **104** de la
-  web, 31 de nous: ordre del faristol, densitat de la taula, rellotge i temps
-  per torn desat) i `npm run build` correcte.
+- `npm run typecheck` net, `npm test` en verd (123 del motor i **105** de la
+  web, 32 de nous: ordre del faristol, mida de les fitxes de la taula,
+  rellotge i temps per torn desat) i `npm run build` correcte.
 - `npm run test:e2e` en verd: **102 proves** en escriptori i mòbil sobre el
   build de producció, amb un fitxer nou (`e2e/torn.spec.ts`, 8 proves × 2
-  projectes) per al faristol a mà, el rellotge, el temps exhaurit, la taula que
-  s'omple i l'avís de l'últim rival.
+  projectes) per al faristol a mà, el rellotge, el temps exhaurit, les fitxes
+  que només s'encongeixen quan ja no hi caben i l'avís de l'últim rival.
 - Comprovat també mirant-ho, amb captures en mòbil vertical (taula buida i
   taula plena, fitxa triada, temps exhaurit), en apaïsat i en escriptori.
 
@@ -1538,10 +1538,15 @@ sigui més vistós.»
   el rellotge t'ha fet robar, el jeroglífic s'apunta igual que si haguessis
   premut robar. La jugada se t'ha escapat de totes maneres, i el repàs del
   final és justament per veure-la.
-- **L'escala de les fitxes es calcula del nombre de fitxes**, no mesurant el
-  navegador. Un bucle de mesura i reajust seria exacte, però faria ballar la
-  mida a cada moviment i costaria un repintat de més per pas; el compte és
-  gradual, previsible i es pot provar sense navegador.
+- **L'escala de les fitxes es mesura, no es compta.** La primera versió la
+  deduïa del nombre de fitxes (previsible i provable sense navegador), però
+  encongia amb mig feltre buit: quantes fitxes hi caben depèn de l'amplada,
+  dels salts de línia i de la pantalla de cadascú, i això només ho sap el
+  navegador. Ara es prova la mida gran i es baixa un pas fins que hi cap tot,
+  en un efecte de disposició (mai es pinta la mida equivocada) i escrivint la
+  variable CSS a l'element, sense passar per l'estat de React. La part
+  decidible —quin pas es tria— continua sent una funció pura i provada
+  (`largestFittingScale`).
 
 ### Problemes trobats
 
@@ -1560,6 +1565,17 @@ sigui més vistós.»
   quan et tornava a tocar jugar, i amb rivals ràpids (o amb `VITE_BOT_DELAY=0`
   a les proves) això passava de seguida. Ara s'apaga sol al cap de sis segons,
   independentment de qui jugui.
+- [2026-08-31] **Encongir per compte de fitxes encongia massa aviat.** Ho va
+  veure el jugador de seguida: «només has de fer les fitxes més petites quan
+  estiguin omplint la pantalla». Amb 38 fitxes a la taula ja es veien petites
+  tot i que hi cabien de sobres amb mig feltre buit. Resolt canviant el compte
+  per la mesura de debò (vegeu la decisió de sobre): fins que la taula no
+  desborda, les fitxes es queden a mida natural.
+- [2026-08-31] **La prova de la partida sencera es va tornar justa de temps.**
+  L'ajudant `robaFinsAlFinal` avançava amb pauses fixes de 20 ms i 400 voltes,
+  i amb una mica més de feina per moviment el pressupost no arribava al final
+  de la partida. Ara cada volta és un torn: el clic al botó d'avançar s'espera
+  sol que torni a ser el teu torn, que és més ràpid i no depèn de rellotges.
 - [2026-08-31] **El daurat de la fitxa robada es perdia sobre el groc**: són
   gairebé el mateix color. Sobre les fitxes grogues, els marcs daurats (robada
   i recol·locada) es fosqueixen fins a un to d'or vell; a les clàssiques no cal,

@@ -655,7 +655,11 @@ input {
   --fitxa-ampla: 2.95rem;
   --fitxa-alta: 3.85rem;
   --fitxa-lletra: 1.55rem;
-  --escala-fitxa: 1;
+  /*
+   * `--densitat` la posa la taula mateixa quan mesura si tot hi cap (vegeu
+   * `game/boardDensity.ts`): val 1 mentre no calgui encongir res.
+   */
+  --escala-fitxa: var(--densitat, 1);
   flex: 1 1 auto;
   min-width: 0;
   min-height: 8rem;
@@ -914,25 +918,13 @@ input {
  * A l'ordinador la taula té lloc de sobres: les fitxes s'hi veuen ben grans
  * (més que les del faristol i tot). En pantalles petites i en apaïsat, els
  * seus blocs canvien les variables de mida perquè hi càpiga el màxim de joc,
- * i a sobre hi actua `--escala-fitxa`, que les va encongint a mesura que la
- * taula s'omple.
+ * i a sobre hi actua `--escala-fitxa`, que les encongeix un pèl més només
+ * quan la taula ja no dona més de si.
  */
 .board .tile {
   width: calc(var(--fitxa-ampla) * var(--escala-fitxa));
   height: calc(var(--fitxa-alta) * var(--escala-fitxa));
   font-size: calc(var(--fitxa-lletra) * var(--escala-fitxa));
-}
-
-/*
- * Als mòbils (i en apaïsat) és on cal veure-ho tot alhora, i per això és on
- * s'aplica l'escala que ve de la pantalla de partida (`--densitat`, calculada
- * a `boardDensity.ts`). A l'ordinador la taula no s'acaba mai i les fitxes es
- * queden sempre de mida natural.
- */
-@media (max-width: 48rem), (orientation: landscape) and (max-height: 32rem) {
-  .board {
-    --escala-fitxa: var(--densitat, 1);
-  }
 }
 
 .tile:not(:disabled) {

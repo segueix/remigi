@@ -1,7 +1,8 @@
 import type { Destination } from '../game/turnDraft';
 import type { Meld } from '@remigi/core';
 import type { TileMark } from './TileView';
-import { boardScale, countBoardTiles } from '../game/boardDensity';
+import { useRef } from 'react';
+import { useBoardFit } from '../game/useBoardFit';
 import { MeldView } from './MeldView';
 
 interface Props {
@@ -51,11 +52,13 @@ export function BoardView({
   const choosing = Boolean(selectedTileId) || Boolean(draggingTileId);
 
   /*
-   * Com més plena està la taula, més petites es veuen les fitxes, perquè no
-   * en quedi cap fora de la pantalla (vegeu `boardDensity.ts`). El full
-   * d'estil decideix on s'aplica: als mòbils, que és on l'espai és or.
+   * Les fitxes s'empetiteixen soles quan la taula no dona més de si, i just el
+   * que calgui (vegeu `boardDensity.ts`). La signatura diu quantes jugades hi
+   * ha i de quina mida: és el que canvia com s'escampen per la taula, i per
+   * tant quan cal tornar a mesurar.
    */
-  const density = boardScale(countBoardTiles(board));
+  const boardRef = useRef<HTMLDivElement>(null);
+  useBoardFit(boardRef, board.map((meld) => meld.length).join(','));
 
   return (
     <div className={overlay ? 'board-zona amb-avisos' : 'board-zona'}>
@@ -64,11 +67,7 @@ export function BoardView({
      * un lloc buit n'obre una. Com que es busca la zona des de l'element de sota
      * cap amunt, deixar-la sobre una jugada concreta hi té preferència.
      */}
-    <div
-      className="board"
-      data-drop="new"
-      style={{ position: 'relative', '--densitat': density } as React.CSSProperties}
-    >
+    <div className="board" data-drop="new" ref={boardRef} style={{ position: 'relative' }}>
       {/*
        * Marca d'aigua del joc: queda integrada al feltre, a baix a la dreta,
        * sense ocupar espai ni interceptar cap clic o gest de les fitxes.
