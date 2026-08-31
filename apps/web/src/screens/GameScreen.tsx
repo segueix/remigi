@@ -26,13 +26,7 @@ import {
   openingPoints,
   type Destination,
 } from '../game/turnDraft';
-import {
-  BOT_DELAY_MS,
-  useGame,
-  type BotAction,
-  type GameHandle,
-  type GameSetup,
-} from '../game/useGame';
+import { BOT_DELAY_MS, useGame, type GameHandle, type GameSetup } from '../game/useGame';
 import type { RatingChange } from '../state/gameOutcome';
 import type { SavedGame } from '../state/savedGame';
 import type { TileStyle } from '../state/useTileStyle';
@@ -443,7 +437,6 @@ export function GameScreen({
         interactive={isHumanTurn}
         overlay={
           <div className="taula-avisos">
-            {handle.lastAction && <LastActionBadge action={handle.lastAction} />}
             {secondsLeft !== null && (
               <TurnClock left={secondsLeft} total={turnSeconds ?? secondsLeft} />
             )}
@@ -640,37 +633,6 @@ function TurnNotice({ player, slot }: { player: GameState['players'][number]; sl
         <span className="torn-avis-barra" />
       </div>
     </div>
-  );
-}
-
-/**
- * Què acaba de fer el rival, sobre el feltre i amb el seu color: es queda fins
- * que tornes a jugar tu, perquè no calgui endevinar d'on han sortit les fitxes
- * noves (que a més porten el marc del seu color).
- */
-function LastActionBadge({ action }: { action: BotAction }) {
-  const persona = botPersona(action.name);
-  const what =
-    action.kind === 'draw'
-      ? 'ha robat'
-      : action.tiles === 0
-        ? 'ha recol·locat la taula'
-        : action.tiles === 1
-          ? 'ha baixat 1 fitxa'
-          : `ha baixat ${action.tiles} fitxes`;
-  return (
-    <p className="ultima-jugada" data-bot={action.slot}>
-      <span
-        className="player-color ultima-avatar"
-        aria-hidden="true"
-        style={{ background: `linear-gradient(135deg, ${persona.colors[0]}, ${persona.colors[1]})` }}
-      >
-        {persona.emoji}
-      </span>
-      <span>
-        <strong>{action.name}</strong> {what}
-      </span>
-    </p>
   );
 }
 

@@ -4,7 +4,9 @@ import { largestFittingScale, TILE_SCALES } from './boardDensity';
 describe('els passos de mida de les fitxes', () => {
   it('van de la natural cap avall, sense passar del mínim llegible', () => {
     expect(TILE_SCALES[0]).toBe(1);
-    expect(TILE_SCALES[TILE_SCALES.length - 1]).toBeCloseTo(0.61, 2);
+    const mesPetita = TILE_SCALES[TILE_SCALES.length - 1];
+    expect(mesPetita).toBeGreaterThanOrEqual(0.5);
+    expect(mesPetita).toBeLessThanOrEqual(0.55);
     expect(TILE_SCALES.every((scale, i) => i === 0 || scale < TILE_SCALES[i - 1])).toBe(true);
   });
 

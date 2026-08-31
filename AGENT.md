@@ -1548,6 +1548,19 @@ sigui més vistós.»
   decidible —quin pas es tria— continua sent una funció pura i provada
   (`largestFittingScale`).
 
+**Retocs demanats un cop vist a la pantalla**:
+
+- Les fitxes de la taula, **més grosses** (3,2 rem a l'ordinador, 2,65 al mòbil
+  i 2,3 en apaïsat, quan abans eren 2,95, 2,2 i 2). Com que ara la mida s'ajusta
+  sola, fer-les grosses no treu res: la taula plena s'encongeix igual, i per
+  això el terra de l'escala baixa a la meitat (així la fitxa més petita de totes
+  continua sent com la de mida natural d'abans, que ja s'havia comprovat que es
+  llegia).
+- **Fora la pastilla de l'última jugada del rival**: informava, però es menjava
+  espai de taula i acabava fent nosa. Del torn dels rivals queden l'avís del mig
+  de la pantalla i el salt de les fitxes noves amb el color del bot, que és el
+  que es mira de debò. Sobre el feltre només hi queda el rellotge, i més petit.
+
 ### Problemes trobats
 
 - [2026-08-31] **La prova del gest de lliscar es va quedar sense taula per
