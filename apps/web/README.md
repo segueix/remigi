@@ -43,10 +43,11 @@ src/
 │   ├── useDragTile.ts        # arrossegar amb ratolí, dit o llapis
 │   ├── bots.ts               # el planter de rivals: noms i avatars
 │   ├── bots.test.ts
-│   ├── boardDensity.ts       # com s'encongeixen les fitxes quan la taula s'omple
+│   ├── boardDensity.ts       # mesura si les fitxes hi caben, i com d'ajustades
 │   ├── meldOwners.ts         # qui ha jugat cada jugada de la taula
 │   ├── meldOwners.test.ts
 │   ├── rackOrder.ts          # l'ordre del faristol, que el posa el jugador
+│   ├── useBoardFit.ts        # torna a mesurar la taula quan canvia
 │   ├── useTurnClock.ts       # el compte enrere del torn
 │   └── useGame.ts            # estat de la partida i torns dels bots
 ├── components/
@@ -89,13 +90,17 @@ faristol**: hi ha lloc de sobres. En pantalles petites i en apaïsat s'empetitei
 per encabir el màxim de joc, i en apaïsat l'ordenació del faristol («números /
 colors») viu a sobre dels botons del torn, que és on queda lloc.
 
-Al mòbil, a més, **la mida va baixant a mesura que la taula s'omple**
-(`game/boardDensity.ts`): a partir d'unes vint fitxes, cada fitxa nova encongeix
-totes les altres un pèl, fins a un mínim on encara es llegeixen. Jugar bé demana
-veure la taula **sencera** —la fitxa que et falta pot ser a qualsevol escala—, i
-amb això hi cap una partida sencera sense desplaçar res. L'escala surt del
-**nombre de fitxes** i no de mesurar el navegador: així el canvi és gradual i
-previsible, una fitxa un pas, i no balla a cada moviment.
+A més, **les fitxes s'empetiteixen soles quan ja no hi caben** —i només
+llavors— (`game/boardDensity.ts` i `game/useBoardFit.ts`). Jugar bé demana veure
+la taula **sencera**, però encongir abans d'hora fa el joc més petit del compte
+i deixa mig feltre buit. Per això no es compten fitxes: després de cada canvi de
+la taula (i quan el feltre canvia de mida) es **mesura** si el contingut hi cap
+(`scrollHeight` contra `clientHeight`) i es baixa de tres en tres per cent fins
+al primer pas que hi càpiga tot, amb un terra del 60 %. Quan la taula es buida,
+les fitxes tornen a créixer soles. Va en un efecte de disposició, així que el
+navegador no arriba a pintar mai la mida equivocada, i l'escala s'escriu com a
+variable CSS a l'element: qui decideix és una mesura del DOM, i tornar-la a
+l'estat de React només serviria per repintar un altre cop el mateix.
 
 Sobre el feltre, i sense desplaçar-s'hi, hi ha dos avisos (`.board-zona`): el
 **rellotge del torn** i **què acaba de fer l'últim rival** («GuineuAstuta ha
@@ -294,8 +299,8 @@ El que abans era una llista per repassar a mà ara ho comprova `npm run test:e2e
   cap mode, i l'ordre sobreviu al canvi de torn i a recarregar la pàgina.
 - El rellotge del torn es veu a la taula, el menú en canvia la durada i, quan
   s'acaba, es desfà el que no s'havia validat i es roba.
-- Les fitxes de la taula s'encongeixen a mesura que s'omple, i la taula diu què
-  acaba de fer cada rival.
+- Les fitxes de la taula es queden a mida natural mentre hi caben i només
+  s'encongeixen quan ja no, i la taula diu què acaba de fer cada rival.
 - Rutes correctes sota `/remigi/`, manifest i icones, i jugar sense connexió.
 - En pantalla petita: res no desborda i els objectius de toc fan 44 px.
 
