@@ -2502,3 +2502,33 @@ button.link.danger {
 .exemple.malament .exemple-nota {
   color: var(--error-text);
 }
+
+
+/*
+ * La roda dentada queda enganxada al perímetre de l'avatar del jugador humà:
+ * fa visible que tocar el perfil també obre la configuració.
+ */
+.player-obre .player-color {
+  position: relative;
+  overflow: visible;
+}
+
+.player-obre .player-color::after {
+  content: '⚙';
+  position: absolute;
+  right: -0.42rem;
+  bottom: -0.32rem;
+  width: 1.05rem;
+  height: 1.05rem;
+  display: grid;
+  place-items: center;
+  border: 1.5px solid #fff;
+  border-radius: 50%;
+  background: #334155;
+  color: #fff;
+  font-size: 0.72rem;
+  line-height: 1;
+  font-family: system-ui, sans-serif;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.35);
+  pointer-events: none;
+}

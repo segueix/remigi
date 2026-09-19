@@ -69,10 +69,10 @@ export interface GameHandle {
   commit(): void;
   draw(): void;
   /**
-   * S'ha acabat el temps del torn: es desfà el que no s'hagi validat i es roba
-   * (o es passa, si el sac és buit).
+   * S'ha acabat el temps del torn. Si la jugada visible és legal, es confirma;
+   * si no, es desfà i es roba (o es passa, si el sac és buit).
    */
-  timeUp(): void;
+  timeUp(): 'committed' | 'drew' | 'passed';
   resetTurn(): void;
   restart(setup?: GameSetup): void;
 }
@@ -242,11 +242,29 @@ export function useGame(
   const draw = useCallback(() => drawTile(false), [drawTile]);
 
   /*
-   * S'ha acabat el temps: el que estiguessis col·locant no s'ha validat, i per
-   * tant no ha passat mai. La robada s'aplica sobre l'estat del motor, que no
-   * ha vist res de l'esborrany, i l'esborrany es refà sol amb el torn nou.
+   * S'ha acabat el temps. Primer provem exactament la taula que el jugador té
+   * davant: si el motor l'accepta, el torn es confirma com si hagués premut
+   * «Acabar jugada». Només si no hi ha canvis o la jugada no és legal es
+   * recupera el comportament antic de desfer i robar/passsar.
    */
-  const timeUp = useCallback(() => drawTile(true), [drawTile]);
+  const timeUp = useCallback((): 'committed' | 'drew' | 'passed' => {
+    if (draft && hasChanges(draft)) {
+      try {
+        const next = applyMove(game, toMove(draft));
+        setTileOwners((owners) => updateOwners(owners, game.board, next.board, game.currentPlayer));
+        setGame(next);
+        setHighlighted(new Set());
+        setDrawnTileId(null);
+        return 'committed';
+      } catch {
+        // La jugada visible no és legal: el temps exhaurit la desfà.
+      }
+    }
+
+    const result = game.bag.length > 0 ? 'drew' : 'passed';
+    drawTile(true);
+    return result;
+  }, [draft, game, drawTile]);
 
   const resetTurn = useCallback(() => {
     setDraft(draftFor(game));

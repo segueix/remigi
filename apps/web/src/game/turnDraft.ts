@@ -124,18 +124,118 @@ function tidyRun(meld: Meld): Meld | null {
  * Mou una fitxa a una destinació. Si la fitxa no es pot moure (no existeix, o
  * és de la taula i es vol tornar al faristol), retorna el mateix esborrany.
  */
+/**
+ * Busca la millor jugada on una fitxa pot entrar amb un doble toc.
+ *
+ * Es prioritza una jugada que quedi completament vàlida. Si encara no hi ha
+ * tres fitxes, també s'accepta una jugada parcial coherent (dos números
+ * consecutius del mateix color, o dues fitxes del mateix número amb colors
+ * diferents). Això permet construir 1-2-3 amb dobles tocs successius.
+ */
+export function findAutoMeldIndex(draft: TurnDraft, tileId: string): number | null {
+  const tile = findTile(draft, tileId);
+  if (!tile) return null;
+
+  const sourceIndex = draft.board.findIndex((meld) => meld.some((candidate) => candidate.id === tileId));
+  let partial: number | null = null;
+
+  for (let index = 0; index < draft.board.length; index++) {
+    if (index === sourceIndex) continue;
+    const inserted = insertIntoMeld(draft.board[index], tile);
+    // Una inserció que partiria l'escala en dues és una operació explícita, no
+    // una destinació automàtica de doble toc.
+    if (inserted.length !== 1) continue;
+    if (isValidMeld(inserted[0])) return index;
+    if (partial === null && isPlausibleOpenMeld(inserted[0])) partial = index;
+  }
+  return partial;
+}
+
+function isPlausibleOpenMeld(meld: Meld): boolean {
+  if (meld.length === 0 || meld.length > 2) return false;
+  const numbers = meld.filter(
+    (tile): tile is Extract<Tile, { kind: 'number' }> => tile.kind === 'number',
+  );
+  if (numbers.length === 0) return false;
+  if (numbers.length !== meld.length) return true; // un joker pot completar qualsevol dels dos patrons
+
+  const sameValue = numbers.every((tile) => tile.value === numbers[0].value);
+  const differentColors = new Set(numbers.map((tile) => tile.color)).size === numbers.length;
+  if (sameValue && differentColors) return true;
+
+  const sameColor = numbers.every((tile) => tile.color === numbers[0].color);
+  const values = numbers.map((tile) => tile.value).sort((a, b) => a - b);
+  return sameColor && new Set(values).size === values.length && values[values.length - 1] - values[0] === values.length - 1;
+}
+
+/**
+ * Si es treu una fitxa de dins d'una escala, les dues bandes passen a ser dues
+ * jugades independents. Així 1-2-3-4-5-6-7 menys el 4 es converteix en
+ * 1-2-3 i 5-6-7, en lloc de quedar enganxat com 1-2-3-5-6-7.
+ */
+function removeFromMeld(meld: Meld, tileId: string): Meld[] {
+  const tileIndex = meld.findIndex((tile) => tile.id === tileId);
+  if (tileIndex < 0) return [meld];
+
+  const info = analyzeMeld(meld);
+  if (info.valid && info.kind === 'run' && tileIndex > 0 && tileIndex < meld.length - 1) {
+    return [meld.slice(0, tileIndex), meld.slice(tileIndex + 1)];
+  }
+
+  const remaining = meld.filter((tile) => tile.id !== tileId);
+  return remaining.length > 0 ? [remaining] : [];
+}
+
+/**
+ * Afegir una còpia repetida al mig d'una escala la parteix en les dues
+ * escales que defineixen les dues còpies. Ex.: 1-2-3-4-5 + un altre 3 dona
+ * 1-2-3 i 3-4-5; 1-2-3 + un altre 2 dona 1-2 i 2-3.
+ */
+function insertIntoMeld(meld: Meld, tile: Tile): Meld[] {
+  const info = analyzeMeld(meld);
+  if (info.valid && info.kind === 'run' && tile.kind === 'number') {
+    const allNumbersSameColor = meld.every(
+      (candidate) => candidate.kind === 'number' && candidate.color === tile.color,
+    );
+    if (allNumbersSameColor) {
+      const duplicateIndex = meld.findIndex(
+        (candidate) =>
+          candidate.kind === 'number' &&
+          candidate.color === tile.color &&
+          candidate.value === tile.value,
+      );
+      if (duplicateIndex > 0 && duplicateIndex < meld.length - 1) {
+        return [
+          meld.slice(0, duplicateIndex + 1),
+          [tile, ...meld.slice(duplicateIndex + 1)],
+        ];
+      }
+    }
+  }
+  return [insertSmart(meld, tile)];
+}
+
+/**
+ * Mou una fitxa a una destinació. Si la fitxa no es pot moure (no existeix, o
+ * és de la taula i es vol tornar al faristol), retorna el mateix esborrany.
+ */
 export function moveTile(draft: TurnDraft, tileId: string, destination: Destination): TurnDraft {
   const tile = findTile(draft, tileId);
   if (!tile) return draft;
   if (destination.kind === 'rack' && draft.locked.has(tileId)) return draft;
 
-  const rack = draft.rack.filter((t) => t.id !== tileId);
-  // Es treu la fitxa de la taula i s'eliminen les jugades que quedin buides.
-  // Compte: treure-la pot desplaçar els índexs de les jugades següents.
-  const withoutTile = draft.board.map((meld) => meld.filter((t) => t.id !== tileId));
-  const removedFrom = withoutTile.findIndex((meld, i) => meld.length !== draft.board[i].length);
-  const emptied = removedFrom >= 0 && withoutTile[removedFrom].length === 0;
-  const board = withoutTile.filter((meld) => meld.length > 0);
+  const removedFrom = draft.board.findIndex((meld) => meld.some((candidate) => candidate.id === tileId));
+  // Tornar a deixar una fitxa exactament a la mateixa jugada no ha de partir-la
+  // ni reconstruir-la: és la mateixa operació.
+  if (destination.kind === 'meld' && removedFrom === destination.index) return draft;
+
+  const rack = draft.rack.filter((candidate) => candidate.id !== tileId);
+  const replacements =
+    removedFrom >= 0 ? removeFromMeld(draft.board[removedFrom], tileId) : [];
+  const board =
+    removedFrom >= 0
+      ? draft.board.flatMap((meld, index) => (index === removedFrom ? replacements : [meld]))
+      : [...draft.board];
 
   if (destination.kind === 'rack') {
     return { ...draft, board, rack: [...rack, tile] };
@@ -144,18 +244,24 @@ export function moveTile(draft: TurnDraft, tileId: string, destination: Destinat
     return { ...draft, board: [...board, [tile]], rack };
   }
 
-  const target = adjustIndex(destination.index, removedFrom, emptied);
+  const target = adjustIndex(destination.index, removedFrom, replacements.length);
   if (target < 0 || target >= board.length) return draft;
+  const inserted = insertIntoMeld(board[target], tile);
   return {
     ...draft,
-    board: board.map((meld, i) => (i === target ? insertSmart(meld, tile) : meld)),
+    board: [...board.slice(0, target), ...inserted, ...board.slice(target + 1)],
     rack,
   };
 }
 
-/** L'índex de destinació es refereix a la taula d'abans de treure la fitxa. */
-function adjustIndex(index: number, removedFrom: number, emptied: boolean): number {
-  return emptied && removedFrom >= 0 && index > removedFrom ? index - 1 : index;
+/**
+ * L'índex de destinació es refereix a la taula d'abans de treure la fitxa.
+ * La jugada d'origen pot desaparèixer (-1 posició), quedar igual o partir-se
+ * en dues (+1 posició).
+ */
+function adjustIndex(index: number, removedFrom: number, replacementCount: number): number {
+  if (removedFrom < 0 || index <= removedFrom) return index;
+  return index + replacementCount - 1;
 }
 
 function findTile(draft: TurnDraft, tileId: string): Tile | undefined {

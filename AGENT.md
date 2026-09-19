@@ -1613,3 +1613,27 @@ sigui més vistós.»
   cas d'empat exacte (comportament actual del `closestDifficultyIndex`); és
   intencionat (val més quedar-se curt que passar-se), no ho «arreglis» sense
   motiu.
+
+
+---
+
+### Torn cronometrat, escales i doble toc 🔄 En curs (2026-09-19)
+
+Demanat pel jugador per fer la manipulació de fitxes més natural i evitar que
+un final de temps castigui una jugada que ja era correcta.
+
+- [x] Si s'esgota el temps amb una jugada legal a la taula, es confirma i passa
+      el torn; només una jugada il·legal es desfà i roba/passsa.
+- [x] Treure una fitxa interior d'una escala la parteix en dues jugades.
+- [x] Afegir al mig d'una escala una còpia d'un número que ja hi és crea les
+      dues escales corresponents (inclòs 1-2-3 + 2 → 1-2 i 2-3).
+- [x] Doble toc: busca una jugada compatible; si no n'hi ha i la fitxa és del
+      faristol, obre una jugada nova.
+- [x] En acabar la partida es desfà el bloqueig horitzontal i es força el retorn
+      inicial a vertical abans de mostrar el resum.
+- [x] L'avatar del jugador mostra una roda dentada blanca al perímetre per fer
+      visible que també és l'accés a configuració.
+- [x] Tests unitaris nous per a separació d'escales i destinació automàtica.
+
+**Criteris d'acceptació**: pendents de la CI de la branca
+`gpt/millores-torn-escales-doble-toc`.
