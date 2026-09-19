@@ -6,7 +6,7 @@ import {
   type DifficultyKey,
   type Tile,
 } from '@remigi/core';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BoardView } from '../components/BoardView';
 import { CheckIcon, DrawIcon, PassIcon, RotateIcon, UndoIcon } from '../components/icons';
 import { PlayerMenu } from '../components/PlayerMenu';
@@ -21,6 +21,7 @@ import { useTurnSeconds, type TurnSeconds } from '../state/useTurnSeconds';
 import { MIN_JEROGLIFICS, useJeroglifics } from '../state/useJeroglifics';
 import { QuizScreen } from './QuizScreen';
 import {
+  findAutoMeldIndex,
   invalidMeldIndexes,
   missingOpeningPoints,
   openingPoints,
@@ -56,6 +57,8 @@ interface Props {
 
 /** Estona que es veu l'avís de temps exhaurit abans d'apagar-se sol. */
 const TIMEOUT_NOTICE_MS = 6000;
+/** Dos tocs prou seguits sobre la mateixa fitxa es consideren doble toc. */
+const DOUBLE_TAP_MS = 360;
 
 export function GameScreen({
   setup,
@@ -91,6 +94,14 @@ export function GameScreen({
   const [quiz, setQuiz] = useState<'partida' | 'col·lecció' | null>(null);
   const jeroglifics = useJeroglifics();
   const rotation = useScreenRotation();
+
+  /*
+   * El resum final ha de tornar a vertical si la partida s'estava jugant amb
+   * el bloqueig horitzontal de l'app. Això també surt de pantalla completa.
+   */
+  useEffect(() => {
+    if (game.status === 'finished') void rotation.resetToPortrait();
+  }, [game.status, rotation.resetToPortrait]);
 
   // La partida es desa a cada moviment, i s'esborra quan s'acaba: així es pot
   // tancar la pestanya a mitges i continuar-la després.
@@ -194,6 +205,46 @@ export function GameScreen({
 
   const drag = useDragTile(isHumanTurn, dropTile);
 
+  /*
+   * El doble toc no substitueix el toc normal: el primer toc continua triant
+   * la fitxa. Si el segon arriba prou aviat, s'intenta una col·locació ràpida.
+   */
+  const lastTap = useRef<{ tileId: string; zone: 'board' | 'rack'; at: number } | null>(null);
+  const isDoubleTap = useCallback((tileId: string, zone: 'board' | 'rack') => {
+    const now = Date.now();
+    const previous = lastTap.current;
+    lastTap.current = { tileId, zone, at: now };
+    if (
+      previous &&
+      previous.tileId === tileId &&
+      previous.zone === zone &&
+      now - previous.at <= DOUBLE_TAP_MS
+    ) {
+      lastTap.current = null;
+      return true;
+    }
+    return false;
+  }, []);
+
+  const autoPlaceDoubleTap = useCallback(
+    (tileId: string, fromRack: boolean) => {
+      if (!draft) return false;
+      const target = findAutoMeldIndex(draft, tileId);
+      if (target !== null) {
+        moveTileTo(tileId, { kind: 'meld', index: target });
+        return true;
+      }
+      // Si encara no hi ha cap jugada compatible, una fitxa pròpia enceta una
+      // jugada nova. Els dobles tocs següents ja la poden completar.
+      if (fromRack) {
+        moveTileTo(tileId, { kind: 'new' });
+        return true;
+      }
+      return false;
+    },
+    [draft, moveTileTo],
+  );
+
   /**
    * Un sol gest per a tot: si no hi ha res triat, el clic tria la fitxa; si n'hi
    * ha, el clic diu on deixar-la. Tornar a clicar la fitxa triada la desmarca.
@@ -202,11 +253,12 @@ export function GameScreen({
   const handleTileClick = useCallback(
     (tileId: string, meldIndex: number) => {
       if (drag.consumeDragFlag()) return;
+      if (isDoubleTap(tileId, 'board') && autoPlaceDoubleTap(tileId, false)) return;
       if (!selectedTileId) return handle.selectTile(tileId);
       if (selectedTileId === tileId) return handle.selectTile(null);
       handle.placeSelected({ kind: 'meld', index: meldIndex });
     },
-    [drag, handle, selectedTileId],
+    [autoPlaceDoubleTap, drag, handle, isDoubleTap, selectedTileId],
   );
 
   /**
@@ -217,11 +269,12 @@ export function GameScreen({
   const handleRackTileClick = useCallback(
     (tileId: string, index: number) => {
       if (drag.consumeDragFlag()) return;
+      if (isDoubleTap(tileId, 'rack') && autoPlaceDoubleTap(tileId, true)) return;
       if (!selectedTileId) return handle.selectTile(tileId);
       if (selectedTileId === tileId) return handle.selectTile(null);
       placeOnRack(selectedTileId, index);
     },
-    [drag, handle, placeOnRack, selectedTileId],
+    [autoPlaceDoubleTap, drag, handle, isDoubleTap, placeOnRack, selectedTileId],
   );
 
   /**
@@ -239,15 +292,16 @@ export function GameScreen({
    * el menú obert o fent jeroglífics s'atura, perquè allò no és jugar.
    */
   const { timeUp } = handle;
-  const bagLeft = game.bag.length;
   const onTimeUp = useCallback(() => {
+    const result = timeUp();
     setTimedOut(
-      bagLeft > 0
-        ? 'S’ha acabat el temps: s’ha desfet el que tenies a mig col·locar i has robat una fitxa.'
-        : 'S’ha acabat el temps: s’ha desfet el que tenies a mig col·locar i has passat torn.',
+      result === 'committed'
+        ? 'S’ha acabat el temps: la jugada era vàlida i s’ha confirmat.'
+        : result === 'drew'
+          ? 'S’ha acabat el temps: la jugada no era vàlida i has robat una fitxa.'
+          : 'S’ha acabat el temps: la jugada no era vàlida i has passat torn.',
     );
-    timeUp();
-  }, [bagLeft, timeUp]);
+  }, [timeUp]);
 
   const secondsLeft = useTurnClock(
     turnSeconds,
@@ -362,7 +416,7 @@ export function GameScreen({
                     className="player-obre"
                     onClick={() => setMenuOpen((open) => !open)}
                     aria-expanded={menuOpen}
-                    aria-label="El teu jugador"
+                    aria-label="El teu jugador i configuració"
                   >
                     {inner}
                     <span className="fletxa" aria-hidden="true">▾</span>
@@ -875,6 +929,24 @@ function useScreenRotation() {
     return () => document.removeEventListener('fullscreenchange', onChange);
   }, [available]);
 
+  const resetToPortrait = useCallback(async () => {
+    try {
+      /*
+       * El bloqueig d'orientació només funciona de manera fiable en pantalla
+       * completa. Primer demanem vertical i després sortim del mode especial.
+       */
+      if (available && document.fullscreenElement) {
+        await orientation().lock?.('portrait').catch(() => {});
+      }
+      if (document.fullscreenElement) await document.exitFullscreen().catch(() => {});
+      if (typeof screen !== 'undefined') screen.orientation.unlock();
+    } catch {
+      // Si el navegador ho denega, com a mínim traiem l'estat visual de bloqueig.
+    } finally {
+      setLocked(false);
+    }
+  }, [available]);
+
   const toggle = useCallback(async () => {
     try {
       if (!locked) {
@@ -893,5 +965,5 @@ function useScreenRotation() {
     }
   }, [locked]);
 
-  return { available, locked, toggle };
+  return { available, locked, toggle, resetToPortrait };
 }

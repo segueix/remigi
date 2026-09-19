@@ -1,6 +1,7 @@
 import type { GameState, Meld, NumberTile, Tile, TileColor } from '@remigi/core';
 import { describe, expect, it } from 'vitest';
 import {
+  findAutoMeldIndex,
   hasChanges,
   insertSmart,
   invalidMeldIndexes,
@@ -110,6 +111,52 @@ describe('moure fitxes', () => {
     const after = moveTile(d, 'red-6-a', { kind: 'meld', index: 1 });
     expect(after.board).toHaveLength(1);
     expect(ids(after.board)[0]).toEqual(['red-6-a', 'red-7-a', 'red-8-a', 'red-9-a']);
+  });
+
+  it('parteix una escala quan se’n treu una fitxa interior', () => {
+    const run = Array.from({ length: 7 }, (_, index) => t('red', index + 1));
+    const d = draft([run], [t('blue', 9)]);
+    const after = moveTile(d, 'red-4-a', { kind: 'new' });
+
+    expect(ids(after.board)).toEqual([
+      ['red-1-a', 'red-2-a', 'red-3-a'],
+      ['red-5-a', 'red-6-a', 'red-7-a'],
+      ['red-4-a'],
+    ]);
+  });
+
+  it('parteix una escala si s’hi afegeix un número repetit al mig', () => {
+    const d = draft(
+      [[t('red', 1), t('red', 2), t('red', 3), t('red', 4), t('red', 5)]],
+      [t('red', 3, 'b')],
+    );
+    const after = moveTile(d, 'red-3-b', { kind: 'meld', index: 0 });
+
+    expect(ids(after.board)).toEqual([
+      ['red-1-a', 'red-2-a', 'red-3-a'],
+      ['red-3-b', 'red-4-a', 'red-5-a'],
+    ]);
+  });
+
+  it('també separa 1-2-3 + un altre 2 en 1-2 i 2-3', () => {
+    const d = draft([[t('red', 1), t('red', 2), t('red', 3)]], [t('red', 2, 'b')]);
+    const after = moveTile(d, 'red-2-b', { kind: 'meld', index: 0 });
+
+    expect(ids(after.board)).toEqual([
+      ['red-1-a', 'red-2-a'],
+      ['red-2-b', 'red-3-a'],
+    ]);
+  });
+
+  it('troba una jugada compatible per al doble toc, inclosa una parcial', () => {
+    const partial = draft([[t('red', 1)]], [t('red', 2)]);
+    expect(findAutoMeldIndex(partial, 'red-2-a')).toBe(0);
+
+    const complete = draft([[t('red', 7), t('red', 8), t('red', 9)]], [t('red', 6)]);
+    expect(findAutoMeldIndex(complete, 'red-6-a')).toBe(0);
+
+    const none = draft([[t('red', 7), t('red', 8), t('red', 9)]], [t('blue', 2)]);
+    expect(findAutoMeldIndex(none, 'blue-2-a')).toBeNull();
   });
 
   it('ignora una fitxa inexistent o una destinació fora de rang', () => {
