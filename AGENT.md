@@ -1617,7 +1617,7 @@ sigui més vistós.»
 
 ---
 
-### Torn cronometrat, escales i doble toc 🔄 En curs (2026-09-19)
+### Torn cronometrat, escales i doble toc ✅ Feta (2026-09-19)
 
 Demanat pel jugador per fer la manipulació de fitxes més natural i evitar que
 un final de temps castigui una jugada que ja era correcta.
@@ -1635,5 +1635,6 @@ un final de temps castigui una jugada que ja era correcta.
       visible que també és l'accés a configuració.
 - [x] Tests unitaris nous per a separació d'escales i destinació automàtica.
 
-**Criteris d'acceptació**: pendents de la CI de la branca
-`gpt/millores-torn-escales-doble-toc`.
+**Criteris d'acceptació (verificats)**: CI #85 de la branca
+`gpt/millores-torn-escales-doble-toc` en verd: `npm run typecheck`,
+`npm test`, build de producció i proves de navegador Playwright.
