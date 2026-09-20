@@ -148,6 +148,15 @@ describe('moure fitxes', () => {
     ]);
   });
 
+  it('troba el grup de tres iguals per afegir-hi el quart color', () => {
+    const d = draft(
+      [[t('red', 5), t('blue', 5), t('black', 5)]],
+      [t('orange', 5)],
+    );
+
+    expect(findAutoMeldIndex(d, 'orange-5-a')).toBe(0);
+  });
+
   it('troba una jugada compatible per al doble toc, inclosa una parcial', () => {
     const partial = draft([[t('red', 1)]], [t('red', 2)]);
     expect(findAutoMeldIndex(partial, 'red-2-a')).toBe(0);
