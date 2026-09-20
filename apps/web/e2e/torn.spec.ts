@@ -46,7 +46,7 @@ test.describe('el faristol es col·loca a mà', () => {
     await avanca(page).click();
     await expect(page.locator('.turn-line')).toContainText('et toca a tu');
     const després = await etiquetes(page);
-    expect(després.slice(0, ordre.length)).toEqual(ordre);
+    expect(despres.slice(0, ordre.length)).toEqual(ordre);
     await expect(page.locator('.rack .tile.drawn').last()).toBeVisible();
 
     // I sobreviu a tancar la pestanya: va desat amb la partida.
@@ -106,8 +106,8 @@ test.describe('doble toc per jugar ràpid', () => {
     await quart.tap();
     const despres = (await quart.boundingBox())!;
 
-    expect(després.y).toBeCloseTo(abans.y, 1);
-    expect(després.x).toBeCloseTo(abans.x, 1);
+    expect(despres.y).toBeCloseTo(abans.y, 1);
+    expect(despres.x).toBeCloseTo(abans.x, 1);
   });
 
   test('afegeix el quart 5 al grup encara amb una pausa humana entre tocs', async ({ page, isMobile }) => {
