@@ -941,11 +941,15 @@ input {
 /* La fitxa triada s'aixeca, creix i s'anella: no hi ha d'haver dubte de quina és. */
 .tile.selected {
   z-index: 3;
-  transform: translateY(-8px) scale(1.06);
+  /*
+   * No es mou ni canvia de mida: el primer toc no pot desplaçar l'objectiu
+   * físic del segon toc. La selecció continua sent ben visible amb vora i ombra.
+   */
+  transform: none;
   border-color: var(--accent);
   box-shadow:
     0 0 0 3px var(--accent),
-    0 10px 16px rgb(0 0 0 / 0.32);
+    0 6px 12px rgb(0 0 0 / 0.28);
 }
 
 /*
@@ -1187,17 +1191,10 @@ input {
   min-height: 2.4rem;
 }
 
-/* On es toca amb el dit, els botons mantenen l'objectiu de toc de 44 px.
- * La fitxa seleccionada conserva exactament la seva posició: si s'aixequés
- * després del primer toc, el segon toc del doble toc podria caure fora.
- */
+/* On es toca amb el dit, els botons mantenen l'objectiu de toc de 44 px. */
 @media (pointer: coarse) {
   .actions button {
     min-height: 2.75rem;
-  }
-
-  .tile.selected {
-    transform: none;
   }
 }
 
