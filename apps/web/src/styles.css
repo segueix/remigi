@@ -1187,10 +1187,17 @@ input {
   min-height: 2.4rem;
 }
 
-/* On es toca amb el dit, els botons mantenen l'objectiu de toc de 44 px. */
+/* On es toca amb el dit, els botons mantenen l'objectiu de toc de 44 px.
+ * La fitxa seleccionada conserva exactament la seva posició: si s'aixequés
+ * després del primer toc, el segon toc del doble toc podria caure fora.
+ */
 @media (pointer: coarse) {
   .actions button {
     min-height: 2.75rem;
+  }
+
+  .tile.selected {
+    transform: none;
   }
 }
 
