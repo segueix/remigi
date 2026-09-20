@@ -1,6 +1,7 @@
 import { ProfileRepository, createProfile, type PlayerProfile } from '@remigi/core';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createWebStore } from '../storage/webStore';
+import type { ProfileProgress } from './profileTransfer';
 
 /**
  * Hi ha un sol perfil per dispositiu. `ProfileRepository` ja en suporta més
@@ -15,6 +16,8 @@ export interface ProfileHandle {
   setName(name: string): Promise<void>;
   /** Desa un perfil ja actualitzat (p. ex. després de `recordGame`). */
   save(profile: PlayerProfile): Promise<void>;
+  /** Actualitza els totals necessaris per reprendre el mateix nivell en un altre aparell. */
+  setProgress(progress: ProfileProgress): Promise<void>;
   /** Esborra el perfil i tot el seu historial. */
   reset(): Promise<void>;
 }
@@ -57,10 +60,23 @@ export function useProfile(): ProfileHandle {
     [profile, save],
   );
 
+  const setProgress = useCallback(
+    async (progress: ProfileProgress) => {
+      if (!profile) return;
+      await save({
+        ...profile,
+        rating: progress.rating,
+        gamesPlayed: progress.gamesPlayed,
+        wins: progress.wins,
+      });
+    },
+    [profile, save],
+  );
+
   const reset = useCallback(async () => {
     await repository.remove(LOCAL_PROFILE_ID);
     setProfile(null);
   }, [repository]);
 
-  return { profile, loading, setName, save, reset };
+  return { profile, loading, setName, save, setProgress, reset };
 }
