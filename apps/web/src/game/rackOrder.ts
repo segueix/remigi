@@ -62,16 +62,16 @@ export function placeInRack(
  * l'ordre manual d'una vegada, i a partir d'aquí el jugador el continua
  * retocant fitxa a fitxa des d'on ha quedat.
  */
+function compareTiles(a: Tile, b: Tile, by: SortBy): number {
+  // Els jokers sempre al final, que és on són més fàcils de trobar.
+  if (isJoker(a) || isJoker(b)) return Number(isJoker(a)) - Number(isJoker(b));
+  return by === 'numero'
+    ? a.value - b.value || COLOR_ORDER.indexOf(a.color) - COLOR_ORDER.indexOf(b.color)
+    : COLOR_ORDER.indexOf(a.color) - COLOR_ORDER.indexOf(b.color) || a.value - b.value;
+}
+
 export function sortRack(rack: readonly Tile[], by: SortBy): string[] {
-  return [...rack]
-    .sort((a, b) => {
-      // Els jokers sempre al final, que és on són més fàcils de trobar.
-      if (isJoker(a) || isJoker(b)) return Number(isJoker(a)) - Number(isJoker(b));
-      return by === 'numero'
-        ? a.value - b.value || COLOR_ORDER.indexOf(a.color) - COLOR_ORDER.indexOf(b.color)
-        : COLOR_ORDER.indexOf(a.color) - COLOR_ORDER.indexOf(b.color) || a.value - b.value;
-    })
-    .map((tile) => tile.id);
+  return [...rack].sort((a, b) => compareTiles(a, b, by)).map((tile) => tile.id);
 }
 
 /**
@@ -87,18 +87,41 @@ export function insertDrawnTileIfSorted(
   rack: readonly Tile[],
   order: RackOrder,
   drawnTileId: string,
+  preferredBy?: SortBy | null,
 ): string[] {
-  if (!rack.some((tile) => tile.id === drawnTileId)) return [...order];
+  const drawn = rack.find((tile) => tile.id === drawnTileId);
+  if (!drawn) return [...order];
 
   const before = rack.filter((tile) => tile.id !== drawnTileId);
-  const visibleBefore = orderRack(before, order).map((tile) => tile.id);
+  const visibleBefore = orderRack(before, order);
+  const visibleIds = visibleBefore.map((tile) => tile.id);
   const sameOrder = (expected: readonly string[]) =>
-    expected.length === visibleBefore.length &&
-    expected.every((id, index) => visibleBefore[index] === id);
+    expected.length === visibleIds.length &&
+    expected.every((id, index) => visibleIds[index] === id);
 
-  if (sameOrder(sortRack(before, 'numero'))) return sortRack(rack, 'numero');
-  if (sameOrder(sortRack(before, 'color'))) return sortRack(rack, 'color');
-  return [...order];
+  /*
+   * Si el jugador ha premut explícitament «per color» o «per número», aquest
+   * criteri té prioritat. És important perquè una mà pot coincidir amb tots
+   * dos ordres alhora; abans això feia que «per color» saltés a números en
+   * arribar una fitxa nova.
+   */
+  const by =
+    preferredBy ??
+    (sameOrder(sortRack(before, 'numero'))
+      ? 'numero'
+      : sameOrder(sortRack(before, 'color'))
+        ? 'color'
+        : null);
+
+  if (!by) return [...order];
+
+  /*
+   * Inserim només la nova dins de l'ordre visible, sense tornar a ordenar tota
+   * la mà. Així les fitxes que ja hi eren no canvien de lloc.
+   */
+  const gap = visibleBefore.findIndex((tile) => compareTiles(drawn, tile, by) < 0);
+  const at = gap < 0 ? visibleIds.length : gap;
+  return [...visibleIds.slice(0, at), drawn.id, ...visibleIds.slice(at)];
 }
 
 /**
@@ -109,4 +132,9 @@ export function insertDrawnTileIfSorted(
 export function validRackOrder(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   return value.filter((id): id is string => typeof id === 'string');
+}
+
+/** Criteri d'ordre desat, si és un dels dos que coneix la interfície. */
+export function validSortBy(value: unknown): SortBy | undefined {
+  return value === 'numero' || value === 'color' ? value : undefined;
 }
