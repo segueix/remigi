@@ -1669,8 +1669,21 @@ navegador.
 - [x] Si el faristol estava realment ordenat per número, la fitxa robada entra
       directament a la posició numèrica que li correspon.
 - [x] Si estava ordenat per color, entra dins del color i número corresponents.
-- [x] No es crea cap mode d'ordenació persistent: si el jugador havia modificat
-      l'ordre a mà, la fitxa nova continua anant al final.
+- [x] El criteri triat (número o color) es recorda mentre el jugador no retoca
+      el faristol a mà; una recol·locació manual el cancel·la.
 - [x] La fitxa conserva el marc de «nova» encara que s'insereixi al mig.
 - [x] Cobert amb proves unitàries per número, color i ordre manual, i amb una
       prova Playwright del recorregut real de robar una fitxa.
+
+**Correcció 2026-09-20 — l'ordre per color no pot saltar a números**:
+
+- [x] Es desa explícitament si l'últim criteri triat és `color` o `numero`,
+      perquè una disposició pot coincidir accidentalment amb tots dos ordres.
+- [x] Una fitxa robada s'insereix dins del color corresponent sense reordenar
+      les fitxes que ja hi havia.
+- [x] El criteri sobreviu a reprendre la partida; valors desats desconeguts es
+      descarten sense perdre la partida.
+- [x] Una recol·locació manual del faristol anul·la el criteri automàtic.
+- [x] Prova Playwright exacta del cas ambigu: 2 vermell, 5 blau, 9 negre
+      ordenats per color + 6 groc ⇒ el 6 queda després del bloc negre, no entre
+      el 5 i el 9 per valor.
