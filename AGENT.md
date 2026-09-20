@@ -1687,3 +1687,26 @@ navegador.
 - [x] Prova Playwright exacta del cas ambigu: 2 vermell, 5 blau, 9 negre
       ordenats per color + 6 groc ⇒ el 6 queda després del bloc negre, no entre
       el 5 i el 9 per valor.
+
+
+### Nivell entre dispositius sense compte ✅ Feta (2026-09-20)
+
+Demanat per poder continuar amb una habilitat coherent entre mòbil, tauleta o
+ordinador sense Google, compte propi ni servidor de sincronització.
+
+- [x] El menú del jugador permet canviar manualment habilitat, partides i victòries.
+- [x] «Comparteix nivell» usa el menú de compartir del navegador; WhatsApp, Keep,
+      Telegram, correu, etc. depenen de les apps disponibles al dispositiu.
+- [x] «Copia enllaç» dona una alternativa directa quan no hi ha Web Share.
+- [x] L'enllaç compartit és sempre
+      `https://eltauler.cat/remigi/?nivell=...&partides=...&victories=...`;
+      mai no comparteix localhost ni una URL de GitHub Pages.
+- [x] En obrir l'enllaç en un altre aparell, Remigi mostra un diàleg d'importació
+      amb una sola acció «Importa nivell».
+- [x] Després d'importar o cancel·lar, els paràmetres de transferència es treuen
+      de la barra d'adreces per evitar repetir la importació en recarregar.
+- [x] Es transfereixen els totals necessaris per mantenir el comportament adaptatiu
+      (habilitat i nombre de partides) i les victòries per conservar coherents
+      els totals; l'historial detallat no es posa dins de l'enllaç.
+- [x] Validació contra enllaços manipulats i proves unitàries + Playwright del
+      canvi manual i de la importació.

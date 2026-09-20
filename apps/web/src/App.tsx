@@ -3,6 +3,11 @@ import { useEffect, useState } from 'react';
 import type { GameSetup } from './game/useGame';
 import { GameScreen } from './screens/GameScreen';
 import { StatsScreen } from './screens/StatsScreen';
+import {
+  parseProfileTransferUrl,
+  stripProfileTransferParams,
+  type ProfileProgress,
+} from './state/profileTransfer';
 import { useProfile } from './state/useProfile';
 import { useTileStyle } from './state/useTileStyle';
 import { useSavedGame } from './state/useSavedGame';
@@ -20,6 +25,9 @@ export function App() {
   const profile = useProfile();
   const savedGame = useSavedGame();
   const [tileStyle, setTileStyle] = useTileStyle();
+  const [pendingProgress, setPendingProgress] = useState<ProfileProgress | null>(() =>
+    typeof window === 'undefined' ? null : parseProfileTransferUrl(window.location.href),
+  );
 
   /*
    * El perfil es crea sol la primera vegada, amb un nom de casa: demanar-lo
@@ -48,6 +56,19 @@ export function App() {
   const classes = [screen === 'game' ? 'app app-joc' : 'app'];
   if (tileStyle === 'invers') classes.push('fitxes-inverses');
 
+  function clearTransferUrl() {
+    if (typeof window !== 'undefined') {
+      window.history.replaceState(null, '', stripProfileTransferParams(window.location.href));
+    }
+    setPendingProgress(null);
+  }
+
+  async function importProgress() {
+    if (!pendingProgress) return;
+    await profile.setProgress(pendingProgress);
+    clearTransferUrl();
+  }
+
   return (
     <main className={classes.join(' ')}>
       {/*
@@ -72,6 +93,39 @@ export function App() {
       </div>
       {screen === 'stats' && (
         <StatsScreen handle={profile} onBack={() => setScreen('game')} />
+      )}
+
+      {pendingProgress && (
+        <>
+          <div className="menu-fons importa-nivell-fons" aria-hidden="true" />
+          <section
+            className="importa-nivell"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="importa-nivell-titol"
+          >
+            <h2 id="importa-nivell-titol">Importa aquest nivell de Remigi?</h2>
+            <p>
+              Habilitat <strong>{pendingProgress.rating}</strong> ·{' '}
+              <strong>{pendingProgress.gamesPlayed}</strong>{' '}
+              {pendingProgress.gamesPlayed === 1 ? 'partida' : 'partides'} ·{' '}
+              <strong>{pendingProgress.wins}</strong>{' '}
+              {pendingProgress.wins === 1 ? 'victòria' : 'victòries'}
+            </p>
+            <p className="muted small">
+              Substitueix aquests totals en aquest aparell. L’historial detallat no viatja
+              dins de l’enllaç.
+            </p>
+            <div className="row importa-nivell-accions">
+              <button type="button" onClick={() => void importProgress()}>
+                Importa nivell
+              </button>
+              <button type="button" className="secondary" onClick={clearTransferUrl}>
+                Cancel·la
+              </button>
+            </div>
+          </section>
+        </>
       )}
     </main>
   );

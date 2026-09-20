@@ -8,6 +8,11 @@ import {
 import { useState } from 'react';
 import type { GameSetup } from '../game/useGame';
 import { playerLevelLabel } from '../state/playerLevel';
+import {
+  buildProfileTransferUrl,
+  isValidProfileProgress,
+  type ProfileProgress,
+} from '../state/profileTransfer';
 import type { ProfileHandle } from '../state/useProfile';
 import { MIN_JEROGLIFICS } from '../state/useJeroglifics';
 import type { TileStyle } from '../state/useTileStyle';
@@ -66,6 +71,11 @@ export function PlayerMenu({
     current.auto === false ? (current.opponents[0] ?? 'auto') : 'auto',
   );
   const [adapt, setAdapt] = useState(Boolean(current.adaptDuringGame));
+  const [editProgress, setEditProgress] = useState(false);
+  const [progressMessage, setProgressMessage] = useState('');
+  const [ratingInput, setRatingInput] = useState(String(profile.profile?.rating ?? 1100));
+  const [gamesInput, setGamesInput] = useState(String(profile.profile?.gamesPlayed ?? 0));
+  const [winsInput, setWinsInput] = useState(String(profile.profile?.wins ?? 0));
 
   const suggested = profile.profile ? suggestOpponents(profile.profile, count) : [];
   const opponents: DifficultyKey[] =
@@ -73,6 +83,67 @@ export function PlayerMenu({
 
   async function saveName() {
     if (name.trim() && name.trim() !== profile.profile?.name) await profile.setName(name);
+  }
+
+  function currentProgress(): ProfileProgress | null {
+    if (!profile.profile) return null;
+    return {
+      rating: profile.profile.rating,
+      gamesPlayed: profile.profile.gamesPlayed,
+      wins: profile.profile.wins,
+    };
+  }
+
+  async function copyProgressLink() {
+    const progress = currentProgress();
+    if (!progress) return;
+    const url = buildProfileTransferUrl(progress);
+    try {
+      await navigator.clipboard.writeText(url);
+      setProgressMessage('Enllaç copiat. El pots enganxar a WhatsApp, Keep o on vulguis.');
+    } catch {
+      window.prompt('Copia aquest enllaç de Remigi:', url);
+      setProgressMessage('');
+    }
+  }
+
+  async function shareProgress() {
+    const progress = currentProgress();
+    if (!progress) return;
+    const url = buildProfileTransferUrl(progress);
+    const text = `Remigi · habilitat ${progress.rating} · ${progress.gamesPlayed} partides`;
+    if (!navigator.share) {
+      await copyProgressLink();
+      return;
+    }
+    try {
+      await navigator.share({
+        title: 'El meu nivell de Remigi',
+        text,
+        url,
+      });
+      setProgressMessage('Nivell compartit.');
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return;
+      await copyProgressLink();
+    }
+  }
+
+  async function saveProgress() {
+    const next: ProfileProgress = {
+      rating: Number(ratingInput),
+      gamesPlayed: Number(gamesInput),
+      wins: Number(winsInput),
+    };
+    if (!isValidProfileProgress(next)) {
+      setProgressMessage(
+        'Revisa els valors: les victòries no poden superar les partides i tots han de ser números sencers.',
+      );
+      return;
+    }
+    await profile.setProgress(next);
+    setEditProgress(false);
+    setProgressMessage('Nivell actualitzat en aquest aparell.');
   }
 
   async function startNewGame() {
@@ -123,6 +194,87 @@ export function PlayerMenu({
             {playerLevelLabel(profile.profile.rating)}) · {profile.profile.gamesPlayed}{' '}
             {profile.profile.gamesPlayed === 1 ? 'partida' : 'partides'}
           </p>
+        )}
+
+        {profile.profile && (
+          <section className="nivell-sync" aria-label="Nivell entre dispositius">
+            <div className="nivell-sync-cap">
+              <strong>Nivell entre dispositius</strong>
+              <span className="muted small">sense compte ni inici de sessió</span>
+            </div>
+            <div className="row nivell-sync-accions">
+              <button type="button" onClick={() => void shareProgress()}>
+                Comparteix nivell
+              </button>
+              <button type="button" className="secondary" onClick={() => void copyProgressLink()}>
+                Copia enllaç
+              </button>
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => {
+                  setEditProgress((open) => !open);
+                  setProgressMessage('');
+                }}
+              >
+                {editProgress ? 'Tanca edició' : 'Canvia manualment'}
+              </button>
+            </div>
+
+            {editProgress && (
+              <div className="nivell-sync-form">
+                <label>
+                  Habilitat
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min="0"
+                    max="4000"
+                    step="1"
+                    value={ratingInput}
+                    onChange={(event) => setRatingInput(event.target.value)}
+                  />
+                </label>
+                <label>
+                  Partides jugades
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min="0"
+                    max="100000"
+                    step="1"
+                    value={gamesInput}
+                    onChange={(event) => setGamesInput(event.target.value)}
+                  />
+                </label>
+                <label>
+                  Victòries
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min="0"
+                    max="100000"
+                    step="1"
+                    value={winsInput}
+                    onChange={(event) => setWinsInput(event.target.value)}
+                  />
+                </label>
+                <button type="button" onClick={() => void saveProgress()}>
+                  Desa nivell
+                </button>
+              </div>
+            )}
+
+            <p className="muted small nivell-sync-nota">
+              L’enllaç obre <strong>eltauler.cat/remigi</strong> i permet importar el nivell amb
+              un toc. L’historial detallat de partides no es transfereix.
+            </p>
+            {progressMessage && (
+              <p className="small nivell-sync-missatge" role="status">
+                {progressMessage}
+              </p>
+            )}
+          </section>
         )}
 
         <div className="menu-seccio">
