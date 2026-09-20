@@ -75,6 +75,33 @@ export function sortRack(rack: readonly Tile[], by: SortBy): string[] {
 }
 
 /**
+ * Si abans de robar el faristol ja estava exactament ordenat per número o per
+ * color, insereix la fitxa nova al lloc que li correspon segons aquell mateix
+ * criteri. Si el jugador tenia un ordre manual, no el toca: la nova continua
+ * quedant al final com fins ara.
+ *
+ * No desa cap «mode d'ordenació»: es dedueix de la disposició real que hi
+ * havia just abans d'arribar la fitxa.
+ */
+export function insertDrawnTileIfSorted(
+  rack: readonly Tile[],
+  order: RackOrder,
+  drawnTileId: string,
+): string[] {
+  if (!rack.some((tile) => tile.id === drawnTileId)) return [...order];
+
+  const before = rack.filter((tile) => tile.id !== drawnTileId);
+  const visibleBefore = orderRack(before, order).map((tile) => tile.id);
+  const sameOrder = (expected: readonly string[]) =>
+    expected.length === visibleBefore.length &&
+    expected.every((id, index) => visibleBefore[index] === id);
+
+  if (sameOrder(sortRack(before, 'numero'))) return sortRack(rack, 'numero');
+  if (sameOrder(sortRack(before, 'color'))) return sortRack(rack, 'color');
+  return [...order];
+}
+
+/**
  * Neteja l'ordre que ve d'una partida desada: ha de ser una llista de cadenes
  * i prou. Si ve malmesa, el faristol es veu en l'ordre del motor i no passa
  * res més.
