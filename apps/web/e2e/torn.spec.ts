@@ -46,7 +46,7 @@ test.describe('el faristol es col·loca a mà', () => {
     await avanca(page).click();
     await expect(page.locator('.turn-line')).toContainText('et toca a tu');
     const després = await etiquetes(page);
-    expect(despres.slice(0, ordre.length)).toEqual(ordre);
+    expect(després.slice(0, ordre.length)).toEqual(ordre);
     await expect(page.locator('.rack .tile.drawn').last()).toBeVisible();
 
     // I sobreviu a tancar la pestanya: va desat amb la partida.
