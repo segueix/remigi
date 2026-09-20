@@ -1651,3 +1651,14 @@ un final de temps castigui una jugada que ja era correcta.
 
 **Verificació de la correcció**: CI #93 en verd, incloses les proves de
 navegador.
+
+**Ajust addicional 2026-09-20 — estabilitat del segon toc**:
+
+- [x] La fitxa seleccionada ja no es desplaça ni escala després del primer toc.
+- [x] L'espai de «+ Jugada nova» queda reservat durant el torn humà perquè fer
+      visible el botó no reordeni la geometria de la pantalla.
+- [x] L'efecte `:hover` que aixeca 2 px una fitxa només s'aplica a dispositius
+      amb `hover: hover` i `pointer: fine`; en tàctil no pot interferir amb
+      el segon toc.
+- [x] La prova Playwright estabilitza primer l'auto-scroll del navegador i
+      comprova que el primer toc no mogui la fitxa.
