@@ -102,6 +102,12 @@ test.describe('doble toc per jugar ràpid', () => {
     });
 
     const quart = page.locator('.rack .tile[aria-label="5 groc"]');
+
+    // Playwright pot desplaçar lleugerament la pàgina quan fa tap() per posar
+    // l'objectiu dins de la zona visible. Ho fem abans de mesurar perquè la
+    // prova comprovi el moviment causat pel primer toc, no l'auto-scroll del
+    // propi Playwright.
+    await quart.scrollIntoViewIfNeeded();
     const abans = (await quart.boundingBox())!;
     await quart.tap();
     const despres = (await quart.boundingBox())!;
