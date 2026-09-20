@@ -15,7 +15,13 @@ import { TileView } from '../components/TileView';
 import { useDragTile } from '../game/useDragTile';
 import { botPersona } from '../game/bots';
 import type { MissedChance } from '../game/missedChances';
-import { orderRack, placeInRack, sortRack, type SortBy } from '../game/rackOrder';
+import {
+  insertDrawnTileIfSorted,
+  orderRack,
+  placeInRack,
+  sortRack,
+  type SortBy,
+} from '../game/rackOrder';
 import { useTurnClock } from '../game/useTurnClock';
 import { useTurnSeconds, type TurnSeconds } from '../state/useTurnSeconds';
 import { MIN_JEROGLIFICS, useJeroglifics } from '../state/useJeroglifics';
@@ -94,6 +100,18 @@ export function GameScreen({
    * sobreviu al canvi de torn i a reprendre la partida (vegeu `rackOrder.ts`).
    */
   const [rackOrder, setRackOrder] = useState<string[]>(() => [...(resumeRackOrder ?? [])]);
+
+  /*
+   * Si arriba una fitxa nova i la mà estava realment ordenada per número o per
+   * color, entra directament al seu lloc. Si l'ordre era manual, no es toca.
+   * El marc de fitxa nova no depèn d'aquesta posició sinó de drawnTileId.
+   */
+  useEffect(() => {
+    if (!drawnTileId) return;
+    setRackOrder((order) =>
+      insertDrawnTileIfSorted(game.players[0].rack, order, drawnTileId),
+    );
+  }, [drawnTileId, game.players]);
   const [turnSeconds, setTurnSeconds] = useTurnSeconds();
   /* Avís de temps exhaurit; s'apaga sol al cap d'uns segons. */
   const [timedOut, setTimedOut] = useState<string | null>(null);
