@@ -92,6 +92,30 @@ test.describe('el faristol es col·loca a mà', () => {
 });
 
 test.describe('doble toc per jugar ràpid', () => {
+  test('la fitxa no es desplaça després del primer toc en pantalla tàctil', async ({ page, isMobile }) => {
+    test.skip(!isMobile, 'el problema només afecta pantalles tàctils');
+
+    await entraAmbPartida(page, {
+      board: [[f('red', 5), f('blue', 5), f('black', 5)]],
+      rack: [f('orange', 5)],
+      haObert: true,
+    });
+
+    const quart = page.locator('.rack .tile[aria-label="5 groc"]');
+
+    // Playwright pot desplaçar lleugerament la pàgina quan fa tap() per posar
+    // l'objectiu dins de la zona visible. Ho fem abans de mesurar perquè la
+    // prova comprovi el moviment causat pel primer toc, no l'auto-scroll del
+    // propi Playwright.
+    await quart.scrollIntoViewIfNeeded();
+    const abans = (await quart.boundingBox())!;
+    await quart.tap();
+    const despres = (await quart.boundingBox())!;
+
+    expect(despres.y).toBeCloseTo(abans.y, 1);
+    expect(despres.x).toBeCloseTo(abans.x, 1);
+  });
+
   test('afegeix el quart 5 al grup encara amb una pausa humana entre tocs', async ({ page, isMobile }) => {
     await entraAmbPartida(page, {
       board: [[f('red', 5), f('blue', 5), f('black', 5)]],

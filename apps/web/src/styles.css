@@ -792,6 +792,12 @@ input {
   color: var(--accent-taula);
 }
 
+/* Reserva geomètrica del botó sense mostrar-lo ni deixar-lo interceptar gestos. */
+.new-meld-reservat {
+  visibility: hidden;
+  pointer-events: none;
+}
+
 /* ---------- Fitxes ---------- */
 
 .tile {
@@ -930,8 +936,15 @@ input {
   cursor: pointer;
 }
 
-.tile:not(:disabled):hover {
-  transform: translateY(-2px);
+/*
+ * L'efecte hover només té sentit amb un punter fi. En pantalles tàctils alguns
+ * navegadors mantenen :hover després del primer toc i desplacen la fitxa 2 px,
+ * cosa que pot fer fallar el segon toc del doble toc.
+ */
+@media (hover: hover) and (pointer: fine) {
+  .tile:not(:disabled):hover {
+    transform: translateY(-2px);
+  }
 }
 
 .tile:disabled {
@@ -941,11 +954,15 @@ input {
 /* La fitxa triada s'aixeca, creix i s'anella: no hi ha d'haver dubte de quina és. */
 .tile.selected {
   z-index: 3;
-  transform: translateY(-8px) scale(1.06);
+  /*
+   * No es mou ni canvia de mida: el primer toc no pot desplaçar l'objectiu
+   * físic del segon toc. La selecció continua sent ben visible amb vora i ombra.
+   */
+  transform: none;
   border-color: var(--accent);
   box-shadow:
     0 0 0 3px var(--accent),
-    0 10px 16px rgb(0 0 0 / 0.32);
+    0 6px 12px rgb(0 0 0 / 0.28);
 }
 
 /*
