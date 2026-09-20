@@ -78,7 +78,26 @@ test.describe('el faristol es col·loca a mà', () => {
     await expect(page.locator('.rack .tile.drawn[aria-label^="6 groc"]')).toHaveCount(1);
   });
 
-  test('ordenar de cop és un cop de mà, no un mode', async ({ page }) => {
+  test('ordenat per color, la nova va al seu color i no salta a números', async ({ page }) => {
+    await entraAmbPartida(page, {
+      // Aquest ordre és ambigu: per color i per número dona exactament igual.
+      rack: [f('black', 9), f('red', 2), f('blue', 5)],
+      sac: [f('orange', 6)],
+      haObert: true,
+    });
+
+    await page.getByRole('button', { name: 'per color' }).click();
+    expect(await etiquetes(page)).toEqual(['2 vermell', '5 blau', '9 negre']);
+
+    await avanca(page).click();
+    await expect(page.locator('.turn-line')).toContainText('et toca a tu');
+
+    // El 6 groc pertany al bloc groc, no entre el 5 i el 9 per valor.
+    expect(await etiquetes(page)).toEqual(['2 vermell', '5 blau', '9 negre', '6 groc']);
+    await expect(page.locator('.rack .tile.drawn[aria-label^="6 groc"]')).toHaveCount(1);
+  });
+
+  test('l’ordre automàtic es pot continuar retocant a mà', async ({ page }) => {
     await entraAmbPartida(page, {
       rack: [f('black', 9), f('red', 2), f('blue', 5), f('red', 7)],
       haObert: true,
