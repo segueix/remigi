@@ -55,6 +55,29 @@ test.describe('el faristol es col·loca a mà', () => {
     expect(await etiquetes(page)).toEqual(després);
   });
 
+  test('una fitxa nova entra al seu lloc si el faristol està ordenat', async ({ page }) => {
+    await entraAmbPartida(page, {
+      rack: [f('black', 9), f('red', 2), f('blue', 5), f('red', 7)],
+      sac: [f('orange', 6)],
+      haObert: true,
+    });
+
+    await page.getByRole('button', { name: 'per número' }).click();
+    expect(await etiquetes(page)).toEqual(['2 vermell', '5 blau', '7 vermell', '9 negre']);
+
+    await avanca(page).click();
+    await expect(page.locator('.turn-line')).toContainText('et toca a tu');
+
+    expect(await etiquetes(page)).toEqual([
+      '2 vermell',
+      '5 blau',
+      '6 groc',
+      '7 vermell',
+      '9 negre',
+    ]);
+    await expect(page.locator('.rack .tile.drawn[aria-label^="6 groc"]')).toHaveCount(1);
+  });
+
   test('ordenar de cop és un cop de mà, no un mode', async ({ page }) => {
     await entraAmbPartida(page, {
       rack: [f('black', 9), f('red', 2), f('blue', 5), f('red', 7)],
