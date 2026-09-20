@@ -53,6 +53,8 @@ interface Props {
   resumeMisses?: SavedGame['misses'];
   /** Com tenia col·locat el faristol qui reprèn la partida. */
   resumeRackOrder?: SavedGame['rackOrder'];
+  /** Amb quin criteri s'havia ordenat, si encara no s'ha retocat a mà. */
+  resumeRackSortBy?: SavedGame['rackSortBy'];
   profile: ProfileHandle;
   savedGame: SavedGameHandle;
   /** Obre l'historial (les estadístiques). */
@@ -79,6 +81,7 @@ export function GameScreen({
   resumeOwners,
   resumeMisses,
   resumeRackOrder,
+  resumeRackSortBy,
   profile,
   savedGame,
   onHistory,
@@ -100,16 +103,29 @@ export function GameScreen({
    * sobreviu al canvi de torn i a reprendre la partida (vegeu `rackOrder.ts`).
    */
   const [rackOrder, setRackOrder] = useState<string[]>(() => [...(resumeRackOrder ?? [])]);
+  /*
+   * Recordem quin botó d'ordre s'ha premut. És un ref perquè canviar-lo sempre
+   * va acompanyat d'un canvi de rackOrder, que ja provoca el desat, i perquè
+   * no volem tornar a executar l'efecte de la fitxa robada només per canviar
+   * aquest indicador.
+   */
+  const rackSortBy = useRef<SortBy | null>(resumeRackSortBy ?? null);
 
   /*
-   * Si arriba una fitxa nova i la mà estava realment ordenada per número o per
-   * color, entra directament al seu lloc. Si l'ordre era manual, no es toca.
-   * El marc de fitxa nova no depèn d'aquesta posició sinó de drawnTileId.
+   * Si arriba una fitxa nova, entra segons el criteri triat explícitament.
+   * Si no n'hi ha cap, es manté la detecció antiga per compatibilitat amb
+   * partides desades abans d'aquesta millora. Només s'insereix la nova: la
+   * resta de fitxes no canvien de lloc.
    */
   useEffect(() => {
     if (!drawnTileId) return;
     setRackOrder((order) =>
-      insertDrawnTileIfSorted(game.players[0].rack, order, drawnTileId),
+      insertDrawnTileIfSorted(
+        game.players[0].rack,
+        order,
+        drawnTileId,
+        rackSortBy.current,
+      ),
     );
   }, [drawnTileId, game.players]);
   const [turnSeconds, setTurnSeconds] = useTurnSeconds();
@@ -134,7 +150,14 @@ export function GameScreen({
   const { tileOwners, misses } = handle;
   useEffect(() => {
     if (game.status === 'playing') {
-      persist({ setup: currentSetup, game, owners: [...tileOwners], misses, rackOrder });
+      persist({
+        setup: currentSetup,
+        game,
+        owners: [...tileOwners],
+        misses,
+        rackOrder,
+        rackSortBy: rackSortBy.current ?? undefined,
+      });
     } else {
       clear();
     }
@@ -149,6 +172,7 @@ export function GameScreen({
   const startNewGame = useCallback(
     (next: GameSetup) => {
       setCurrentSetup(next);
+      rackSortBy.current = null;
       setMenuOpen(false);
       setQuiz(null);
       handle.restart(next);
@@ -201,8 +225,17 @@ export function GameScreen({
     [draft, game, rackOrder],
   );
 
-  /* Ordenar de cop és només una empenta: escriu l'ordre i es continua a mà. */
-  const sortRackBy = useCallback((by: SortBy) => setRackOrder(sortRack(rackTiles, by)), [rackTiles]);
+  /*
+   * L'ordre continua sent editable a mà, però mentre no es retoca recordem
+   * quin criteri s'ha triat perquè la següent fitxa entri al lloc correcte.
+   */
+  const sortRackBy = useCallback(
+    (by: SortBy) => {
+      rackSortBy.current = by;
+      setRackOrder(sortRack(rackTiles, by));
+    },
+    [rackTiles],
+  );
 
   /**
    * Deixa una fitxa al faristol, al forat que es digui (al final, si no se'n
@@ -213,6 +246,8 @@ export function GameScreen({
   const placeOnRack = useCallback(
     (tileId: string, gap: number | null) => {
       if (draft?.locked.has(tileId)) return;
+      // Un canvi manual deixa de considerar actiu l'ordre automàtic.
+      rackSortBy.current = null;
       moveTileTo(tileId, { kind: 'rack' });
       setRackOrder((order) => placeInRack(rackTiles, order, tileId, gap ?? rackTiles.length));
     },
