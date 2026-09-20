@@ -1638,3 +1638,16 @@ un final de temps castigui una jugada que ja era correcta.
 **Criteris d'acceptació (verificats)**: CI #85 de la branca
 `gpt/millores-torn-escales-doble-toc` en verd: `npm run typecheck`,
 `npm test`, build de producció i proves de navegador Playwright.
+
+**Correcció 2026-09-20 — doble toc en mòbil**:
+
+- [x] El límit de 360 ms entre tocs era massa estricte en pantalles tàctils i
+      feia que molts dobles tocs naturals es llegissin com dos tocs normals.
+- [x] El marge passa a 700 ms mantenint l'exigència que sigui la mateixa fitxa.
+- [x] Prova unitària exacta: tres 5 de colors diferents a la taula + el quart 5
+      al faristol troba el grup correcte.
+- [x] Prova Playwright amb 450 ms entre tocs: el quart 5 surt del faristol i
+      s'afegeix automàticament al grup de tres.
+
+**Verificació de la correcció**: CI #93 en verd, incloses les proves de
+navegador.
