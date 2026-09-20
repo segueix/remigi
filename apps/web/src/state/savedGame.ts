@@ -1,6 +1,6 @@
 import type { GameState } from '@remigi/core';
 import { validMisses, type MissedChance } from '../game/missedChances';
-import { validRackOrder } from '../game/rackOrder';
+import { validRackOrder, validSortBy, type SortBy } from '../game/rackOrder';
 import type { GameSetup } from '../game/useGame';
 import type { KeyValueStore } from '@remigi/core';
 
@@ -33,6 +33,8 @@ export interface SavedGame {
    * motor i la partida continua igual.
    */
   rackOrder?: string[];
+  /** Últim criteri automàtic triat; evita confondre color i número en mans ambigües. */
+  rackSortBy?: SortBy;
 }
 
 export async function saveGame(store: KeyValueStore, saved: SavedGame): Promise<void> {
@@ -60,6 +62,7 @@ export async function loadGame(store: KeyValueStore): Promise<SavedGame | null> 
     if ('owners' in saved) saved = { ...saved, owners: validOwners(saved.owners) };
     if ('misses' in saved) saved = { ...saved, misses: validMisses(saved.misses) };
     if ('rackOrder' in saved) saved = { ...saved, rackOrder: validRackOrder(saved.rackOrder) };
+    if ('rackSortBy' in saved) saved = { ...saved, rackSortBy: validSortBy(saved.rackSortBy) };
     return saved;
   } catch {
     return null;
