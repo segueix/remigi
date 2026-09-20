@@ -105,13 +105,25 @@ export function BoardView({
         />
       ))}
 
-      {/* No porta la classe .meld a posta: no és una jugada, és com se'n crea una. */}
-      {interactive && choosing && (
+      {/*
+       * L'espai del botó de jugada nova es reserva durant tot el torn humà.
+       * Fer-lo aparèixer només després del primer toc canviava l'alçada del
+       * tauler i desplaçava el faristol uns píxels, cosa que podia trencar el
+       * segon toc del doble toc.
+       */}
+      {interactive && (
         <button
           type="button"
-          className={over?.kind === 'new' ? 'new-meld over' : 'new-meld'}
-          data-drop="new"
-          onClick={onNewMeldClick}
+          className={[
+            over?.kind === 'new' ? 'new-meld over' : 'new-meld',
+            choosing ? '' : 'new-meld-reservat',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+          data-drop={choosing ? 'new' : undefined}
+          onClick={choosing ? onNewMeldClick : undefined}
+          tabIndex={choosing ? 0 : -1}
+          aria-hidden={!choosing}
         >
           + Jugada nova
         </button>
