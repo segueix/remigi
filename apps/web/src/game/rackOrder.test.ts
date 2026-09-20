@@ -1,6 +1,12 @@
 import type { NumberTile, Tile, TileColor } from '@remigi/core';
 import { describe, expect, it } from 'vitest';
-import { orderRack, placeInRack, sortRack, validRackOrder } from './rackOrder';
+import {
+  insertDrawnTileIfSorted,
+  orderRack,
+  placeInRack,
+  sortRack,
+  validRackOrder,
+} from './rackOrder';
 
 function t(color: TileColor, value: number, copy = 'a'): NumberTile {
   return { id: `${color}-${value}-${copy}`, kind: 'number', color, value };
@@ -137,6 +143,47 @@ describe('ordenar de cop', () => {
   it('els jokers sempre al final', () => {
     expect(sortRack([joker, t('red', 1)], 'numero')).toEqual(['red-1-a', 'joker-a']);
     expect(sortRack([joker, t('red', 1)], 'color')).toEqual(['red-1-a', 'joker-a']);
+  });
+});
+
+describe('inserir la fitxa acabada de robar', () => {
+  it('entra al seu lloc si el faristol estava ordenat per número', () => {
+    const abans = [t('red', 2), t('blue', 5), t('red', 7), t('black', 9)];
+    const nova = t('orange', 6);
+    const rack = [...abans, nova];
+    const order = sortRack(abans, 'numero');
+
+    expect(insertDrawnTileIfSorted(rack, order, nova.id)).toEqual([
+      'red-2-a',
+      'blue-5-a',
+      'orange-6-a',
+      'red-7-a',
+      'black-9-a',
+    ]);
+  });
+
+  it('entra al seu lloc si el faristol estava ordenat per color', () => {
+    const abans = [t('red', 2), t('red', 7), t('blue', 5), t('black', 9)];
+    const nova = t('blue', 3);
+    const rack = [...abans, nova];
+    const order = sortRack(abans, 'color');
+
+    expect(insertDrawnTileIfSorted(rack, order, nova.id)).toEqual([
+      'red-2-a',
+      'red-7-a',
+      'blue-3-a',
+      'blue-5-a',
+      'black-9-a',
+    ]);
+  });
+
+  it('respecta un faristol ordenat a mà i deixa la nova al final', () => {
+    const abans = [t('red', 2), t('blue', 5), t('red', 7), t('black', 9)];
+    const nova = t('orange', 6);
+    const order = ['black-9-a', 'red-2-a', 'blue-5-a', 'red-7-a'];
+
+    expect(insertDrawnTileIfSorted([...abans, nova], order, nova.id)).toEqual(order);
+    expect(ids(orderRack([...abans, nova], order))).toEqual([...order, nova.id]);
   });
 });
 

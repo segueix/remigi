@@ -1662,3 +1662,15 @@ navegador.
       el segon toc.
 - [x] La prova Playwright estabilitza primer l'auto-scroll del navegador i
       comprova que el primer toc no mogui la fitxa.
+
+
+**Millora 2026-09-20 — fitxa nova dins del faristol ordenat**:
+
+- [x] Si el faristol estava realment ordenat per número, la fitxa robada entra
+      directament a la posició numèrica que li correspon.
+- [x] Si estava ordenat per color, entra dins del color i número corresponents.
+- [x] No es crea cap mode d'ordenació persistent: si el jugador havia modificat
+      l'ordre a mà, la fitxa nova continua anant al final.
+- [x] La fitxa conserva el marc de «nova» encara que s'insereixi al mig.
+- [x] Cobert amb proves unitàries per número, color i ordre manual, i amb una
+      prova Playwright del recorregut real de robar una fitxa.
