@@ -2549,3 +2549,108 @@ button.link.danger {
   box-shadow: 0 1px 3px rgb(0 0 0 / 0.35);
   pointer-events: none;
 }
+
+
+/* ---------- Nivell entre dispositius ---------- */
+
+.nivell-sync {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid var(--vora);
+  border-radius: 0.65rem;
+  background: var(--taula-jugada);
+}
+
+.nivell-sync-cap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.25rem 0.75rem;
+}
+
+.nivell-sync-accions {
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.6rem;
+}
+
+.nivell-sync-accions button {
+  padding: 0.4rem 0.7rem;
+  font-size: 0.88rem;
+}
+
+.nivell-sync-form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  align-items: end;
+  gap: 0.5rem;
+  margin-top: 0.7rem;
+}
+
+.nivell-sync-form label {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.82rem;
+  color: var(--text-suau);
+}
+
+.nivell-sync-form input {
+  width: 100%;
+  min-width: 0;
+}
+
+.nivell-sync-nota,
+.nivell-sync-missatge {
+  margin: 0.55rem 0 0;
+}
+
+.nivell-sync-missatge {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* Diàleg que apareix en obrir un enllaç compartit d'eltauler.cat/remigi. */
+.importa-nivell-fons {
+  z-index: 80;
+}
+
+.importa-nivell {
+  position: fixed;
+  z-index: 81;
+  left: 50%;
+  top: 50%;
+  width: min(30rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+  transform: translate(-50%, -50%);
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--vora);
+  border-radius: 0.8rem;
+  background: var(--superficie);
+  box-shadow: 0 1rem 3rem rgb(0 0 0 / 0.3);
+}
+
+.importa-nivell h2 {
+  margin: 0 0 0.7rem;
+  font-size: 1.2rem;
+}
+
+.importa-nivell p {
+  margin: 0.45rem 0;
+}
+
+.importa-nivell-accions {
+  gap: 0.5rem;
+  margin-top: 0.9rem;
+}
+
+@media (max-width: 34rem) {
+  .nivell-sync-form {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .nivell-sync-form button {
+    grid-column: 1 / -1;
+  }
+}
