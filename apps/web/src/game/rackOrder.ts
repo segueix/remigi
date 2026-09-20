@@ -58,9 +58,9 @@ export function placeInRack(
 }
 
 /**
- * Ordena el faristol de cop per número o per color. No és cap «mode»: escriu
- * l'ordre manual d'una vegada, i a partir d'aquí el jugador el continua
- * retocant fitxa a fitxa des d'on ha quedat.
+ * Ordena el faristol de cop per número o per color. La pantalla recorda aquest
+ * criteri perquè les fitxes noves s'hi insereixin bé; si el jugador retoca el
+ * faristol a mà, deixa de considerar-se actiu.
  */
 function compareTiles(a: Tile, b: Tile, by: SortBy): number {
   // Els jokers sempre al final, que és on són més fàcils de trobar.
@@ -80,8 +80,9 @@ export function sortRack(rack: readonly Tile[], by: SortBy): string[] {
  * criteri. Si el jugador tenia un ordre manual, no el toca: la nova continua
  * quedant al final com fins ara.
  *
- * No desa cap «mode d'ordenació»: es dedueix de la disposició real que hi
- * havia just abans d'arribar la fitxa.
+ * El criteri explícit, si n'hi ha, resol els casos ambigus en què una mateixa
+ * disposició coincideix tant amb l'ordre per número com amb l'ordre per color.
+ * Sense criteri explícit es conserva la detecció per compatibilitat.
  */
 export function insertDrawnTileIfSorted(
   rack: readonly Tile[],
