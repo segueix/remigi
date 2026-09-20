@@ -66,6 +66,13 @@ describe('desar i continuar la partida', () => {
     expect((await loadGame(store))!.rackOrder).toEqual(rackOrder);
   });
 
+  it('conserva si el faristol estava ordenat per color o per número', async () => {
+    const store = new MemoryStore();
+    await saveGame(store, { ...playing(), rackSortBy: 'color' });
+
+    expect((await loadGame(store))!.rackSortBy).toBe('color');
+  });
+
   it('esborrar-la deixa de oferir-la', async () => {
     const store = new MemoryStore();
     await saveGame(store, playing());
@@ -111,6 +118,14 @@ describe('el que hi ha desat no és de fiar', () => {
     expect(
       await stored(JSON.stringify({ ...saved, rackOrder: 'ni tan sols una llista' })),
     ).not.toBeNull();
+  });
+
+  it('un criteri d’ordre desconegut es descarta sense perdre la partida', async () => {
+    const saved = playing();
+    const loaded = await stored(JSON.stringify({ ...saved, rackSortBy: 'alfabètic' }));
+
+    expect(loaded).not.toBeNull();
+    expect(loaded!.rackSortBy).toBeUndefined();
   });
 
   it('descarta estats incomplets o incoherents', async () => {
