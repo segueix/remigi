@@ -135,8 +135,10 @@ test.describe('doble toc per jugar ràpid', () => {
     await quart.tap();
     const despres = (await quart.boundingBox())!;
 
-    expect(despres.y).toBeCloseTo(abans.y, 1);
-    expect(despres.x).toBeCloseTo(abans.x, 1);
+    // Un píxel pot variar per l'arrodoniment subpíxel del navegador.
+    // El desplaçament real que trencava el doble toc era de 2 px o més.
+    expect(Math.abs(despres.y - abans.y)).toBeLessThanOrEqual(1);
+    expect(Math.abs(despres.x - abans.x)).toBeLessThanOrEqual(1);
   });
 
   test('afegeix el quart 5 al grup encara amb una pausa humana entre tocs', async ({ page, isMobile }) => {
