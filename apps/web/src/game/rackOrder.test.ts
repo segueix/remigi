@@ -6,6 +6,7 @@ import {
   placeInRack,
   sortRack,
   validRackOrder,
+  validSortBy,
 } from './rackOrder';
 
 function t(color: TileColor, value: number, copy = 'a'): NumberTile {
@@ -177,6 +178,36 @@ describe('inserir la fitxa acabada de robar', () => {
     ]);
   });
 
+  it('respecta "per color" encara que l’ordre anterior també sembli numèric', () => {
+    const abans = [t('red', 2), t('blue', 5), t('black', 9)];
+    const nova = t('orange', 6);
+    const rack = [...abans, nova];
+    const order = sortRack(abans, 'color');
+
+    // Sense recordar el criteri, aquesta mà també sembla ordenada per número.
+    expect(sortRack(abans, 'numero')).toEqual(order);
+    expect(insertDrawnTileIfSorted(rack, order, nova.id, 'color')).toEqual([
+      'red-2-a',
+      'blue-5-a',
+      'black-9-a',
+      'orange-6-a',
+    ]);
+  });
+
+  it('insereix només la nova i no reordena la resta', () => {
+    const abans = [t('red', 7), t('red', 2), t('blue', 5), t('black', 9)];
+    const nova = t('blue', 3);
+    const order = abans.map((tile) => tile.id);
+
+    expect(insertDrawnTileIfSorted([...abans, nova], order, nova.id, 'color')).toEqual([
+      'red-7-a',
+      'red-2-a',
+      'blue-3-a',
+      'blue-5-a',
+      'black-9-a',
+    ]);
+  });
+
   it('respecta un faristol ordenat a mà i deixa la nova al final', () => {
     const abans = [t('red', 2), t('blue', 5), t('red', 7), t('black', 9)];
     const nova = t('orange', 6);
@@ -184,6 +215,15 @@ describe('inserir la fitxa acabada de robar', () => {
 
     expect(insertDrawnTileIfSorted([...abans, nova], order, nova.id)).toEqual(order);
     expect(ids(orderRack([...abans, nova], order))).toEqual([...order, nova.id]);
+  });
+});
+
+describe('criteri d’ordre desat', () => {
+  it('només accepta número o color', () => {
+    expect(validSortBy('numero')).toBe('numero');
+    expect(validSortBy('color')).toBe('color');
+    expect(validSortBy('altres')).toBeUndefined();
+    expect(validSortBy(null)).toBeUndefined();
   });
 });
 
