@@ -36,6 +36,42 @@ test('els oponents proposats pugen amb l’habilitat', async ({ page }) => {
   await expect(page.locator('.suggestion')).toContainText('Avançat, Expert');
 });
 
+test('el nivell es pot canviar manualment des del menú', async ({ page }) => {
+  await comencaDeZero(page);
+  await obreMenu(page);
+
+  await page.getByRole('button', { name: 'Canvia manualment' }).click();
+  await page.getByLabel('Habilitat').fill('1375');
+  await page.getByLabel('Partides jugades').fill('22');
+  await page.getByLabel('Victòries').fill('12');
+  await page.getByRole('button', { name: 'Desa nivell' }).click();
+
+  await expect(page.locator('.menu-habilitat')).toContainText('1375');
+  await expect
+    .poll(async () =>
+      page.evaluate((clau) => JSON.parse(localStorage.getItem(clau) ?? 'null'), PROFILE_KEY),
+    )
+    .toMatchObject({ rating: 1375, gamesPlayed: 22, wins: 12 });
+});
+
+test('un enllaç de eltauler.cat permet importar el nivell amb un toc', async ({ page }) => {
+  await page.addInitScript(() => localStorage.clear());
+  await page.goto('./?nivell=1460&partides=31&victories=18');
+
+  await expect(page.getByRole('dialog', { name: 'Importa aquest nivell de Remigi?' })).toBeVisible();
+  await expect(page.getByRole('dialog')).toContainText('1460');
+  await page.getByRole('button', { name: 'Importa nivell' }).click();
+
+  await expect(page.getByRole('dialog', { name: 'Importa aquest nivell de Remigi?' })).toHaveCount(0);
+  await expect
+    .poll(async () =>
+      page.evaluate((clau) => JSON.parse(localStorage.getItem(clau) ?? 'null'), PROFILE_KEY),
+    )
+    .toMatchObject({ rating: 1460, gamesPlayed: 31, wins: 18 });
+  expect(page.url()).not.toContain('nivell=');
+  expect(page.url()).not.toContain('partides=');
+});
+
 test('cada partida mou l’habilitat i queda a l’historial', async ({ page }) => {
   await comencaDeZero(page);
   await jugaContra(page, 2);
