@@ -91,6 +91,31 @@ test.describe('el faristol es col·loca a mà', () => {
   });
 });
 
+test.describe('doble toc per jugar ràpid', () => {
+  test('afegeix el quart 5 al grup encara amb una pausa humana entre tocs', async ({ page, isMobile }) => {
+    await entraAmbPartida(page, {
+      board: [[f('red', 5), f('blue', 5), f('black', 5)]],
+      rack: [f('orange', 5)],
+      haObert: true,
+    });
+
+    const quart = page.locator('.rack .tile[aria-label="5 groc"]');
+    if (isMobile) await quart.tap();
+    else await quart.click();
+
+    // 450 ms feia fallar el límit antic de 360 ms, tot i ser un doble toc
+    // perfectament natural sobre una pantalla tàctil.
+    await page.waitForTimeout(450);
+
+    if (isMobile) await quart.tap();
+    else await quart.click();
+
+    await expect(page.locator('.board .meld')).toHaveCount(1);
+    await expect(page.locator('.board .meld .tile')).toHaveCount(4);
+    await expect(page.locator('.rack .tile')).toHaveCount(0);
+  });
+});
+
 test.describe('el rellotge del torn', () => {
   test('es veu a la taula i el menú en canvia la durada', async ({ page }) => {
     await entraAmbPartida(page, { rack: [f('red', 1), f('blue', 2)], temps: '120' });
