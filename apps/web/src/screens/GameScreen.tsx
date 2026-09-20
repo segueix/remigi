@@ -57,8 +57,15 @@ interface Props {
 
 /** Estona que es veu l'avís de temps exhaurit abans d'apagar-se sol. */
 const TIMEOUT_NOTICE_MS = 6000;
-/** Dos tocs prou seguits sobre la mateixa fitxa es consideren doble toc. */
-const DOUBLE_TAP_MS = 360;
+/**
+ * Dos tocs seguits sobre la mateixa fitxa es consideren doble toc.
+ *
+ * 360 ms era massa exigent en mòbil: entre el pointerup, el click sintetitzat
+ * i el segon gest, un doble toc normal sovint quedava fora. 700 ms continua
+ * exigint dos tocs intencionadament seguits, però respecta millor el ritme real
+ * de dits i pantalles tàctils.
+ */
+const DOUBLE_TAP_MS = 700;
 
 export function GameScreen({
   setup,
