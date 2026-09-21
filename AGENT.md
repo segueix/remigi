@@ -1710,3 +1710,30 @@ ordinador sense Google, compte propi ni servidor de sincronització.
       els totals; l'historial detallat no es posa dins de l'enllaç.
 - [x] Validació contra enllaços manipulats i proves unitàries + Playwright del
       canvi manual i de la importació.
+
+### Doble toc amb Pointer Events — 2026-09-21
+
+- [x] Causa reproduïda: la detecció vivia al `click` de compatibilitat,
+      separada del hook de gestos. Un drag, hold o lliscament no invalidava
+      `lastTap`: el toc següent podia baixar la fitxa inesperadament. A més,
+      dependre del click deixava el toc a mercè del retargeting del navegador.
+- [x] Els tocs curts es resolen a `pointerup`, amb `tileId` conservat des de
+      `pointerdown`, zona i rellotge monotònic. Es mantenen els 700 ms.
+- [x] El mateix hook arbitra toc/drag/scroll, identifica el punter i anul·la
+      la seqüència en hold, moviment de drag, cancel·lació o pèrdua de focus.
+      Els callbacks actualitzats no desmunten els listeners durant un render.
+- [x] Es consumeix en captura el click posterior al gest, fins i tot si el
+      render ha canviat el node destinatari. El teclat conserva el clic normal
+      i el quiz conserva l'API anterior del hook. Cap canvi visual.
+- [x] `findAutoMeldIndex` ja resol correctament el quart 5 i les escales
+      parcials: no cal modificar aquesta lògica.
+- [x] Playwright amb entrada nativa de ratolí i tacte CDP, coordenades fixes,
+      pauses de 90/450/550 ms, desviació de 3–4 px, selecció simple, quart 5,
+      jugada nova, escala successiva, drag i lliscament.
+- [x] Regressió comprovada contra `main` anterior: fallen el drag entre tocs
+      en escriptori i mòbil i el lliscament en mòbil (3 errors); amb la
+      correcció passen. No es dona per vàlid només pels tests antics.
+
+**Validació**: typecheck, 245 tests unitaris i build correctes;
+Playwright complet: 122 correctes i 8 omeses per plataforma. El Chromium estàndard no arrenca en aquest
+contenidor (socket restringit); execució local amb Chromium headless 153.

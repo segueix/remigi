@@ -184,6 +184,97 @@ test.describe('doble toc per jugar ràpid', () => {
   });
 });
 
+// Gestos natius a coordenades fixes: sense que Locator torni a buscar la fitxa
+// entre els dos tocs. CDP genera pointer/touch i els clicks del navegador.
+test.describe('gestos reals de doble toc', () => {
+  async function input(page: import('@playwright/test').Page, mobile: boolean) {
+    const cdp = mobile ? await page.context().newCDPSession(page) : null;
+    return async (x: number, y: number, hold = 45, move = 0) => {
+      if (cdp) {
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
+        await page.waitForTimeout(hold);
+        if (move) await cdp.send('Input.dispatchTouchEvent', {
+          type: 'touchMove', touchPoints: [{ x: x + move, y }],
+        });
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      } else {
+        await page.mouse.move(x, y);
+        await page.mouse.down();
+        await page.waitForTimeout(hold);
+        if (move) await page.mouse.move(x + move, y, { steps: 3 });
+        await page.mouse.up();
+      }
+    };
+  }
+
+  async function center(tile: import('@playwright/test').Locator) {
+    await tile.scrollIntoViewIfNeeded();
+    const box = (await tile.boundingBox())!;
+    return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  }
+
+  for (const interval of [90, 450, 550]) {
+    test(`quart 5 amb interval ${interval} ms i desviació del dit`, async ({ page, isMobile }) => {
+      await entraAmbPartida(page, {
+        board: [[f('red', 5), f('blue', 5), f('black', 5)]],
+        rack: [f('orange', 5)], haObert: true,
+      });
+      const tap = await input(page, isMobile);
+      const { x, y } = await center(page.locator('.rack .tile'));
+      await tap(x, y);
+      await expect(page.locator('.rack .tile')).toHaveAttribute('aria-pressed', 'true');
+      await page.waitForTimeout(interval);
+      await tap(x + 4, y + 3);
+      await expect(page.locator('.board .meld')).toHaveCount(1);
+      await expect(page.locator('.board .tile')).toHaveCount(4);
+      await expect(page.locator('.rack .tile')).toHaveCount(0);
+    });
+  }
+
+  test('jugada nova i escala amb dobles tocs successius', async ({ page, isMobile }) => {
+    await entraAmbPartida(page, {
+      rack: [f('red', 1), f('red', 2), f('red', 3)], haObert: true,
+    });
+    const tap = await input(page, isMobile);
+    for (let value = 1; value <= 3; value++) {
+      const { x, y } = await center(page.locator('.rack .tile').first());
+      await tap(x, y);
+      await page.waitForTimeout(100);
+      await tap(x + 3, y);
+      await expect(page.locator('.board .meld')).toHaveCount(1);
+      await expect(page.locator('.board .tile')).toHaveCount(value);
+    }
+  });
+
+  test('un drag entre dos tocs anul·la el doble toc pendent', async ({ page, isMobile }) => {
+    await entraAmbPartida(page, {
+      board: [[f('red', 5), f('blue', 5), f('black', 5)]],
+      rack: [f('orange', 5)], haObert: true,
+    });
+    const tap = await input(page, isMobile);
+    const { x, y } = await center(page.locator('.rack .tile'));
+    await tap(x, y);
+    // Mantenir 230 ms activa el drag tàctil de 180 ms; el ratolí es mou 8 px.
+    await tap(x, y, 230, 8);
+    await tap(x, y);
+    await expect(page.locator('.rack .tile')).toHaveCount(1);
+    await expect(page.locator('.rack .tile')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('.board .tile')).toHaveCount(3);
+  });
+
+  test('un lliscament no selecciona ni completa un doble toc', async ({ page, isMobile }) => {
+    test.skip(!isMobile, 'gest de scroll tàctil');
+    await entraAmbPartida(page, { rack: [f('red', 1)], haObert: true });
+    const tap = await input(page, true);
+    const { x, y } = await center(page.locator('.rack .tile'));
+    await tap(x, y);
+    await tap(x, y, 30, 24);
+    await tap(x, y);
+    await expect(page.locator('.rack .tile')).toHaveCount(1);
+    await expect(page.locator('.board .tile')).toHaveCount(0);
+  });
+});
+
 test.describe('el rellotge del torn', () => {
   test('es veu a la taula i el menú en canvia la durada', async ({ page }) => {
     await entraAmbPartida(page, { rack: [f('red', 1), f('blue', 2)], temps: '120' });
