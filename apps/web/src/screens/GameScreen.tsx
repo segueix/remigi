@@ -263,15 +263,13 @@ export function GameScreen({
     [moveTileTo, placeOnRack],
   );
 
-  const drag = useDragTile(isHumanTurn, dropTile);
-
   /*
    * El doble toc no substitueix el toc normal: el primer toc continua triant
    * la fitxa. Si el segon arriba prou aviat, s'intenta una col·locació ràpida.
    */
   const lastTap = useRef<{ tileId: string; zone: 'board' | 'rack'; at: number } | null>(null);
   const isDoubleTap = useCallback((tileId: string, zone: 'board' | 'rack') => {
-    const now = Date.now();
+    const now = performance.now();
     const previous = lastTap.current;
     lastTap.current = { tileId, zone, at: now };
     if (
@@ -308,17 +306,16 @@ export function GameScreen({
   /**
    * Un sol gest per a tot: si no hi ha res triat, el clic tria la fitxa; si n'hi
    * ha, el clic diu on deixar-la. Tornar a clicar la fitxa triada la desmarca.
-   * Un clic que ve de deixar anar una fitxa arrossegada s'ignora.
+   * El hook de punter filtra el click de compatibilitat; el teclat conserva
+   * aquests handlers per seleccionar i col·locar sense gestos de punter.
    */
   const handleTileClick = useCallback(
     (tileId: string, meldIndex: number) => {
-      if (drag.consumeDragFlag()) return;
-      if (isDoubleTap(tileId, 'board') && autoPlaceDoubleTap(tileId, false)) return;
       if (!selectedTileId) return handle.selectTile(tileId);
       if (selectedTileId === tileId) return handle.selectTile(null);
       handle.placeSelected({ kind: 'meld', index: meldIndex });
     },
-    [autoPlaceDoubleTap, drag, handle, isDoubleTap, selectedTileId],
+    [handle, selectedTileId],
   );
 
   /**
@@ -328,14 +325,29 @@ export function GameScreen({
    */
   const handleRackTileClick = useCallback(
     (tileId: string, index: number) => {
-      if (drag.consumeDragFlag()) return;
-      if (isDoubleTap(tileId, 'rack') && autoPlaceDoubleTap(tileId, true)) return;
       if (!selectedTileId) return handle.selectTile(tileId);
       if (selectedTileId === tileId) return handle.selectTile(null);
       placeOnRack(selectedTileId, index);
     },
-    [autoPlaceDoubleTap, drag, handle, isDoubleTap, placeOnRack, selectedTileId],
+    [handle, placeOnRack, selectedTileId],
   );
+
+  const cancelTap = useCallback(() => { lastTap.current = null; }, []);
+  useEffect(cancelTap, [cancelTap, game, isHumanTurn]);
+
+  const handlePointerTap = useCallback((tileId: string) => {
+    if (!isHumanTurn || !draft) return;
+    const rackIndex = rackTiles.findIndex((tile) => tile.id === tileId);
+    const zone = rackIndex >= 0 ? 'rack' : 'board';
+    if (isDoubleTap(tileId, zone) && autoPlaceDoubleTap(tileId, zone === 'rack')) return;
+    if (zone === 'rack') handleRackTileClick(tileId, rackIndex);
+    else {
+      const meldIndex = draft.board.findIndex((meld) => meld.some((tile) => tile.id === tileId));
+      if (meldIndex >= 0) handleTileClick(tileId, meldIndex);
+    }
+  }, [isHumanTurn, draft, rackTiles, isDoubleTap, autoPlaceDoubleTap, handleRackTileClick, handleTileClick]);
+
+  const drag = useDragTile(isHumanTurn, dropTile, handlePointerTap, cancelTap);
 
   /**
    * Avançar: si has posat fitxes, s'acaba la jugada; si no n'has posat cap,

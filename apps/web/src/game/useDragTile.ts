@@ -21,9 +21,9 @@ import type { Destination } from './turnDraft';
  * descartat el `touch-action`.
  *
  * Conviu amb el «tria i col·loca» a tocs, que continua sent l'alternativa
- * accessible: un toc net segueix sent un toc. Quan sí que hi ha hagut
- * arrossegament, es marca perquè el `click` que el navegador envia tot seguit
- * no torni a actuar sobre la mateixa fitxa.
+ * accessible: un toc net es resol a pointerup amb la identitat de pointerdown.
+ * Si es proporciona onTap, es consumeix el click posterior encara que el render
+ * hagi canviat el node. Els consumidors antics conserven consumeDragFlag.
  */
 const DRAG_THRESHOLD_PX = 6;
 /** Temps que cal mantenir el dit quiet sobre una fitxa per aixecar-la. */
@@ -70,6 +70,7 @@ export function dropTargetAt(x: number, y: number): Destination | null {
 
 interface Gesture {
   tileId: string;
+  pointerId: number;
   pointerType: string;
   startX: number;
   startY: number;
@@ -82,20 +83,27 @@ interface Gesture {
 export function useDragTile(
   enabled: boolean,
   onDrop: (tileId: string, target: Destination) => void,
+  onTap?: (tileId: string) => void,
+  onCancelTap?: () => void,
 ): DragHandle {
   const [dragging, setDragging] = useState<DragInfo | null>(null);
   const gesture = useRef<Gesture | null>(null);
   const draggedJustNow = useRef(false);
+  // Els listeners conserven el gest encara que React torni a renderitzar.
+  const callbacks = useRef({ onDrop, onTap, onCancelTap });
+  callbacks.current = { onDrop, onTap, onCancelTap };
+  const suppressClick = useRef(false);
 
   const start = useCallback(
     (event: React.PointerEvent, tileId: string) => {
       // Cada gest nou parteix de zero: així una marca que no s'hagi arribat a
       // consumir no s'endú el clic següent.
       draggedJustNow.current = false;
-      if (!enabled) return;
+      if (!enabled || !event.isPrimary || gesture.current) return;
       if (event.pointerType === 'mouse' && event.button !== 0) return;
       const next: Gesture = {
         tileId,
+        pointerId: event.pointerId,
         pointerType: event.pointerType,
         startX: event.clientX,
         startY: event.clientY,
@@ -104,12 +112,14 @@ export function useDragTile(
         active: false,
       };
       gesture.current = next;
+      suppressClick.current = Boolean(callbacks.current.onTap);
 
       if (event.pointerType === 'touch') {
         next.holdTimer = window.setTimeout(() => {
           const current = gesture.current;
           if (current !== next || current.active) return;
           current.active = true;
+          callbacks.current.onCancelTap?.();
           try {
             navigator.vibrate?.(15);
           } catch {
@@ -134,7 +144,7 @@ export function useDragTile(
 
     function move(event: PointerEvent) {
       const current = gesture.current;
-      if (!current) return;
+      if (!current || event.pointerId !== current.pointerId) return;
       current.lastX = event.clientX;
       current.lastY = event.clientY;
       if (!current.active) {
@@ -145,11 +155,13 @@ export function useDragTile(
           if (distance > HOLD_SLOP_PX) {
             clearHold(current);
             gesture.current = null;
+            callbacks.current.onCancelTap?.();
           }
           return;
         }
         if (distance < DRAG_THRESHOLD_PX) return;
         current.active = true;
+        callbacks.current.onCancelTap?.();
       }
       setDragging({
         tileId: current.tileId,
@@ -161,16 +173,21 @@ export function useDragTile(
 
     function finish(event: PointerEvent) {
       const current = gesture.current;
+      if (!current || event.pointerId !== current.pointerId) return;
       clearHold(current);
       gesture.current = null;
       setDragging(null);
-      if (!current?.active) return;
+      if (!current.active) {
+        callbacks.current.onTap?.(current.tileId);
+        return;
+      }
       draggedJustNow.current = true;
       const target = dropTargetAt(event.clientX, event.clientY);
-      if (target) onDrop(current.tileId, target);
+      if (target) callbacks.current.onDrop(current.tileId, target);
     }
 
     function cancel() {
+      callbacks.current.onCancelTap?.();
       clearHold(gesture.current);
       gesture.current = null;
       setDragging(null);
@@ -190,19 +207,39 @@ export function useDragTile(
       if (gesture.current) event.preventDefault();
     }
 
+    // El click de compatibilitat pot arribar a un altre node després del render.
+    // Es consumeix en captura; els clicks de teclat (detail=0) es conserven.
+    function click(event: MouseEvent) {
+      if (!suppressClick.current || event.detail === 0) return;
+      suppressClick.current = false;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }
+    function pointerDown(event: PointerEvent) {
+      suppressClick.current = false;
+      if (!event.isPrimary) cancel();
+    }
+    window.addEventListener('pointerdown', pointerDown, true);
+    window.addEventListener('click', click, true);
+    window.addEventListener('blur', cancel);
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', finish);
     window.addEventListener('pointercancel', cancel);
     window.addEventListener('touchmove', blockScrollWhileDragging, { passive: false });
     window.addEventListener('contextmenu', blockContextMenu);
     return () => {
+      clearHold(gesture.current);
+      gesture.current = null;
+      window.removeEventListener('pointerdown', pointerDown, true);
+      window.removeEventListener('click', click, true);
+      window.removeEventListener('blur', cancel);
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', finish);
       window.removeEventListener('pointercancel', cancel);
       window.removeEventListener('touchmove', blockScrollWhileDragging);
       window.removeEventListener('contextmenu', blockContextMenu);
     };
-  }, [onDrop]);
+  }, [enabled]);
 
   const consumeDragFlag = useCallback(() => {
     const value = draggedJustNow.current;
