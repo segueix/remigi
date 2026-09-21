@@ -124,31 +124,85 @@ function tidyRun(meld: Meld): Meld | null {
  * Mou una fitxa a una destinació. Si la fitxa no es pot moure (no existeix, o
  * és de la taula i es vol tornar al faristol), retorna el mateix esborrany.
  */
+interface AutoMeldOptions {
+  /**
+   * Abans d'haver obert no es poden reutilitzar jugades que ja eren a la
+   * taula. Les jugades noves del torn, en canvi, sí que es poden continuar.
+   */
+  canRearrangeBoard?: boolean;
+}
+
 /**
  * Busca la millor jugada on una fitxa pot entrar amb un doble toc.
  *
- * Es prioritza una jugada que quedi completament vàlida. Si encara no hi ha
- * tres fitxes, també s'accepta una jugada parcial coherent (dos números
- * consecutius del mateix color, o dues fitxes del mateix número amb colors
- * diferents). Això permet construir 1-2-3 amb dobles tocs successius.
+ * Prioritat:
+ * 1. una jugada nova que el jugador ja està construint durant aquest torn;
+ * 2. una altra jugada compatible de la taula.
+ *
+ * Dins de cada grup de prioritat es prefereix deixar una jugada vàlida, però
+ * també s'accepta una construcció parcial coherent. Això permet encadenar
+ * dobles tocs sense que una jugada antiga "robi" una fitxa que l'usuari estava
+ * fent servir per completar la nova.
  */
-export function findAutoMeldIndex(draft: TurnDraft, tileId: string): number | null {
+export function findAutoMeldIndex(
+  draft: TurnDraft,
+  tileId: string,
+  options: AutoMeldOptions = {},
+): number | null {
   const tile = findTile(draft, tileId);
   if (!tile) return null;
 
-  const sourceIndex = draft.board.findIndex((meld) => meld.some((candidate) => candidate.id === tileId));
-  let partial: number | null = null;
+  const sourceIndex = draft.board.findIndex((meld) =>
+    meld.some((candidate) => candidate.id === tileId),
+  );
+
+  /*
+   * Un automatisme no ha de trencar la jugada d'on surt una fitxa de la
+   * taula. Si l'origen és una jugada nova d'aquest torn, es permet continuar
+   * reorganitzant-la; si conté fitxes antigues, el que hi queda ha de ser
+   * vàlid per si sol.
+   */
+  if (sourceIndex >= 0 && !isNewTurnMeld(draft, draft.board[sourceIndex])) {
+    const remaining = removeFromMeld(draft.board[sourceIndex], tileId);
+    if (!remaining.every((meld) => isValidMeld(meld))) return null;
+  }
+
+  const canRearrangeBoard = options.canRearrangeBoard ?? true;
+  const candidates: Array<{
+    index: number;
+    inProgress: boolean;
+    valid: boolean;
+  }> = [];
 
   for (let index = 0; index < draft.board.length; index++) {
     if (index === sourceIndex) continue;
-    const inserted = insertIntoMeld(draft.board[index], tile);
-    // Una inserció que partiria l'escala en dues és una operació explícita, no
-    // una destinació automàtica de doble toc.
-    if (inserted.length !== 1) continue;
-    if (isValidMeld(inserted[0])) return index;
-    if (partial === null && isPlausibleOpenMeld(inserted[0])) partial = index;
+    const target = draft.board[index];
+    const inProgress = isNewTurnMeld(draft, target);
+
+    // Abans de la sortida inicial només es poden continuar jugades pròpies noves.
+    if (!canRearrangeBoard && !inProgress) continue;
+
+    const inserted = insertIntoMeld(target, tile);
+    const valid = inserted.every((meld) => isValidMeld(meld));
+    const plausible =
+      inserted.length > 0 &&
+      inserted.every((meld) => isValidMeld(meld) || isPlausibleOpenMeld(meld));
+
+    if (valid || plausible) candidates.push({ index, inProgress, valid });
   }
-  return partial;
+
+  return (
+    candidates.find((candidate) => candidate.inProgress && candidate.valid)?.index ??
+    candidates.find((candidate) => candidate.inProgress)?.index ??
+    candidates.find((candidate) => candidate.valid)?.index ??
+    candidates[0]?.index ??
+    null
+  );
+}
+
+/** Jugada creada només amb fitxes baixades durant el torn actual. */
+function isNewTurnMeld(draft: TurnDraft, meld: Meld): boolean {
+  return meld.length > 0 && meld.every((tile) => !draft.locked.has(tile.id));
 }
 
 function isPlausibleOpenMeld(meld: Meld): boolean {
@@ -165,7 +219,13 @@ function isPlausibleOpenMeld(meld: Meld): boolean {
 
   const sameColor = numbers.every((tile) => tile.color === numbers[0].color);
   const values = numbers.map((tile) => tile.value).sort((a, b) => a - b);
-  return sameColor && new Set(values).size === values.length && values[values.length - 1] - values[0] === values.length - 1;
+  if (!sameColor || new Set(values).size !== values.length) return false;
+
+  /*
+   * També acceptem una parella amb un únic forat (5-7): el 6 o un joker la
+   * poden completar al toc següent. Més separació ja seria massa ambigua.
+   */
+  return values[values.length - 1] - values[0] <= 2;
 }
 
 /**
