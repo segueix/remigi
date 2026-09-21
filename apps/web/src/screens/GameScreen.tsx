@@ -287,7 +287,9 @@ export function GameScreen({
   const autoPlaceDoubleTap = useCallback(
     (tileId: string, fromRack: boolean) => {
       if (!draft) return false;
-      const target = findAutoMeldIndex(draft, tileId);
+      const target = findAutoMeldIndex(draft, tileId, {
+        canRearrangeBoard: game.players[0]?.hasOpened ?? false,
+      });
       if (target !== null) {
         moveTileTo(tileId, { kind: 'meld', index: target });
         return true;
@@ -300,7 +302,7 @@ export function GameScreen({
       }
       return false;
     },
-    [draft, moveTileTo],
+    [draft, game.players, moveTileTo],
   );
 
   /**
