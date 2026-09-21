@@ -1737,3 +1737,22 @@ ordinador sense Google, compte propi ni servidor de sincronització.
 **Validació**: typecheck, 245 tests unitaris i build correctes;
 Playwright complet: 122 correctes i 8 omeses per plataforma. El Chromium estàndard no arrenca en aquest
 contenidor (socket restringit); execució local amb Chromium headless 153.
+
+
+**Millora 2026-09-21 — prioritat intel·ligent del doble toc**:
+
+- [x] Si durant el torn ja hi ha una jugada nova començada, el doble toc intenta
+      completar-la abans de buscar una jugada antiga compatible de la taula.
+- [x] Si la jugada en curs no admet la fitxa, el doble toc busca la resta de
+      jugades compatibles com fins ara.
+- [x] Una còpia repetida al mig d'una escala també es pot aplicar amb doble toc
+      i aprofita la partició automàtica existent.
+- [x] Moure automàticament una fitxa de la taula només es permet si la jugada
+      d'origen continua sent vàlida; el doble toc no deixa enrere grups o
+      escales trencats.
+- [x] Abans d'haver fet la sortida inicial, el doble toc no reutilitza jugades
+      antigues de la taula, però sí que permet continuar jugades noves pròpies.
+- [x] Una escala parcial pot començar amb un únic forat (p. ex. 5-7) perquè el
+      6 o un joker la puguin completar al doble toc següent.
+- [x] Cobert amb proves unitàries i una prova Playwright del cas de prioritat:
+      5 iniciat + 6 amb 7-8-9 existent => el 6 va primer amb el 5.

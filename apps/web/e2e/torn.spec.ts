@@ -246,6 +246,34 @@ test.describe('gestos reals de doble toc', () => {
     }
   });
 
+  test('prioritza la jugada que s’està construint abans d’una jugada antiga compatible', async ({ page, isMobile }) => {
+    await entraAmbPartida(page, {
+      board: [[f('red', 7), f('red', 8), f('red', 9)]],
+      rack: [f('red', 5), f('red', 6)],
+      haObert: true,
+    });
+    const tap = await input(page, isMobile);
+
+    // El 5 no encaixa a 7-8-9: el doble toc enceta una jugada nova.
+    let pos = await center(page.locator('.rack .tile[aria-label="5 vermell"]'));
+    await tap(pos.x, pos.y);
+    await page.waitForTimeout(100);
+    await tap(pos.x + 3, pos.y);
+    await expect(page.locator('.board .meld')).toHaveCount(2);
+
+    // El 6 podria completar 6-7-8-9, però ha de continuar primer el 5 iniciat.
+    pos = await center(page.locator('.rack .tile[aria-label="6 vermell"]'));
+    await tap(pos.x, pos.y);
+    await page.waitForTimeout(100);
+    await tap(pos.x + 3, pos.y);
+
+    await expect(page.locator('.board .meld').nth(0).locator('.tile')).toHaveCount(3);
+    await expect(page.locator('.board .meld').nth(1).locator('.tile')).toHaveCount(2);
+    await expect(page.locator('.board .meld').nth(1)).toContainText('5');
+    await expect(page.locator('.board .meld').nth(1)).toContainText('6');
+    await expect(page.locator('.rack .tile')).toHaveCount(0);
+  });
+
   test('un drag entre dos tocs anul·la el doble toc pendent', async ({ page, isMobile }) => {
     await entraAmbPartida(page, {
       board: [[f('red', 5), f('blue', 5), f('black', 5)]],
