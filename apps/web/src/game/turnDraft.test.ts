@@ -168,6 +168,88 @@ describe('moure fitxes', () => {
     expect(findAutoMeldIndex(none, 'blue-2-a')).toBeNull();
   });
 
+  it('prioritza una jugada nova en curs encara que una jugada antiga quedaria vàlida', () => {
+    const d = draft(
+      [
+        [t('red', 7), t('red', 8), t('red', 9)],
+        [t('red', 5)],
+      ],
+      [t('red', 6)],
+      ['red-7-a', 'red-8-a', 'red-9-a'],
+    );
+
+    // El 6 faria vàlida 6-7-8-9, però primer ha de continuar 5-6.
+    expect(findAutoMeldIndex(d, 'red-6-a')).toBe(1);
+  });
+
+  it('permet completar una escala parcial amb un únic forat', () => {
+    const d = draft([[t('red', 5)]], [t('red', 7), t('red', 6)]);
+
+    expect(findAutoMeldIndex(d, 'red-7-a')).toBe(0);
+    const ambSet = moveTile(d, 'red-7-a', { kind: 'meld', index: 0 });
+    expect(findAutoMeldIndex(ambSet, 'red-6-a')).toBe(0);
+  });
+
+  it('el doble toc també pot partir una escala amb una còpia repetida', () => {
+    const d = draft(
+      [[t('red', 1), t('red', 2), t('red', 3), t('red', 4), t('red', 5)]],
+      [t('red', 3, 'b')],
+      ['red-1-a', 'red-2-a', 'red-3-a', 'red-4-a', 'red-5-a'],
+    );
+
+    expect(findAutoMeldIndex(d, 'red-3-b')).toBe(0);
+    expect(ids(moveTile(d, 'red-3-b', { kind: 'meld', index: 0 }).board)).toEqual([
+      ['red-1-a', 'red-2-a', 'red-3-a'],
+      ['red-3-b', 'red-4-a', 'red-5-a'],
+    ]);
+  });
+
+  it('no mou automàticament una fitxa de taula si trenca la jugada d’origen', () => {
+    const d = draft(
+      [
+        [t('red', 3), t('red', 4), t('red', 5)],
+        [t('red', 6), t('red', 7), t('red', 8)],
+      ],
+      [],
+      ['red-3-a', 'red-4-a', 'red-5-a', 'red-6-a', 'red-7-a', 'red-8-a'],
+    );
+
+    // El 5 encaixa perfectament davant 6-7-8, però deixaria 3-4 invàlid.
+    expect(findAutoMeldIndex(d, 'red-5-a')).toBeNull();
+  });
+
+  it('sí que mou una fitxa de taula si l’origen continua sent vàlid', () => {
+    const d = draft(
+      [
+        [t('red', 2), t('red', 3), t('red', 4), t('red', 5)],
+        [t('red', 6), t('red', 7), t('red', 8)],
+      ],
+      [],
+      ['red-2-a', 'red-3-a', 'red-4-a', 'red-5-a', 'red-6-a', 'red-7-a', 'red-8-a'],
+    );
+
+    expect(findAutoMeldIndex(d, 'red-5-a')).toBe(1);
+  });
+
+  it('abans d’obrir només continua jugades noves del torn', () => {
+    const oldOnly = draft(
+      [[t('red', 7), t('red', 8), t('red', 9)]],
+      [t('red', 6)],
+      ['red-7-a', 'red-8-a', 'red-9-a'],
+    );
+    expect(findAutoMeldIndex(oldOnly, 'red-6-a', { canRearrangeBoard: false })).toBeNull();
+
+    const withNew = draft(
+      [
+        [t('red', 7), t('red', 8), t('red', 9)],
+        [t('red', 5)],
+      ],
+      [t('red', 6)],
+      ['red-7-a', 'red-8-a', 'red-9-a'],
+    );
+    expect(findAutoMeldIndex(withNew, 'red-6-a', { canRearrangeBoard: false })).toBe(1);
+  });
+
   it('ignora una fitxa inexistent o una destinació fora de rang', () => {
     const d = draft([[t('red', 7)]], [t('blue', 2)]);
     expect(moveTile(d, 'no-existeix', { kind: 'new' })).toBe(d);
