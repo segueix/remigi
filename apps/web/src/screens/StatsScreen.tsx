@@ -1,4 +1,4 @@
-import { DIFFICULTIES, STARTING_RATING, type GameRecord } from '@remigi/core';
+import { DIFFICULTIES, STARTING_RATING, adaptiveLevelLabel, type GameRecord } from '@remigi/core';
 import { useState } from 'react';
 import type { ProfileHandle } from '../state/useProfile';
 
@@ -12,6 +12,7 @@ export function StatsScreen({ handle, onBack }: Props) {
   const profile = handle.profile;
   if (!profile) return <p className="muted">Encara no hi ha cap perfil.</p>;
 
+  const calibrating = profile.adaptiveCalibrating === true;
   const winRate = profile.gamesPlayed
     ? Math.round((100 * profile.wins) / profile.gamesPlayed)
     : null;
@@ -37,9 +38,12 @@ export function StatsScreen({ handle, onBack }: Props) {
       <dl className="stats">
         <div className="stat-habilitat">
           <dt>
-            <span aria-hidden="true">📈</span> Habilitat
+            <span aria-hidden="true">📈</span> Nivell
           </dt>
-          <dd>{profile.rating}</dd>
+          <dd className={calibrating ? 'stat-text' : undefined}>
+            {calibrating ? 'Calibrant…' : adaptiveLevelLabel(profile)}
+          </dd>
+          {!calibrating && <small className="muted">Habilitat {profile.rating}</small>}
         </div>
         <div className="stat-partides">
           <dt>
@@ -68,8 +72,14 @@ export function StatsScreen({ handle, onBack }: Props) {
         </p>
       ) : (
         <>
-          <RatingChart history={profile.history} />
-          <HistoryList history={profile.history} />
+          {!calibrating && <RatingChart history={profile.history} />}
+          {calibrating && (
+            <p className="notice">
+              Encara estem buscant el teu nivell. El número d’habilitat apareixerà quan
+              acabi la calibració.
+            </p>
+          )}
+          <HistoryList history={profile.history} showRating={!calibrating} />
         </>
       )}
 
@@ -203,14 +213,15 @@ function RatingChart({ history }: { history: GameRecord[] }) {
   );
 }
 
-function describeRecord(record: GameRecord, index: number): string {
+function describeRecord(record: GameRecord, index: number, showRating = true): string {
   const rivals = record.opponents.map((key) => DIFFICULTIES[key].label).join(', ');
-  return `Partida ${index + 1} · ${record.won ? 'guanyada' : 'perduda'} contra ${rivals} · habilitat ${record.ratingAfter}`;
+  const base = `Partida ${index + 1} · ${record.won ? 'guanyada' : 'perduda'} contra ${rivals}`;
+  return showRating ? `${base} · habilitat ${record.ratingAfter}` : base;
 }
 
 /* ---------- Historial ---------- */
 
-function HistoryList({ history }: { history: GameRecord[] }) {
+function HistoryList({ history, showRating }: { history: GameRecord[]; showRating: boolean }) {
   const recent = [...history].reverse();
   return (
     <>
@@ -225,7 +236,7 @@ function HistoryList({ history }: { history: GameRecord[] }) {
               {record.opponents.map((key) => DIFFICULTIES[key].label).join(', ')}
             </span>
             <span className="muted history-date">{formatDate(record.date)}</span>
-            <span className="history-rating">{record.ratingAfter}</span>
+            {showRating && <span className="history-rating">{record.ratingAfter}</span>}
           </li>
         ))}
       </ul>
