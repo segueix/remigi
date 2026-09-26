@@ -1,5 +1,6 @@
 import {
   DIFFICULTIES,
+  adaptiveLevelLabel,
   difficultyByKey,
   finalScores,
   suggestOpponents,
@@ -39,7 +40,6 @@ import type { SavedGame } from '../state/savedGame';
 import type { TileStyle } from '../state/useTileStyle';
 import type { SavedGameHandle } from '../state/useSavedGame';
 import type { ProfileHandle } from '../state/useProfile';
-import { playerLevelLabel } from '../state/playerLevel';
 import { useRecordResult } from '../state/useRecordResult';
 import type { GameState } from '@remigi/core';
 
@@ -96,7 +96,12 @@ export function GameScreen({
   const [currentSetup, setCurrentSetup] = useState(setup);
   const handle = useGame(setup, resume, resumeOwners, resumeMisses);
   const { game, draft, selectedTileId, error, highlighted, drawnTileId, isHumanTurn } = handle;
-  const change = useRecordResult(game, currentSetup.opponents, profile);
+  const change = useRecordResult(
+    game,
+    currentSetup.opponents,
+    profile,
+    currentSetup.auto !== false,
+  );
   const [menuOpen, setMenuOpen] = useState(false);
   /* El resum final es pot tancar per inspeccionar com ha quedat la taula. */
   const [resultOpen, setResultOpen] = useState(true);
@@ -556,8 +561,14 @@ export function GameScreen({
                 : 'Els rivals s’adapten al teu nivell: pugen i baixen amb tu'
             }
           >
-            Nivell {profile.profile.rating}{' '}
-            (<strong>{playerLevelLabel(profile.profile.rating)}</strong>)
+            {currentSetup.auto !== false ? (
+              <>
+                Nivell adaptatiu <strong>{adaptiveLevelLabel(profile.profile)}</strong>
+                {' '}· habilitat {profile.profile.rating}
+              </>
+            ) : (
+              <>Habilitat {profile.profile.rating}</>
+            )}
             {fixedRivalsLabel && (
               <>
                 {' '}· rivals fixats: <strong>{fixedRivalsLabel}</strong>

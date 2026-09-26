@@ -31,10 +31,11 @@ export function profileAfterGame(
   game: GameState,
   opponents: DifficultyKey[],
   date?: Date,
+  adaptive = true,
 ): PlayerProfile {
   const mine = finalScores(game).find((score) => score.playerId === game.players[0]?.id);
   const margin = mine ? marginFromPoints(mine.points, opponents.length) : undefined;
-  return recordGame(profile, opponents, { won: humanWon(game), margin }, date);
+  return recordGame(profile, opponents, { won: humanWon(game), margin, adaptive }, date);
 }
 
 export interface RatingChange {

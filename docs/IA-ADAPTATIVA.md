@@ -30,8 +30,12 @@ jugador humà d'aquell nivell.
 
 Cada jugador té un `PlayerProfile` persistent:
 
-- **`rating`**: valoració Elo. Es comença a 1100 (entre Fàcil i Mitjà).
-- **`gamesPlayed`, `wins`**: experiència acumulada.
+- **`rating`**: valoració Elo. Es comença a 1100 i continua servint per mesurar
+  l'habilitat i conservar compatibilitat amb perfils anteriors;
+- **`adaptiveStep`**: mig graó de dificultat adaptativa (0 = Novell, 2 = Fàcil,
+  4 = Mitjà, 6 = Avançat, 8 = Expert);
+- **`adaptiveCalibrating`**: indica si encara és a l'escalada inicial;
+- **`gamesPlayed`, `wins`**: experiència acumulada;
 - **`history`**: les darreres 50 partides (rivals, resultat, evolució de l'Elo).
 
 Després de cada partida, `recordGame` actualitza l'Elo del jugador contra la
@@ -48,21 +52,34 @@ mitjana dels rivals de la partida (`adaptive/rating.ts`):
 
 ## 3. Tria d'oponents (`adaptive/adaptiveDifficulty.ts`)
 
-Quan comença una partida, `suggestOpponents(perfil, quants)` tria els nivells:
+El mode **adaptatiu és el predeterminat**. Un perfil nou no es col·loca d'entrada
+segons l'Elo: fa una calibració curta i entenedora:
 
-- el **nivell principal** és el que té l'Elo més proper al del jugador — per
-  construcció, això empeny el percentatge de victòries cap al **50%**;
-- amb **2 oponents**: el principal i un de mig graó per sota;
-- amb **3 oponents**: un per sota, el principal i un per sobre, de manera que la
-  partida tingui varietat sense deixar de ser equilibrada.
+1. primera partida: **Novell**;
+2. si guanya: **Fàcil**;
+3. si torna a guanyar: **Mitjà**;
+4. després **Avançat** i **Expert**, sempre que continuï guanyant.
 
-El jugador sempre pot ignorar la proposta i triar els nivells a mà: la tria
-adaptativa és un suggeriment, no una imposició, i la interfície ho ofereix així
-(«Prefereixo triar-los jo» a la pantalla d'inici).
+Durant aquesta escalada tots els rivals tenen el mateix nivell. Quan arriba la
+**primera derrota**, s'acaba la calibració i comença l'ajust fi. El nivell
+adaptatiu passa a moure's en **mig graons**:
 
-Amb **dos** rivals la regla és «un per sota i un al nivell», de manera que les
-primeres partides d'un jugador nou són una mica planeres a posta. Amb **tres**
-queda repartit (un per sota, un al nivell, un per sobre).
+- victòria: puja mig graó;
+- derrota: baixa mig graó;
+- amb dos rivals, un mig graó es representa amb un rival de cada nivell
+  adjacent: per exemple **Fàcil + Mitjà**.
+
+Així, si el jugador guanya a Fàcil però perd a Mitjà, el sistema pot quedar-se
+un temps entre tots dos en lloc d'obligar-lo a repetir sempre un únic nivell. Si
+millora i torna a encadenar victòries, continua pujant.
+
+Amb un sol rival, els dos nivells adjacents s'alternen entre partides. Amb tres,
+s'alterna quin dels dos nivells es repeteix per no esbiaixar sempre la dificultat
+cap al mateix costat.
+
+Els perfils antics, que no tenen desat aquest mig graó, es recuperen a partir del
+seu Elo perquè no perdin el nivell acumulat. Les partides amb nivell triat
+manualment continuen movent l'Elo, però **no alteren l'escala adaptativa**.
 
 ## 4. El cicle complet
 

@@ -15,6 +15,7 @@ export function useRecordResult(
   game: GameState,
   opponents: DifficultyKey[],
   profile: ProfileHandle,
+  adaptive = true,
 ): RatingChange | null {
   // El perfil canvia d'identitat a cada render; es llegeix per referència
   // perquè l'efecte depengui només de la partida.
@@ -35,10 +36,10 @@ export function useRecordResult(
 
     const current = profileRef.current.profile;
     if (!current) return;
-    const next = profileAfterGame(current, game, opponents);
+    const next = profileAfterGame(current, game, opponents, undefined, adaptive);
     setChange(ratingChange(current, next));
     void profileRef.current.save(next);
-  }, [game, opponents]);
+  }, [game, opponents, adaptive]);
 
   return change;
 }

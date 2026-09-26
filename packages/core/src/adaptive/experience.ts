@@ -1,5 +1,6 @@
 import { DIFFICULTIES, type DifficultyKey } from '../ai/difficulty';
 import { updateRating } from './rating';
+import { nextAdaptiveProgress } from './adaptiveDifficulty';
 
 /** Valoració amb què comença tot jugador nou (entre 'easy' i 'medium'). */
 export const STARTING_RATING = 1100;
@@ -17,6 +18,8 @@ export interface GameRecord {
   margin?: number;
   /** Valoració del jugador després de la partida. */
   ratingAfter: number;
+  /** Si la partida formava part de la progressió adaptativa. */
+  adaptive?: boolean;
 }
 
 /** Resultat d'una partida, amb el marge si es coneix. */
@@ -24,6 +27,8 @@ export interface GameOutcome {
   won: boolean;
   /** 0 = molt ajustat, 1 = pallissa. Si no es diu, es fa servir 0,5. */
   margin?: number;
+  /** Si s'ha de moure també el nivell adaptatiu. Per defecte, sí. */
+  adaptive?: boolean;
 }
 
 /** Marge neutre: mou la valoració igual que abans de tenir-lo en compte. */
@@ -51,10 +56,23 @@ export interface PlayerProfile {
   gamesPlayed: number;
   wins: number;
   history: GameRecord[];
+  /** Mig graó adaptatiu: 0 = Novell, 2 = Fàcil, 4 = Mitjà, 6 = Avançat, 8 = Expert. */
+  adaptiveStep?: number;
+  /** Cert només durant l'escalada inicial fins a la primera derrota. */
+  adaptiveCalibrating?: boolean;
 }
 
 export function createProfile(id: string, name: string): PlayerProfile {
-  return { id, name, rating: STARTING_RATING, gamesPlayed: 0, wins: 0, history: [] };
+  return {
+    id,
+    name,
+    rating: STARTING_RATING,
+    gamesPlayed: 0,
+    wins: 0,
+    history: [],
+    adaptiveStep: 0,
+    adaptiveCalibrating: true,
+  };
 }
 
 /**
@@ -90,8 +108,10 @@ export function recordGame(
   outcome: boolean | GameOutcome,
   date: Date = new Date(),
 ): PlayerProfile {
-  const { won, margin = NEUTRAL_MARGIN } =
-    typeof outcome === 'boolean' ? { won: outcome, margin: NEUTRAL_MARGIN } : outcome;
+  const { won, margin = NEUTRAL_MARGIN, adaptive = true } =
+    typeof outcome === 'boolean'
+      ? { won: outcome, margin: NEUTRAL_MARGIN, adaptive: true }
+      : outcome;
 
   const opponentRatings = opponents.map((key) => DIFFICULTIES[key].rating);
   const averageOpponent =
@@ -108,9 +128,12 @@ export function recordGame(
     won,
     margin,
     ratingAfter: rating,
+    adaptive,
   };
+  const adaptiveProgress = adaptive ? nextAdaptiveProgress(profile, won) : {};
   return {
     ...profile,
+    ...adaptiveProgress,
     rating,
     gamesPlayed: profile.gamesPlayed + 1,
     wins: profile.wins + (won ? 1 : 0),

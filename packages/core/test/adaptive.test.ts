@@ -39,17 +39,58 @@ describe('perfil del jugador', () => {
 });
 
 describe('tria adaptativa d’oponents', () => {
-  it('proposa rivals fluixos a un principiant i forts a un jugador expert', () => {
-    const beginner = { ...createProfile('u1', 'Nou'), rating: 750 };
-    expect(suggestOpponents(beginner, 1)).toEqual(['rookie']);
+  it('la primera partida és Novell i cada victòria de calibració puja un nivell', () => {
+    let profile = createProfile('u1', 'Nou');
+    expect(suggestOpponents(profile, 2)).toEqual(['rookie', 'rookie']);
 
-    const strong = { ...createProfile('u2', 'Crac'), rating: 1650 };
-    expect(suggestOpponents(strong, 1)).toEqual(['expert']);
+    profile = recordGame(profile, ['rookie', 'rookie'], true);
+    expect(suggestOpponents(profile, 2)).toEqual(['easy', 'easy']);
+
+    profile = recordGame(profile, ['easy', 'easy'], true);
+    expect(suggestOpponents(profile, 2)).toEqual(['medium', 'medium']);
+
+    profile = recordGame(profile, ['medium', 'medium'], true);
+    expect(suggestOpponents(profile, 2)).toEqual(['advanced', 'advanced']);
   });
 
-  it('amb més d’un oponent, dispersa els nivells al voltant del principal', () => {
-    const profile = { ...createProfile('u1', 'Mitjana'), rating: 1200 };
+  it('la primera derrota passa a ajust fi entre el nivell perdut i l’anterior', () => {
+    let profile = createProfile('u1', 'Anna');
+    profile = recordGame(profile, ['rookie', 'rookie'], true);
+    profile = recordGame(profile, ['easy', 'easy'], true);
+
+    profile = recordGame(profile, ['medium', 'medium'], false);
+    expect(profile.adaptiveCalibrating).toBe(false);
     expect(suggestOpponents(profile, 2)).toEqual(['easy', 'medium']);
-    expect(suggestOpponents(profile, 3)).toEqual(['easy', 'medium', 'advanced']);
+
+    // Si torna a guanyar, recupera Mitjà; si hi perd, torna al mig graó.
+    profile = recordGame(profile, ['easy', 'medium'], true);
+    expect(suggestOpponents(profile, 2)).toEqual(['medium', 'medium']);
+    profile = recordGame(profile, ['medium', 'medium'], false);
+    expect(suggestOpponents(profile, 2)).toEqual(['easy', 'medium']);
+
+    // Una altra derrota l'abaixa a Fàcil, però una victòria el torna a acostar a Mitjà.
+    profile = recordGame(profile, ['easy', 'medium'], false);
+    expect(suggestOpponents(profile, 2)).toEqual(['easy', 'easy']);
+    profile = recordGame(profile, ['easy', 'easy'], true);
+    expect(suggestOpponents(profile, 2)).toEqual(['easy', 'medium']);
+  });
+
+  it('els perfils antics sense graó adaptatiu conserven el nivell segons l’Elo', () => {
+    const strong = {
+      ...createProfile('u2', 'Crac'),
+      rating: 1650,
+      gamesPlayed: 30,
+      adaptiveStep: undefined,
+      adaptiveCalibrating: undefined,
+    };
+    expect(suggestOpponents(strong, 2)).toEqual(['expert', 'expert']);
+  });
+
+  it('una partida manual mou l’Elo però no l’escala adaptativa', () => {
+    const profile = createProfile('u1', 'Anna');
+    const after = recordGame(profile, ['expert'], { won: false, adaptive: false });
+    expect(after.rating).toBeLessThan(profile.rating);
+    expect(after.adaptiveStep).toBe(0);
+    expect(after.adaptiveCalibrating).toBe(true);
   });
 });
