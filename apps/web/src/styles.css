@@ -2816,3 +2816,59 @@ button.secondary.reset-nivell {
     flex: 1 1 auto;
   }
 }
+
+
+/* ---------- Configuració: capçalera estable i sense desplaçament lateral ---------- */
+
+.menu-usuari {
+  /* El menú només es desplaça verticalment: un gest lateral no ha de moure la caixa. */
+  overflow-x: hidden;
+  overscroll-behavior-x: none;
+  min-width: 0;
+  max-width: calc(100vw - 1.5rem);
+  scrollbar-gutter: stable;
+}
+
+.menu-usuari > * {
+  max-width: 100%;
+}
+
+.menu-cap {
+  width: 100%;
+  min-width: 0;
+}
+
+.menu-nom {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  gap: 0.5rem;
+}
+
+.menu-nom input {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.menu-nom button {
+  max-width: 100%;
+  white-space: nowrap;
+}
+
+/* En pantalles estretes, el botó queda sota el camp i ocupa tota la seva amplada. */
+@media (max-width: 26rem) {
+  .menu-cap {
+    align-items: flex-start;
+  }
+
+  .menu-nom {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .menu-nom button {
+    width: 100%;
+  }
+}
