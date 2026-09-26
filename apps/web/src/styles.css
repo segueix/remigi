@@ -2654,3 +2654,165 @@ button.link.danger {
     grid-column: 1 / -1;
   }
 }
+
+
+/* ---------- Configuració: jerarquia visual de les seccions ---------- */
+
+/* El cap del menú agafa una mica dels quatre colors de les fitxes. */
+.menu-cap {
+  padding: 0.65rem 0.7rem;
+  border-radius: 0.75rem;
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--franja-1) 10%, var(--superficie)),
+      color-mix(in srgb, var(--franja-2) 9%, var(--superficie)) 38%,
+      color-mix(in srgb, var(--franja-3) 10%, var(--superficie)) 68%,
+      color-mix(in srgb, var(--franja-4) 9%, var(--superficie))
+    );
+}
+
+/* La tria de nivell és la secció principal de configuració: molt més visible. */
+.nivell-seccio {
+  margin-top: 0.85rem;
+  padding: 0.9rem;
+  border: 2px solid color-mix(in srgb, var(--bot-3) 58%, var(--vora));
+  border-left-width: 6px;
+  border-radius: 0.8rem;
+  background: color-mix(in srgb, var(--bot-3) 10%, var(--superficie));
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--bot-3) 10%, transparent);
+}
+
+.menu-seccio-cap {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  margin-bottom: 0.8rem;
+}
+
+.menu-seccio-icona {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex: none;
+  border-radius: 0.65rem;
+  background: color-mix(in srgb, var(--bot-3) 18%, var(--superficie));
+  font-size: 1.25rem;
+}
+
+.menu-seccio-cap > div {
+  display: grid;
+  gap: 0.08rem;
+}
+
+.menu-seccio-cap > div > strong {
+  font-size: 1.05rem;
+}
+
+.nivell-seccio .count-picker {
+  padding: 0.45rem 0.55rem;
+  border-radius: 0.6rem;
+  background: color-mix(in srgb, var(--franja-2) 7%, var(--superficie));
+}
+
+.nivell-seccio .menu-nivell {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 0.75rem;
+  padding: 0.65rem 0.7rem;
+  border-left: 4px solid var(--franja-4);
+  border-radius: 0.6rem;
+  background: color-mix(in srgb, var(--franja-4) 8%, var(--superficie));
+  font-weight: 700;
+}
+
+.nivell-seccio .menu-nivell select {
+  width: 100%;
+  min-height: 2.45rem;
+  border-color: color-mix(in srgb, var(--franja-4) 48%, var(--vora));
+  font-weight: 600;
+}
+
+.nivell-seccio .suggestion {
+  margin: 0.65rem 0 0;
+  padding: 0.6rem 0.7rem;
+  border-radius: 0.55rem;
+  background: color-mix(in srgb, var(--bot-3) 8%, var(--superficie));
+  color: var(--text);
+}
+
+.nivell-reset {
+  margin-top: 0.75rem;
+}
+
+button.secondary.reset-nivell {
+  border-color: color-mix(in srgb, var(--error) 42%, var(--vora));
+  background: color-mix(in srgb, var(--error) 6%, var(--superficie));
+  color: var(--error);
+}
+
+.nivell-reset-confirm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--error) 42%, var(--vora));
+  border-radius: 0.6rem;
+  background: color-mix(in srgb, var(--error) 7%, var(--superficie));
+  font-size: 0.9rem;
+}
+
+.nivell-reset-confirm span {
+  flex: 1 1 100%;
+  font-weight: 600;
+}
+
+/* Les altres seccions també tenen identitat pròpia, però menys pes que Nivell. */
+.nivell-sync {
+  border-left: 4px solid var(--franja-2);
+  background: color-mix(in srgb, var(--franja-2) 6%, var(--superficie));
+}
+
+.temps-torn {
+  margin-top: 0.8rem;
+  padding: 0.65rem 0.7rem;
+  border: 1px solid color-mix(in srgb, var(--franja-3) 45%, var(--vora));
+  border-left: 4px solid var(--franja-3);
+  border-radius: 0.65rem;
+  background: color-mix(in srgb, var(--franja-3) 7%, var(--superficie));
+}
+
+.tria-fitxes {
+  margin-top: 0.65rem;
+  padding: 0.65rem 0.7rem;
+  border: 1px solid color-mix(in srgb, var(--franja-4) 40%, var(--vora));
+  border-left: 4px solid var(--franja-4);
+  border-radius: 0.65rem;
+  background: color-mix(in srgb, var(--franja-4) 6%, var(--superficie));
+}
+
+.rating-change.calibrant {
+  border-color: color-mix(in srgb, var(--franja-3) 55%, var(--vora));
+  background: color-mix(in srgb, var(--franja-3) 8%, var(--superficie));
+}
+
+.rating-change.nivell-fixat {
+  border-color: color-mix(in srgb, var(--be) 45%, var(--vora));
+  background: color-mix(in srgb, var(--be) 7%, var(--superficie));
+}
+
+.stats .stat-text {
+  font-size: 1.05rem;
+}
+
+@media (max-width: 34rem) {
+  .nivell-seccio {
+    padding: 0.75rem;
+  }
+
+  .nivell-reset-confirm button {
+    flex: 1 1 auto;
+  }
+}

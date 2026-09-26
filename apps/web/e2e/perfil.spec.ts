@@ -42,6 +42,14 @@ test('els oponents proposats pugen amb l’habilitat', async ({ page }) => {
 
 test('el nivell es pot canviar manualment des del menú', async ({ page }) => {
   await comencaDeZero(page);
+  await page.evaluate((clau) => {
+    const perfil = JSON.parse(localStorage.getItem(clau)!);
+    localStorage.setItem(
+      clau,
+      JSON.stringify({ ...perfil, adaptiveStep: 4, adaptiveCalibrating: false, rating: 1200 }),
+    );
+  }, PROFILE_KEY);
+  await page.reload();
   await obreMenu(page);
 
   await page.getByRole('button', { name: 'Canvia manualment' }).click();
@@ -100,12 +108,62 @@ test('cada partida mou l’habilitat i queda a l’historial', async ({ page }) 
 
   // Del final de la partida s'entra directament a l'historial.
   await page.getByRole('button', { name: 'Historial' }).click();
-  await expect(page.locator('.stats')).toContainText(String(desprésDeJugar));
+  const perfilFinal = await page.evaluate(
+    (clau) => JSON.parse(localStorage.getItem(clau) ?? 'null'),
+    PROFILE_KEY,
+  );
+  if (perfilFinal?.adaptiveCalibrating) {
+    await expect(page.locator('.stat-habilitat')).toContainText('Calibrant');
+    await expect(page.locator('.stats')).not.toContainText(String(desprésDeJugar));
+  } else {
+    await expect(page.locator('.stats')).toContainText(String(desprésDeJugar));
+  }
   await expect(page.locator('.history li')).toHaveCount(1);
 
   // I d'allà es torna a la taula.
   await page.getByRole('button', { name: 'Torna a la partida' }).click();
   await expect(page.getByRole('button', { name: 'Una altra partida' })).toBeVisible();
+});
+
+test('es pot reiniciar només el nivell i tornar a la calibració de Novell', async ({ page }) => {
+  await comencaDeZero(page, 'Anna');
+  await page.evaluate((clau) => {
+    const perfil = JSON.parse(localStorage.getItem(clau)!);
+    localStorage.setItem(
+      clau,
+      JSON.stringify({
+        ...perfil,
+        rating: 1400,
+        gamesPlayed: 12,
+        wins: 7,
+        adaptiveStep: 6,
+        adaptiveCalibrating: false,
+      }),
+    );
+  }, PROFILE_KEY);
+  await page.reload();
+
+  await obreMenu(page);
+  await expect(page.locator('.nivell-seccio')).toContainText('Nivell i rivals');
+  await page.getByRole('button', { name: 'Reinicia nivell i torna a calibrar' }).click();
+  await expect(page.getByText('Vols tornar a començar la calibració des de Novell?')).toBeVisible();
+  await page.getByRole('button', { name: 'Sí, reinicia el nivell' }).click();
+
+  await expect(page.locator('.menu-habilitat')).toContainText('Calibrant el teu nivell');
+  await expect(page.locator('.menu-habilitat')).not.toContainText('1100');
+  await expect(page.locator('.suggestion')).toContainText('Novell, Novell');
+  await expect
+    .poll(async () =>
+      page.evaluate((clau) => JSON.parse(localStorage.getItem(clau) ?? 'null'), PROFILE_KEY),
+    )
+    .toMatchObject({
+      name: 'Anna',
+      rating: 1100,
+      gamesPlayed: 12,
+      wins: 7,
+      adaptiveStep: 0,
+      adaptiveCalibrating: true,
+    });
 });
 
 test('una partida a mitges es continua sola en tornar a obrir', async ({ page }) => {

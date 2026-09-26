@@ -75,6 +75,29 @@ describe('tria adaptativa d’oponents', () => {
     expect(suggestOpponents(profile, 2)).toEqual(['easy', 'medium']);
   });
 
+  it('la primera derrota fixa el nivell segons si ha estat ajustada o contundent', () => {
+    const aMitja = recordGame(
+      recordGame(createProfile('u1', 'Anna'), ['rookie'], true),
+      ['easy'],
+      true,
+    );
+
+    const ajustada = recordGame(aMitja, ['medium'], { won: false, margin: 0.15 });
+    expect(ajustada.adaptiveStep).toBe(4);
+    expect(ajustada.rating).toBe(1200);
+    expect(suggestOpponents(ajustada, 2)).toEqual(['medium', 'medium']);
+
+    const intermèdia = recordGame(aMitja, ['medium'], { won: false, margin: 0.5 });
+    expect(intermèdia.adaptiveStep).toBe(3);
+    expect(intermèdia.rating).toBe(1100);
+    expect(suggestOpponents(intermèdia, 2)).toEqual(['easy', 'medium']);
+
+    const clara = recordGame(aMitja, ['medium'], { won: false, margin: 0.9 });
+    expect(clara.adaptiveStep).toBe(2);
+    expect(clara.rating).toBe(1000);
+    expect(suggestOpponents(clara, 2)).toEqual(['easy', 'easy']);
+  });
+
   it('els perfils antics sense graó adaptatiu conserven el nivell segons l’Elo', () => {
     const strong = {
       ...createProfile('u2', 'Crac'),

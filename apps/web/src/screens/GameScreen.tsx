@@ -5,6 +5,7 @@ import {
   finalScores,
   suggestOpponents,
   type DifficultyKey,
+  type PlayerProfile,
   type Tile,
 } from '@remigi/core';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -435,6 +436,8 @@ export function GameScreen({
       <GameOver
         handle={handle}
         change={change}
+        playerProfile={profile.profile}
+        adaptive={currentSetup.auto !== false}
         nextOpponents={nextOpponents}
         fixedRivals={fixedRivalsLabel}
         misses={misses}
@@ -562,10 +565,17 @@ export function GameScreen({
             }
           >
             {currentSetup.auto !== false ? (
-              <>
-                Nivell adaptatiu <strong>{adaptiveLevelLabel(profile.profile)}</strong>
-                {' '}· habilitat {profile.profile.rating}
-              </>
+              profile.profile.adaptiveCalibrating === true ? (
+                <>
+                  <strong>Calibrant nivell</strong> · ara{' '}
+                  <strong>{adaptiveLevelLabel(profile.profile)}</strong>
+                </>
+              ) : (
+                <>
+                  Nivell adaptatiu <strong>{adaptiveLevelLabel(profile.profile)}</strong>
+                  {' '}· habilitat {profile.profile.rating}
+                </>
+              )
             ) : (
               <>Habilitat {profile.profile.rating}</>
             )}
@@ -836,6 +846,8 @@ function initialOf(name: string): string {
 function GameOver({
   handle,
   change,
+  playerProfile,
+  adaptive,
   nextOpponents,
   fixedRivals,
   misses,
@@ -846,6 +858,9 @@ function GameOver({
 }: {
   handle: GameHandle;
   change: RatingChange | null;
+  playerProfile: PlayerProfile | null;
+  /** Si aquesta partida formava part del sistema adaptatiu. */
+  adaptive: boolean;
   /** Rivals de la partida següent, si són automàtics (adaptats a l'habilitat). */
   nextOpponents: DifficultyKey[] | null;
   /** Etiqueta dels rivals quan estan fixats a mà. */
@@ -939,7 +954,17 @@ function GameOver({
           })}
       </ul>
 
-      {change && (
+      {adaptive && playerProfile?.adaptiveCalibrating === true ? (
+        <p className="rating-change calibrant">
+          <strong>Calibració en curs.</strong> Encara no tens un número d’habilitat:
+          la pròxima partida continuarà buscant el teu nivell.
+        </p>
+      ) : adaptive && playerProfile ? (
+        <p className="rating-change nivell-fixat">
+          Nivell actual: <strong>{adaptiveLevelLabel(playerProfile)}</strong> · habilitat{' '}
+          <strong>{playerProfile.rating}</strong>
+        </p>
+      ) : change ? (
         <p className="rating-change">
           La teva habilitat: {change.before} → <strong>{change.after}</strong>{' '}
           <span className={change.delta >= 0 ? 'points-positive' : 'points-negative'}>
@@ -947,7 +972,7 @@ function GameOver({
             {change.delta})
           </span>
         </p>
-      )}
+      ) : null}
 
       {/*
         * Els jeroglífics de la partida: si has robat quan hi havia una jugada

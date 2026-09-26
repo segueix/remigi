@@ -106,8 +106,14 @@ export function App() {
           >
             <h2 id="importa-nivell-titol">Importa aquest nivell de Remigi?</h2>
             <p>
-              Habilitat <strong>{pendingProgress.rating}</strong> ·{' '}
-              <strong>{pendingProgress.gamesPlayed}</strong>{' '}
+              {pendingProgress.adaptiveCalibrating ? (
+                <strong>Calibració del nivell en curs</strong>
+              ) : (
+                <>
+                  Habilitat <strong>{pendingProgress.rating}</strong>
+                </>
+              )}{' '}
+              · <strong>{pendingProgress.gamesPlayed}</strong>{' '}
               {pendingProgress.gamesPlayed === 1 ? 'partida' : 'partides'} ·{' '}
               <strong>{pendingProgress.wins}</strong>{' '}
               {pendingProgress.wins === 1 ? 'victòria' : 'victòries'}
