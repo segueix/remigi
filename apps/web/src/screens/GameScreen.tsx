@@ -98,6 +98,8 @@ export function GameScreen({
   const { game, draft, selectedTileId, error, highlighted, drawnTileId, isHumanTurn } = handle;
   const change = useRecordResult(game, currentSetup.opponents, profile);
   const [menuOpen, setMenuOpen] = useState(false);
+  /* El resum final es pot tancar per inspeccionar com ha quedat la taula. */
+  const [resultOpen, setResultOpen] = useState(true);
   /*
    * L'ordre del faristol és del jugador: es guarda com una llista d'ids i
    * sobreviu al canvi de torn i a reprendre la partida (vegeu `rackOrder.ts`).
@@ -175,6 +177,7 @@ export function GameScreen({
       rackSortBy.current = null;
       setMenuOpen(false);
       setQuiz(null);
+      setResultOpen(true);
       handle.restart(next);
     },
     [handle],
@@ -411,17 +414,18 @@ export function GameScreen({
     );
   }
 
-  if (game.status === 'finished') {
-    if (quiz === 'partida' && misses.length > 0) {
-      return (
-        <QuizScreen
-          misses={misses}
-          playerName={profile.profile?.name ?? game.players[0].name}
-          closeLabel="Torna al resum"
-          onClose={() => setQuiz(null)}
-        />
-      );
-    }
+  if (game.status === 'finished' && quiz === 'partida' && misses.length > 0) {
+    return (
+      <QuizScreen
+        misses={misses}
+        playerName={profile.profile?.name ?? game.players[0].name}
+        closeLabel="Torna al resum"
+        onClose={() => setQuiz(null)}
+      />
+    );
+  }
+
+  if (game.status === 'finished' && resultOpen) {
     return (
       <GameOver
         handle={handle}
@@ -430,6 +434,7 @@ export function GameScreen({
         fixedRivals={fixedRivalsLabel}
         misses={misses}
         onQuiz={() => setQuiz('partida')}
+        onClose={() => setResultOpen(false)}
         onRestart={restartAdapted}
         onHistory={onHistory}
       />
@@ -479,7 +484,7 @@ export function GameScreen({
             return (
               <li
                 key={player.id}
-                className={index === game.currentPlayer ? 'player active' : 'player'}
+                className={game.status === 'playing' && index === game.currentPlayer ? 'player active' : 'player'}
                 /* Cada bot té color propi; aquí és on es veu de qui és cadascun. */
                 data-bot={player.kind === 'ai' ? index : undefined}
               >
@@ -524,9 +529,17 @@ export function GameScreen({
 
         {/* Els canvis de torn i els errors s'anuncien als lectors de pantalla. */}
         <p className="muted turn-line" aria-live="polite">
-          Torn {game.turn} ·{' '}
-          {isHumanTurn ? 'et toca a tu' : `juga ${game.players[game.currentPlayer].name}…`} ·{' '}
-          {game.bag.length} {game.bag.length === 1 ? 'fitxa' : 'fitxes'} al sac
+          {game.status === 'finished' ? (
+            <>
+              Partida acabada · {game.bag.length} {game.bag.length === 1 ? 'fitxa' : 'fitxes'} al sac
+            </>
+          ) : (
+            <>
+              Torn {game.turn} ·{' '}
+              {isHumanTurn ? 'et toca a tu' : `juga ${game.players[game.currentPlayer].name}…`} ·{' '}
+              {game.bag.length} {game.bag.length === 1 ? 'fitxa' : 'fitxes'} al sac
+            </>
+          )}
         </p>
 
         {/*
@@ -553,6 +566,14 @@ export function GameScreen({
           </span>
         )}
       </header>
+
+      {game.status === 'finished' && (
+        <div className="row">
+          <button type="button" onClick={() => setResultOpen(true)}>
+            Veure resultat final
+          </button>
+        </div>
+      )}
 
       <BoardView
         board={board}
@@ -646,6 +667,7 @@ export function GameScreen({
         * s'amaga i queda la icona, com en una app. L'embolcall només pren cos
         * en apaïsat, on porta l'ordenació compacta a sobre dels botons.
         */}
+      {game.status === 'playing' && (
       <div className="accions-costat">
         <div className="sort-mini" role="group" aria-label="Ordena les fitxes">
           {(['numero', 'color'] as SortBy[]).map((option) => (
@@ -699,6 +721,7 @@ export function GameScreen({
         )}
       </div>
       </div>
+      )}
 
       {/*
         * L'avís de torn: mentre un bot pensa (la pausa de tres segons), al mig
@@ -806,6 +829,7 @@ function GameOver({
   fixedRivals,
   misses,
   onQuiz,
+  onClose,
   onRestart,
   onHistory,
 }: {
@@ -818,6 +842,8 @@ function GameOver({
   /** Oportunitats perdudes de la partida, per oferir-ne el repàs. */
   misses: MissedChance[];
   onQuiz(): void;
+  /** Tanca el resum per poder inspeccionar el tauler final, sense reiniciar-lo. */
+  onClose(): void;
   onRestart(): void;
   onHistory(): void;
 }) {
@@ -959,6 +985,9 @@ function GameOver({
       )}
 
       <div className="row">
+        <button className="secondary" onClick={onClose}>
+          Veure tauler final
+        </button>
         <button onClick={onRestart}>Una altra partida</button>
         <button className="secondary" onClick={onHistory}>
           Historial
