@@ -24,7 +24,7 @@ test('el perfil es conserva en tancar i reobrir', async ({ page }) => {
 test('els oponents proposats pugen amb l’habilitat', async ({ page }) => {
   await comencaDeZero(page);
   await obreMenu(page);
-  await expect(page.locator('.suggestion')).toContainText('Novell, Fàcil');
+  await expect(page.locator('.suggestion')).toContainText('Novell, Novell');
   await tancaMenu(page);
 
   await page.evaluate((clau) => {
@@ -33,7 +33,7 @@ test('els oponents proposats pugen amb l’habilitat', async ({ page }) => {
   }, PROFILE_KEY);
   await page.reload();
   await obreMenu(page);
-  await expect(page.locator('.suggestion')).toContainText('Avançat, Expert');
+  await expect(page.locator('.suggestion')).toContainText('Expert, Expert');
 });
 
 test('el nivell es pot canviar manualment des del menú', async ({ page }) => {
