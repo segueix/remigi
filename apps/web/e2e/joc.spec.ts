@@ -25,8 +25,10 @@ test.describe('una partida sencera', () => {
 
       expect(await robaFinsAlFinal(page)).toBe(true);
       await expect(page.locator('.scores li')).toHaveCount(oponents + 1);
-      // El resultat compta per a l'habilitat.
-      await expect(page.locator('.rating-change')).toContainText(/\d+ → \d+/);
+      // Durant la calibració no s'ensenya cap número provisional; si la primera
+      // derrota ja l'ha tancada, es mostra directament el nivell assignat.
+      await expect(page.locator('.rating-change')).toBeVisible();
+      await expect(page.locator('.rating-change')).toContainText(/Calibració en curs|Nivell actual/);
       expect(errors, errors.join(' | ')).toHaveLength(0);
     });
   }
@@ -524,12 +526,12 @@ test.describe('la taula de joc', () => {
   test('el nivell adaptatiu del jugador es veu a dalt', async ({ page }) => {
     await comencaDeZero(page);
 
-    // Un perfil nou comença la calibració a Novell, encara que l'Elo base sigui 1100.
+    // Un perfil nou comença a Novell, però el número intern encara no es mostra.
     const nivell = page.locator('.nivell-jugador');
     await expect(nivell).toBeVisible();
-    await expect(nivell).toContainText('Nivell adaptatiu');
+    await expect(nivell).toContainText('Calibrant nivell');
     await expect(nivell).toContainText('Novell');
-    await expect(nivell).toContainText('1100');
+    await expect(nivell).not.toContainText('1100');
   });
 
   test('fixar el nivell dels rivals es veu i es recorda; treure’l, també', async ({ page }) => {
