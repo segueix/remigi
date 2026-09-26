@@ -115,6 +115,16 @@ export function suggestOpponents(profile: PlayerProfile, count: 1 | 2 | 3): Diff
   return opponentsForStep(adaptiveStepFor(profile), count, profile.gamesPlayed);
 }
 
+/** Etiqueta del punt adaptatiu actual: «Mitjà» o «Fàcil–Mitjà». */
+export function adaptiveLevelLabel(profile: PlayerProfile): string {
+  const step = adaptiveStepFor(profile);
+  const lowerIndex = Math.floor(step / 2);
+  const lower = DIFFICULTIES[difficultyAt(lowerIndex)].label;
+  if (step % 2 === 0 || lowerIndex >= DIFFICULTY_ORDER.length - 1) return lower;
+  const upper = DIFFICULTIES[difficultyAt(lowerIndex + 1)].label;
+  return `${lower}–${upper}`;
+}
+
 /** Text curt per explicar la tria a la interfície. */
 export function describeSuggestion(keys: DifficultyKey[]): string {
   const labels = keys.map((key) => DIFFICULTIES[key].label);
