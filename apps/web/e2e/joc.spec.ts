@@ -340,6 +340,33 @@ test.describe('amb el dit', () => {
 test.describe('en pantalla petita', () => {
   test.skip(({ isMobile }) => !isMobile, 'només té sentit al projecte de mòbil');
 
+  test('la configuració no es mou lateralment i el botó del nom queda dins la caixa', async ({ page }) => {
+    await comencaDeZero(page);
+    await obreMenu(page);
+
+    const menu = page.locator('.menu-usuari');
+    const desaNom = page.getByRole('button', { name: 'Desa el nom' });
+    const caixaMenu = (await menu.boundingBox())!;
+    const caixaBoto = (await desaNom.boundingBox())!;
+
+    expect(caixaBoto.x).toBeGreaterThanOrEqual(caixaMenu.x);
+    expect(caixaBoto.x + caixaBoto.width).toBeLessThanOrEqual(
+      caixaMenu.x + caixaMenu.width + 1,
+    );
+
+    const amplades = await menu.evaluate((el) => ({
+      client: el.clientWidth,
+      scroll: el.scrollWidth,
+    }));
+    expect(amplades.scroll).toBeLessThanOrEqual(amplades.client + 1);
+
+    const scrollLeft = await menu.evaluate((el) => {
+      el.scrollLeft = 200;
+      return el.scrollLeft;
+    });
+    expect(scrollLeft).toBe(0);
+  });
+
   test('res no desborda i les fitxes es poden tocar', async ({ page }) => {
     await comencaDeZero(page);
     await jugaContra(page, 2);
