@@ -130,13 +130,15 @@ export function recordGame(
    * primera derrota tanca la calibració, el número queda alineat amb el nivell
    * acabat d'assignar (Novell 800, Novell–Fàcil 900, Fàcil 1000, etc.).
    */
-  const justCalibrated =
+  const calibratedStep =
     adaptive &&
     profile.adaptiveCalibrating === true &&
     !won &&
-    typeof adaptiveProgress.adaptiveStep === 'number';
-  const rating = justCalibrated
-    ? ratingForAdaptiveStep(adaptiveProgress.adaptiveStep)
+    typeof adaptiveProgress.adaptiveStep === 'number'
+      ? adaptiveProgress.adaptiveStep
+      : null;
+  const rating = calibratedStep !== null
+    ? ratingForAdaptiveStep(calibratedStep)
     : eloRating;
   const record: GameRecord = {
     date: date.toISOString(),
