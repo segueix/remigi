@@ -68,10 +68,12 @@ export function useProfile(): ProfileHandle {
         rating: progress.rating,
         gamesPlayed: progress.gamesPlayed,
         wins: progress.wins,
-        // Un nivell importat o canviat manualment parteix del seu Elo actual;
-        // no s'ha de tornar a la calibració inicial de Novell.
-        adaptiveStep: undefined,
-        adaptiveCalibrating: false,
+        // Els enllaços nous conserven exactament el mig graó adaptatiu. Els
+        // antics només porten Elo: en aquest cas se'n deriva el nivell.
+        adaptiveStep: progress.adaptiveStep,
+        adaptiveCalibrating: progress.adaptiveStep === undefined
+          ? false
+          : (progress.adaptiveCalibrating ?? false),
       });
     },
     [profile, save],
