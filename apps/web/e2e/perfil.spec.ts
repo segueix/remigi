@@ -83,6 +83,17 @@ test('cada partida mou l’habilitat i queda a l’historial', async ({ page }) 
   // El sistema s'adapta: el final anuncia els rivals de la partida següent.
   await expect(page.locator('.seguents-rivals')).toContainText('pròxims rivals');
 
+  // El resum es pot tancar per inspeccionar exactament com ha quedat la partida.
+  await page.getByRole('button', { name: 'Veure tauler final' }).click();
+  await expect(page.locator('.board')).toBeVisible();
+  await expect(page.locator('.turn-line')).toContainText('Partida acabada');
+  await expect(page.getByRole('button', { name: 'Veure resultat final' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Avançar' })).toHaveCount(0);
+
+  // I es pot tornar al resultat sense perdre l'estat final del tauler.
+  await page.getByRole('button', { name: 'Veure resultat final' }).click();
+  await expect(page.getByRole('button', { name: 'Una altra partida' })).toBeVisible();
+
   // Del final de la partida s'entra directament a l'historial.
   await page.getByRole('button', { name: 'Historial' }).click();
   await expect(page.locator('.stats')).toContainText(String(desprésDeJugar));
