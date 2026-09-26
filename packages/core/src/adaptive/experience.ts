@@ -1,6 +1,6 @@
 import { DIFFICULTIES, type DifficultyKey } from '../ai/difficulty';
 import { updateRating } from './rating';
-import { nextAdaptiveProgress } from './adaptiveDifficulty';
+import { nextAdaptiveProgress, ratingForAdaptiveStep } from './adaptiveDifficulty';
 
 /** Valoració amb què comença tot jugador nou (entre 'easy' i 'medium'). */
 export const STARTING_RATING = 1100;
@@ -116,12 +116,26 @@ export function recordGame(
   const opponentRatings = opponents.map((key) => DIFFICULTIES[key].rating);
   const averageOpponent =
     opponentRatings.reduce((a, b) => a + b, 0) / Math.max(1, opponentRatings.length);
-  const rating = updateRating(
+  const eloRating = updateRating(
     profile.rating,
     averageOpponent,
     won ? 1 : 0,
     kFactor(profile.gamesPlayed) * marginWeight(margin),
   );
+  const adaptiveProgress = adaptive ? nextAdaptiveProgress(profile, won, margin) : {};
+  /*
+   * Durant la calibració l'Elo es mou internament però no s'ensenya. Quan la
+   * primera derrota tanca la calibració, el número queda alineat amb el nivell
+   * acabat d'assignar (Novell 800, Novell–Fàcil 900, Fàcil 1000, etc.).
+   */
+  const justCalibrated =
+    adaptive &&
+    profile.adaptiveCalibrating === true &&
+    !won &&
+    typeof adaptiveProgress.adaptiveStep === 'number';
+  const rating = justCalibrated
+    ? ratingForAdaptiveStep(adaptiveProgress.adaptiveStep)
+    : eloRating;
   const record: GameRecord = {
     date: date.toISOString(),
     opponents,
@@ -130,7 +144,6 @@ export function recordGame(
     ratingAfter: rating,
     adaptive,
   };
-  const adaptiveProgress = adaptive ? nextAdaptiveProgress(profile, won) : {};
   return {
     ...profile,
     ...adaptiveProgress,
