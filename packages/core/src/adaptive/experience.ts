@@ -122,7 +122,9 @@ export function recordGame(
     won ? 1 : 0,
     kFactor(profile.gamesPlayed) * marginWeight(margin),
   );
-  const adaptiveProgress = adaptive ? nextAdaptiveProgress(profile, won, margin) : {};
+  const adaptiveProgress: Partial<
+    Pick<PlayerProfile, 'adaptiveStep' | 'adaptiveCalibrating'>
+  > = adaptive ? nextAdaptiveProgress(profile, won, margin) : {};
   /*
    * Durant la calibració l'Elo es mou internament però no s'ensenya. Quan la
    * primera derrota tanca la calibració, el número queda alineat amb el nivell
