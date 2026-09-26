@@ -1,13 +1,13 @@
 import {
   DIFFICULTIES,
   DIFFICULTY_ORDER,
+  adaptiveLevelLabel,
   describeSuggestion,
   suggestOpponents,
   type DifficultyKey,
 } from '@remigi/core';
 import { useState } from 'react';
 import type { GameSetup } from '../game/useGame';
-import { playerLevelLabel } from '../state/playerLevel';
 import {
   buildProfileTransferUrl,
   isValidProfileProgress,
@@ -190,8 +190,8 @@ export function PlayerMenu({
 
         {profile.profile && (
           <p className="muted small menu-habilitat">
-            Habilitat: <strong>{profile.profile.rating}</strong> (
-            {playerLevelLabel(profile.profile.rating)}) · {profile.profile.gamesPlayed}{' '}
+            Nivell adaptatiu: <strong>{adaptiveLevelLabel(profile.profile)}</strong> · habilitat{' '}
+            <strong>{profile.profile.rating}</strong> · {profile.profile.gamesPlayed}{' '}
             {profile.profile.gamesPlayed === 1 ? 'partida' : 'partides'}
           </p>
         )}
