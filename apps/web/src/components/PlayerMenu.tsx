@@ -205,8 +205,7 @@ export function PlayerMenu({
           <p className="muted small menu-habilitat">
             {calibrating ? (
               <>
-                <strong>Calibrant el teu nivell</strong> · {profile.profile.gamesPlayed}{' '}
-                {profile.profile.gamesPlayed === 1 ? 'partida de prova' : 'partides de prova'}
+                <strong>Calibrant el teu nivell</strong> · encara no hi ha cap número d’habilitat definitiu
               </>
             ) : (
               <>
