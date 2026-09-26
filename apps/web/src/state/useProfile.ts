@@ -1,4 +1,4 @@
-import { ProfileRepository, createProfile, type PlayerProfile } from '@remigi/core';
+import { ProfileRepository, STARTING_RATING, createProfile, type PlayerProfile } from '@remigi/core';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createWebStore } from '../storage/webStore';
 import type { ProfileProgress } from './profileTransfer';
@@ -18,6 +18,8 @@ export interface ProfileHandle {
   save(profile: PlayerProfile): Promise<void>;
   /** Actualitza els totals necessaris per reprendre el mateix nivell en un altre aparell. */
   setProgress(progress: ProfileProgress): Promise<void>;
+  /** Reinicia només la calibració del nivell, conservant nom, partides i historial. */
+  resetAdaptiveLevel(): Promise<void>;
   /** Esborra el perfil i tot el seu historial. */
   reset(): Promise<void>;
 }
@@ -79,10 +81,20 @@ export function useProfile(): ProfileHandle {
     [profile, save],
   );
 
+  const resetAdaptiveLevel = useCallback(async () => {
+    if (!profile) return;
+    await save({
+      ...profile,
+      rating: STARTING_RATING,
+      adaptiveStep: 0,
+      adaptiveCalibrating: true,
+    });
+  }, [profile, save]);
+
   const reset = useCallback(async () => {
     await repository.remove(LOCAL_PROFILE_ID);
     setProfile(null);
   }, [repository]);
 
-  return { profile, loading, setName, save, setProgress, reset };
+  return { profile, loading, setName, save, setProgress, resetAdaptiveLevel, reset };
 }
