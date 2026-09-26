@@ -60,9 +60,17 @@ segons l'Elo: fa una calibració curta i entenedora:
 3. si torna a guanyar: **Mitjà**;
 4. després **Avançat** i **Expert**, sempre que continuï guanyant.
 
-Durant aquesta escalada tots els rivals tenen el mateix nivell. Quan arriba la
-**primera derrota**, s'acaba la calibració i comença l'ajust fi. El nivell
-adaptatiu passa a moure's en **mig graons**:
+Durant aquesta escalada tots els rivals tenen el mateix nivell i **no es mostra
+cap número d'habilitat provisional**. Quan arriba la **primera derrota**, s'acaba
+la calibració i el marge d'aquella derrota fixa el primer nivell del jugador:
+
+- derrota ajustada: conserva el nivell que estava provant;
+- derrota intermèdia: queda a mig graó entre aquell nivell i l'anterior;
+- derrota clara: baixa al nivell anterior.
+
+En aquell moment el número d'habilitat es fa visible i queda alineat amb el
+nivell assignat (Novell 800, Novell–Fàcil 900, Fàcil 1000, etc.). A partir
+d'aquí comença l'ajust fi i el nivell adaptatiu passa a moure's en **mig graons**:
 
 - victòria: puja mig graó;
 - derrota: baixa mig graó;
@@ -80,6 +88,10 @@ cap al mateix costat.
 Els perfils antics, que no tenen desat aquest mig graó, es recuperen a partir del
 seu Elo perquè no perdin el nivell acumulat. Les partides amb nivell triat
 manualment continuen movent l'Elo, però **no alteren l'escala adaptativa**.
+
+Des de la configuració es pot **reiniciar només el nivell adaptatiu**. Això
+torna la calibració a Novell i reinicia l'habilitat provisional, però conserva
+el nom del jugador, les partides, les victòries i l'historial.
 
 ## 4. El cicle complet
 
