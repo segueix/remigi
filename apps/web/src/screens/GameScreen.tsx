@@ -963,11 +963,6 @@ function GameOver({
         <p className="rating-change nivell-fixat">
           Nivell actual: <strong>{adaptiveLevelLabel(playerProfile)}</strong> · habilitat{' '}
           <strong>{playerProfile.rating}</strong>
-          {change && (
-            <span className={change.delta >= 0 ? 'points-positive' : 'points-negative'}>
-              {' '}({change.delta >= 0 ? '+' : ''}{change.delta})
-            </span>
-          )}
         </p>
       ) : change ? (
         <p className="rating-change">
