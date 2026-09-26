@@ -521,14 +521,15 @@ test.describe('qui ha jugat què', () => {
 });
 
 test.describe('la taula de joc', () => {
-  test('el nivell del jugador es veu a dalt, amb el nom entre parèntesis', async ({ page }) => {
+  test('el nivell adaptatiu del jugador es veu a dalt', async ({ page }) => {
     await comencaDeZero(page);
 
-    // Amb l'habilitat inicial (1100), el nivell amb nom és «Fàcil».
+    // Un perfil nou comença la calibració a Novell, encara que l'Elo base sigui 1100.
     const nivell = page.locator('.nivell-jugador');
     await expect(nivell).toBeVisible();
+    await expect(nivell).toContainText('Nivell adaptatiu');
+    await expect(nivell).toContainText('Novell');
     await expect(nivell).toContainText('1100');
-    await expect(nivell).toContainText('(Fàcil)');
   });
 
   test('fixar el nivell dels rivals es veu i es recorda; treure’l, també', async ({ page }) => {
