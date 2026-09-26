@@ -68,6 +68,10 @@ export function useProfile(): ProfileHandle {
         rating: progress.rating,
         gamesPlayed: progress.gamesPlayed,
         wins: progress.wins,
+        // Un nivell importat o canviat manualment parteix del seu Elo actual;
+        // no s'ha de tornar a la calibració inicial de Novell.
+        adaptiveStep: undefined,
+        adaptiveCalibrating: false,
       });
     },
     [profile, save],
