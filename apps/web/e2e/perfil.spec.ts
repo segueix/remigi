@@ -29,6 +29,10 @@ test('els oponents proposats pugen amb l’habilitat', async ({ page }) => {
 
   await page.evaluate((clau) => {
     const perfil = JSON.parse(localStorage.getItem(clau)!);
+    // Simula un perfil antic, que encara no tenia el mig graó adaptatiu:
+    // en aquest cas el nivell s'ha de reconstruir a partir de l'Elo.
+    delete perfil.adaptiveStep;
+    delete perfil.adaptiveCalibrating;
     localStorage.setItem(clau, JSON.stringify({ ...perfil, rating: 1600 }));
   }, PROFILE_KEY);
   await page.reload();
