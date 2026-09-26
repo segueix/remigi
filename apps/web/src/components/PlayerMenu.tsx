@@ -73,10 +73,12 @@ export function PlayerMenu({
   const [adapt, setAdapt] = useState(Boolean(current.adaptDuringGame));
   const [editProgress, setEditProgress] = useState(false);
   const [progressMessage, setProgressMessage] = useState('');
+  const [resetLevelConfirm, setResetLevelConfirm] = useState(false);
   const [ratingInput, setRatingInput] = useState(String(profile.profile?.rating ?? 1100));
   const [gamesInput, setGamesInput] = useState(String(profile.profile?.gamesPlayed ?? 0));
   const [winsInput, setWinsInput] = useState(String(profile.profile?.wins ?? 0));
 
+  const calibrating = profile.profile?.adaptiveCalibrating === true;
   const suggested = profile.profile ? suggestOpponents(profile.profile, count) : [];
   const opponents: DifficultyKey[] =
     level === 'auto' ? suggested : Array.from({ length: count }, () => level);
@@ -113,7 +115,9 @@ export function PlayerMenu({
     const progress = currentProgress();
     if (!progress) return;
     const url = buildProfileTransferUrl(progress);
-    const text = `Remigi · habilitat ${progress.rating} · ${progress.gamesPlayed} partides`;
+    const text = progress.adaptiveCalibrating
+      ? `Remigi · calibrant nivell · ${progress.gamesPlayed} partides`
+      : `Remigi · habilitat ${progress.rating} · ${progress.gamesPlayed} partides`;
     if (!navigator.share) {
       await copyProgressLink();
       return;
@@ -146,6 +150,13 @@ export function PlayerMenu({
     await profile.setProgress(next);
     setEditProgress(false);
     setProgressMessage('Nivell actualitzat en aquest aparell.');
+  }
+
+  async function resetAdaptiveLevel() {
+    await profile.resetAdaptiveLevel();
+    setLevel('auto');
+    setResetLevelConfirm(false);
+    setProgressMessage('Calibració reiniciada. La pròxima partida començarà a Novell.');
   }
 
   async function startNewGame() {
@@ -192,9 +203,18 @@ export function PlayerMenu({
 
         {profile.profile && (
           <p className="muted small menu-habilitat">
-            Nivell adaptatiu: <strong>{adaptiveLevelLabel(profile.profile)}</strong> · habilitat{' '}
-            <strong>{profile.profile.rating}</strong> · {profile.profile.gamesPlayed}{' '}
-            {profile.profile.gamesPlayed === 1 ? 'partida' : 'partides'}
+            {calibrating ? (
+              <>
+                <strong>Calibrant el teu nivell</strong> · {profile.profile.gamesPlayed}{' '}
+                {profile.profile.gamesPlayed === 1 ? 'partida de prova' : 'partides de prova'}
+              </>
+            ) : (
+              <>
+                Nivell adaptatiu: <strong>{adaptiveLevelLabel(profile.profile)}</strong> · habilitat{' '}
+                <strong>{profile.profile.rating}</strong> · {profile.profile.gamesPlayed}{' '}
+                {profile.profile.gamesPlayed === 1 ? 'partida' : 'partides'}
+              </>
+            )}
           </p>
         )}
 
@@ -211,16 +231,18 @@ export function PlayerMenu({
               <button type="button" className="secondary" onClick={() => void copyProgressLink()}>
                 Copia enllaç
               </button>
-              <button
-                type="button"
-                className="secondary"
-                onClick={() => {
-                  setEditProgress((open) => !open);
-                  setProgressMessage('');
-                }}
-              >
-                {editProgress ? 'Tanca edició' : 'Canvia manualment'}
-              </button>
+              {!calibrating && (
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={() => {
+                    setEditProgress((open) => !open);
+                    setProgressMessage('');
+                  }}
+                >
+                  {editProgress ? 'Tanca edició' : 'Canvia manualment'}
+                </button>
+              )}
             </div>
 
             {editProgress && (
@@ -268,8 +290,17 @@ export function PlayerMenu({
             )}
 
             <p className="muted small nivell-sync-nota">
-              L’enllaç obre <strong>eltauler.cat/remigi</strong> i permet importar el nivell amb
-              un toc. L’historial detallat de partides no es transfereix.
+              {calibrating ? (
+                <>
+                  Encara no mostrem cap número d’habilitat: primer acabarem de trobar el teu nivell.
+                  L’enllaç conserva aquesta calibració entre dispositius.
+                </>
+              ) : (
+                <>
+                  L’enllaç obre <strong>eltauler.cat/remigi</strong> i permet importar el nivell amb
+                  un toc. L’historial detallat de partides no es transfereix.
+                </>
+              )}
             </p>
             {progressMessage && (
               <p className="small nivell-sync-missatge" role="status">
@@ -279,7 +310,18 @@ export function PlayerMenu({
           </section>
         )}
 
-        <div className="menu-seccio">
+        <div className="menu-seccio nivell-seccio">
+        <div className="menu-seccio-cap">
+          <span className="menu-seccio-icona" aria-hidden="true">🎯</span>
+          <div>
+            <strong>Nivell i rivals</strong>
+            <span className="muted small">
+              {calibrating
+                ? 'Estem buscant el teu nivell: començaràs a Novell i anirem pujant.'
+                : 'Tria nivell adaptatiu o fixa manualment la dificultat.'}
+            </span>
+          </div>
+        </div>
         <div className="row count-picker">
           <span className="muted">Rivals:</span>
           {([1, 2, 3] as OpponentCount[]).map((option) => (
@@ -322,6 +364,28 @@ export function PlayerMenu({
             encara que el teu nivell es mogui. S’aplica a la partida nova.
           </p>
         )}
+
+        <div className="nivell-reset">
+          {resetLevelConfirm ? (
+            <div className="nivell-reset-confirm">
+              <span>Vols tornar a començar la calibració des de Novell?</span>
+              <button type="button" onClick={() => void resetAdaptiveLevel()}>
+                Sí, reinicia el nivell
+              </button>
+              <button type="button" className="secondary" onClick={() => setResetLevelConfirm(false)}>
+                Cancel·la
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="secondary reset-nivell"
+              onClick={() => setResetLevelConfirm(true)}
+            >
+              ↺ Reinicia nivell i torna a calibrar
+            </button>
+          )}
+        </div>
 
         <label className="check">
           <input
