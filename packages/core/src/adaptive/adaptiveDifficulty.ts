@@ -47,6 +47,7 @@ export function isCalibrating(profile: PlayerProfile): boolean {
 export function nextAdaptiveProgress(
   profile: PlayerProfile,
   won: boolean,
+  margin = 0.5,
 ): { adaptiveStep: number; adaptiveCalibrating: boolean } {
   const current = adaptiveStepFor(profile);
 
@@ -57,8 +58,18 @@ export function nextAdaptiveProgress(
         adaptiveCalibrating: true,
       };
     }
+    /*
+     * La primera derrota és la que fixa el nivell inicial del jugador:
+     * - derrota ajustada (≤25% del marge): conserva el nivell provat;
+     * - derrota mitjana (≤65%): queda a mig camí amb l'anterior;
+     * - derrota clara: baixa al nivell anterior.
+     *
+     * Així no assignem el mateix nivell a qui gairebé guanya que a qui perd
+     * amb molta diferència.
+     */
+    const lossDrop = margin <= 0.25 ? 0 : margin <= 0.65 ? 1 : 2;
     return {
-      adaptiveStep: clampStep(current - 1),
+      adaptiveStep: clampStep(current - lossDrop),
       adaptiveCalibrating: false,
     };
   }
@@ -123,6 +134,14 @@ export function adaptiveLevelLabel(profile: PlayerProfile): string {
   if (step % 2 === 0 || lowerIndex >= DIFFICULTY_ORDER.length - 1) return lower;
   const upper = DIFFICULTIES[difficultyAt(lowerIndex + 1)].label;
   return `${lower}–${upper}`;
+}
+
+/** Valoració numèrica coherent amb un mig graó adaptatiu. */
+export function ratingForAdaptiveStep(step: number): number {
+  const first = DIFFICULTIES[DIFFICULTY_ORDER[0]].rating;
+  const second = DIFFICULTIES[DIFFICULTY_ORDER[1]].rating;
+  const halfLevel = Math.max(1, (second - first) / 2);
+  return first + clampStep(step) * halfLevel;
 }
 
 /** Text curt per explicar la tria a la interfície. */
