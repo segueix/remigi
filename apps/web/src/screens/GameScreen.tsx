@@ -96,7 +96,12 @@ export function GameScreen({
   const [currentSetup, setCurrentSetup] = useState(setup);
   const handle = useGame(setup, resume, resumeOwners, resumeMisses);
   const { game, draft, selectedTileId, error, highlighted, drawnTileId, isHumanTurn } = handle;
-  const change = useRecordResult(game, currentSetup.opponents, profile);
+  const change = useRecordResult(
+    game,
+    currentSetup.opponents,
+    profile,
+    currentSetup.auto !== false,
+  );
   const [menuOpen, setMenuOpen] = useState(false);
   /*
    * L'ordre del faristol és del jugador: es guarda com una llista d'ids i
