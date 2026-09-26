@@ -91,6 +91,8 @@ export function PlayerMenu({
       rating: profile.profile.rating,
       gamesPlayed: profile.profile.gamesPlayed,
       wins: profile.profile.wins,
+      adaptiveStep: profile.profile.adaptiveStep,
+      adaptiveCalibrating: profile.profile.adaptiveCalibrating,
     };
   }
 
