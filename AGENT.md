@@ -1756,3 +1756,54 @@ contenidor (socket restringit); execució local amb Chromium headless 153.
       6 o un joker la puguin completar al doble toc següent.
 - [x] Cobert amb proves unitàries i una prova Playwright del cas de prioritat:
       5 iniciat + 6 amb 7-8-9 existent => el 6 va primer amb el 5.
+
+---
+
+### Un esglaó entre Avançat i Expert, i un ajust que iguala de debò ✅ Feta (2026-10-04)
+
+Una jugadora guanyava sempre contra dos Avançats i perdia sempre contra dos
+Experts sense que li sortís cap jeroglífic. Mesurat amb duels de robots: el que
+separava els dos nivells era la reordenació de la taula, que era tot o res
+(Expert 100% contra Avançat; Avançat amb reordenació 100% contra Avançat), mentre
+que la probabilitat d'error gairebé no afebleix un bot que reordena (expert amb
+un 15% d'error: 48–52 contra l'expert perfecte).
+
+- [x] Nou paràmetre `rearrangeRate` (proporció de torns amb reordenació) a
+      `AiParams`. L'Avançat passa a reordenar el 20% dels torns
+      (`rearrangesTable: true`); l'Expert, el 100%; la resta, mai. El 20% es va
+      triar simulant 0,1 / 0,2 / 0,3 (Expert 81% / 74% / 65%) i quedant-se amb
+      el que encaixa amb l'Elo (1600 contra 1400 → 76%).
+- [x] El dau de la reordenació només es tira si la proporció és entre 0 i 1:
+      l'Expert consumeix el RNG igual que abans i juga exactament les mateixes
+      partides (el baseline de regressió només canvia per a `advanced`).
+- [x] `withOverrides` (a `difficulty.ts`): una substitució que només diu
+      `rearrangesTable` vol dir sempre o mai, com abans; la fan servir
+      `decideAiMove` i el `level` del motor.
+- [x] Ajust dins de la partida: `rubberBandedRearrangeRate` treu un 25% de torns
+      amb reordenació per cada fitxa que l'humà va endarrerit (i n'afegeix si va
+      davant). `rubberBandedMistakeRate` es manté per als nivells baixos.
+- [x] Simulador: `--ladder N` (duels entre nivells consecutius, amb el que n'espera
+      l'Elo) i `--rubber N` («humà» d'Avançat contra dos experts, amb ajust i sense).
+- [x] `ENGINE_VERSION` 1.0.0 → 1.1.0 (la IA juga diferent). Baseline regenerat.
+- [x] Docs: `IA-ADAPTATIVA.md` (taula de nivells i ajust), `ENGINE.md`,
+      `ARQUITECTURA.md`.
+- [x] Tests: proporció de reordenació (dau dins i fora, expert sempre, mitjà
+      mai, cap dau amb 0 o 1, substitucions), ajust de la reordenació i
+      monotonia de `rearrangeRate` entre nivells (138 tests al core).
+
+**Validació**: typecheck i tests en verd (138 core + 129 web).
+`npm run simulate -- --ladder 200`: Fàcil–Novell 84%, Mitjà–Fàcil 99%,
+Avançat–Mitjà 98%, Expert–Avançat **76%** (abans 100%).
+`npm run simulate -- --rubber 900 --seed 9`: l'«humà» guanya el 12% sense ajust,
+el 12% amb l'ajust antic (només errors) i el **18%** amb el nou.
+
+### Problemes trobats
+
+- [2026-10-04] Limitar la cerca amb `maxNodes` no serveix per afeblir un bot:
+  quan s'esgota, la reordenació es descarta sencera (Expert 100% contra un de
+  500 nodes). Per això la gradació és una proporció de torns i no un sostre.
+- [2026-10-04] Els jeroglífics només surten quan el jugador roba havent-hi
+  jugada; una jugada més curta que la millor no es detecta. Queda com a proposta
+  («jugades curtes»), no implementada en aquest canvi.
+- [2026-10-04] Mitjà–Fàcil (99%) i Avançat–Mitjà (98%) continuen molt per sobre
+  del 76% que espera l'Elo. No s'ha tocat perquè no era el cas reportat.

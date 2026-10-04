@@ -1,5 +1,5 @@
 import { decideAiMove, type AiDecisionStats } from '../ai/aiPlayer';
-import { difficultyByKey, type AiParams, type DifficultyKey } from '../ai/difficulty';
+import { difficultyByKey, withOverrides, type AiParams, type DifficultyKey } from '../ai/difficulty';
 import { chooseBestPlay, type PlayCandidate } from '../ai/solver';
 import { createRng, type Rng } from '../core/random';
 import type { GameState, Move } from '../core/types';
@@ -39,7 +39,10 @@ export interface EnginePlayOptions {
    * (o el nivell per defecte si no en té).
    */
   level?: DifficultyKey;
-  /** Ajusta la probabilitat d'error segons com va el jugador humà (rubber banding). */
+  /**
+   * Ajusta el nivell segons com va el jugador humà (rubber banding): la
+   * probabilitat d'error i la proporció de torns amb reordenació.
+   */
   rubberBanding?: boolean;
   /** Substitueix paràmetres concrets del nivell (proves i comparatives). */
   overrides?: Partial<AiParams>;
@@ -125,7 +128,7 @@ export function createEngine(options: EngineOptions = {}): RemigiEngine {
       // El nivell demanat es converteix en substitucions completes de
       // paràmetres: així la decisió passa pel mateix `decideAiMove` de sempre.
       const overrides = playOptions.level
-        ? { ...difficultyByKey(playOptions.level), ...playOptions.overrides }
+        ? withOverrides(difficultyByKey(playOptions.level), playOptions.overrides)
         : playOptions.overrides;
       const stats = emptyStats();
 

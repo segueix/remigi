@@ -1,5 +1,5 @@
 {
-  "generatedWith": "decideAiMove pre-refactorització",
+  "generatedWith": "engine API (regenerat a consciència)",
   "games": [
     {
       "level": "rookie",
@@ -199,67 +199,67 @@
     {
       "level": "advanced",
       "seed": 101,
-      "turns": 100,
+      "turns": 52,
       "winner": 0,
       "finalScores": [
-        161,
-        -46,
-        -115
+        158,
+        -60,
+        -98
       ],
-      "moveTypes": "PPDDPDDDDDDDDDDDPDPDDDDDDDDDPPPPDDDDDPPPPDDDDDDDPPDDDDPDDDDPPPDDDPPPDDDPPDDDDDPPPPDDDDDPDDDPDPPDPDDD",
-      "trajectoryHash": "0820b390e1660213"
+      "moveTypes": "PPDDPDDDDDDDDDDDPDPDDDDDDDDDPDPDPDPDPDPDPDDDDDPDPDPP",
+      "trajectoryHash": "5d548a3d24aeca72"
     },
     {
       "level": "advanced",
       "seed": 202,
-      "turns": 92,
-      "winner": 1,
+      "turns": 95,
+      "winner": 0,
       "finalScores": [
-        -96,
-        250,
-        -154
+        243,
+        -70,
+        -173
       ],
-      "moveTypes": "PDDDDDPPDDDPPPDDDDDDDDDDPDDDPDDDDDDDPPDDDPPPDDDPDDDDDDPPDDDDDDDPDDDDPPDDDPDPDDDPDPDDDDPDPDDD",
-      "trajectoryHash": "68e00af7be23930b"
+      "moveTypes": "PDDDDDPPDDPPPDDDDDDDDDDDPDDDPDDDDDDDPPDDDPPPDDDDDDPDDDPPPPDDDPPPDDDDDDDDPDDDPDPDDDPDPDDDPDPDDDD",
+      "trajectoryHash": "2604266aa25ef773"
     },
     {
       "level": "advanced",
       "seed": 303,
-      "turns": 103,
+      "turns": 76,
       "winner": 0,
       "finalScores": [
-        115,
-        -23,
-        -92
+        200,
+        -69,
+        -131
       ],
-      "moveTypes": "PPDPDDDDDDPDDDPPDDDPDDDDDPDPPDDDDDPPPDDDDPDPDDDDDDDDDDPPDPDPDDDPDDDPDPDDDPDDDDDDDPPPPPDPPDDDPPPDDDDPDDD",
-      "trajectoryHash": "39c1978bf1bc6919"
+      "moveTypes": "PPDPDDDDDDPDPDPPPDDDDPDDDDPPPDDDDDDPPDDDDDPPDDDDPDPPDDDDDPPDDDDDDDPPDDDPPPDP",
+      "trajectoryHash": "70f5c8efe65942b4"
     },
     {
       "level": "advanced",
       "seed": 404,
-      "turns": 98,
-      "winner": 0,
+      "turns": 101,
+      "winner": 1,
       "finalScores": [
-        148,
-        -37,
-        -111
+        -52,
+        209,
+        -157
       ],
-      "moveTypes": "DPDDDDDDDDDDDDPDDDPDDPPDDDDPPDDDDPDDDPDDDPDDDDPDPPDPDDDDPPPDPDDDDPDPDDDDDDDDDDDPDPPPDDDPPPPDDDPDDD",
-      "trajectoryHash": "077de48be43f5642"
+      "moveTypes": "DPDDDDDDDDDPDDDDDDPDDPPDDDDPPDDDDPPDPPDPPPDDDDDDPPPDDDDPDPDDDDDDPPPDDDPPDDDDDDDPDPDDDDDPPDPDPDPDPPDDD",
+      "trajectoryHash": "809b850ccbd12730"
     },
     {
       "level": "advanced",
       "seed": 505,
-      "turns": 95,
+      "turns": 61,
       "winner": 0,
       "finalScores": [
-        190,
-        -69,
-        -121
+        138,
+        -33,
+        -105
       ],
-      "moveTypes": "DDDPPDDPDPPDDDDDDDDDPPDDDDPDPDDDDDDDPDDDDPPDDDDDPPDDDDDPDDDDDDDDDDPPPPPDPDDDDPPDDDPDDDDPDDDPDDD",
-      "trajectoryHash": "9da2f56e3c7bb343"
+      "moveTypes": "DPDPPDPDDDDDDDDPDDDDDDDDDDPPDDDPDDDDDPPPDDDPDPPPPPDDDDDPDPPPP",
+      "trajectoryHash": "32f32f3b8f2d3c76"
     },
     {
       "level": "expert",

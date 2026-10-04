@@ -32,7 +32,7 @@ Tot això s'exporta des de `@remigi/core` (i és exactament el que conté
 
 | Element | Què és |
 |---|---|
-| `ENGINE_VERSION` | Versió del motor, `"1.0.0"` |
+| `ENGINE_VERSION` | Versió del motor, `"1.1.0"` |
 | `createEngine(options?)` | Crea un motor (`seed` o `rng` opcionals) |
 | `engine.play(state, options?)` | Decideix el moviment d'un jugador |
 | `engine.analyze(state, options?)` | Millor jugada d'una posició, sense errors humans (determinista) |
@@ -70,7 +70,7 @@ La resposta (`EngineDecision`) porta la jugada i el seu diagnòstic:
 ```ts
 {
   move: { type: 'play', board: [...] },  // o { type: 'draw' }
-  engineVersion: '1.0.0',
+  engineVersion: '1.1.0',
   level: 'expert',        // nivell efectivament aplicat
   thinkingTimeMs: 34,     // temps de càlcul
   nodes: 84321,           // nodes de la cerca de reordenació (0 si no s'engega)
@@ -89,7 +89,7 @@ El diagnòstic **no canvia mai la jugada**: és per mesurar i comparar motors.
 engine.play(state, {
   playerIndex: 2,          // per defecte, state.currentPlayer
   level: 'medium',         // per defecte, l'aiLevel del jugador dins de l'estat
-  rubberBanding: true,     // ajust d'error segons com va l'humà (per defecte, no)
+  rubberBanding: true,     // ajust d'error i de reordenació segons com va l'humà (per defecte, no)
   overrides: { mistakeRate: 0 },  // substitueix paràmetres del nivell (proves)
   maxNodes: 50_000,        // sostre de la cerca de reordenació
 });

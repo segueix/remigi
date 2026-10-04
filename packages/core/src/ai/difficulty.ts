@@ -18,11 +18,15 @@ export interface AiParams {
   extendsBoard: boolean;
   /** Si està disposat a jugar els jokers de la mà (els nivells baixos se'ls guarden). */
   usesJokers: boolean;
-  /**
-   * Reservat per a la fase següent del solver: reordenar completament la taula
-   * per encabir-hi més fitxes. Encara no implementat (vegeu docs/ARQUITECTURA.md).
-   */
+  /** Si sap reordenar completament la taula per encabir-hi més fitxes. */
   rearrangesTable: boolean;
+  /**
+   * Proporció de torns en què fa servir la reordenació (0–1), si en sap. És el
+   * que més pesa en la força d'un bot: un rival que no reordena mai perd totes
+   * les partides contra un que sempre ho fa, així que aquest valor gradua el
+   * salt entre nivells en comptes de fer-lo de cop.
+   */
+  rearrangeRate: number;
 }
 
 export const DIFFICULTIES: Record<DifficultyKey, AiParams> = {
@@ -34,6 +38,7 @@ export const DIFFICULTIES: Record<DifficultyKey, AiParams> = {
     extendsBoard: false,
     usesJokers: false,
     rearrangesTable: false,
+    rearrangeRate: 0,
   },
   easy: {
     key: 'easy',
@@ -43,6 +48,7 @@ export const DIFFICULTIES: Record<DifficultyKey, AiParams> = {
     extendsBoard: false,
     usesJokers: true,
     rearrangesTable: false,
+    rearrangeRate: 0,
   },
   medium: {
     key: 'medium',
@@ -52,6 +58,7 @@ export const DIFFICULTIES: Record<DifficultyKey, AiParams> = {
     extendsBoard: true,
     usesJokers: true,
     rearrangesTable: false,
+    rearrangeRate: 0,
   },
   advanced: {
     key: 'advanced',
@@ -60,7 +67,8 @@ export const DIFFICULTIES: Record<DifficultyKey, AiParams> = {
     mistakeRate: 0.04,
     extendsBoard: true,
     usesJokers: true,
-    rearrangesTable: false,
+    rearrangesTable: true,
+    rearrangeRate: 0.2,
   },
   expert: {
     key: 'expert',
@@ -70,6 +78,7 @@ export const DIFFICULTIES: Record<DifficultyKey, AiParams> = {
     extendsBoard: true,
     usesJokers: true,
     rearrangesTable: true,
+    rearrangeRate: 1,
   },
 };
 
@@ -80,4 +89,17 @@ export const DEFAULT_DIFFICULTY: DifficultyKey = 'medium';
 
 export function difficultyByKey(key: string | undefined): AiParams {
   return DIFFICULTIES[(key ?? DEFAULT_DIFFICULTY) as DifficultyKey] ?? DIFFICULTIES[DEFAULT_DIFFICULTY];
+}
+
+/**
+ * Aplica substitucions de paràmetres a un nivell. Una substitució que només
+ * diu `rearrangesTable` (sense `rearrangeRate`) es llegeix com abans que
+ * existís la proporció: `true` vol dir reordenar sempre i `false`, mai.
+ */
+export function withOverrides(base: AiParams, overrides: Partial<AiParams> = {}): AiParams {
+  const params = { ...base, ...overrides };
+  if (overrides.rearrangesTable !== undefined && overrides.rearrangeRate === undefined) {
+    params.rearrangeRate = overrides.rearrangesTable ? 1 : 0;
+  }
+  return params;
 }
