@@ -62,7 +62,8 @@ Amb la mateixa llavor, la mateixa partida: imprescindible per depurar i testejar
 No hi ha un algorisme per nivell: hi ha **un únic cercador de jugades**
 (`ai/solver.ts`) i **paràmetres que el limiten** (`ai/difficulty.ts`): probabilitat
 d'error humà (`mistakeRate`), si pot allargar la taula (`extendsBoard`), si juga
-els jokers (`usesJokers`), si reparteix de nou la taula (`rearrangesTable`)...
+els jokers (`usesJokers`), si sap repartir de nou la taula (`rearrangesTable`) i
+en quina proporció de torns ho fa (`rearrangeRate`)...
 Ajustar la corba de dificultat és tocar números, no
 reescriure lògica. La capa adaptativa (`adaptive/`) tria aquests paràmetres
 segons el perfil del jugador; vegeu `docs/IA-ADAPTATIVA.md`.
