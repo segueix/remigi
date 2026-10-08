@@ -144,3 +144,15 @@ describe('el que hi ha desat no és de fiar', () => {
     ).toBeNull();
   });
 });
+
+it('conserva la força contínua i rebutja una configuració numèrica malmesa', async () => {
+  const store = new MemoryStore();
+  const saved = playing();
+  saved.setup.opponentRatings = [1130, 1130];
+  await saveGame(store, saved);
+  expect((await loadGame(store))?.setup.opponentRatings).toEqual([1130, 1130]);
+  for (const ratings of [[1130], [1130, 9000], [1130, NaN]]) {
+    await saveGame(store, { ...saved, setup: { ...saved.setup, opponentRatings: ratings } });
+    expect(await loadGame(store)).toBeNull();
+  }
+});

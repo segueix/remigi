@@ -37,7 +37,7 @@ test('els oponents proposats pugen amb l’habilitat', async ({ page }) => {
   }, PROFILE_KEY);
   await page.reload();
   await obreMenu(page);
-  await expect(page.locator('.suggestion')).toContainText('Expert, Expert');
+  await expect(page.locator('.suggestion')).toContainText('1600 (Expert)');
 });
 
 test('el nivell es pot canviar manualment des del menú', async ({ page }) => {
@@ -204,4 +204,23 @@ test('reiniciar el perfil demana confirmació i torna a començar de zero', asyn
       page.evaluate((clau) => JSON.parse(localStorage.getItem(clau) ?? 'null'), PROFILE_KEY),
     )
     .toMatchObject({ name: 'Jugador', rating: 1100, gamesPlayed: 0 });
+});
+
+test('la força exacta segueix el número i queda congelada en reprendre', async ({ page }) => {
+  await comencaDeZero(page, 'Anna');
+  await page.evaluate((key) => {
+    const profile = JSON.parse(localStorage.getItem(key)!);
+    localStorage.setItem(key, JSON.stringify({ ...profile, rating: 1130, adaptiveStep: 8, adaptiveCalibrating: false, ratedGames: 3 }));
+    localStorage.removeItem('remigi:game');
+  }, PROFILE_KEY);
+  await page.reload();
+  await expect(page.locator('.player .tag').filter({ hasText: 'Fàcil–Mitjà' })).toHaveCount(2);
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('remigi:game') ?? 'null')?.setup.opponentRatings)).toEqual([1130, 1130]);
+  await page.evaluate((key) => {
+    const profile = JSON.parse(localStorage.getItem(key)!);
+    localStorage.setItem(key, JSON.stringify({ ...profile, rating: 1500 }));
+  }, PROFILE_KEY);
+  await page.reload();
+  await expect(page.locator('.player .tag').filter({ hasText: 'Fàcil–Mitjà' })).toHaveCount(2);
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('remigi:game') ?? 'null')?.setup.opponentRatings)).toEqual([1130, 1130]);
 });

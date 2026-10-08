@@ -1,4 +1,4 @@
-import { DIFFICULTIES, STARTING_RATING, adaptiveLevelLabel, type GameRecord } from '@remigi/core';
+import { DIFFICULTIES, STARTING_RATING, adaptiveLevelLabel, difficultyByRating, type GameRecord } from '@remigi/core';
 import { useState } from 'react';
 import type { ProfileHandle } from '../state/useProfile';
 
@@ -214,7 +214,10 @@ function RatingChart({ history }: { history: GameRecord[] }) {
 }
 
 function describeRecord(record: GameRecord, index: number, showRating = true): string {
-  const rivals = record.opponents.map((key) => DIFFICULTIES[key].label).join(', ');
+  const rivals = record.opponents.map((key, i) => {
+                const rating = record.opponentRatings?.[i];
+                return rating === undefined ? DIFFICULTIES[key].label : `${difficultyByRating(rating).label} (${rating})`;
+              }).join(', ');
   const base = `Partida ${index + 1} · ${record.won ? 'guanyada' : 'perduda'} contra ${rivals}`;
   return showRating ? `${base} · habilitat ${record.ratingAfter}` : base;
 }
@@ -233,7 +236,10 @@ function HistoryList({ history, showRating }: { history: GameRecord[]; showRatin
               {record.won ? 'Guanyada' : 'Perduda'}
             </span>
             <span className="muted history-rivals">
-              {record.opponents.map((key) => DIFFICULTIES[key].label).join(', ')}
+              {record.opponents.map((key, i) => {
+                const rating = record.opponentRatings?.[i];
+                return rating === undefined ? DIFFICULTIES[key].label : `${difficultyByRating(rating).label} (${rating})`;
+              }).join(', ')}
             </span>
             <span className="muted history-date">{formatDate(record.date)}</span>
             {showRating && <span className="history-rating">{record.ratingAfter}</span>}

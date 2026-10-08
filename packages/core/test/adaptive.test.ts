@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { suggestOpponents } from '../src/adaptive/adaptiveDifficulty';
+import { suggestOpponents, suggestOpponentRatings } from '../src/adaptive/adaptiveDifficulty';
 import { createProfile, kFactor, recordGame, STARTING_RATING } from '../src/adaptive/experience';
 import { expectedScore, updateRating } from '../src/adaptive/rating';
 
@@ -53,26 +53,20 @@ describe('tria adaptativa d’oponents', () => {
     expect(suggestOpponents(profile, 2)).toEqual(['advanced', 'advanced']);
   });
 
-  it('la primera derrota passa a ajust fi entre el nivell perdut i l’anterior', () => {
+  it('després del calibratge el número mana i els ajustos són petits', () => {
     let profile = createProfile('u1', 'Anna');
     profile = recordGame(profile, ['rookie', 'rookie'], true);
     profile = recordGame(profile, ['easy', 'easy'], true);
-
     profile = recordGame(profile, ['medium', 'medium'], false);
     expect(profile.adaptiveCalibrating).toBe(false);
-    expect(suggestOpponents(profile, 2)).toEqual(['easy', 'medium']);
-
-    // Si torna a guanyar, recupera Mitjà; si hi perd, torna al mig graó.
-    profile = recordGame(profile, ['easy', 'medium'], true);
-    expect(suggestOpponents(profile, 2)).toEqual(['medium', 'medium']);
-    profile = recordGame(profile, ['medium', 'medium'], false);
-    expect(suggestOpponents(profile, 2)).toEqual(['easy', 'medium']);
-
-    // Una altra derrota l'abaixa a Fàcil, però una victòria el torna a acostar a Mitjà.
-    profile = recordGame(profile, ['easy', 'medium'], false);
-    expect(suggestOpponents(profile, 2)).toEqual(['easy', 'easy']);
-    profile = recordGame(profile, ['easy', 'easy'], true);
-    expect(suggestOpponents(profile, 2)).toEqual(['easy', 'medium']);
+    expect(profile.rating).toBe(1100);
+    expect(profile.ratedGames).toBe(0);
+    expect(suggestOpponentRatings(profile, 2)).toEqual([1100, 1100]);
+    profile = recordGame(profile, ['easy', 'easy'], { won: true, opponentRatings: [1100, 1100] });
+    expect(profile.rating).toBe(1127);
+    expect(suggestOpponentRatings(profile, 2)).toEqual([1127, 1127]);
+    profile = recordGame(profile, ['easy', 'easy'], { won: false, opponentRatings: [1127, 1127] });
+    expect(profile.rating).toBe(1114);
   });
 
   it('la primera derrota fixa el nivell segons si ha estat ajustada o contundent', () => {
@@ -90,7 +84,7 @@ describe('tria adaptativa d’oponents', () => {
     const intermèdia = recordGame(aMitja, ['medium'], { won: false, margin: 0.5 });
     expect(intermèdia.adaptiveStep).toBe(3);
     expect(intermèdia.rating).toBe(1100);
-    expect(suggestOpponents(intermèdia, 2)).toEqual(['easy', 'medium']);
+    expect(suggestOpponentRatings(intermèdia, 2)).toEqual([1100, 1100]);
 
     const clara = recordGame(aMitja, ['medium'], { won: false, margin: 0.9 });
     expect(clara.adaptiveStep).toBe(2);

@@ -1807,3 +1807,40 @@ el 12% amb l'ajust antic (només errors) i el **18%** amb el nou.
   («jugades curtes»), no implementada en aquest canvi.
 - [2026-10-04] Mitjà–Fàcil (99%) i Avançat–Mitjà (98%) continuen molt per sobre
   del 76% que espera l'Elo. No s'ha tocat perquè no era el cas reportat.
+
+### Nivell continu que busca l'equilibri — 2026-10-08
+
+**Estat**: ✅ Feta (2026-10-08).
+
+- [x] Unificar força adaptativa i número del jugador: després del calibratge
+      `rating` mana; els mig graons antics ja no produeixen salts de 100 punts.
+- [x] Primera derrota: assignació segons el marge; guanyar a Expert també
+      acaba el calibratge a 1600, evitant una escalada indefinida.
+- [x] Valoració multijugador: victòria esperada 1/(n+1) contra n rivals iguals.
+      K=40 les primeres 10 partides valorades, reducció gradual fins a K=20;
+      marge limitat a ±25%. El marge negatiu correspon al faristol propi.
+- [x] Motor 1.2.0: `rating` continu, errors i capacitats graduades, sense
+      canviar les trajectòries dels cinc nivells fixos. Força congelada amb la
+      partida, reutilitzada al motor, desat, historial i càlcul final.
+- [x] Mostrar variació del nivell i final de calibratge; compatibilitat amb
+      perfils/partides/enllaços antics, conservació i transferència de
+      `ratedGames`, reinici sense esborrar totals.
+- [x] Simulador reproduïble: `node --import tsx packages/core/src/cli/simulateRatings.ts 80`.
+      640 partides completades, amb invariant de conservació de fitxes.
+- [x] Tipus i 281 tests unitaris correctes (149 motor + 132 web); build correcte.
+      Proves de perfil: 18 correctes entre mòbil i escriptori.
+- [x] Bateria completa de navegador: 129 correctes i 9 omeses per plataforma.
+      Canvi preparat per integrar a main mitjançant pull request.
+
+**Problemes i decisions**:
+- La interpolació lineal dels jokers feia que el nivell 900 fos massa semblant
+  a Fàcil: 215/400 victòries contra 1000. Amb corba cúbica: 184/400 (46%).
+  La força no és lineal en la probabilitat de victòria; l'Elo és una estimació.
+- Els nivells antics fora de 800–1600 no es retallen de cop: no es penalitza
+  una victòria ni es premia una derrota pel simple fet de migrar el perfil.
+- `tsx` CLI no pot crear el seu socket IPC en aquest entorn; les simulacions
+  s'han executat amb `node --import tsx`, sense servidor IPC.
+
+- La primera passada completa de Playwright s'ha interromput perquè un build
+  simultani havia substituït els recursos servits i el retard dels bots de
+  prova. S'ha repetit amb el build estable, sense compilacions paral·leles.

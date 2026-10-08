@@ -88,6 +88,11 @@ function isResumable(value: unknown): boolean {
   if (!setup || !Array.isArray(setup.opponents) || typeof setup.playerName !== 'string') {
     return false;
   }
+  if (setup.opponentRatings !== undefined &&
+      (!Array.isArray(setup.opponentRatings) || setup.opponentRatings.length !== setup.opponents.length ||
+       !setup.opponentRatings.every((rating) => Number.isFinite(rating) && rating >= 800 && rating <= 1600))) {
+    return false;
+  }
   if (!game || typeof game !== 'object') return false;
   // Només es reprenen partides a mig jugar: una d'acabada ja no té continuació.
   if (game.status !== 'playing') return false;

@@ -119,3 +119,9 @@ describe('cicle complet amb emmagatzematge', () => {
     expect(loaded!.rating > STARTING_RATING).toBe(humanWon(game));
   });
 });
+
+it('registra la força congelada de la partida encara que el perfil hagi canviat', () => {
+  const profile = { ...createProfile('u', 'Anna'), adaptiveCalibrating: false, rating: 1300 };
+  const after = profileAfterGame(profile, finishedWith(0), ['easy', 'easy'], undefined, true, [1130, 1130]);
+  expect(after.history[0].opponentRatings).toEqual([1130, 1130]);
+});

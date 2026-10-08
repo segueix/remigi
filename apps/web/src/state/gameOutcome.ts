@@ -32,18 +32,21 @@ export function profileAfterGame(
   opponents: DifficultyKey[],
   date?: Date,
   adaptive = true,
+  opponentRatings?: number[],
 ): PlayerProfile {
   const mine = finalScores(game).find((score) => score.playerId === game.players[0]?.id);
-  const margin = mine ? marginFromPoints(mine.points, opponents.length) : undefined;
-  return recordGame(profile, opponents, { won: humanWon(game), margin, adaptive }, date);
+  const margin = mine ? marginFromPoints(mine.points, humanWon(game) ? opponents.length : 1) : undefined;
+  return recordGame(profile, opponents, { won: humanWon(game), margin, adaptive, opponentRatings }, date);
 }
 
 export interface RatingChange {
   before: number;
   after: number;
   delta: number;
+  calibrated?: boolean;
 }
 
 export function ratingChange(before: PlayerProfile, after: PlayerProfile): RatingChange {
-  return { before: before.rating, after: after.rating, delta: after.rating - before.rating };
+  return { before: before.rating, after: after.rating, delta: after.rating - before.rating,
+    calibrated: before.adaptiveCalibrating === true && after.adaptiveCalibrating === false };
 }

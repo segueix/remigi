@@ -36,6 +36,8 @@ const engine = createEngine();
 export interface GameSetup {
   playerName: string;
   opponents: DifficultyKey[];
+  /** Força exacta dels bots, desada amb la partida. */
+  opponentRatings?: number[];
   /**
    * Els rivals són automàtics: surten de l'habilitat del perfil i es tornen a
    * triar a cada partida nova. Absent (partides desades velles) val com a cert.
@@ -146,6 +148,7 @@ export function useGame(
         const mover = current.currentPlayer;
         const decision = engine.play(current, {
           playerIndex: mover,
+          rating: setupRef.current.opponentRatings?.[mover - 1],
           rubberBanding: setupRef.current.adaptDuringGame,
         });
         const next = applyMove(current, decision.move);

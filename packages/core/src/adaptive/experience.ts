@@ -1,5 +1,5 @@
 import { DIFFICULTIES, type DifficultyKey } from '../ai/difficulty';
-import { updateRating } from './rating';
+import { updateTableRating } from './rating';
 import { nextAdaptiveProgress, ratingForAdaptiveStep } from './adaptiveDifficulty';
 
 /** Valoració amb què comença tot jugador nou (entre 'easy' i 'medium'). */
@@ -20,6 +20,8 @@ export interface GameRecord {
   ratingAfter: number;
   /** Si la partida formava part de la progressió adaptativa. */
   adaptive?: boolean;
+  /** Força numèrica real dels rivals, congelada en començar. */
+  opponentRatings?: number[];
 }
 
 /** Resultat d'una partida, amb el marge si es coneix. */
@@ -29,6 +31,8 @@ export interface GameOutcome {
   margin?: number;
   /** Si s'ha de moure també el nivell adaptatiu. Per defecte, sí. */
   adaptive?: boolean;
+  /** Força numèrica real dels rivals, congelada en començar. */
+  opponentRatings?: number[];
 }
 
 /** Marge neutre: mou la valoració igual que abans de tenir-lo en compte. */
@@ -58,7 +62,9 @@ export interface PlayerProfile {
   history: GameRecord[];
   /** Mig graó adaptatiu: 0 = Novell, 2 = Fàcil, 4 = Mitjà, 6 = Avançat, 8 = Expert. */
   adaptiveStep?: number;
-  /** Cert només durant l'escalada inicial fins a la primera derrota. */
+  /** Partides valorades des del darrer calibratge (absent en perfils antics). */
+  ratedGames?: number;
+  /** Cert fins a la primera derrota o fins a guanyar a Expert. */
   adaptiveCalibrating?: boolean;
 }
 
@@ -70,6 +76,7 @@ export function createProfile(id: string, name: string): PlayerProfile {
     gamesPlayed: 0,
     wins: 0,
     history: [],
+    ratedGames: 0,
     adaptiveStep: 0,
     adaptiveCalibrating: true,
   };
@@ -90,13 +97,12 @@ function marginWeight(margin: number): number {
  */
 export function kFactor(gamesPlayed: number): number {
   if (gamesPlayed < 10) return 40;
-  if (gamesPlayed < 30) return 24;
-  return 16;
+  return Math.max(20, 40 - (gamesPlayed - 9));
 }
 
 /**
  * Registra el resultat d'una partida al perfil i retorna el perfil actualitzat
- * (el d'entrada no es modifica). La valoració s'actualitza contra la mitjana
+ * (el d'entrada no es modifica). La valoració s'actualitza contra el conjunt
  * dels oponents de la partida i, si es coneix, segons el marge del resultat:
  * una victòria per molt val més que una d'apurada.
  *
@@ -108,50 +114,57 @@ export function recordGame(
   outcome: boolean | GameOutcome,
   date: Date = new Date(),
 ): PlayerProfile {
-  const { won, margin = NEUTRAL_MARGIN, adaptive = true } =
+  const { won, margin = NEUTRAL_MARGIN, adaptive = true, opponentRatings: actualRatings } =
     typeof outcome === 'boolean'
       ? { won: outcome, margin: NEUTRAL_MARGIN, adaptive: true }
       : outcome;
 
-  const opponentRatings = opponents.map((key) => DIFFICULTIES[key].rating);
-  const averageOpponent =
-    opponentRatings.reduce((a, b) => a + b, 0) / Math.max(1, opponentRatings.length);
-  const eloRating = updateRating(
-    profile.rating,
-    averageOpponent,
-    won ? 1 : 0,
-    kFactor(profile.gamesPlayed) * marginWeight(margin),
+  const opponentRatings = opponents.map((key, index) => {
+    const actual = actualRatings?.[index];
+    return typeof actual === 'number' && Number.isFinite(actual) && actual >= 800 && actual <= 1600
+      ? actual : DIFFICULTIES[key].rating;
+  });
+  const ratedGames = profile.ratedGames ?? profile.gamesPlayed;
+  const eloRating = updateTableRating(
+    profile.rating, opponentRatings, won,
+    kFactor(ratedGames) * marginWeight(margin),
   );
   const adaptiveProgress: Partial<
     Pick<PlayerProfile, 'adaptiveStep' | 'adaptiveCalibrating'>
   > = adaptive ? nextAdaptiveProgress(profile, won, margin) : {};
   /*
    * Durant la calibració l'Elo es mou internament però no s'ensenya. Quan la
-   * primera derrota tanca la calibració, el número queda alineat amb el nivell
+   * primera derrota (o victòria a Expert) tanca el calibratge, el número queda alineat amb el nivell
    * acabat d'assignar (Novell 800, Novell–Fàcil 900, Fàcil 1000, etc.).
    */
   const calibratedStep =
     adaptive &&
     profile.adaptiveCalibrating === true &&
-    !won &&
+    adaptiveProgress.adaptiveCalibrating === false &&
     typeof adaptiveProgress.adaptiveStep === 'number'
       ? adaptiveProgress.adaptiveStep
       : null;
   const rating = calibratedStep !== null
     ? ratingForAdaptiveStep(calibratedStep)
-    : eloRating;
+    : Math.min(Math.max(1600, profile.rating), Math.max(Math.min(800, profile.rating), eloRating));
+  if (adaptive && calibratedStep === null && !profile.adaptiveCalibrating) {
+    adaptiveProgress.adaptiveStep = Math.min(8, Math.max(0, Math.round((rating - 800) / 100)));
+  }
   const record: GameRecord = {
     date: date.toISOString(),
     opponents,
     won,
     margin,
     ratingAfter: rating,
+    opponentRatings,
     adaptive,
   };
   return {
     ...profile,
     ...adaptiveProgress,
     rating,
+    ratedGames: calibratedStep !== null ? 0
+      : profile.adaptiveCalibrating ? ratedGames : ratedGames + 1,
     gamesPlayed: profile.gamesPlayed + 1,
     wins: profile.wins + (won ? 1 : 0),
     history: [...profile.history, record].slice(-HISTORY_LIMIT),

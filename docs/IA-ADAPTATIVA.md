@@ -33,72 +33,69 @@ reordena gairebé no es nota, perquè la jugada que deixa escapar la recupera el
 torn següent (un expert amb un 15% d'error encara guanya la meitat dels duels
 contra un de perfecte).
 
-## 2. Perfil i experiència del jugador (`adaptive/experience.ts`)
+## 2. Un únic nivell numèric
 
-Cada jugador té un `PlayerProfile` persistent:
+`PlayerProfile.rating` és la font de veritat del nivell del jugador. Després
+del calibratge, la força dels rivals surt d'aquest número, sense una escala
+paral·lela que pugi o baixi 100 punts a cada resultat.
 
-- **`rating`**: valoració Elo. Es comença a 1100 i continua servint per mesurar
-  l'habilitat i conservar compatibilitat amb perfils anteriors;
-- **`adaptiveStep`**: mig graó de dificultat adaptativa (0 = Novell, 2 = Fàcil,
-  4 = Mitjà, 6 = Avançat, 8 = Expert);
-- **`adaptiveCalibrating`**: indica si encara és a l'escalada inicial;
-- **`gamesPlayed`, `wins`**: experiència acumulada;
-- **`history`**: les darreres 50 partides (rivals, resultat, evolució de l'Elo).
+- `adaptiveStep`: només dirigeix l'escalada del calibratge; els valors antics
+  no substitueixen el número d'un perfil ja calibrat.
+- `adaptiveCalibrating`: indica si encara s'està buscant el primer nivell.
+- `ratedGames`: partides valorades després del calibratge. Les primeres 10
+  tenen K=40; després baixa un punt per partida fins a K=20. Si el camp falta
+  en un perfil antic, es fa servir `gamesPlayed`.
+- `gamesPlayed`, `wins` i les darreres 50 partides es conserven. L'historial
+  també desa la força numèrica real dels rivals.
 
-Després de cada partida, `recordGame` actualitza l'Elo del jugador contra la
-mitjana dels rivals de la partida (`adaptive/rating.ts`):
+La probabilitat de victòria estimada és
+`1 / (1 + suma(10 ** ((nivellRival - nivellJugador) / 400)))`.
+Contra 1, 2 o 3 rivals equivalents és respectivament 1/2, 1/3 o 1/4.
+La variació és `K × pesMarge × (resultat - probabilitat)`, arrodonida.
+Així, amb dos rivals equivalents i marge neutre, inicialment guanyar suma
+27 punts i perdre en resta 13; una victòria compensa aproximadament dues derrotes.
 
-- guanyar contra rivals més forts puja molt; contra rivals fluixos, poc;
-- perdre contra rivals fluixos baixa molt; contra rivals forts, poc;
-- el **factor K** comença alt (40) i baixa amb l'experiència (24, després 16):
-  les primeres partides serveixen per situar ràpidament el nivell del jugador,
-  i després la valoració s'estabilitza;
-- el **marge del resultat** hi posa el matís: guanyar per molts punts mou la
-  valoració un 25% més que guanyar-ne per pocs, i perdre de pallissa la baixa
-  més que perdre per poc (`marginFromPoints`).
+El marge modula K entre un 75% i un 125%. En guanyar es divideixen els punts
+entre els rivals; en perdre es compta només el faristol propi, perquè els
+punts negatius ja són individuals. La velocitat o el nombre de reorganitzacions
+no donen punts. La probabilitat és una estimació, no una garantia empírica.
 
-## 3. Tria d'oponents (`adaptive/adaptiveDifficulty.ts`)
+El rang ordinari és 800–1600, el que cobreix la IA. Els valors antics que
+queden fora del rang no es retallen sobtadament: una victòria no els abaixa
+ni una derrota els apuja. Els bots es limiten a la força disponible.
 
-El mode **adaptatiu és el predeterminat**. Un perfil nou no es col·loca d'entrada
-segons l'Elo: fa una calibració curta i entenedora:
+## 3. Calibratge i tria de rivals
 
-1. primera partida: **Novell**;
-2. si guanya: **Fàcil**;
-3. si torna a guanyar: **Mitjà**;
-4. després **Avançat** i **Expert**, sempre que continuï guanyant.
+Un perfil nou comença contra Novell i puja a Fàcil, Mitjà, Avançat i Expert
+mentre guanya. Durant l'escalada no s'ensenya cap número provisional.
+La primera derrota acaba el calibratge i assigna:
 
-Durant aquesta escalada tots els rivals tenen el mateix nivell i **no es mostra
-cap número d'habilitat provisional**. Quan arriba la **primera derrota**, s'acaba
-la calibració i el marge d'aquella derrota fixa el primer nivell del jugador:
+- marge ≤0,25: nivell provat;
+- marge ≤0,65: 100 punts menys;
+- marge >0,65: 200 punts menys, amb mínim 800.
 
-- derrota ajustada: conserva el nivell que estava provant;
-- derrota intermèdia: queda a mig graó entre aquell nivell i l'anterior;
-- derrota clara: baixa al nivell anterior.
+Si guanya també a Expert, el calibratge acaba a 1600. En acabar o reiniciar
+el calibratge, el comptador `ratedGames` torna a zero, sense esborrar totals.
 
-En aquell moment el número d'habilitat es fa visible i queda alineat amb el
-nivell assignat (Novell 800, Novell–Fàcil 900, Fàcil 1000, etc.). A partir
-d'aquí comença l'ajust fi i el nivell adaptatiu passa a moure's en **mig graons**:
+Després, `suggestOpponentRatings` fixa per a tots els rivals el número del
+jugador en començar la partida. La web el desa a `GameSetup.opponentRatings`
+i el passa a `engine.play({ rating })` a cada torn. El resultat es valora amb
+els números desats, encara que el perfil hagi canviat. Les partides desades
+antigues, sense números, continuen amb els nivells fixos que tenien.
 
-- victòria: puja mig graó;
-- derrota: baixa mig graó;
-- amb dos rivals, un mig graó es representa amb un rival de cada nivell
-  adjacent: per exemple **Fàcil + Mitjà**.
+`difficultyByRating` interpola entre els dos nivells adjacents: errors,
+proporció de torns amb jokers, extensions i reordenació. Les capacitats noves
+s'activen gradualment, sense salts booleans. Els jokers segueixen una corba
+cúbica: les simulacions mostren que una interpolació lineal arriba massa
+aviat a una força semblant a Fàcil. Als cinc nivells exactes, les
+jugades i el consum de RNG són els mateixos que abans. Les claus retornades
+per `suggestOpponents` són descriptives; per jugar amb força contínua cal
+passar també els números de `suggestOpponentRatings`.
 
-Així, si el jugador guanya a Fàcil però perd a Mitjà, el sistema pot quedar-se
-un temps entre tots dos en lloc d'obligar-lo a repetir sempre un únic nivell. Si
-millora i torna a encadenar victòries, continua pujant.
-
-Amb un sol rival, els dos nivells adjacents s'alternen entre partides. Amb tres,
-s'alterna quin dels dos nivells es repeteix per no esbiaixar sempre la dificultat
-cap al mateix costat.
-
-Els perfils antics, que no tenen desat aquest mig graó, es recuperen a partir del
-seu Elo perquè no perdin el nivell acumulat. Les partides amb nivell triat
-manualment continuen movent l'Elo, però **no alteren l'escala adaptativa**.
-
-Des de la configuració es pot **reiniciar només el nivell adaptatiu**. Això
-torna la calibració a Novell i reinicia l'habilitat provisional, però conserva
-el nom del jugador, les partides, les victòries i l'historial.
+Les partides manuals mantenen els rivals escollits i també actualitzen el
+número. Si es torna al mode automàtic, els rivals segueixen aquest número.
+Una partida manual no acaba ni fa avançar un calibratge pendent.
+Els enllaços entre dispositius conserven també `ratedGames` (`valorades` a la URL).
 
 ## 4. El cicle complet
 

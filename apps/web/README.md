@@ -335,3 +335,12 @@ el nom amb empremta i canvien de nom quan canvien de contingut.
 - **L'emmagatzematge no pot tombar el joc**: `localStorage` falla en navegació
   privada, amb galetes bloquejades o amb la quota exhaurida. `createWebStore()`
   ho comprova escrivint-hi de debò i, si no pot, degrada a memòria.
+
+### Nivell continu i calibratge
+
+La primera derrota fixa el número del jugador; guanyar també a Expert tanca
+el calibratge a 1600. Després, el número determina la força exacta dels bots
+i varia suaument segons resultat, marge i nombre de rivals. La pantalla final
+mostra el canvi (+/−) o «Calibratge completat». La força dels bots queda desada
+amb la partida; reprendre-la no recalcula els rivals amb un perfil diferent.
+Els enllaços de transferència conserven també les partides des del calibratge.

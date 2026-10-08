@@ -16,8 +16,12 @@ export interface AiParams {
   mistakeRate: number;
   /** Si sap allargar les jugades que ja hi ha a la taula. */
   extendsBoard: boolean;
+  /** Proporció de torns amb extensions; absent equival al booleà. */
+  extensionRate?: number;
   /** Si està disposat a jugar els jokers de la mà (els nivells baixos se'ls guarden). */
   usesJokers: boolean;
+  /** Proporció de torns amb jokers; absent equival al booleà. */
+  jokerRate?: number;
   /** Si sap reordenar completament la taula per encabir-hi més fitxes. */
   rearrangesTable: boolean;
   /**
@@ -102,4 +106,27 @@ export function withOverrides(base: AiParams, overrides: Partial<AiParams> = {})
     params.rearrangeRate = overrides.rearrangesTable ? 1 : 0;
   }
   return params;
+}
+
+/** Interpolació contínua de capacitats entre dos nivells consecutius. */
+export function difficultyByRating(value: number): AiParams {
+  const rating = Number.isFinite(value) ? Math.min(1600, Math.max(800, value)) : 1200;
+  const position = (rating - 800) / 200;
+  const lower = DIFFICULTIES[DIFFICULTY_ORDER[Math.floor(position)]];
+  const upper = DIFFICULTIES[DIFFICULTY_ORDER[Math.ceil(position)]];
+  if (lower === upper) return { ...lower };
+  const fraction = position - Math.floor(position);
+  const mix = (a: number, b: number) => a + (b - a) * fraction;
+  return {
+    ...lower, rating, label: `${lower.label}–${upper.label}`,
+    mistakeRate: mix(lower.mistakeRate, upper.mistakeRate),
+    rearrangesTable: upper.rearrangesTable,
+    rearrangeRate: mix(lower.rearrangeRate, upper.rearrangeRate),
+    usesJokers: upper.usesJokers,
+    // Els jokers tenen molt impacte als nivells baixos: una corba cúbica
+    // evita que el punt mig ja jugui pràcticament com Fàcil.
+    jokerRate: Number(lower.usesJokers) + (Number(upper.usesJokers) - Number(lower.usesJokers)) * fraction ** 3,
+    extendsBoard: upper.extendsBoard,
+    extensionRate: mix(Number(lower.extendsBoard), Number(upper.extendsBoard)),
+  };
 }
