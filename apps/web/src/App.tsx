@@ -1,4 +1,4 @@
-import { suggestOpponents } from '@remigi/core';
+import { suggestOpponents, suggestOpponentRatings } from '@remigi/core';
 import { useEffect, useState } from 'react';
 import type { GameSetup } from './game/useGame';
 import { GameScreen } from './screens/GameScreen';
@@ -50,6 +50,7 @@ export function App() {
   const setup: GameSetup = savedGame.saved?.setup ?? {
     playerName: profile.profile.name,
     opponents: suggestOpponents(profile.profile, 2),
+    opponentRatings: suggestOpponentRatings(profile.profile, 2),
     auto: true,
   };
 

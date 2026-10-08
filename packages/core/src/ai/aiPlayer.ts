@@ -104,8 +104,8 @@ export function decideAiMove(
 ): Move {
   const params = withOverrides(aiParamsForPlayer(state, playerIndex), options.overrides);
   const best = chooseBestPlay(state, playerIndex, {
-    allowJokers: params.usesJokers,
-    allowExtensions: params.extendsBoard,
+    allowJokers: params.usesJokers && rollRate(params.jokerRate ?? 1, rng),
+    allowExtensions: params.extendsBoard && rollRate(params.extensionRate ?? 1, rng),
     allowRearrange: params.rearrangesTable && rollRearrange(state, playerIndex, rng, params, options),
     maxNodes: options.maxNodes,
     stats: options.stats,
@@ -133,4 +133,9 @@ function rollRearrange(
   if (rate >= 1) return true;
   if (rate <= 0) return false;
   return rng() < rate;
+}
+
+/** Els extrems no consumeixen RNG: els nivells fixos conserven les decisions. */
+function rollRate(rate: number, rng: Rng): boolean {
+  return rate >= 1 || (rate > 0 && rng() < rate);
 }

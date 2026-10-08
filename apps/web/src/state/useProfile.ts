@@ -68,10 +68,11 @@ export function useProfile(): ProfileHandle {
       await save({
         ...profile,
         rating: progress.rating,
+        ratedGames: progress.ratedGames ?? progress.gamesPlayed,
         gamesPlayed: progress.gamesPlayed,
         wins: progress.wins,
-        // Els enllaços nous conserven exactament el mig graó adaptatiu. Els
-        // antics només porten Elo: en aquest cas se'n deriva el nivell.
+        // El graó només es recupera per continuar un calibratge pendent.
+        // Un cop calibrat, la força surt sempre del número.
         adaptiveStep: progress.adaptiveStep,
         adaptiveCalibrating: progress.adaptiveStep === undefined
           ? false
@@ -86,6 +87,7 @@ export function useProfile(): ProfileHandle {
     await save({
       ...profile,
       rating: STARTING_RATING,
+      ratedGames: 0,
       adaptiveStep: 0,
       adaptiveCalibrating: true,
     });

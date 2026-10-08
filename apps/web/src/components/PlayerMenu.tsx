@@ -4,6 +4,7 @@ import {
   adaptiveLevelLabel,
   describeSuggestion,
   suggestOpponents,
+  suggestOpponentRatings,
   type DifficultyKey,
 } from '@remigi/core';
 import { useState } from 'react';
@@ -93,6 +94,7 @@ export function PlayerMenu({
       rating: profile.profile.rating,
       gamesPlayed: profile.profile.gamesPlayed,
       wins: profile.profile.wins,
+      ratedGames: profile.profile.ratedGames,
       adaptiveStep: profile.profile.adaptiveStep,
       adaptiveCalibrating: profile.profile.adaptiveCalibrating,
     };
@@ -164,6 +166,8 @@ export function PlayerMenu({
     onNewGame({
       playerName: name.trim() || profile.profile?.name || 'Jugador',
       opponents,
+      opponentRatings: level === 'auto' && profile.profile
+        ? suggestOpponentRatings(profile.profile, count) : undefined,
       auto: level === 'auto',
       adaptDuringGame: adapt,
     });
@@ -353,7 +357,7 @@ export function PlayerMenu({
         {level === 'auto' ? (
           suggested.length > 0 && (
             <p className="suggestion">
-              {describeSuggestion(suggested)} Aniran canviant a mesura que milloris o
+              {calibrating ? describeSuggestion(suggested) : `Rivals de nivell ${profile.profile?.rating} (${profile.profile ? adaptiveLevelLabel(profile.profile) : ""})`} Aniran canviant a mesura que milloris o
               empitjoris.
             </p>
           )

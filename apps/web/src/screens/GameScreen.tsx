@@ -2,8 +2,10 @@ import {
   DIFFICULTIES,
   adaptiveLevelLabel,
   difficultyByKey,
+  difficultyByRating,
   finalScores,
   suggestOpponents,
+  suggestOpponentRatings,
   type DifficultyKey,
   type PlayerProfile,
   type Tile,
@@ -102,6 +104,7 @@ export function GameScreen({
     currentSetup.opponents,
     profile,
     currentSetup.auto !== false,
+    currentSetup.opponentRatings,
   );
   const [menuOpen, setMenuOpen] = useState(false);
   /* El resum final es pot tancar per inspeccionar com ha quedat la taula. */
@@ -210,9 +213,12 @@ export function GameScreen({
 
   const restartAdapted = useCallback(() => {
     startNewGame(
-      nextOpponents ? { ...currentSetup, opponents: nextOpponents } : currentSetup,
+      nextOpponents && profile.profile ? {
+        ...currentSetup, opponents: nextOpponents,
+        opponentRatings: suggestOpponentRatings(profile.profile, nextOpponents.length as 1 | 2 | 3),
+      } : currentSetup,
     );
-  }, [startNewGame, nextOpponents, currentSetup]);
+  }, [startNewGame, nextOpponents, currentSetup, profile.profile]);
 
   /*
    * La taula que es veu és la del torn en curs mentre jugues tu, i la del
@@ -482,7 +488,9 @@ export function GameScreen({
                     {isHuman ? (profile.profile?.name ?? player.name) : player.name}
                   </span>
                   {player.kind === 'ai' && (
-                    <span className="tag">{difficultyByKey(player.aiLevel).label}</span>
+                    <span className="tag">{currentSetup.opponentRatings?.[index - 1] !== undefined
+                      ? difficultyByRating(currentSetup.opponentRatings[index - 1]).label
+                      : difficultyByKey(player.aiLevel).label}</span>
                   )}
                   {!player.hasOpened && <span className="tag">sense obrir</span>}
                 </span>
@@ -963,6 +971,11 @@ function GameOver({
         <p className="rating-change nivell-fixat">
           Nivell actual: <strong>{adaptiveLevelLabel(playerProfile)}</strong> · habilitat{' '}
           <strong>{playerProfile.rating}</strong>
+          {change?.calibrated ? ' · Calibratge completat' : change ? (
+            <span className={change.delta >= 0 ? 'points-positive' : 'points-negative'}>
+              {' '}({change.delta >= 0 ? '+' : ''}{change.delta})
+            </span>
+          ) : null}
         </p>
       ) : change ? (
         <p className="rating-change">
@@ -1009,7 +1022,7 @@ function GameOver({
       {nextOpponents ? (
         <p className="seguents-rivals">
           El joc s’adapta a tu: els pròxims rivals seran{' '}
-          <strong>{nextOpponents.map((key) => DIFFICULTIES[key].label).join(', ')}</strong>.
+          <strong>{playerProfile ? `${adaptiveLevelLabel(playerProfile)}${playerProfile.adaptiveCalibrating ? '' : ` · ${playerProfile.rating}`}` : nextOpponents.map((key) => DIFFICULTIES[key].label).join(', ')}</strong>.
         </p>
       ) : (
         fixedRivals && (

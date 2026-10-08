@@ -32,7 +32,7 @@ Tot això s'exporta des de `@remigi/core` (i és exactament el que conté
 
 | Element | Què és |
 |---|---|
-| `ENGINE_VERSION` | Versió del motor, `"1.1.0"` |
+| `ENGINE_VERSION` | Versió del motor, `"1.2.0"` |
 | `createEngine(options?)` | Crea un motor (`seed` o `rng` opcionals) |
 | `engine.play(state, options?)` | Decideix el moviment d'un jugador |
 | `engine.analyze(state, options?)` | Millor jugada d'una posició, sense errors humans (determinista) |
@@ -70,7 +70,7 @@ La resposta (`EngineDecision`) porta la jugada i el seu diagnòstic:
 ```ts
 {
   move: { type: 'play', board: [...] },  // o { type: 'draw' }
-  engineVersion: '1.1.0',
+  engineVersion: '1.2.0',
   level: 'expert',        // nivell efectivament aplicat
   thinkingTimeMs: 34,     // temps de càlcul
   nodes: 84321,           // nodes de la cerca de reordenació (0 si no s'engega)
@@ -258,3 +258,11 @@ La frontera ja permet, sense tocar l'app, el pas següent quan toqui:
 
 Res d'això no està implementat encara — només l'arquitectura que ho fa
 possible.
+
+## Força contínua (motor 1.2.0)
+
+`engine.play(state, { rating: 1130 })` aplica una força entre Fàcil i Mitjà.
+`rating` té preferència sobre `level`; `overrides` continua tenint l'última
+paraula. `difficultyByRating` exposa els paràmetres calculats. Els nous camps
+opcionals `jokerRate` i `extensionRate` graduen aquestes capacitats per torn.
+Sense `rating`, els cinc nivells fixos mantenen exactament el comportament.

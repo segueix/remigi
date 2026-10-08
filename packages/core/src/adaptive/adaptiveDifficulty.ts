@@ -1,83 +1,50 @@
 import { DIFFICULTIES, DIFFICULTY_ORDER, type DifficultyKey } from '../ai/difficulty';
 import type { PlayerProfile } from './experience';
 
-/**
- * El nivell adaptatiu es mou en mig graons:
- * 0 = Novell, 1 = entre Novell i Fàcil, 2 = Fàcil, ... 8 = Expert.
- *
- * Durant la primera calibració només es fan servir graons sencers: una victòria
- * puja directament al nivell següent. Quan arriba la primera derrota, el sistema
- * passa a l'ajust fi i cada resultat mou només mig graó.
- */
+/** Graons reservats a la calibració; després només mana la valoració. */
 export const MAX_ADAPTIVE_STEP = (DIFFICULTY_ORDER.length - 1) * 2;
 
 function clampStep(step: number): number {
   return Math.min(MAX_ADAPTIVE_STEP, Math.max(0, Math.round(step)));
 }
 
-/**
- * Perfils nous porten el graó explícit. Els perfils antics, que no el tenen,
- * es col·loquen segons el seu Elo perquè no perdin el nivell acumulat.
- */
-export function adaptiveStepFor(profile: PlayerProfile): number {
-  if (typeof profile.adaptiveStep === 'number') return clampStep(profile.adaptiveStep);
-
-  const first = DIFFICULTIES[DIFFICULTY_ORDER[0]].rating;
-  const second = DIFFICULTIES[DIFFICULTY_ORDER[1]].rating;
-  const halfLevel = Math.max(1, (second - first) / 2);
-  return clampStep((profile.rating - first) / halfLevel);
-}
-
-/** Els perfils antics entren directament en ajust fi; només els nous calibren. */
 export function isCalibrating(profile: PlayerProfile): boolean {
   return profile.adaptiveCalibrating === true;
 }
 
-/**
- * Calcula el pròxim punt del nivell adaptatiu.
- *
- * - calibració: victòria = +1 nivell sencer; primera derrota = mig nivell avall
- *   i s'acaba la calibració;
- * - ajust fi: victòria = +mig nivell; derrota = -mig nivell.
- *
- * Això fa que, després de trobar el primer nivell massa fort, la dificultat
- * oscil·li al voltant del llindar real del jugador i pugui tornar a pujar quan
- * encadena resultats bons.
- */
+export function adaptiveStepFor(profile: PlayerProfile): number {
+  if (isCalibrating(profile) && typeof profile.adaptiveStep === 'number') {
+    return clampStep(profile.adaptiveStep);
+  }
+  return clampStep((profile.rating - 800) / 100);
+}
+
+/** Escalada inicial; guanyar a Expert també acaba el calibratge. */
 export function nextAdaptiveProgress(
   profile: PlayerProfile,
   won: boolean,
   margin = 0.5,
 ): { adaptiveStep: number; adaptiveCalibrating: boolean } {
   const current = adaptiveStepFor(profile);
-
-  if (isCalibrating(profile)) {
-    if (won) {
-      return {
-        adaptiveStep: clampStep(current + 2),
-        adaptiveCalibrating: true,
-      };
-    }
-    /*
-     * La primera derrota és la que fixa el nivell inicial del jugador:
-     * - derrota ajustada (≤25% del marge): conserva el nivell provat;
-     * - derrota mitjana (≤65%): queda a mig camí amb l'anterior;
-     * - derrota clara: baixa al nivell anterior.
-     *
-     * Així no assignem el mateix nivell a qui gairebé guanya que a qui perd
-     * amb molta diferència.
-     */
-    const lossDrop = margin <= 0.25 ? 0 : margin <= 0.65 ? 1 : 2;
+  if (!isCalibrating(profile)) {
+    return { adaptiveStep: current, adaptiveCalibrating: false };
+  }
+  if (won) {
     return {
-      adaptiveStep: clampStep(current - lossDrop),
-      adaptiveCalibrating: false,
+      adaptiveStep: clampStep(current + 2),
+      adaptiveCalibrating: current < MAX_ADAPTIVE_STEP,
     };
   }
+  const lossDrop = margin <= 0.25 ? 0 : margin <= 0.65 ? 1 : 2;
+  return { adaptiveStep: clampStep(current - lossDrop), adaptiveCalibrating: false };
+}
 
-  return {
-    adaptiveStep: clampStep(current + (won ? 1 : -1)),
-    adaptiveCalibrating: false,
-  };
+/** Valoració congelada en començar la partida, compartida per tots els rivals. */
+export function suggestOpponentRatings(profile: PlayerProfile, count: 1 | 2 | 3): number[] {
+  const rating = isCalibrating(profile)
+    ? ratingForAdaptiveStep(adaptiveStepFor(profile))
+    : Math.min(1600, Math.max(800, profile.rating));
+  return Array.from({ length: count }, () => rating);
 }
 
 function difficultyAt(index: number): DifficultyKey {
@@ -85,55 +52,20 @@ function difficultyAt(index: number): DifficultyKey {
   return DIFFICULTY_ORDER[clamped];
 }
 
-/**
- * Converteix un mig graó en rivals.
- *
- * En un graó sencer tots els rivals tenen el mateix nivell. En un mig graó,
- * amb dos rivals —el mode per defecte— n'hi ha un del nivell inferior i un del
- * superior. Amb un sol rival s'alternen els dos nivells entre partides; amb
- * tres, s'alterna quin dels dos es repeteix perquè la mitjana no quedi sempre
- * esbiaixada cap al mateix costat.
- */
-function opponentsForStep(
-  step: number,
-  count: 1 | 2 | 3,
-  gamesPlayed: number,
-): DifficultyKey[] {
-  const clamped = clampStep(step);
-  const lowerIndex = Math.floor(clamped / 2);
-  const lower = difficultyAt(lowerIndex);
-
-  if (clamped % 2 === 0 || lowerIndex >= DIFFICULTY_ORDER.length - 1) {
-    return Array.from({ length: count }, () => lower);
-  }
-
-  const upper = difficultyAt(lowerIndex + 1);
-  if (count === 1) return [gamesPlayed % 2 === 0 ? lower : upper];
-  if (count === 2) return [lower, upper];
-
-  return gamesPlayed % 2 === 0 ? [lower, lower, upper] : [lower, upper, upper];
-}
-
-/**
- * Tria automàtica dels rivals.
- *
- * Un perfil nou comença a Novell. Mentre guanya durant la calibració, puja
- * Novell → Fàcil → Mitjà → Avançat → Expert. A la primera derrota entra en
- * ajust fi i es mou en mig graons, de manera que vagi trobant un punt on no
- * guanyi ni perdi sempre però pugui continuar progressant.
- */
+/** Claus descriptives; la força exacta viatja a suggestOpponentRatings. */
 export function suggestOpponents(profile: PlayerProfile, count: 1 | 2 | 3): DifficultyKey[] {
-  return opponentsForStep(adaptiveStepFor(profile), count, profile.gamesPlayed);
+  return suggestOpponentRatings(profile, count).map((rating) =>
+    difficultyAt(Math.floor((rating - 800) / 200)),
+  );
 }
 
 /** Etiqueta del punt adaptatiu actual: «Mitjà» o «Fàcil–Mitjà». */
 export function adaptiveLevelLabel(profile: PlayerProfile): string {
-  const step = adaptiveStepFor(profile);
-  const lowerIndex = Math.floor(step / 2);
-  const lower = DIFFICULTIES[difficultyAt(lowerIndex)].label;
-  if (step % 2 === 0 || lowerIndex >= DIFFICULTY_ORDER.length - 1) return lower;
-  const upper = DIFFICULTIES[difficultyAt(lowerIndex + 1)].label;
-  return `${lower}–${upper}`;
+  const rating = suggestOpponentRatings(profile, 1)[0];
+  const position = (rating - 800) / 200;
+  const lower = DIFFICULTIES[difficultyAt(Math.floor(position))].label;
+  if (Number.isInteger(position)) return lower;
+  return `${lower}–${DIFFICULTIES[difficultyAt(Math.ceil(position))].label}`;
 }
 
 /** Valoració numèrica coherent amb un mig graó adaptatiu. */

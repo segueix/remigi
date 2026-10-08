@@ -9,6 +9,7 @@ export const PUBLIC_REMIGI_URL = 'https://eltauler.cat/remigi/';
 
 export interface ProfileProgress {
   rating: number;
+  ratedGames?: number;
   gamesPlayed: number;
   wins: number;
   /** Mig graó adaptatiu; absent en enllaços antics. */
@@ -22,6 +23,8 @@ const MAX_GAMES = 100_000;
 
 export function isValidProfileProgress(value: ProfileProgress): boolean {
   return (
+    (value.ratedGames === undefined ||
+      (Number.isInteger(value.ratedGames) && value.ratedGames >= 0 && value.ratedGames <= value.gamesPlayed)) &&
     Number.isInteger(value.rating) &&
     value.rating >= 0 &&
     value.rating <= MAX_RATING &&
@@ -41,6 +44,7 @@ export function buildProfileTransferUrl(progress: ProfileProgress): string {
   if (!isValidProfileProgress(progress)) throw new Error('Progrés de perfil no vàlid');
   const url = new URL(PUBLIC_REMIGI_URL);
   url.searchParams.set('nivell', String(progress.rating));
+  if (progress.ratedGames !== undefined) url.searchParams.set('valorades', String(progress.ratedGames));
   url.searchParams.set('partides', String(progress.gamesPlayed));
   url.searchParams.set('victories', String(progress.wins));
   if (progress.adaptiveStep !== undefined) {
@@ -61,6 +65,7 @@ export function parseProfileTransferUrl(href: string): ProfileProgress | null {
     const calibrant = url.searchParams.get('calibrant');
     const progress: ProfileProgress = {
       rating: Number(nivell),
+      ...(url.searchParams.has('valorades') ? { ratedGames: Number(url.searchParams.get('valorades')) } : {}),
       gamesPlayed: Number(partides),
       wins: Number(url.searchParams.get('victories') ?? 0),
       ...(grao === null
@@ -80,6 +85,7 @@ export function parseProfileTransferUrl(href: string): ProfileProgress | null {
 export function stripProfileTransferParams(href: string): string {
   const url = new URL(href);
   url.searchParams.delete('nivell');
+  url.searchParams.delete('valorades');
   url.searchParams.delete('partides');
   url.searchParams.delete('victories');
   url.searchParams.delete('grao');

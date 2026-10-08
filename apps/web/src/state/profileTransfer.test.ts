@@ -62,3 +62,10 @@ describe('transferència del nivell entre dispositius', () => {
     ).toBe('/remigi/?tema=fosc#taula');
   });
 });
+
+it('conserva la confiança del nivell quan es canvia de dispositiu', () => {
+  const progress = { rating: 1130, gamesPlayed: 150, wins: 48, ratedGames: 3 };
+  expect(parseProfileTransferUrl(buildProfileTransferUrl(progress))).toEqual(progress);
+  expect(parseProfileTransferUrl('https://eltauler.cat/remigi/?nivell=1130&partides=3&valorades=4')).toBeNull();
+  expect(stripProfileTransferParams(buildProfileTransferUrl(progress))).toBe('/remigi/');
+});
