@@ -83,7 +83,10 @@ export function newGameState(setup: GameSetup): GameState {
   // Cada partida té rivals nous: el nom viatja dins de l'estat del joc, així
   // que en reprendre una partida desada tornen exactament els mateixos.
   const personas = pickPersonas(setup.opponents.length);
+  // Qui fa el primer torn es sorteja: de vegades comença un rival.
+  const playerCount = setup.opponents.length + 1;
   return createGame({
+    firstPlayer: Math.floor(Math.random() * playerCount),
     players: [
       { name: setup.playerName, kind: 'human' },
       ...setup.opponents.map((level, i) => ({
