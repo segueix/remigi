@@ -16,6 +16,8 @@ import type { GameState, Meld, NumberTile, Tile, TileColor } from '../core/types
 export interface SolverOptions {
   /** Si pot fer servir els jokers de la mà. */
   allowJokers: boolean;
+  /** Criteri dels rivals; no altera les regles ni les ajudes al jugador. */
+  limitJokers?: boolean;
   /** Si pot allargar jugades que ja són a la taula. */
   allowExtensions: boolean;
   /** Si pot repartir de nou la taula sencera (cerca completa). */
@@ -154,6 +156,7 @@ function extendBoardMelds(
   board: Meld[],
   rack: Tile[],
   allowJokers: boolean,
+  limitJokers = false,
 ): { board: Meld[]; rack: Tile[]; used: number } {
   const melds = board.map((m) => [...m]);
   let rest = [...rack];
@@ -167,7 +170,7 @@ function extendBoardMelds(
         const extended = [
           [...melds[i], tile],
           [tile, ...melds[i]],
-        ].find((m) => analyzeMeld(m).valid);
+        ].find((m) => analyzeMeld(m).valid && (!limitJokers || followsJokerPolicy(m)));
         if (extended) {
           melds[i] = extended;
           rest = rest.filter((t) => t.id !== tile.id);
@@ -190,6 +193,40 @@ export function chooseBestPlay(
   playerIndex: number,
   options: SolverOptions,
 ): PlayCandidate | null {
+  if (options.limitJokers) {
+    // Primer comprovem si la cerca habitual ja permet acabar la partida.
+    const unrestricted = chooseBestPlay(state, playerIndex, { ...options, limitJokers: false });
+    if (!unrestricted || unrestricted.tilesUsed === state.players[playerIndex].rack.length) return unrestricted;
+    // Les jugades humanes preexistents poden quedar intactes. Només revisem
+    // les combinacions que el rival crea o modifica en aquest torn.
+    const signature = (meld: Meld) => meld.map(tile => tile.id).sort().join(',');
+    const existing = new Set(state.board.map(signature));
+    if (unrestricted.board.every(meld => followsJokerPolicy(meld) || existing.has(signature(meld)))) {
+      return unrestricted;
+    }
+    const previousStats = options.stats ? { ...options.stats } : undefined;
+    const restricted = chooseRestrictedPlay(state, playerIndex, options);
+    if (options.stats && previousStats) {
+      options.stats.nodes += previousStats.nodes;
+      options.stats.searchLimited ||= previousStats.searchLimited;
+    }
+    return restricted;
+  }
+  return chooseRestrictedPlay(state, playerIndex, options);
+}
+
+/** Màxim un joker al grup; a l'escala, no més jokers que fitxes numerades. */
+export function followsJokerPolicy(meld: Meld): boolean {
+  const jokers = meld.filter(isJoker).length;
+  const info = analyzeMeld(meld);
+  return info.valid && (info.kind === 'group' ? jokers <= 1 : jokers <= meld.length - jokers);
+}
+
+function chooseRestrictedPlay(
+  state: GameState,
+  playerIndex: number,
+  options: SolverOptions,
+): PlayCandidate | null {
   const { stats } = options;
   if (stats) {
     stats.nodes = 0;
@@ -197,7 +234,8 @@ export function chooseBestPlay(
     stats.rearrangeUsed = false;
   }
   const player = state.players[playerIndex];
-  const candidates = findRackMelds(player.rack, options.allowJokers);
+  const candidates = findRackMelds(player.rack, options.allowJokers)
+    .filter(({ meld }) => !options.limitJokers || followsJokerPolicy(meld));
 
   if (!player.hasOpened) {
     const { melds, points } = pickDisjointMelds(candidates, 'points');
@@ -216,7 +254,7 @@ export function chooseBestPlay(
   let tilesUsed = usedIds.size;
 
   if (options.allowExtensions) {
-    const extended = extendBoardMelds(board, rack, options.allowJokers);
+    const extended = extendBoardMelds(board, rack, options.allowJokers, options.limitJokers);
     board = extended.board;
     rack = extended.rack;
     tilesUsed += extended.used;
@@ -235,6 +273,7 @@ export function chooseBestPlay(
   const rearranged = bestRearrangement(state.board, player.rack, {
     maxNodes: options.maxNodes,
     stats: rearrangeStats,
+    limitJokers: options.limitJokers,
   });
   if (stats && rearrangeStats) {
     stats.nodes = rearrangeStats.nodes;

@@ -1844,3 +1844,18 @@ el 12% amb l'ajust antic (només errors) i el **18%** amb el nou.
 - La primera passada completa de Playwright s'ha interromput perquè un build
   simultani havia substituït els recursos servits i el retard dels bots de
   prova. S'ha repetit amb el build estable, sense compilacions paral·leles.
+
+### Criteris de comodins dels rivals ✅ Feta (2026-10-21)
+
+- [x] Màxim un comodí als grups de números iguals.
+- [x] A les escales, mai més comodins que fitxes numerades.
+- [x] Excepció si la proposta buida el faristol i guanya el mateix torn.
+- [x] Filtratge de candidates, extensions i reordenacions; les jugades
+      humanes preexistents poden quedar intactes, sense canviar les regles.
+- [x] Les ajudes del jugador conserven l'anàlisi de totes les jugades legals.
+- [x] Motor 1.3.0 i documentació actualitzada.
+- [x] 13 proves noves: grups, escales, sortida, victòria, extensions,
+      conservació i reutilització dels comodins humans i ajudes.
+
+**Validació**: typecheck, 295 tests (163 core + 132 web) i build correctes.
+Baseline regenerat a consciència: les 25 partides de referència no canvien.

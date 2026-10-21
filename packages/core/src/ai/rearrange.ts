@@ -45,6 +45,8 @@ export interface RearrangeOptions {
    * mica pitjor que fer esperar el jugador.
    */
   maxNodes?: number;
+  /** Restringeix els comodins de les noves combinacions dels rivals. */
+  limitJokers?: boolean;
   /**
    * Sortida de diagnòstic: si es passa, s'hi escriuen els nodes explorats i si
    * la cerca ha tocat el sostre. No canvia cap decisió.
@@ -132,6 +134,10 @@ export function bestRearrangement(
     }
 
     for (const meld of meldsStartingAt(slot, remaining, jokersLeft)) {
+      if (options.limitJokers) {
+        const jokers = meld.kind === 'group' ? meld.jokers : meld.jokerAt.filter(Boolean).length;
+        if (meld.kind === 'group' ? jokers > 1 : jokers > meld.length - jokers) continue;
+      }
       const usedJokers = apply(meld, remaining, 1);
       const rest = solve(slot, jokersLeft - usedJokers);
       apply(meld, remaining, -1);

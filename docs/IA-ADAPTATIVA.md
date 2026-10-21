@@ -134,3 +134,18 @@ decisió explícita del jugador, no una sorpresa.
   només cal interfície).
 - Estratègia a llarg termini de la IA: guardar-se fitxes per a jugades futures i
   tenir en compte què li pot quedar al rival.
+
+## Ús dels comodins pels rivals (motor 1.3.0)
+
+Tots els rivals, fixos o adaptatius, creen grups de números iguals amb un
+màxim d'un comodí. A les escales no poden posar més comodins que fitxes
+numerades: 5–comodí–7–comodí sí; 5–comodí–comodí no.
+
+L'excepció és una jugada que buida tot el faristol i guanya en aquell torn.
+El criteri s'aplica tant a la sortida inicial com a les extensions i a la
+reordenació completa. Les combinacions legals que ja hi havia a la taula
+poden quedar intactes. Les regles del jugador i l'anàlisi de les ajudes
+continuen admetent totes les combinacions legals.
+
+Només es repeteix la cerca amb els límits quan la proposta habitual crea o
+modifica una combinació que no els compleix i no acaba la partida.
