@@ -104,6 +104,7 @@ export function decideAiMove(
 ): Move {
   const params = withOverrides(aiParamsForPlayer(state, playerIndex), options.overrides);
   const best = chooseBestPlay(state, playerIndex, {
+    limitJokers: true,
     allowJokers: params.usesJokers && rollRate(params.jokerRate ?? 1, rng),
     allowExtensions: params.extendsBoard && rollRate(params.extensionRate ?? 1, rng),
     allowRearrange: params.rearrangesTable && rollRearrange(state, playerIndex, rng, params, options),
