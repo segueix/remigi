@@ -1886,3 +1886,24 @@ i tres rivals: abans, la barra dels bots 2 i 3 tenia l'animació acabada (escala
   passaven. Resolt fixant la feina de la CI a `ubuntu-24.04`; quan
   s'actualitzi Playwright (la 1.64.1 ja suporta Ubuntu 26.04) es pot tornar a
   `ubuntu-latest`.
+
+### El joker d'una escala, a la punta que toca ✅ Feta (2026-10-22)
+
+- [x] Amb 9-10 i un joker, el joker entrava per l'esquerra (8-9-10, 27
+      punts) i no es podia obrir. Ara `insertSmart` tria, entre les posicions
+      vàlides, la que dona més punts: 9-10-11, 30 punts.
+- [x] El joker d'una punta es pot girar a l'altra deixant-lo a la mateixa
+      jugada (arrossegant-lo o tocant-lo i tocant la jugada): 8-9-10 ↔
+      9-10-11. No es gira si trencaria una escala vàlida (J-12-13) ni si és
+      al mig.
+- [x] Una línia a «Com es juga» ho explica.
+
+**Validació**: typecheck i tests (163 core + 135 web) correctes; tres tests
+nous a `turnDraft.test.ts`.
+
+### Problemes trobats
+
+- [2026-10-22] **No es podia sortir amb 9-10 i joker** — `insertSmart` agafava
+  la primera posició vàlida, i amb el joker és la de l'esquerra. A més, deixar
+  una fitxa a la seva mateixa jugada no feia res, així que no hi havia manera
+  de moure el joker a l'altra punta. Resolt amb les dues tasques de dalt.

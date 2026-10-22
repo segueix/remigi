@@ -89,6 +89,11 @@ export function ComEsJuga({ obertPerDefecte }: { obertPerDefecte?: boolean }) {
         torn.
       </p>
       <p className="muted small">
+        <strong>El joker en una escala</strong> s’hi posa per la punta que suma més (9-10 i el
+        joker fan 9-10-11). Si el vols a l’altra punta, torna’l a deixar a la mateixa jugada i
+        canviarà de costat.
+      </p>
+      <p className="muted small">
         <strong>Avançar</strong> és l’únic botó per acabar: si has posat fitxes a la taula, en
         comprova la jugada; si no n’has posat cap, roba una fitxa i passa el torn. I si has posat
         el <strong>temps per torn</strong> (al menú del teu jugador), el rellotge de la taula el

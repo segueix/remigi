@@ -333,6 +333,30 @@ describe('les escales s’endrecen soles mentre es construeixen', () => {
     expect(meld.map((t) => t.id)).toEqual(['joker-a', 'red-12-a', 'red-13-a']);
   });
 
+  it('el joker que pot anar a totes dues puntes va on suma més (9-10-11, no 8-9-10)', () => {
+    const meld = build([red(9), red(10), jk('joker-a')]);
+    expect(meld.map((t) => t.id)).toEqual(['red-9-a', 'red-10-a', 'joker-a']);
+    // 9 + 10 + 11 = 30: n'hi ha prou per a la sortida inicial.
+    expect(openingPoints(draft([meld], []))).toBe(30);
+  });
+
+  it('el joker d’una punta es gira a l’altra deixant-lo a la mateixa jugada', () => {
+    const d = draft([[jk('joker-a'), red(9), red(10)]], []);
+    const girat = moveTile(d, 'joker-a', { kind: 'meld', index: 0 });
+    expect(ids(girat.board)).toEqual([['red-9-a', 'red-10-a', 'joker-a']]);
+    const tornat = moveTile(girat, 'joker-a', { kind: 'meld', index: 0 });
+    expect(ids(tornat.board)).toEqual([['joker-a', 'red-9-a', 'red-10-a']]);
+  });
+
+  it('no gira el joker si trenca l’escala o si és al mig', () => {
+    const alFinal = draft([[jk('joker-a'), red(12), red(13)]], []);
+    expect(moveTile(alFinal, 'joker-a', { kind: 'meld', index: 0 })).toBe(alFinal);
+    const alMig = draft([[red(5), jk('joker-a'), red(7)]], []);
+    expect(moveTile(alMig, 'joker-a', { kind: 'meld', index: 0 })).toBe(alMig);
+    const numero = draft([[red(5), red(6), red(7)]], []);
+    expect(moveTile(numero, 'red-5-a', { kind: 'meld', index: 0 })).toBe(numero);
+  });
+
   it('els grups no es toquen: el seu ordre no vol dir res', () => {
     const group: Meld = [
       { id: 'red-7-a', kind: 'number', color: 'red', value: 7 } as Tile,
