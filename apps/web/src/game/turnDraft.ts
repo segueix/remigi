@@ -68,12 +68,20 @@ export function hasChanges(draft: TurnDraft): boolean {
  * exemple, un 6 vermell entra sol a l'esquerra de [7,8,9] i a la dreta de
  * [3,4,5]. Si cap posició no la fa vàlida, va al final i l'usuari veurà la
  * jugada marcada com a incorrecta.
+ *
+ * Un joker pot entrar per totes dues puntes d'una escala: llavors es tria la
+ * que dona més punts (9-10 + joker és 9-10-11, no 8-9-10), que és la que ajuda
+ * a la sortida inicial. Si l'usuari el vol a l'altra punta, el pot girar
+ * deixant-lo a la mateixa jugada (vegeu `moveTile`).
  */
 export function insertSmart(meld: Meld, tile: Tile): Meld {
+  let best: { meld: Meld; points: number } | null = null;
   for (let i = 0; i <= meld.length; i++) {
     const candidate = [...meld.slice(0, i), tile, ...meld.slice(i)];
-    if (isValidMeld(candidate)) return candidate;
+    const info = analyzeMeld(candidate);
+    if (info.valid && (!best || info.points > best.points)) best = { meld: candidate, points: info.points };
   }
+  if (best) return best.meld;
   /*
    * Cap posició no fa la jugada vàlida. Si el que hi ha és material d'escala
    * (mateix color, valors sense repetir), s'endreça igualment per valor: una
@@ -286,8 +294,16 @@ export function moveTile(draft: TurnDraft, tileId: string, destination: Destinat
 
   const removedFrom = draft.board.findIndex((meld) => meld.some((candidate) => candidate.id === tileId));
   // Tornar a deixar una fitxa exactament a la mateixa jugada no ha de partir-la
-  // ni reconstruir-la: és la mateixa operació.
-  if (destination.kind === 'meld' && removedFrom === destination.index) return draft;
+  // ni reconstruir-la: és la mateixa operació. L'excepció és el joker d'una
+  // punta, que passa a l'altra punta (8-9-10 → 9-10-11).
+  if (destination.kind === 'meld' && removedFrom === destination.index) {
+    const flipped = flipJoker(draft.board[removedFrom], tileId);
+    if (!flipped) return draft;
+    return {
+      ...draft,
+      board: draft.board.map((meld, index) => (index === removedFrom ? flipped : meld)),
+    };
+  }
 
   const rack = draft.rack.filter((candidate) => candidate.id !== tileId);
   const replacements =
@@ -312,6 +328,24 @@ export function moveTile(draft: TurnDraft, tileId: string, destination: Destinat
     board: [...board.slice(0, target), ...inserted, ...board.slice(target + 1)],
     rack,
   };
+}
+
+/**
+ * Passa un joker d'una punta de la jugada a l'altra. Retorna null si la fitxa
+ * no és un joker d'una punta, o si girar-lo trencaria una jugada vàlida
+ * (11-12-13 no pot créixer per la dreta). En una jugada a mig fer es gira
+ * igualment: és l'usuari qui decideix cap on la vol continuar.
+ */
+function flipJoker(meld: Meld, tileId: string): Meld | null {
+  const index = meld.findIndex((tile) => tile.id === tileId);
+  if (index < 0 || meld[index].kind !== 'joker' || meld.length < 2) return null;
+  const rest = meld.filter((tile) => tile.id !== tileId);
+  let flipped: Meld;
+  if (index === 0) flipped = [...rest, meld[index]];
+  else if (index === meld.length - 1) flipped = [meld[index], ...rest];
+  else return null;
+  if (isValidMeld(meld) && !isValidMeld(flipped)) return null;
+  return flipped;
 }
 
 /**
