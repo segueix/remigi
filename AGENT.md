@@ -1859,3 +1859,30 @@ el 12% amb l'ajust antic (només errors) i el **18%** amb el nou.
 
 **Validació**: typecheck, 295 tests (163 core + 132 web) i build correctes.
 Baseline regenerat a consciència: les 25 partides de referència no canvien.
+
+### La barra de l'avís de torn, també per al segon i el tercer bot ✅ Feta (2026-10-22)
+
+- [x] Quan juguen dos o tres bots seguits, cadascun té el seu avís de torn:
+      la barra s'omple de zero i la caixa torna a aparèixer, com amb el
+      primer. `TurnNotice` porta `key={game.turn}`.
+
+**Validació**: typecheck, 295 tests (163 core + 132 web) i 129 proves de
+navegador correctes. Comprovat amb Playwright sobre un build amb pausa de 2 s
+i tres rivals: abans, la barra dels bots 2 i 3 tenia l'animació acabada (escala
+1) a 400 ms del seu torn; ara és un element nou amb l'animació en marxa
+(escala ≈ 0,2).
+
+### Problemes trobats
+
+- [2026-10-22] **La barra arribava plena als bots 2 i 3** — entre dos torns de
+  bot seguits l'avís no es desmuntava: React reaprofitava l'element i només
+  en canviava el nom i els colors, i l'animació CSS de la barra (`forwards`),
+  que ja havia acabat amb el primer, no es tornava a engegar. Resolt amb la
+  clau del torn. No hi ha prova de navegador permanent: les proves es
+  construeixen amb `VITE_BOT_DELAY=0` i l'avís hi dura un instant.
+- [2026-10-22] **La CI fallava a `main` des del 2026-10-21** («exit code 1» a
+  «Instal·la Chromium»): `ubuntu-latest` ha passat a Ubuntu 26.04 i
+  Playwright 1.56.1 no hi sap instal·lar el navegador. Tipus, tests i build
+  passaven. Resolt fixant la feina de la CI a `ubuntu-24.04`; quan
+  s'actualitzi Playwright (la 1.64.1 ja suporta Ubuntu 26.04) es pot tornar a
+  `ubuntu-latest`.
