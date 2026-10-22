@@ -1,3 +1,6 @@
+import { randomUUID } from 'node:crypto';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import react from '@vitejs/plugin-react';
 // De `vitest/config` i no de `vite`, perquè la config porta l'apartat `test`.
 import { defineConfig } from 'vitest/config';
@@ -16,7 +19,17 @@ export default defineConfig(({ command, isPreview }) => ({
   // de l'arrel, les rutes dels fitxers no lligarien i les proves de navegador
   // no estarien comprovant el que es publica de debò.
   base: command === 'build' || isPreview ? BASE_PATH : '/',
-  plugins: [react()],
+  plugins: [react(), {
+    name: 'remigi-publication-version',
+    apply: 'build',
+    // Vite copia public/sw.js sense transformar-lo. El segell fa que el
+    // navegador detecti cada publicació, encara que només canviï el joc.
+    writeBundle(options) {
+      const path = resolve(options.dir ?? 'dist', 'sw.js');
+      const source = readFileSync(path, 'utf8');
+      writeFileSync(path, `// Publicació: ${randomUUID()}\n${source}`);
+    },
+  }],
   // @remigi/core és un paquet del workspace que publica codi font TypeScript
   // (el seu `main` apunta a src/index.ts). Vite el tracta com a codi del
   // projecte gràcies a l'enllaç simbòlic de npm workspaces, així que el

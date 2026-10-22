@@ -324,6 +324,20 @@ si no hi ha connexió, de manera que una versió nova arriba de seguida; els
 fitxers de codi, en canvi, es poden servir de la memòria sense por perquè porten
 el nom amb empremta i canvien de nom quan canvien de contingut.
 
+Cada build segella `sw.js` amb un identificador de publicació diferent. El
+registre ignora la memòria cau HTTP (`updateViaCache: none`) i comprova
+actualitzacions en obrir, tornar a primer pla, recuperar connexió, recuperar
+el focus i cada 60 segons mentre el joc és visible. L'activació d'un worker
+nou recarrega la pàgina una sola vegada. Es conserva el perfil i l'últim torn
+desat; les fitxes mogudes en un torn encara no confirmat es reprenen des de
+l'últim estat desat. Sense connexió es manté la versió disponible i es torna
+a comprovar quan retorna la xarxa. El navegador pot ajornar les comprovacions
+mentre l'aplicació està suspesa.
+
+La navegació demana l'HTML amb `cache: no-store`; una resposta HTTP fallida
+no substitueix la còpia disponible sense connexió. La neteja de memòria cau
+només afecta els noms `remigi-`, mai els d'altres aplicacions del domini.
+
 ## Notes de disseny
 
 - **Sense router**: la navegació és un estat de `App.tsx`. No hi ha enllaços

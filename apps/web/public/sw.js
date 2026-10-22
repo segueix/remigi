@@ -25,7 +25,7 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     (async () => {
       const names = await caches.keys();
-      await Promise.all(names.filter((name) => name !== CACHE).map((name) => caches.delete(name)));
+      await Promise.all(names.filter((name) => name.startsWith('remigi-') && name !== CACHE).map((name) => caches.delete(name)));
       await self.clients.claim();
     })(),
   );
@@ -40,7 +40,8 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       (async () => {
         try {
-          const response = await fetch(request);
+          const response = await fetch(request, { cache: 'no-store' });
+          if (!response.ok) throw new Error('la pàgina nova no està disponible');
           const cache = await caches.open(CACHE);
           await cache.put(APP_SHELL, response.clone());
           return response;
