@@ -1907,3 +1907,21 @@ nous a `turnDraft.test.ts`.
   la primera posició vàlida, i amb el joker és la de l'esquerra. A més, deixar
   una fitxa a la seva mateixa jugada no feia res, així que no hi havia manera
   de moure el joker a l'altra punta. Resolt amb les dues tasques de dalt.
+
+### Actualització automàtica de cada publicació ✅ Feta (2026-10-22)
+
+- [x] Cada build segella el service worker amb un UUID: els canvis de joc
+      també provoquen una actualització encara que el worker no canviï.
+- [x] Registre sense memòria cau HTTP; comprovació inicial, en recuperar
+      focus, visibilitat, pageshow, connexió i cada minut en primer pla.
+- [x] Una sola recàrrega quan s'activa una versió nova; cap recàrrega
+      en la primera instal·lació. Es mantenen perfil i últim torn desat.
+- [x] HTML de xarxa sense memòria cau HTTP i fallback si falla la resposta.
+- [x] Neteja de caches limitada a Remigi, sense afectar altres apps del domini.
+- [x] Prova amb servidor de dues publicacions: recàrrega real, dades
+      conservades i absència de bucle en escriptori i mòbil.
+
+**Validació**: typecheck, 302 tests (163 core + 139 web), build i 8 proves
+Playwright d'actualització/publicació correctes, inclòs funcionament offline.
+**Límit**: sense connexió o amb l'app suspesa, el navegador no pot baixar
+una versió nova; es comprova en recuperar connexió o tornar al joc.
