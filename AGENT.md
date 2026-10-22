@@ -1880,3 +1880,9 @@ i tres rivals: abans, la barra dels bots 2 i 3 tenia l'animació acabada (escala
   que ja havia acabat amb el primer, no es tornava a engegar. Resolt amb la
   clau del torn. No hi ha prova de navegador permanent: les proves es
   construeixen amb `VITE_BOT_DELAY=0` i l'avís hi dura un instant.
+- [2026-10-22] **La CI fallava a `main` des del 2026-10-21** («exit code 1» a
+  «Instal·la Chromium»): `ubuntu-latest` ha passat a Ubuntu 26.04 i
+  Playwright 1.56.1 no hi sap instal·lar el navegador. Tipus, tests i build
+  passaven. Resolt fixant la feina de la CI a `ubuntu-24.04`; quan
+  s'actualitzi Playwright (la 1.64.1 ja suporta Ubuntu 26.04) es pot tornar a
+  `ubuntu-latest`.
