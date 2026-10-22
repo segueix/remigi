@@ -757,9 +757,13 @@ export function GameScreen({
         * de la pantalla es veu qui està jugant, amb el seu avatar. No rep
         * clics i és decoratiu: la línia de torn ja ho anuncia als lectors de
         * pantalla.
+        *
+        * La clau és el torn: quan juguen dos bots seguits, l'avís del segon ha
+        * de ser nou. Si React reaprofités el del primer, només en canviarien
+        * el nom i els colors, i la barra ja hauria acabat d'omplir-se.
         */}
       {game.status === 'playing' && !isHumanTurn && (
-        <TurnNotice player={game.players[game.currentPlayer]} slot={game.currentPlayer} />
+        <TurnNotice key={game.turn} player={game.players[game.currentPlayer]} slot={game.currentPlayer} />
       )}
 
       {/* Còpia que segueix el punter. No rep clics: així no tapa la destinació. */}
