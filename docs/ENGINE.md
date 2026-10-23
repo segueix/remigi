@@ -32,7 +32,7 @@ Tot això s'exporta des de `@remigi/core` (i és exactament el que conté
 
 | Element | Què és |
 |---|---|
-| `ENGINE_VERSION` | Versió del motor, `"1.3.0"` |
+| `ENGINE_VERSION` | Versió del motor, `"1.4.0"` |
 | `createEngine(options?)` | Crea un motor (`seed` o `rng` opcionals) |
 | `engine.play(state, options?)` | Decideix el moviment d'un jugador |
 | `engine.analyze(state, options?)` | Millor jugada d'una posició, sense errors humans (determinista) |
@@ -70,7 +70,7 @@ La resposta (`EngineDecision`) porta la jugada i el seu diagnòstic:
 ```ts
 {
   move: { type: 'play', board: [...] },  // o { type: 'draw' }
-  engineVersion: '1.3.0',
+  engineVersion: '1.4.0',
   level: 'expert',        // nivell efectivament aplicat
   thinkingTimeMs: 34,     // temps de càlcul
   nodes: 84321,           // nodes de la cerca de reordenació (0 si no s'engega)
@@ -273,3 +273,10 @@ Sense `rating`, els cinc nivells fixos mantenen exactament el comportament.
 com comodins a les escales, excepte quan la jugada guanya immediatament.
 `analyze` conserva totes les jugades legals per a les ajudes al jugador.
 Els nodes i el límit de cerca acumulen les dues passades quan cal repetir-la.
+
+## Comodins necessaris (motor 1.4.0)
+
+`play` conserva els comodins de la mà prescindibles per a la validesa de la
+combinació. S'exceptuen els necessaris per assolir els 30 punts de la sortida
+i els que permeten guanyar immediatament. `analyze` manté les regles legals
+del jugador. Les partides de referència s'han regenerat pel canvi d'estratègia.

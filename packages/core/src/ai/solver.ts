@@ -195,7 +195,8 @@ export function chooseBestPlay(
 ): PlayCandidate | null {
   if (options.limitJokers) {
     // Primer comprovem si la cerca habitual ja permet acabar la partida.
-    const unrestricted = chooseBestPlay(state, playerIndex, { ...options, limitJokers: false });
+    const unrestricted = keepUnneededJokers(state, playerIndex,
+      chooseBestPlay(state, playerIndex, { ...options, limitJokers: false }));
     if (!unrestricted || unrestricted.tilesUsed === state.players[playerIndex].rack.length) return unrestricted;
     // Les jugades humanes preexistents poden quedar intactes. Només revisem
     // les combinacions que el rival crea o modifica en aquest torn.
@@ -205,7 +206,8 @@ export function chooseBestPlay(
       return unrestricted;
     }
     const previousStats = options.stats ? { ...options.stats } : undefined;
-    const restricted = chooseRestrictedPlay(state, playerIndex, options);
+    const restricted = keepUnneededJokers(state, playerIndex,
+      chooseRestrictedPlay(state, playerIndex, options));
     if (options.stats && previousStats) {
       options.stats.nodes += previousStats.nodes;
       options.stats.searchLimited ||= previousStats.searchLimited;
@@ -213,6 +215,40 @@ export function chooseBestPlay(
     return restricted;
   }
   return chooseRestrictedPlay(state, playerIndex, options);
+}
+
+/**
+ * El rival conserva els comodins de la mà que no fan falta a la proposta.
+ * No podem retirar comodins que ja eren a la taula. Per obrir, valorem els
+ * punts de totes les jugades noves juntes; per guanyar, els baixem tots.
+ */
+function keepUnneededJokers(
+  state: GameState,
+  playerIndex: number,
+  play: PlayCandidate | null,
+): PlayCandidate | null {
+  const player = state.players[playerIndex];
+  if (!play || play.tilesUsed === player.rack.length) return play;
+  const rackJokers = new Set(player.rack.filter(isJoker).map(tile => tile.id));
+  const rackIds = new Set(player.rack.map(tile => tile.id));
+  const board = play.board.map(meld => [...meld]);
+  let tilesUsed = play.tilesUsed;
+  let points = play.points;
+  for (let m = 0; m < board.length; m++) {
+    for (let i = 0; i < board[m].length; i++) {
+      if (!rackJokers.has(board[m][i].id)) continue;
+      const reduced = board[m].filter((_, index) => index !== i);
+      const info = analyzeMeld(reduced);
+      if (!info.valid) continue;
+      const reducedPoints = points - analyzeMeld(board[m]).points + info.points;
+      if (!player.hasOpened && reducedPoints < INITIAL_MELD_POINTS) continue;
+      if (board[m].every(tile => rackIds.has(tile.id))) points = reducedPoints;
+      board[m] = reduced;
+      tilesUsed--;
+      i = -1; // Tornem a comprovar si ha quedat un altre comodí prescindible.
+    }
+  }
+  return tilesUsed > 0 ? { board, tilesUsed, points } : null;
 }
 
 /** Màxim un joker al grup; a l'escala, no més jokers que fitxes numerades. */

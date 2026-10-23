@@ -1925,3 +1925,20 @@ nous a `turnDraft.test.ts`.
 Playwright d'actualització/publicació correctes, inclòs funcionament offline.
 **Límit**: sense connexió o amb l'app suspesa, el navegador no pot baixar
 una versió nova; es comprova en recuperar connexió o tornar al joc.
+
+### El bot conserva els comodins prescindibles ✅ Feta (2026-10-23)
+
+- [x] Retira de la proposta els comodins propis que no són necessaris per
+      mantenir vàlida la combinació; conserva els de la taula.
+- [x] Excepcions: assolir els 30 punts globals per obrir i guanyar aquell torn.
+- [x] Aplicat al bot en tots els nivells, tant en jugades noves com en
+      extensions i reorganitzacions. Les ajudes del jugador no canvien.
+- [x] Cas exacte de Lluís: 10–11–12 ja suma 33, el comodí es queda a la mà.
+- [x] 13 proves noves i ajust de la prova de dos comodins a una escala on
+      tots dos són necessaris. Motor 1.4.0 i baseline regenerat a consciència.
+
+**Validació**: typecheck, 315 tests (176 core + 139 web) i build correctes.
+**Publicació**: el domini `eltauler.cat/remigi/` es construeix des de
+`segueix/eltauler`, workflow `desplega-web.yml`, incorporant main de Remigi.
+Cal executar també aquesta publicació; desplegar només Remigi no actualitza
+el domini. Les republicacions distingeixen els artefactes per run_attempt.
