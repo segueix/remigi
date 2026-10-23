@@ -139,7 +139,7 @@ decisió explícita del jugador, no una sorpresa.
 
 Tots els rivals, fixos o adaptatius, creen grups de números iguals amb un
 màxim d'un comodí. A les escales no poden posar més comodins que fitxes
-numerades: 5–comodí–7–comodí sí; 5–comodí–comodí no.
+numerades: 5–comodí–7–comodí–9 sí; 5–comodí–comodí no.
 
 L'excepció és una jugada que buida tot el faristol i guanya en aquell torn.
 El criteri s'aplica tant a la sortida inicial com a les extensions i a la
@@ -149,3 +149,14 @@ continuen admetent totes les combinacions legals.
 
 Només es repeteix la cerca amb els límits quan la proposta habitual crea o
 modifica una combinació que no els compleix i no acaba la partida.
+
+### Comodins imprescindibles (motor 1.4.0)
+
+Abans de baixar la proposta, el rival conserva cada comodí de la mà que es
+pot retirar sense invalidar la combinació. S'exceptuen els comodins necessaris
+per assolir els 30 punts globals de la sortida i les jugades que guanyen
+en aquell torn. Per exemple, 10–11–12 obre amb 33 punts i no hi afegeix
+un comodí com a 13; tampoc l'afegeix com a quart color d'un grup complet.
+
+El criteri cobreix grups, extrems d'escales, extensions i reorganitzacions.
+Els comodins ja presents a la taula no es poden retornar a la mà.

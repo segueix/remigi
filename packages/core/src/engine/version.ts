@@ -8,4 +8,4 @@
  * diferent (més fort o més fluix), PATCH per a correccions que no canvien cap
  * decisió.
  */
-export const ENGINE_VERSION = '1.3.0';
+export const ENGINE_VERSION = '1.4.0';

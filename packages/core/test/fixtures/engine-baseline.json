@@ -7,12 +7,12 @@
       "turns": 90,
       "winner": 1,
       "finalScores": [
-        -167,
-        262,
-        -95
+        -136,
+        283,
+        -147
       ],
-      "moveTypes": "DPDDDDPPDDDDDDDDPDDDDDPPDDDDDDDDPDPDDDDDDPDPDPPPDDDDPDPDDDPDDDDDDDDDDDDDPPPDDDDPDDDPPPDDDD",
-      "trajectoryHash": "416bec4bb2b8e1ca"
+      "moveTypes": "DPDDPDPPDDDDDDDDDDDPDDDDDDDDPPPDDDDDDDDDDPDPDPDDDPDDDDDPDDDDDDPPPDDDDDPDDDPPPDDDDPDPDPDDDD",
+      "trajectoryHash": "99f3e8eedecfe0f9"
     },
     {
       "level": "rookie",
@@ -77,7 +77,7 @@
         -117
       ],
       "moveTypes": "PPDDPDDDDDDDDDDDPDPDDDDDDDDDPPPPDDDDDPPDPDPDPDDDPPDDDDDPDDDDDDDDPDPDPDDDDPPDPDDDDDPDDDDDDPPDDD",
-      "trajectoryHash": "3f577a6fd1e386c7"
+      "trajectoryHash": "4092fd59d54f75d2"
     },
     {
       "level": "easy",
@@ -95,15 +95,15 @@
     {
       "level": "easy",
       "seed": 303,
-      "turns": 90,
-      "winner": 1,
+      "turns": 92,
+      "winner": 0,
       "finalScores": [
-        -137,
-        254,
-        -117
+        182,
+        -85,
+        -97
       ],
-      "moveTypes": "PPDDDDDDDDDDDPDDDPDPDDDPDDDDDDDDDPPPDPDDDDPPPDPDDDDDDDDPDPDDDPDDDDDPDPDDDDDDDPDPDDDPDPDDDD",
-      "trajectoryHash": "f4dd11584caca66a"
+      "moveTypes": "PPDPDDDDDDPDDDPDDDDDPDPDDDDDDDDPDPDPDPDDDDDPDDDPPDDDPDPDDDDPDPDDDDDDDPPDDDDDDDDDDDDPDPDPPDDD",
+      "trajectoryHash": "7e486955a3064bbc"
     },
     {
       "level": "easy",
@@ -142,7 +142,7 @@
         -96
       ],
       "moveTypes": "PPDDPDDDDDDDDDDDPDPDDDDDDDDDPPPPDDDDDPPPPDDDDDDDPPDDDDPDDDDPPPDDDPPPDDDPPDDDDDPPPPDDDDDDDDPPPPPDDDDPDDD",
-      "trajectoryHash": "74317348b66a9982"
+      "trajectoryHash": "2640608e431587d9"
     },
     {
       "level": "medium",
@@ -160,15 +160,15 @@
     {
       "level": "medium",
       "seed": 303,
-      "turns": 103,
+      "turns": 97,
       "winner": 0,
       "finalScores": [
-        115,
-        -23,
-        -92
+        192,
+        -75,
+        -117
       ],
-      "moveTypes": "PPDPDDDDDDPDDDPPDDDPDDDDDPDPPDDDDDPPPDDDDPDPDDDDDDDDDDPPDPDPDDDPDDDPDPDDDPDDDDDDDPPPPPDPPDDDPPPDDDDPDDD",
-      "trajectoryHash": "39c1978bf1bc6919"
+      "moveTypes": "PPDPDDDDDDPDDDPPDDDPDDDDDPDPPDDDDDPPPDDDDPPPDDDDDDPDPDDDDPDDDPDPDPDDDPDDDDDDDPPDDDDPPPDDDDPPDDDDD",
+      "trajectoryHash": "6748c50f3e1f4b8e"
     },
     {
       "level": "medium",
@@ -199,15 +199,15 @@
     {
       "level": "advanced",
       "seed": 101,
-      "turns": 52,
+      "turns": 49,
       "winner": 0,
       "finalScores": [
-        158,
-        -60,
-        -98
+        189,
+        -66,
+        -123
       ],
-      "moveTypes": "PPDDPDDDDDDDDDDDPDPDDDDDDDDDPDPDPDPDPDPDPDDDDDPDPDPP",
-      "trajectoryHash": "5d548a3d24aeca72"
+      "moveTypes": "PPDDPDDDDDDDDDDDPDPDDDDDDDDDPDPDPDPDPDPDPDDDDDDDP",
+      "trajectoryHash": "2f4a2980073a5d61"
     },
     {
       "level": "advanced",
@@ -225,15 +225,15 @@
     {
       "level": "advanced",
       "seed": 303,
-      "turns": 76,
-      "winner": 0,
+      "turns": 103,
+      "winner": 1,
       "finalScores": [
-        200,
-        -69,
-        -131
+        -61,
+        191,
+        -130
       ],
-      "moveTypes": "PPDPDDDDDDPDPDPPPDDDDPDDDDPPPDDDDDDPPDDDDDPPDDDDPDPPDDDDDPPDDDDDDDPPDDDPPPDP",
-      "trajectoryHash": "70f5c8efe65942b4"
+      "moveTypes": "PPDPDDDDDDPDDDPPDDDPDDDDDPDPPDDDDDPDPDPDPDPPPPDDDPDPDPDPDDDDDPDPDPPDDDPDDDPDDDPPDDDDDPDPDPDPDPDDDPDDDDD",
+      "trajectoryHash": "1685b323da3d1374"
     },
     {
       "level": "advanced",
@@ -264,15 +264,15 @@
     {
       "level": "expert",
       "seed": 101,
-      "turns": 88,
+      "turns": 67,
       "winner": 0,
       "finalScores": [
-        156,
-        -45,
-        -111
+        90,
+        -16,
+        -74
       ],
-      "moveTypes": "PPDPPDPDDDPDDDDPDDDDPPPDDDDDDPDDDDPDPDPDDDPDDDPDDDDPPDDDDPPDDDPPDDDDPPPDDDDPDDDPPPDDDPDP",
-      "trajectoryHash": "9ed709995241e824"
+      "moveTypes": "PPDDPDPDDDDPDDDDPDPDDDDDDPDDDDDPDPDPDPDPDPDPDDDDDDPPPDDDDPPPDDDDPDP",
+      "trajectoryHash": "59e2fde87dc193aa"
     },
     {
       "level": "expert",
@@ -298,7 +298,7 @@
         -94
       ],
       "moveTypes": "PPDPDDDDDDPDDDPPDDDPDPDDDPPPDDDPDDDDPDDDDPPPDPDDDPDDDDPDDDPDDDDDPDDDDDPPPPDP",
-      "trajectoryHash": "33daa82bab9cae1b"
+      "trajectoryHash": "cc0ebdd6d33d9c3b"
     },
     {
       "level": "expert",
