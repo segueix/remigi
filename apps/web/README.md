@@ -124,7 +124,7 @@ telèfon fa el mateix.
 
 No jugues contra «Bot 1» sinó contra algú: hi ha un **planter de 24
 personatges** amb nom d'usuari i avatar amb degradat de colors propi
-(`game/bots.ts`) —GuineuAstuta, PolpVuitMans, MussolSavi…— i cada partida en
+(`game/bots.ts`) —GuineuAstuta, PopVuitMans, MussolSavi…— i cada partida en
 tria de diferents a l'atzar. L'anell de l'avatar conserva el color de taula del
 bot, que és el que lliga amb els marcs de les seves jugades. El nom viatja dins de l'estat del motor —que només hi veu
 una cadena—, així que una partida represa conserva els mateixos rivals;

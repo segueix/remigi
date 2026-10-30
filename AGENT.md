@@ -1942,3 +1942,26 @@ una versió nova; es comprova en recuperar connexió o tornar al joc.
 `segueix/eltauler`, workflow `desplega-web.yml`, incorporant main de Remigi.
 Cal executar també aquesta publicació; desplegar només Remigi no actualitza
 el domini. Les republicacions distingeixen els artefactes per run_attempt.
+
+### Detalls estètics: noms de bots i marc de la groga robada ✅ Feta (2026-10-30)
+
+- [x] El bot «ÓssaBruna» passa a «OssaBruna», sense accent.
+- [x] El bot «PolpVuitMans» passa a «PopVuitMans»: «pop» és la forma
+      habitual («polp» també és al DIEC, però és menys corrent).
+- [x] La fitxa groga acabada de robar (i la groga recol·locada del repàs)
+      porta el mateix marc daurat de ratlles que la resta de colors.
+
+**Validació**: typecheck i 315 tests (176 core + 139 web) correctes; comprovat amb captures del
+faristol i d'una jugada del repàs, en tema clar i fosc.
+
+### Problemes trobats
+
+- [2026-10-30] **El marc de la groga robada es veia negre i difuminat a
+  baix.** L'excepció del 2026-08-31 el fosquia a or vell (`#6b4a00`) perquè
+  no es confongués amb la fitxa, però sobre la fusta fosca del faristol
+  semblava negre, i a la part de baix, damunt l'ombra de la fitxa, es perdia.
+  Resolt traient l'excepció: la vora fosca de la fitxa groga i el buit d'1 px
+  fins al marc ja separen el daurat del groc.
+- [2026-10-30] Una partida desada abans del canvi conserva els noms antics
+  dels rivals; com que ja no són al planter, reben l'avatar de recanvi (🤖)
+  fins a la partida següent. És el comportament previst per a noms desconeguts.

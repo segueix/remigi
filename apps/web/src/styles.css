@@ -981,6 +981,10 @@ input {
  * les altres tretze. És a fora (`outline`), de ratlles i d'un color que no fa
  * servir res més, per no confondre's ni amb la fitxa triada (enlairada i amb
  * el marc sencer) ni amb els colors dels bots.
+ *
+ * També és daurat sobre les fitxes grogues: la vora fosca de la fitxa i el
+ * buit fins al marc ja els separen. Fosquit a or vell (com era abans), sobre
+ * la fusta es veia negre i a baix, amb l'ombra de la fitxa, es difuminava.
  */
 .tile.drawn {
   outline: 2px dashed var(--robada);
@@ -1001,17 +1005,6 @@ input {
 .tile.moved {
   outline: 2px solid var(--robada);
   outline-offset: 1px;
-}
-
-/*
- * Els marcs daurats (la fitxa robada i la recol·locada) es perdrien sobre una
- * fitxa groga, que és gairebé del mateix color: sobre les grogues, el daurat
- * es fosqueix fins a un to d'or vell que continua sent el mateix senyal però
- * es veu. A les fitxes clàssiques no cal: allà la fitxa és crema.
- */
-.fitxes-inverses .tile-orange.drawn,
-.fitxes-inverses .tile-orange.moved {
-  outline-color: #6b4a00;
 }
 
 /*
