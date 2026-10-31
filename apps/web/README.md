@@ -26,6 +26,10 @@ src/
 ├── main.tsx                  # punt d'entrada
 ├── App.tsx                   # navegació entre pantalles
 ├── styles.css                # estils (tema clar i fosc)
+├── appSwitch/
+│   ├── appSwitch.ts          # al mòbil, lliscar el dit pel mig porta a El Tauler
+│   ├── appSwitch.css         # el panell que entra seguint el dit i l'avís de la mà
+│   └── appSwitch.test.ts
 ├── storage/
 │   ├── webStore.ts           # adaptador de localStorage a KeyValueStore
 │   └── webStore.test.ts

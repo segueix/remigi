@@ -1942,3 +1942,48 @@ una versió nova; es comprova en recuperar connexió o tornar al joc.
 `segueix/eltauler`, workflow `desplega-web.yml`, incorporant main de Remigi.
 Cal executar també aquesta publicació; desplegar només Remigi no actualitza
 el domini. Les republicacions distingeixen els artefactes per run_attempt.
+
+### Pas a El Tauler lliscant el dit ✅ Feta (2026-10-31)
+
+Remigi i El Tauler són apps germanes (Remigi viu a `eltauler.cat/remigi/`).
+Com Segueix! amb Segueix! Música, ara es passa d'una a l'altra lliscant el dit,
+amb la mateixa animació.
+
+- [x] `src/appSwitch/appSwitch.ts` (+ `appSwitch.css`, arrencat a `main.tsx`):
+      al mòbil (≤ 768 px), lliscar el dit cap a l'esquerra o la dreta pel mig
+      de la pantalla fa entrar el panell «El Tauler» (corona ♔ i nom en el
+      daurat d'El Tauler, sobre el feltre fosc) des del costat contrari,
+      seguint el dit. Passat el llindar (35 % de l'ample, mínim 110 px) diu
+      «Deixa anar per anar-hi» i, en deixar-lo anar, obre
+      `https://eltauler.cat/` a la mateixa pestanya. Abans del llindar, torna.
+- [x] No fa res des de les vores (12 % per banda: l'enrere del sistema), a la
+      tira de jugadors de dalt ni als botons de baix, si el moviment és
+      sobretot vertical (desplaçar la taula), damunt de les fitxes i del
+      faristol (allà el dit aixeca i arrossega fitxes), de fileres amb scroll
+      lateral, camps de text, el menú del jugador o altres finestres. Si una
+      fitxa s'aixeca a mig gest (`.drag-layer`), el gest es deixa córrer.
+      Oients passius: no frenen cap desplaçament.
+- [x] Avís de les primeres vegades: les tres primeres obertures al mòbil, amb
+      la taula a punt i sense cap finestra ni avís de torn al damunt, una mà
+      blanca llisca cap als costats amb «El Tauler» uns 3 s
+      (`pointer-events: none`). Comptador a `remigi:avis-canvi-app`, que no
+      topa amb El Tauler (comparteixen domini i localStorage). Mai a
+      l'ordinador.
+- [x] El sentit contrari és a `canviapp.js` de `segueix/eltauler` (només a la
+      portada d'El Tauler, cap a `/remigi/`).
+
+**Validació**: typecheck i 327 tests (176 core + 151 web; 12 nous a
+`appSwitch.test.ts`) correctes. Playwright: 139 proves correctes, entre elles
+les 8 noves d'`e2e/canvi-app.spec.ts` amb gestos tàctils reals per CDP
+(esquerra i dreta obren El Tauler; a mitges el panell entra i torna; gest curt,
+vertical o des de la vora; fitxes del faristol; menú obert; avís de la mà al
+mòbil i no a l'ordinador). Les proves negatives s'han comprovat traient-ne el
+bloqueig: llavors fallen.
+
+### Problemes trobats
+
+- [2026-10-31] **Chrome fon l'últim `touchmove` amb el `touchend`** — una
+  lliscada sintètica de 150 px acabava comptant-ne ~134 i no arribava al
+  llindar, així que la prova del faristol passava encara que el bloqueig no hi
+  fos. Resolt fent-la començar a la fitxa més a la dreta i acabar a 30 px de
+  la vora (~280 px), i comprovant-ho traient el bloqueig.
