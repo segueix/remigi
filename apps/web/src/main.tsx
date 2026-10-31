@@ -3,6 +3,8 @@ import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import { migrateOldStorage } from './storage/migrate';
 import './styles.css';
+import './appSwitch/appSwitch.css';
+import { initAppSwitch } from './appSwitch/appSwitch';
 import { registerUpdates } from './pwa/updates';
 
 // Abans de res: si hi ha dades desades amb el nom antic del joc, es migren.
@@ -36,6 +38,9 @@ createRoot(container).render(
     <App />
   </StrictMode>,
 );
+
+// Al mòbil, lliscar el dit pel mig de la pantalla porta a El Tauler (app germana).
+initAppSwitch(window);
 
 // Només en producció: cada publicació activa la recàrrega automàtica.
 if (import.meta.env.PROD) {
