@@ -205,6 +205,9 @@ test.describe('moure fitxes', () => {
   test('arrossegar del faristol a la taula', async ({ page }) => {
     await comencaDeZero(page);
     await jugaContra(page, 1);
+    // Si comença el bot, quan et toca la taula ja pot tenir fitxes seves.
+    await expect(avanca(page)).toBeEnabled();
+    const fitxesAbans = await page.locator('.board .meld .tile').count();
 
     const fitxa = page.locator('.rack .tile').first();
     const caixa = (await fitxa.boundingBox())!;
@@ -217,7 +220,7 @@ test.describe('moure fitxes', () => {
     await page.mouse.move(taula.x + taula.width / 2, taula.y + taula.height / 2, { steps: 8 });
     await page.mouse.up();
 
-    await expect(page.locator('.board .meld .tile')).toHaveCount(1);
+    await expect(page.locator('.board .meld .tile')).toHaveCount(fitxesAbans + 1);
     // L'arrossegament no ha de comptar a més com un clic.
     await expect(page.locator('.tile.selected')).toHaveCount(0);
   });

@@ -2184,3 +2184,23 @@ sencera en verd.
   obre abans del teu torn i la prova, que suposava la taula buida, fallava (3
   de cada 20 execucions locals; a la CI la salvava el reintent). Ara espera el
   teu torn i compara amb les jugades que ja hi havia: 40 de 40.
+- [2026-11-13] **Rivals amb força fora del marge** (revisió automàtica de la
+  PR): el soroll de ±8 de `spreadRatings` podia passar el desplaçament de
+  ±80 i, als graons 1, 2, 18 i 19, donar rivals de 796 o de més de 1600 (774
+  de 8.400 temporades generades). `validSeason` descartava aquestes temporades
+  en recarregar, amb tots els resultats. Ara el desplaçament s'encabeix a la
+  seva banda, la força final es limita a 800–1600 i, en carregar, una força
+  fora de marge es corregeix en comptes de llençar la temporada. Proves: cap
+  graó amb 300 llavors i tres mides surt del marge, i totes les temporades
+  generades es desen i es recuperen senceres.
+- [2026-11-13] **El compte enrere podia descomptar l'estona en segon pla**
+  (revisió automàtica): si el mòbil suspèn els temporitzadors amb l'app
+  amagada, el primer toc en tornar descomptava tot el temps passat i la
+  jornada començava de cop. Ara el compte és pur (`lliga/countdown.ts`): en
+  canviar la visibilitat es torna a prendre el temps, i cap pas no descompta
+  més d'un segon. Proves d'unitat i de navegador (un salt de temps sense tocs
+  amb l'app amagada no fa començar la jornada).
+- [2026-11-13] **Una altra prova amb la mateixa suposició de taula buida**:
+  «arrossegar del faristol a la taula» (3 de 15 execucions). Arreglada igual:
+  espera el teu torn i compta respecte de la taula d'abans (30 de 30). És
+  l'única altra prova amb partida a l'atzar que comptava fitxes de la taula.

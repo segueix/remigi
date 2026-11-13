@@ -242,14 +242,17 @@ export function spreadRatings(center: number, count: number, rng: Rng, spread = 
   const raw = Array.from({ length: count }, (_, i) =>
     count === 1 ? 0 : -spread + (2 * spread * i) / (count - 1) + (rng() - 0.5) * 16,
   );
-  return raw.map((offset) => {
-    if (offset < 0) {
-      const room = Math.min(spread, center - MIN_RATING);
-      return Math.round(center + (offset / spread) * room);
-    }
-    const room = Math.min(spread, MAX_RATING - center);
-    return Math.round(center + (offset / spread) * room);
+  return raw.map((rawOffset) => {
+    // El soroll no pot treure cap rival de la seva banda (ni del marge del motor).
+    const offset = Math.max(-spread, Math.min(spread, rawOffset));
+    const room = offset < 0 ? Math.min(spread, center - MIN_RATING) : Math.min(spread, MAX_RATING - center);
+    return clampRating(Math.round(center + (offset / spread) * room));
   });
+}
+
+/** Una força dins del marge que juga el motor (800–1600). */
+export function clampRating(rating: number): number {
+  return Math.min(MAX_RATING, Math.max(MIN_RATING, Math.round(rating)));
 }
 
 export function createSeason(options: CreateSeasonOptions): LeagueSeason {
@@ -725,9 +728,13 @@ function validSeason(value: unknown): LeagueSeason | null {
   const results = Array.isArray(value.results) ? value.results : null;
   if (!rivals || !schedule || !results) return null;
   if (rivals.length !== config.players - 1 || schedule.length !== config.rounds) return null;
+  /*
+   * Una força fora del marge (desats d'abans d'encabir el soroll) es corregeix
+   * en comptes de llençar la temporada sencera amb els seus resultats.
+   */
   const rivalsOk = rivals.every(
     (r) => isRecord(r) && typeof r.id === 'string' && typeof r.name === 'string' &&
-      typeof r.rating === 'number' && r.rating >= MIN_RATING && r.rating <= MAX_RATING,
+      typeof r.rating === 'number' && Number.isFinite(r.rating),
   );
   const ids = new Set([YOU, ...rivals.map((r) => (r as LeagueRival).id)]);
   const scheduleOk = schedule.every(
@@ -750,7 +757,7 @@ function validSeason(value: unknown): LeagueSeason | null {
     tier: clampTier(Number(value.tier)),
     config,
     name: typeof value.name === 'string' ? value.name : '',
-    rivals: rivals as LeagueRival[],
+    rivals: (rivals as LeagueRival[]).map((rival) => ({ ...rival, rating: clampRating(rival.rating) })),
     schedule: schedule as string[][][],
     results: results as TableResult[],
     played,

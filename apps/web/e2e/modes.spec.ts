@@ -220,16 +220,28 @@ test('entre jornades: 30 segons de relax amb música composta, i la jornada seg�
 
   // Amb l'app amagada, el compte enrere no corre.
   const rivals = await page.locator('.interludi-rival-text strong').allTextContents();
-  await page.evaluate(() => Object.defineProperty(document, 'hidden', { configurable: true, get: () => true }));
-  await page.clock.fastForward(40_000);
+  await page.evaluate(() => {
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+  await page.clock.runFor(40_000);
+  await expect(page.locator('.interludi')).toBeVisible();
+  const quiet = Number(await page.locator('.interludi-compte strong').textContent());
+  expect(quiet).toBeGreaterThan(20);
+
+  // Si el navegador ha suspès els temporitzadors, en tornar no es descompta
+  // l'estona amagada: un salt de temps sense tocs no fa començar la jornada.
+  await page.clock.fastForward(60_000);
+  await page.evaluate(() => {
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => false });
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
   await page.clock.runFor(1000);
   await expect(page.locator('.interludi')).toBeVisible();
+  expect(Number(await page.locator('.interludi-compte strong').textContent())).toBeGreaterThan(quiet - 3);
 
   // A la vista, a zero comença sola la jornada 2 amb els rivals anunciats.
-  await page.evaluate(() => Object.defineProperty(document, 'hidden', { configurable: true, get: () => false }));
-  await page.clock.runFor(1000);
-  await page.clock.fastForward(31_000);
-  await page.clock.runFor(1000);
+  await page.clock.runFor(31_000);
   await expect(page.locator('.player .player-nom')).toHaveText(['Jugador', ...rivals]);
   await expect(page.locator('.nivell-mode')).toContainText('jornada 2/7');
 

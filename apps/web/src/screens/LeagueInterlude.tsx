@@ -1,5 +1,6 @@
 import { DIFFICULTIES } from '@remigi/core';
 import { useEffect, useRef, useState } from 'react';
+import { resyncCountdown, startCountdown, tickCountdown } from '../lliga/countdown';
 import { botPersona } from '../game/bots';
 import {
   YOU,
@@ -49,22 +50,29 @@ export function LeagueInterlude({ season, playerName, onPlayNow, onStandings, on
   const [music, setMusic] = useMusicPrefs();
   const [left, setLeft] = useState(INTERLUDE_SECONDS * 1000);
   const [playing, setPlaying] = useState<string | null>(null);
-  const clock = useRef({ left: INTERLUDE_SECONDS * 1000, last: performance.now() });
+  const clock = useRef(startCountdown(INTERLUDE_SECONDS * 1000, performance.now()));
   const onPlayNowRef = useRef(onPlayNow);
   onPlayNowRef.current = onPlayNow;
 
   useEffect(() => {
-    clock.current = { left: INTERLUDE_SECONDS * 1000, last: performance.now() };
+    clock.current = startCountdown(INTERLUDE_SECONDS * 1000, performance.now());
     let done = false;
+    /*
+     * En amagar-se o tornar l'app, el temps es torna a prendre: si el mòbil ha
+     * suspès els temporitzadors en segon pla, l'estona amagada no es descompta
+     * (vegeu `countdown.ts`).
+     */
+    const onVisibility = () => {
+      clock.current = resyncCountdown(clock.current, performance.now());
+      if (document.hidden) pauseMusic();
+      else resumeMusic();
+    };
+    document.addEventListener('visibilitychange', onVisibility);
     const timer = setInterval(() => {
-      const now = performance.now();
-      const hidden = typeof document !== 'undefined' && document.hidden;
+      const hidden = document.hidden;
       if (hidden) pauseMusic();
-      else {
-        resumeMusic();
-        clock.current.left -= Math.max(0, now - clock.current.last);
-      }
-      clock.current.last = now;
+      else resumeMusic();
+      clock.current = tickCountdown(clock.current, performance.now(), hidden);
       setLeft(clock.current.left);
       if (clock.current.left <= 0 && !done) {
         done = true;
@@ -72,7 +80,10 @@ export function LeagueInterlude({ season, playerName, onPlayNow, onStandings, on
         onPlayNowRef.current();
       }
     }, 200);
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
   }, []);
 
   /*

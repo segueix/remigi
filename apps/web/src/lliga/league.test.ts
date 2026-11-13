@@ -131,6 +131,39 @@ describe('els rivals', () => {
     }
   });
 
+  it('el soroll no treu cap rival del marge del motor, a cap graó', () => {
+    for (let tier = 0; tier <= TOP_TIER; tier++) {
+      for (let seed = 1; seed <= 300; seed++) {
+        for (const count of [5, 7, 15]) {
+          for (const rating of spreadRatings(tierRating(tier), count, createRng(seed))) {
+            expect(rating).toBeGreaterThanOrEqual(MIN_RATING);
+            expect(rating).toBeLessThanOrEqual(MAX_RATING);
+          }
+        }
+      }
+    }
+  });
+
+  it('les temporades generades es poden desar i recuperar senceres, a tots els graons', () => {
+    for (let tier = 0; tier <= TOP_TIER; tier++) {
+      for (const seed of [1, 2, 3]) {
+        const season = createSeason({ tier, config: DEFAULT_CONFIG, home: VIC, seed });
+        expect(parseLeagueState(serializeLeagueState({ career: newCareer(VIC), season })).season).toEqual(season);
+      }
+    }
+    // El cas que va trobar la revisió: graó 1, llavor 2.
+    const season = createSeason({ tier: 1, config: DEFAULT_CONFIG, home: null, seed: 2 });
+    expect(Math.min(...season.rivals.map((r) => r.rating))).toBeGreaterThanOrEqual(MIN_RATING);
+  });
+
+  it('una temporada desada amb una força fora de marge es corregeix, no es perd', () => {
+    const season = recordRound(createSeason({ tier: 1, config: DEFAULT_CONFIG, home: VIC, seed: 2 }), [10, -2, -3, -5]);
+    const broken = { ...season, rivals: season.rivals.map((r, i) => (i === 0 ? { ...r, rating: 796 } : r)) };
+    const parsed = parseLeagueState(JSON.stringify({ career: newCareer(VIC), season: broken })).season;
+    expect(parsed?.played).toBe(1);
+    expect(parsed?.rivals[0].rating).toBe(MIN_RATING);
+  });
+
   it('crea una temporada amb noms de persona diferents, del lloc i del nivell', () => {
     const season = createSeason({ tier: 3, config: DEFAULT_CONFIG, home: VIC, seed: 42 });
     expect(season.rivals).toHaveLength(7);
