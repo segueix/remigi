@@ -141,24 +141,42 @@ test('una temporada sencera de lliga: jornades, classificació i temporada segü
   await page.getByRole('button', { name: 'Comença la temporada' }).click();
   await expect(page.locator('.lliga-taula tbody tr')).toHaveCount(6);
 
-  for (let jornada = 1; jornada <= 3; jornada++) {
-    const rivals = await page.locator('.lliga-rivals strong').allTextContents();
-    expect(rivals).toHaveLength(2);
-    await page.getByRole('button', { name: `Juga la jornada ${jornada}` }).click();
-    // Els rivals de la partida són els del calendari, amb nom i cognom.
-    await expect(page.locator('.player .player-nom')).toHaveText(['Jugador', ...rivals]);
-    await expect(page.locator('.nivell-mode')).toContainText(`jornada ${jornada}/3`);
-    await obreMenu(page);
-    await expect(page.locator('.nivell-seccio')).toHaveCount(0);
-    await page.locator('.menu-fons').click({ position: { x: 5, y: 5 } });
-    await acabaLaPartida(page, '.final-lliga');
-    await expect(page.locator('.final-lliga')).toContainText(`jornada ${jornada} de 3`);
-    await page.getByRole('button', { name: /Veure (la classificació|el final de la temporada)/ }).click();
-  }
+  // Jornada 1: en acabar, 30 segons de relax; «Classificació» atura el compte.
+  let rivals = await page.locator('.lliga-rivals strong').allTextContents();
+  expect(rivals).toHaveLength(2);
+  await page.getByRole('button', { name: 'Juga la jornada 1' }).click();
+  // Els rivals de la partida són els del calendari, amb nom i cognom.
+  await expect(page.locator('.player .player-nom')).toHaveText(['Jugador', ...rivals]);
+  await expect(page.locator('.nivell-mode')).toContainText('jornada 1/3');
+  await obreMenu(page);
+  await expect(page.locator('.nivell-seccio')).toHaveCount(0);
+  await page.locator('.menu-fons').click({ position: { x: 5, y: 5 } });
+  await acabaLaPartida(page, '.interludi');
+  await expect(page.locator('.interludi-jornada')).toContainText('Jornada2/3');
+  await expect(page.locator('.interludi-compte strong')).toHaveText(/^(30|29|28|27)$/);
+  rivals = await page.locator('.interludi-rival-text strong').allTextContents();
+  expect(rivals).toHaveLength(2);
+  await page.getByRole('button', { name: 'Classificació' }).click();
+  await expect(page.locator('.lliga-rivals strong')).toHaveText(rivals);
+
+  // Jornada 2: «Juga ara» no espera.
+  await page.getByRole('button', { name: 'Juga la jornada 2' }).click();
+  await acabaLaPartida(page, '.interludi');
+  rivals = await page.locator('.interludi-rival-text strong').allTextContents();
+  await page.getByRole('button', { name: 'Juga ara' }).click();
+  await expect(page.locator('.player .player-nom')).toHaveText(['Jugador', ...rivals]);
+  await expect(page.locator('.nivell-mode')).toContainText('jornada 3/3');
+
+  // L'última jornada acaba amb el resum de sempre.
+  await acabaLaPartida(page, '.final-lliga');
+  await expect(page.locator('.final-lliga')).toContainText('jornada 3 de 3');
+  await page.getByRole('button', { name: 'Veure el final de la temporada' }).click();
 
   // Final de temporada: cadascú ha jugat les tres jornades.
   await expect(page.locator('.lliga-final')).toBeVisible();
-  await expect(page.locator('.lliga-final-moviment')).toContainText(/Continues a la|Puges a la/);
+  await expect(page.locator('.lliga-final-moviment')).toContainText(
+    /Continues al Grup C de la Lliga Local|Puges al Grup B de la Lliga Local/,
+  );
   const jugades = await page.locator('.lliga-final .lliga-taula tbody tr td.col-pj').allTextContents();
   if (jugades.length > 0) expect(new Set(jugades)).toEqual(new Set(['3']));
   await expect(page.getByText(/Palmarès \(1 temporada\)/)).toBeVisible();
@@ -169,4 +187,55 @@ test('una temporada sencera de lliga: jornades, classificació i temporada segü
   // La lliga no mou el nivell del joc lliure.
   const perfil = await page.evaluate((clau) => JSON.parse(localStorage.getItem(clau) ?? 'null'), PROFILE_KEY);
   expect(perfil).toMatchObject({ rating: 1100, gamesPlayed: 0 });
+});
+
+test('entre jornades: 30 segons de relax amb música composta, i la jornada següent comença sola', async ({ page }) => {
+  await page.clock.install();
+  await obreNet(page);
+  await page.getByRole('button', { name: 'Lliga', exact: true }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Ara no' }).click();
+  await page.getByRole('button', { name: 'Comença la temporada' }).click();
+  await page.getByRole('button', { name: 'Juga la jornada 1' }).click();
+  await acabaLaPartida(page, '.interludi');
+
+  // La música es compon en aquell moment i queda al registre.
+  await expect(page.locator('.interludi-musica')).toContainText('Sona:', { timeout: 15_000 });
+  await expect
+    .poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('remigi:musica-registre') ?? '[]').length))
+    .toBe(1);
+
+  // Amb l'app amagada, el compte enrere no corre.
+  const rivals = await page.locator('.interludi-rival-text strong').allTextContents();
+  await page.evaluate(() => Object.defineProperty(document, 'hidden', { configurable: true, get: () => true }));
+  await page.clock.fastForward(40_000);
+  await page.clock.runFor(1000);
+  await expect(page.locator('.interludi')).toBeVisible();
+
+  // A la vista, a zero comença sola la jornada 2 amb els rivals anunciats.
+  await page.evaluate(() => Object.defineProperty(document, 'hidden', { configurable: true, get: () => false }));
+  await page.clock.runFor(1000);
+  await page.clock.fastForward(31_000);
+  await page.clock.runFor(1000);
+  await expect(page.locator('.player .player-nom')).toHaveText(['Jugador', ...rivals]);
+  await expect(page.locator('.nivell-mode')).toContainText('jornada 2/7');
+
+  // La peça que ha sonat es pot tornar a escoltar des de «Música composta».
+  await obreMenu(page);
+  await inici(page).click();
+  await page.getByRole('button', { name: '🎵 Música composta' }).click();
+  await expect(page.locator('.musica-peca')).toHaveCount(1);
+  await page.locator('.musica-peca').getByRole('button', { name: 'Marca com a preferida' }).click();
+  await expect(page.locator('.musica-peca').getByRole('button', { name: 'Treu de les preferides' })).toBeVisible();
+});
+
+test('la música entre jornades es pot silenciar i ho recorda', async ({ page }) => {
+  await obreNet(page);
+  await page.getByRole('button', { name: 'Lliga', exact: true }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Ara no' }).click();
+  await page.getByRole('button', { name: 'Comença la temporada' }).click();
+  await page.getByRole('button', { name: 'Juga la jornada 1' }).click();
+  await acabaLaPartida(page, '.interludi');
+  await page.locator('.interludi-musica').getByRole('button', { name: 'Silencia' }).click();
+  await expect(page.locator('.interludi-musica')).toContainText('Sense música');
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('remigi:musica') ?? '{}').on)).toBe(false);
 });

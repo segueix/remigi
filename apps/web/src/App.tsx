@@ -12,13 +12,14 @@ import {
   rankOf,
   recordRound,
   tablePoints,
-  tierName,
+  movementText,
   yourTable,
   type LeagueConfig,
   type LeagueSeason,
   type LeagueState,
 } from './lliga/league';
 import type { LeagueHome } from './lliga/localitats';
+import { loadRadio } from './musica/musica';
 import {
   abandonChallenge,
   addGame,
@@ -32,7 +33,9 @@ import {
 } from './repte/challenge';
 import { GameScreen, type ModeFinish } from './screens/GameScreen';
 import { HomeScreen } from './screens/HomeScreen';
+import { LeagueInterlude } from './screens/LeagueInterlude';
 import { LligaScreen } from './screens/LligaScreen';
+import { MusicScreen } from './screens/MusicScreen';
 import { RepteScreen } from './screens/RepteScreen';
 import { StatsScreen } from './screens/StatsScreen';
 import {
@@ -57,7 +60,7 @@ import { useTileStyle } from './state/useTileStyle';
 import { leaguePoints, ordinal, signed } from './ui/format';
 
 /** Pantalles: l'inici amb les tres maneres de jugar, la partida i les del repte i la lliga. */
-export type View = 'home' | 'game' | 'repte' | 'lliga';
+export type View = 'home' | 'game' | 'repte' | 'lliga' | 'musica';
 
 export const CHALLENGE_KEY = 'remigi:repte';
 export const LEAGUE_KEY = 'remigi:lliga';
@@ -269,6 +272,8 @@ export function App() {
     const season = league.get()?.season;
     const player = profile.profile;
     if (!season || isFinished(season) || !player) return;
+    // El compositor de la música d'entre jornades es baixa mentre es juga.
+    void loadRadio().catch(() => {});
     const session = leagueSession(season);
     const label = `${season.name} · jornada ${season.played + 1}/${season.config.rounds}`;
     const saved = await savedGames.load('lliga');
@@ -372,13 +377,7 @@ export function App() {
             </p>
             {record && (
               <p className="final-lliga-moviment">
-                {record.movement === 'up'
-                  ? `Puges a la ${tierName(record.nextTier, state.career.home)}!`
-                  : record.movement === 'down'
-                    ? `Baixes a la ${tierName(record.nextTier, state.career.home)}.`
-                    : record.movement === 'champion'
-                      ? 'Campió del món!'
-                      : `Continues a la ${tierName(record.nextTier, state.career.home)}.`}
+                {movementText(record.tier, record.nextTier, record.movement, state.career.home)}
               </p>
             )}
           </div>
@@ -387,9 +386,23 @@ export function App() {
           label: done ? 'Veure el final de la temporada' : 'Veure la classificació',
           run: () => goTo('lliga'),
         },
+        /*
+         * Entre jornada i jornada, 30 segons de relax amb música i la següent
+         * comença sola. L'última jornada acaba amb el resum de sempre i el
+         * final de la temporada.
+         */
+        interlude: done ? undefined : (
+          <LeagueInterlude
+            season={season}
+            playerName={profile.profile?.name ?? 'Tu'}
+            onPlayNow={() => void playRound()}
+            onStandings={() => goTo('lliga')}
+            onHome={() => goTo('home')}
+          />
+        ),
       };
     },
-    [goTo],
+    [goTo, playRound, profile.profile],
   );
 
   /* ---------- Final de partida ---------- */
@@ -496,8 +509,11 @@ export function App() {
           onChallenge={() => setView('repte')}
           onLeague={() => setView('lliga')}
           onHistory={() => setStatsOpen(true)}
+          onMusic={() => setView('musica')}
         />
       )}
+
+      {!statsOpen && view === 'musica' && <MusicScreen onHome={() => goTo('home')} />}
 
       {!statsOpen && view === 'repte' && (
         <RepteScreen

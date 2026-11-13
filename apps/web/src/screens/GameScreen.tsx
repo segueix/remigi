@@ -85,6 +85,11 @@ interface Props {
 export interface ModeFinish {
   body: ReactNode;
   primary: { label: string; run(): void };
+  /**
+   * Si n'hi ha, substitueix el resum sencer: la pantalla de relax entre
+   * jornades de la lliga, que encadena la partida següent.
+   */
+  interlude?: ReactNode;
 }
 
 /** Estona que es veu l'avís de temps exhaurit abans d'apagar-se sol. */
@@ -478,6 +483,10 @@ export function GameScreen({
         onClose={() => setQuiz(null)}
       />
     );
+  }
+
+  if (game.status === 'finished' && resultOpen && finish?.interlude) {
+    return <>{finish.interlude}</>;
   }
 
   if (game.status === 'finished' && resultOpen) {

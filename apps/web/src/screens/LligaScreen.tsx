@@ -14,6 +14,7 @@ import {
   difficultyForRating,
   isFinished,
   levelName,
+  movementText,
   normalizeConfig,
   rivalById,
   roundsToMeetAll,
@@ -50,13 +51,6 @@ interface Props {
   onSetHome(home: LeagueHome | null): void;
   onHome(): void;
 }
-
-const MOVEMENT_TEXT: Record<Movement, string> = {
-  up: 'Puges a la',
-  down: 'Baixes a la',
-  stay: 'Continues a la',
-  champion: 'Campió del món!',
-};
 
 /** Rival (força) en paraules: «Fàcil · 1010». */
 function strengthLabel(rating: number): string {
@@ -166,8 +160,9 @@ export function LligaScreen({
       <details className="lliga-escala">
         <summary>L’escalada: del poble al món</summary>
         <p className="muted small">
-          Cada nivell té tres lligues: la C, la B i la A. Pugen els primers i baixen els últims (una
-          quarta part de la lliga); de la A es puja a la C del nivell següent. La lliga local comença a
+          Cada nivell té tres lligues i es puja d’una en una: de la <strong>C</strong> a la{' '}
+          <strong>B</strong>, de la B a la <strong>A</strong>, i de la A a la C del nivell següent.
+          Pugen els primers i baixen els últims (una quarta part de la lliga). La lliga local comença a
           Novell i la mundial acaba a Expert.
         </p>
         <ol>
@@ -206,7 +201,10 @@ export function LligaScreen({
  */
 function Ladder({ tier, best }: { tier: number; best: number }) {
   return (
-    <ol className="escala" aria-label={`Graó ${tier + 1} de ${TOP_TIER + 1}`}>
+    <ol
+      className="escala"
+      aria-label={`Graó ${tier + 1} de ${TOP_TIER + 1}: ${LEAGUE_LEVELS[tierLevel(tier)].label}, grup ${tierGroup(tier)}. Es puja de la C a la B, de la B a la A i de la A a la C del nivell següent.`}
+    >
       {LEAGUE_LEVELS.map((level, index) => (
         <li key={level.id} className="escala-nivell" title={level.label}>
           {GROUPS.map((group, g) => {
@@ -217,7 +215,7 @@ function Ladder({ tier, best }: { tier: number; best: number }) {
             if (step === best && best > tier) classes.push('millor');
             return (
               <span key={group} className={classes.join(' ')}>
-                {step === tier ? group : ''}
+                {group}
               </span>
             );
           })}
@@ -476,14 +474,7 @@ function SeasonReview({ season, state, playerName }: { season: LeagueSeason; sta
           {me?.wins === 1 ? 'victòria' : 'victòries'}
         </p>
         <p className="lliga-final-moviment">
-          {movement === 'champion' ? (
-            <strong>{MOVEMENT_TEXT.champion}</strong>
-          ) : (
-            <>
-              {MOVEMENT_TEXT[movement]} <strong>{tierName(next, state.career.home)}</strong>
-              {movement === 'up' && tierGroup(next) === 'C' && ' — nivell nou!'}
-            </>
-          )}
+          <strong>{movementText(season.tier, next, movement, state.career.home)}</strong>
         </p>
       </div>
       <StandingsTable season={season} playerName={playerName} />

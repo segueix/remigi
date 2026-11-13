@@ -33,6 +33,11 @@ src/
 │   ├── localitats.js (.d.ts) # municipis, comarques i orígens (còpia d'El Tauler)
 │   ├── elTaulerHome.ts       # llegeix on jugues a la lliga d'escacs d'El Tauler
 │   └── LocationDialog.tsx    # «On jugues?»
+├── musica/
+│   ├── radioambient.js (.d.ts) # compositor i sintetitzador de música (còpia d'El Tauler)
+│   ├── musica.ts             # peça nova sense repeticions, registre, MP3
+│   ├── musica.test.ts
+│   └── useMusicPrefs.ts      # música sí/no i volum
 ├── repte/
 │   ├── challenge.ts          # el repte: partides, total i rècords
 │   └── challenge.test.ts
@@ -79,6 +84,8 @@ src/
     ├── HomeScreen.tsx        # inici: joc lliure, repte i lliga, de costat
     ├── RepteScreen.tsx       # configurar, seguir i acabar un repte
     ├── LligaScreen.tsx       # temporada, classificació, escalada i palmarès
+    ├── LeagueInterlude.tsx   # 30 s de relax amb música entre jornades
+    ├── MusicScreen.tsx       # la música composta: escoltar, preferides, MP3
     ├── GameScreen.tsx        # la partida, el menú del jugador i el resultat
     └── StatsScreen.tsx       # historial: habilitat, gràfic i reinici
 ```

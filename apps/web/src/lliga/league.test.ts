@@ -11,6 +11,7 @@ import {
   createSeason,
   isFinished,
   makeSchedule,
+  movementText,
   newCareer,
   nextTier,
   normalizeConfig,
@@ -68,6 +69,22 @@ describe("l'escala de lligues", () => {
     expect(catalanDe('el Bages')).toBe('del Bages');
     expect(catalanDe("l'Anoia")).toBe("de l'Anoia");
     expect(catalanDe('Igualada')).toBe("d'Igualada");
+  });
+
+  it('dins d’un nivell es passa de la C a la B i de la B a la A', () => {
+    expect(tierGroup(nextTier(0, 1, 8))).toBe('B'); // Municipal C → Municipal B
+    expect(tierGroup(nextTier(1, 1, 8))).toBe('A'); // Municipal B → Municipal A
+    expect(tierLevel(nextTier(1, 1, 8))).toBe(0);
+    expect(movementText(0, 1, 'up', VIC)).toBe('Puges al Grup B de la Lliga de Vic');
+    expect(movementText(1, 2, 'up', VIC)).toBe('Puges al Grup A de la Lliga de Vic');
+    expect(movementText(2, 3, 'up', VIC)).toBe("Puges a la Lliga Comarcal d'Osona · Grup C: nivell nou!");
+    expect(movementText(4, 3, 'down', VIC)).toBe("Baixes al Grup C de la Lliga Comarcal d'Osona");
+    expect(movementText(3, 2, 'down', VIC)).toBe('Baixes a la Lliga de Vic · Grup A');
+    expect(movementText(5, 5, 'stay', VIC)).toBe("Continues al Grup A de la Lliga Comarcal d'Osona");
+    expect(movementText(20, 20, 'champion', VIC)).toBe('Campió del món!');
+    // De pujada, tots els graons un per un: C, B, A, C, B, A…
+    const groups = Array.from({ length: 21 }, (_, t) => tierGroup(t)).join('');
+    expect(groups).toBe('CBA'.repeat(7));
   });
 
   it('de la A es puja a la C del nivell següent, i de la C es baixa a la A de l’anterior', () => {

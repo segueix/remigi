@@ -4,7 +4,7 @@ En obrir Remigi surten tres opcions, l'una al costat de l'altra (també al mòbi
 
 | | Joc lliure (esquerra) | Repte (centre) | Lliga (dreta) |
 |---|---|---|---|
-| Què és | La partida de sempre | Unes quantes partides seguides, i se sumen els punts | Temporades de lliga, del poble al món |
+| Què és | La partida de sempre | Unes quantes partides seguides, i se sumen els punts | Temporades de lliga, del poble al món, amb 30 s de relax i música entre jornades |
 | Rivals | Els que triïs (1–3), automàtics o fixats | 1–3, al nivell que triïs | 2 o 3 per partida, els del calendari |
 | Nivell | Adaptatiu (puja i baixa amb tu) o fixat | Fix: Novell … Expert | El del graó: de Novell (local) a Expert (mundial) |
 | Mou la teva habilitat | Sí | No | No |
@@ -71,10 +71,13 @@ punts, de **Novell (800) a la lliga local** fins a **Expert (1600) a la
 mundial**. A diferència d'El Tauler, la força no surt de la puntuació del
 jugador: pujar vol dir, de debò, jugar contra rivals més forts.
 
-**Es puja d'un en un**: de la C a la B, de la B a la A, i **de la A a la C del
-nivell següent** (Municipal A → Comarcal C). En sentit contrari, de la C es baixa
+**Es puja d'un en un: de la C a la B, de la B a la A**, i de la A a la C del
+nivell següent (Municipal A → Comarcal C). En sentit contrari, de la C es baixa
 a la A del nivell anterior. Al primer graó no es baixa; a l'últim no es puja, i
-el primer és «Campió del món».
+el primer és «Campió del món». L'escalada de la pantalla mostra les lletres de
+tots els graons (C B A · C B A…), i el final de temporada ho diu així:
+«Puges al Grup B de la Lliga de Vic», «Puges al Grup A de la Lliga de Vic»,
+«Puges a la Lliga Comarcal d'Osona · Grup C: nivell nou!» (`movementText`).
 
 ### Configuració de la temporada
 
@@ -172,6 +175,28 @@ l'atzar entre 0,55 i 1,45 (ordenats perquè qui queda més avall en tingui més)
 el guanyador s'emporta la suma: el marcador de cada taula suma zero, com una
 partida de debò. Entre forces es fa interpolació lineal.
 
+### Entre jornades: 30 segons de relax
+
+Com a les lligues d'escacs d'El Tauler a 30 s, 1 i 2 minuts, en acabar una
+jornada no surt el resum llarg sinó una pantalla amb poc text
+(`LeagueInterlude.tsx`):
+
+- el resultat en curt («2n de 4 · +2 punts · −31»), verd si guanyes i vermell
+  si quedes últim;
+- la **jornada que toca, gran i en un requadre** («JORNADA 3/7»);
+- «comença en» i el **compte enrere de 30 a 0**;
+- la teva posició a la classificació **cara a cara** amb la dels rivals de la
+  jornada següent (posició, punts i força);
+- la **música composta** en aquell moment (§4), amb el seu nom («Sona: Rumba de
+  la classificació · la menor · flauta») i «Silencia».
+
+A zero comença sola la jornada següent; «Juga ara» no espera; «Classificació» i
+«Inici» aturen el compte. El compte enrere **només corre amb l'app a la
+vista**: amb la pestanya amagada es queda quiet, i la música també. L'última
+jornada acaba amb el resum de sempre i el final de la temporada. El
+compositor es baixa (a part, 16 kB comprimits) mentre es juga la jornada, de
+manera que la música és a punt quan s'acaba.
+
 ### Final de temporada
 
 En acabar l'última jornada la temporada es tanca **de seguida** (`closeSeason`):
@@ -189,7 +214,31 @@ quadra es descarta i es conserva la trajectòria; una trajectòria que no quadra
 torna a començar. Cada jornada té sessió (`llavor#jornada`) i només es
 comptabilitza la que toca.
 
-## 4. Límits
+## 4. Música composta il·limitada
+
+És el sistema d'El Tauler (`radioambient.js`, LLIGA.md §8 de
+`segueix/eltauler`), copiat a `apps/web/src/musica/radioambient.js` com a mòdul
+ES i carregat a demanda. Cada vegada que cal música, l'app **compon una peça
+nova**: tria un dels cinc estils (Passeig de jornada, Tic-tac del rellotge,
+Rumba de la classificació, Groove de la jugada i Himne de la lliga), diferent de
+l'anterior, i amb una llavor en surten la tonalitat, el tempo, la progressió
+d'acords (frases A · A' · B), la melodia, el solista i la variant
+d'acompanyament. La sintetitza al dispositiu amb Web Audio: un bucle de 32 s
+que sona fins que s'atura. **No se'n repeteix cap**: es recorden les empremtes
+de les 200 darreres (`remigi:musica-vistes`), i també es tenen en compte les que
+ja han sonat a la lliga d'escacs d'El Tauler (`eltauler_league_jingle_seen`,
+només es llegeix).
+
+**Música composta** (botó de l'inici, `MusicScreen.tsx`) és el registre, com el
+d'El Tauler: de cada peça només es desa la recepta (estil i llavor), així que
+es poden tornar a **escoltar** en bucle, marcar com a **preferides** o **baixar
+en MP3** (quatre voltes, uns 2 minuts, amb lamejs de cdnjs carregat només el
+primer cop; mono, 22.050 Hz, 64 kbps). Les 5 darreres a la vista, les
+preferides i l'arxiu per dies; se'n guarden 200 i fins a 100 preferides
+(`remigi:musica-registre`). També s'hi pot compondre'n una de nova, apagar la
+música entre jornades o canviar-ne el volum (`remigi:musica`).
+
+## 5. Límits
 
 - El model de les partides simulades surt de partides entre bots, no de
   persones; la força relativa entre nivells del motor és més abrupta que
@@ -201,14 +250,23 @@ comptabilitza la que toca.
 - Abandonar una temporada permet fugir d'un descens. És deliberat (no es vol
   obligar a acabar una temporada que no ve de gust), però queda apuntat.
 
-## 5. Proves
+## 6. Proves
 
 - Unitat: `lliga/league.test.ts` (escala, noms, configuració, rivals, calendari,
   simulació, classificació, tancament i desat), `repte/challenge.test.ts`,
   `state/freePlay.test.ts`, `ui/format.test.ts` i les inicials de
   `game/bots.test.ts`.
+- Unitat (música): `musica/musica.test.ts` (cada peça és nova i d'estil
+  diferent, no repeteix les d'El Tauler ni hi escriu, la recepta torna a donar
+  la mateixa peça, síntesi de 32 s, registre i preferides, nom de l'MP3).
 - Navegador: `e2e/modes.spec.ts` (les tres opcions de costat també al mòbil,
   el joc lliure que recorda 3 Experts després de recarregar sense partida, la
   tornada a l'inici i represa, un repte de 3 partides amb el total i sense
   moure l'habilitat, la localitat d'El Tauler i els noms de les lligues, i una
-  temporada sencera de 3 jornades fins a començar la següent).
+  temporada sencera de 3 jornades amb la pantalla de relax —«Classificació»
+  atura el compte i «Juga ara» no espera— fins a començar la següent; i, amb el
+  rellotge del navegador simulat, que el compte no corre amb l'app amagada,
+  que a zero comença sola la jornada amb els rivals anunciats, que la música
+  composta sona i queda al registre, i que «Silencia» es recorda).
+- La baixada en MP3 s'ha comprovat amb el lamejs real des de Node: un fitxer
+  MPEG layer III vàlid de 64 kbps i 22,05 kHz.

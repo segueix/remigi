@@ -20,6 +20,8 @@ interface Props {
   onChallenge(): void;
   onLeague(): void;
   onHistory(): void;
+  /** La música composta per l'app (la que sona entre jornades de la lliga). */
+  onMusic(): void;
 }
 
 /**
@@ -40,6 +42,7 @@ export function HomeScreen({
   onChallenge,
   onLeague,
   onHistory,
+  onMusic,
 }: Props) {
   const calibrating = profile.adaptiveCalibrating === true;
 
@@ -122,6 +125,15 @@ export function HomeScreen({
           <span className="mode-cta" aria-hidden="true">
             {season && !isFinished(season) ? (savedLliga ? 'Continua' : 'Segueix') : 'Obre'}
           </span>
+        </button>
+      </div>
+
+      <div className="row inici-extres">
+        <button type="button" className="secondary" onClick={onMusic}>
+          🎵 Música composta
+        </button>
+        <button type="button" className="secondary" onClick={onHistory}>
+          Historial
         </button>
       </div>
 

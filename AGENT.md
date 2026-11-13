@@ -2090,3 +2090,68 @@ la darrera partida.» Disseny complet a **`docs/LLIGA.md`**.
   d'un emoji. Classe `inicials` amb mides pròpies a cada lloc.
 - [2026-11-13] A les proves, el botó «Inici» xoca per nom amb «Reinicia nivell
   i torna a calibrar»: cal `exact: true`.
+
+### Lliga: de la C a la B i a la A, 30 s de relax entre jornades i música composta ✅ Feta (2026-11-13)
+
+Demanat pel jugador: «Fes que de C es passi a B i després a A. Importa el
+sistema de fer música il·limitada i fes el mateix estil entre partides de la
+lliga que es fa en les partides de 30 segons, un minut i dos minuts per bàndol
+als escacs: quan acabi una partida hi ha 30 segons de relax fins a la següent
+partida. Finalment fusiona.» Detall a `docs/LLIGA.md` (§3 i §4).
+
+- [x] **C → B → A**: ja es pujava d'un graó en un, però no es veia. Ara
+      l'escalada mostra les lletres de tots els graons (C B A · C B A…) i el
+      final de temporada ho diu com és (`movementText`): «Puges al Grup B de la
+      Lliga de Vic», «Puges al Grup A…», «Puges a la Lliga Comarcal d'Osona ·
+      Grup C: nivell nou!». Test que recorre els 21 graons.
+- [x] **Música composta il·limitada** (`musica/`): `radioambient.js` d'El
+      Tauler copiat com a mòdul ES i carregat a demanda (16 kB comprimits, a
+      part). Una peça nova cada vegada, d'estil diferent i sense repetir cap de
+      les 200 darreres, ni tampoc les que han sonat a El Tauler (es llegeix, no
+      s'hi escriu). Registre «Música composta» a l'inici: escoltar en bucle,
+      preferides, MP3 (lamejs de cdnjs, com a El Tauler), compondre'n una de
+      nova, música sí/no i volum.
+- [x] **Entre jornades, 30 s de relax** (`LeagueInterlude.tsx`): resultat en
+      curt, «JORNADA n/N» gran, compte enrere 30→0, la teva posició cara a
+      cara amb la dels rivals de la jornada següent i la música composta («Sona:
+      …», «Silencia»). A zero comença sola la jornada; «Juga ara», «Classificació»
+      i «Inici». El compte (i la música) s'aturen amb l'app amagada. L'última
+      jornada acaba amb el resum de sempre.
+
+**Criteris d'acceptació (verificats)**:
+
+- `npm run typecheck` net, `npm test` en verd (176 del motor i **198** de la
+  web: 8 de nous) i `npm run build` correcte.
+- Proves de navegador: **155 correctes** i 17 omeses per plataforma. Les de la
+  lliga recorren ara la pantalla de relax («Classificació» atura el compte,
+  «Juga ara» no espera, l'última jornada sense relax) i n'hi ha dues de noves:
+  amb el rellotge del navegador simulat, el compte no corre amb l'app amagada
+  i a zero comença sola la jornada amb els rivals anunciats, la música sona i
+  queda al registre (i s'hi marca preferida); i «Silencia» es recorda.
+- Música sentida de debò al Chromium: «Sona: Himne de la lliga · re major ·
+  trompa». MP3 comprovat amb el lamejs real des de Node: MPEG layer III de
+  64 kbps i 22,05 kHz.
+- Captures de la pantalla de relax en clar i fosc al mòbil, de l'escalada amb
+  les lletres i de «Música composta».
+- La injecció de l'enllaç a El Tauler que fa el desplegament
+  (`inject-tauler-link-remigi.py` sobre `GameScreen.tsx`) continua trobant la
+  seva marca.
+
+**Decisions**:
+
+- **El relax és a totes les jornades**, no només amb rellotge: el jugador ho
+  demanava per a les partides de la lliga, i qui vulgui més estona té
+  «Classificació» o «Inici».
+- **El registre de música és de Remigi** (`remigi:musica-registre`), no el
+  d'El Tauler, encara que comparteixin `localStorage`: així cap app no omple la
+  llista de l'altra. Només les empremtes d'El Tauler es llegeixen, per no
+  repetir peces entre les dues.
+
+### Problemes trobats
+
+- [2026-11-13] Les proves de la temporada esperaven el resum de jornada en
+  acabar cada partida; ara les jornades que no són l'última acaben amb la
+  pantalla de relax. Reescrites per recórrer-la.
+- [2026-11-13] Esperar 30 segons de debò a cada prova no té sentit: el compte
+  enrere es prova amb `page.clock` (rellotge simulat de Playwright), que també
+  fa avançar els temporitzadors del compositor.

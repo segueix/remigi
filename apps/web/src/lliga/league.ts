@@ -600,6 +600,22 @@ export function nextTier(tier: number, rank: number, players: number): number {
   return clampTier(tier);
 }
 
+/**
+ * On jugaràs la temporada següent, en paraules. Dins d'un nivell es passa de
+ * la C a la B i de la B a la A («Puges al Grup B de la Lliga de Vic»); de la A
+ * es passa a la C del nivell següent («nivell nou»).
+ */
+export function movementText(from: number, to: number, movement: Movement, home: LeagueHome | null): string {
+  if (movement === 'champion') return 'Campió del món!';
+  const sameLevel = tierLevel(from) === tierLevel(to);
+  const where = sameLevel
+    ? `al Grup ${tierGroup(to)} de la ${levelName(tierLevel(to), home)}`
+    : `a la ${tierName(to, home)}`;
+  if (movement === 'up') return `Puges ${where}${sameLevel ? '' : ': nivell nou!'}`;
+  if (movement === 'down') return `Baixes ${where}`;
+  return `Continues ${where}`;
+}
+
 /* ---------- Trajectòria ---------- */
 
 export interface SeasonRecord {

@@ -28,8 +28,10 @@ o amb el dit i deixar una partida a mitges per continuar-la després.
 En obrir l'app surten **tres maneres de jugar**: el **joc lliure** (la partida
 de sempre, que recorda els rivals i el nivell que has triat), el **repte**
 (unes quantes partides a un nivell fix, i se sumen els punts) i la **lliga**
-(del poble al món, amb els grups C, B i A i els mateixos noms que les lligues
-d'escacs d'El Tauler). Tot el detall és a [`docs/LLIGA.md`](docs/LLIGA.md).
+(del poble al món, pujant de la C a la B i a la A, amb els mateixos noms que
+les lligues d'escacs d'El Tauler, i 30 segons de relax entre jornades amb
+música que l'app compon en aquell moment). Tot el detall és a
+[`docs/LLIGA.md`](docs/LLIGA.md).
 
 ## Estructura del repositori
 
