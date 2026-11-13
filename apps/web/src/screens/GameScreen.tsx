@@ -10,14 +10,14 @@ import {
   type PlayerProfile,
   type Tile,
 } from '@remigi/core';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { BoardView } from '../components/BoardView';
 import { CheckIcon, DrawIcon, PassIcon, RotateIcon, UndoIcon } from '../components/icons';
 import { PlayerMenu } from '../components/PlayerMenu';
 import { RackView } from '../components/RackView';
 import { TileView } from '../components/TileView';
 import { useDragTile } from '../game/useDragTile';
-import { botPersona } from '../game/bots';
+import { botPersona, isPersonName } from '../game/bots';
 import type { MissedChance } from '../game/missedChances';
 import {
   insertDrawnTileIfSorted,
@@ -37,7 +37,7 @@ import {
   openingPoints,
   type Destination,
 } from '../game/turnDraft';
-import { BOT_DELAY_MS, useGame, type GameHandle, type GameSetup } from '../game/useGame';
+import { BOT_DELAY_MS, useGame, type GameHandle, type GameMode, type GameSetup } from '../game/useGame';
 import type { RatingChange } from '../state/gameOutcome';
 import type { SavedGame } from '../state/savedGame';
 import type { TileStyle } from '../state/useTileStyle';
@@ -64,6 +64,27 @@ interface Props {
   onHistory(): void;
   tileStyle: TileStyle;
   onTileStyle(style: TileStyle): void;
+  /** Mode de joc: el lliure de sempre, el repte o la lliga. */
+  mode?: GameMode;
+  /** Torna a la pantalla d'inici (les tres maneres de jugar). */
+  onHome(): void;
+  /**
+   * La partida s'ha acabat. Es crida una sola vegada per partida, amb la
+   * configuració que s'ha jugat: el repte i la lliga hi apunten el resultat.
+   */
+  onFinished?(game: GameState, setup: GameSetup): void;
+  /** Què diu i què ofereix el final de partida en el repte i la lliga. */
+  finish?: ModeFinish | null;
+  /** A dalt a la dreta, en comptes del nivell adaptatiu (repte i lliga). */
+  modeLabel?: ReactNode;
+  /** S'ha començat una partida lliure nova: se'n desen les preferències. */
+  onFreeSetup?(setup: GameSetup): void;
+}
+
+/** El final de partida del repte i la lliga: el resum del mode i com continuar. */
+export interface ModeFinish {
+  body: ReactNode;
+  primary: { label: string; run(): void };
 }
 
 /** Estona que es veu l'avís de temps exhaurit abans d'apagar-se sol. */
@@ -90,6 +111,12 @@ export function GameScreen({
   onHistory,
   tileStyle,
   onTileStyle,
+  mode = 'lliure',
+  onHome,
+  onFinished,
+  finish,
+  modeLabel,
+  onFreeSetup,
 }: Props) {
   /*
    * La configuració viva de la partida: comença amb la que arriba (nova o
@@ -105,7 +132,22 @@ export function GameScreen({
     profile,
     currentSetup.auto !== false,
     currentSetup.opponentRatings,
+    mode === 'lliure',
   );
+
+  /*
+   * El final de la partida s'avisa una sola vegada: el repte i la lliga hi
+   * apunten el resultat (i tenen la seva pròpia defensa contra els duplicats:
+   * la sessió de la partida ha de ser la jornada o la partida que toca).
+   */
+  const onFinishedRef = useRef(onFinished);
+  onFinishedRef.current = onFinished;
+  const finishedFor = useRef<GameState | null>(null);
+  useEffect(() => {
+    if (game.status !== 'finished' || finishedFor.current === game) return;
+    finishedFor.current = game;
+    onFinishedRef.current?.(game, currentSetup);
+  }, [game, currentSetup]);
   const [menuOpen, setMenuOpen] = useState(false);
   /* El resum final es pot tancar per inspeccionar com ha quedat la taula. */
   const [resultOpen, setResultOpen] = useState(true);
@@ -182,6 +224,7 @@ export function GameScreen({
 
   const startNewGame = useCallback(
     (next: GameSetup) => {
+      if (mode === 'lliure') onFreeSetup?.(next);
       setCurrentSetup(next);
       rackSortBy.current = null;
       setMenuOpen(false);
@@ -189,7 +232,7 @@ export function GameScreen({
       setResultOpen(true);
       handle.restart(next);
     },
-    [handle],
+    [handle, mode, onFreeSetup],
   );
 
   /*
@@ -198,7 +241,7 @@ export function GameScreen({
    * partida», que abans repetia els mateixos rivals per sempre.
    */
   const nextOpponents: DifficultyKey[] | null =
-    currentSetup.auto !== false && profile.profile
+    mode === 'lliure' && currentSetup.auto !== false && profile.profile
       ? suggestOpponents(
           profile.profile,
           Math.min(3, Math.max(1, currentSetup.opponents.length)) as 1 | 2 | 3,
@@ -207,7 +250,7 @@ export function GameScreen({
 
   /* El nivell fixat dels rivals, per dir-lo tal qual (únic si tots són iguals). */
   const fixedRivalsLabel =
-    currentSetup.auto === false
+    mode === 'lliure' && currentSetup.auto === false
       ? [...new Set(currentSetup.opponents)].map((key) => DIFFICULTIES[key].label).join(', ')
       : null;
 
@@ -451,6 +494,9 @@ export function GameScreen({
         onClose={() => setResultOpen(false)}
         onRestart={restartAdapted}
         onHistory={onHistory}
+        mode={mode}
+        finish={finish ?? null}
+        onHome={onHome}
       />
     );
   }
@@ -474,7 +520,7 @@ export function GameScreen({
                 <span className="player-name">
                   {/* L'avatar: el del bot amb els seus colors, o la teva inicial. */}
                   <span
-                    className="player-color"
+                    className={persona && isPersonName(player.name) ? 'player-color inicials' : 'player-color'}
                     aria-hidden="true"
                     style={
                       persona
@@ -540,6 +586,8 @@ export function GameScreen({
             onNewGame={startNewGame}
             onHistory={onHistory}
             onClose={() => setMenuOpen(false)}
+            mode={mode}
+            onHome={onHome}
           />
         )}
 
@@ -563,7 +611,9 @@ export function GameScreen({
           * Si has fixat el nivell dels rivals, també es diu — i si no, no es
           * diu res, perquè llavors s'adapten sols al teu.
           */}
-        {profile.profile && (
+        {modeLabel ? (
+          <span className="nivell-jugador nivell-mode">{modeLabel}</span>
+        ) : profile.profile && (
           <span
             className="nivell-jugador"
             title={
@@ -798,7 +848,7 @@ function TurnNotice({ player, slot }: { player: GameState['players'][number]; sl
         style={{ '--pensada': `${BOT_DELAY_MS}ms` } as React.CSSProperties}
       >
         <span
-          className="player-color torn-avatar"
+          className={isPersonName(player.name) ? 'player-color torn-avatar inicials' : 'player-color torn-avatar'}
           style={{ background: `linear-gradient(135deg, ${persona.colors[0]}, ${persona.colors[1]})` }}
         >
           {persona.emoji}
@@ -867,6 +917,9 @@ function GameOver({
   onClose,
   onRestart,
   onHistory,
+  mode,
+  finish,
+  onHome,
 }: {
   handle: GameHandle;
   change: RatingChange | null;
@@ -884,8 +937,13 @@ function GameOver({
   onClose(): void;
   onRestart(): void;
   onHistory(): void;
+  mode: GameMode;
+  /** Resum i continuació del repte o la lliga; null en el joc lliure. */
+  finish: ModeFinish | null;
+  onHome(): void;
 }) {
   const { game } = handle;
+  const free = mode === 'lliure';
   const scores = finalScores(game);
   const winner = game.players.find((player) => player.id === game.winnerId);
   const blocked = winner ? winner.rack.length > 0 : false;
@@ -913,7 +971,7 @@ function GameOver({
         ) : (
           winner && (
             <span
-              className="player-color final-avatar"
+              className={isPersonName(winner.name) ? 'player-color final-avatar inicials' : 'player-color final-avatar'}
               aria-hidden="true"
               style={
                 avatarOf(winner.id).colors
@@ -944,7 +1002,9 @@ function GameOver({
               <li key={score.playerId} className={score.playerId === game.winnerId ? 'winner' : ''}>
                 <span className="score-jugador">
                   <span
-                    className="player-color score-avatar"
+                    className={
+                      avatar.colors && isPersonName(score.name) ? 'player-color score-avatar inicials' : 'player-color score-avatar'
+                    }
                     aria-hidden="true"
                     style={
                       avatar.colors
@@ -966,7 +1026,11 @@ function GameOver({
           })}
       </ul>
 
-      {adaptive && playerProfile?.adaptiveCalibrating === true ? (
+      {!free ? (
+        <div className="final-mode">
+          {finish ? finish.body : <p className="muted">Apuntant el resultat…</p>}
+        </div>
+      ) : adaptive && playerProfile?.adaptiveCalibrating === true ? (
         <p className="rating-change calibrant">
           <strong>Calibració en curs.</strong> Encara no tens un número d’habilitat:
           la pròxima partida continuarà buscant el teu nivell.
@@ -1023,7 +1087,7 @@ function GameOver({
         </p>
       )}
 
-      {nextOpponents ? (
+      {!free ? null : nextOpponents ? (
         <p className="seguents-rivals">
           El joc s’adapta a tu: els pròxims rivals seran{' '}
           <strong>{playerProfile ? `${adaptiveLevelLabel(playerProfile)}${playerProfile.adaptiveCalibrating ? '' : ` · ${playerProfile.rating}`}` : nextOpponents.map((key) => DIFFICULTIES[key].label).join(', ')}</strong>.
@@ -1041,9 +1105,18 @@ function GameOver({
         <button className="secondary" onClick={onClose}>
           Veure tauler final
         </button>
-        <button onClick={onRestart}>Una altra partida</button>
-        <button className="secondary" onClick={onHistory}>
-          Historial
+        {free ? (
+          <button onClick={onRestart}>Una altra partida</button>
+        ) : (
+          finish && <button onClick={finish.primary.run}>{finish.primary.label}</button>
+        )}
+        {free && (
+          <button className="secondary" onClick={onHistory}>
+            Historial
+          </button>
+        )}
+        <button className="secondary" onClick={onHome}>
+          Inici
         </button>
       </div>
     </section>

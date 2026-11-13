@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { entraAlJocLliure } from './ajudants';
 
 /**
  * El que ha de complir el build tal com es publica: rutes correctes sota
@@ -13,8 +14,8 @@ test('tots els fitxers pengen de la ruta publicada', async ({ page }) => {
   });
 
   await page.goto('./');
-  // L'app entra directament a la partida.
-  await expect(page.locator('.rack .tile').first()).toBeVisible();
+  // L'app s'obre amb les tres maneres de jugar, i el joc lliure carrega la partida.
+  await entraAlJocLliure(page);
 
   const src = await page.locator('script[type=module]').first().getAttribute('src');
   expect(src, 'el codi ha de penjar de /remigi/').toContain('/remigi/assets/');
@@ -56,12 +57,12 @@ test('registra el service worker i deixa jugar sense connexió', async ({ page, 
   });
 
   // Es visita una vegada amb connexió perquè es desi tot...
-  await expect(page.locator('.rack .tile').first()).toBeVisible();
+  await entraAlJocLliure(page);
 
   // ...i llavors es talla i s'ha de poder continuar jugant igualment.
   await context.setOffline(true);
   await page.reload();
-  await expect(page.locator('.rack .tile').first()).toBeVisible();
+  await entraAlJocLliure(page);
 
   await context.setOffline(false);
 });

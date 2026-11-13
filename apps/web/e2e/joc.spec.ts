@@ -3,6 +3,7 @@ import {
   avanca,
   baixaGrup,
   comencaDeZero,
+  entraAlJocLliure,
   entraAmbPartida,
   f,
   jugaContra,
@@ -183,7 +184,7 @@ test.describe('moure fitxes', () => {
 
     // I la tria sobreviu a tancar i tornar a obrir.
     await page.reload();
-    await expect(page.locator('.rack .tile').first()).toBeVisible();
+    await entraAlJocLliure(page);
     const colorDespres = await page
       .locator('.rack .tile:not(.tile-joker):not(.tile-orange)')
       .first()

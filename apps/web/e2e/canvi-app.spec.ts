@@ -1,5 +1,9 @@
 import { expect, test, type CDPSession, type Page } from '@playwright/test';
-import { comencaDeZero, obreMenu } from './ajudants';
+import {
+  comencaDeZero,
+  entraAlJocLliure,
+  obreMenu,
+} from './ajudants';
 
 /*
  * Pas a El Tauler lliscant el dit (src/appSwitch/appSwitch.ts): al mòbil,
@@ -138,7 +142,7 @@ test.describe('avís de les primeres vegades', () => {
 
     await page.evaluate(() => localStorage.setItem('remigi:avis-canvi-app', '3'));
     await page.reload();
-    await expect(page.locator('.rack .tile').first()).toBeVisible();
+    await entraAlJocLliure(page);
     await page.waitForTimeout(2500);
     await expect(avis).toHaveCount(0);
   });

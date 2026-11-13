@@ -8,7 +8,7 @@ import {
   type DifficultyKey,
 } from '@remigi/core';
 import { useState } from 'react';
-import type { GameSetup } from '../game/useGame';
+import type { GameMode, GameSetup } from '../game/useGame';
 import {
   buildProfileTransferUrl,
   isValidProfileProgress,
@@ -36,6 +36,10 @@ interface Props {
   onNewGame(setup: GameSetup): void;
   onHistory(): void;
   onClose(): void;
+  /** Al repte i a la lliga, els rivals els fixa el mode: aquí no es canvien. */
+  mode?: GameMode;
+  /** Torna a la pantalla d'inici. */
+  onHome(): void;
 }
 
 type OpponentCount = 1 | 2 | 3;
@@ -58,7 +62,10 @@ export function PlayerMenu({
   onNewGame,
   onHistory,
   onClose,
+  mode = 'lliure',
+  onHome,
 }: Props) {
+  const free = mode === 'lliure';
   const [name, setName] = useState(profile.profile?.name ?? '');
   const [count, setCount] = useState<OpponentCount>(
     Math.min(3, Math.max(1, current.opponents.length)) as OpponentCount,
@@ -313,6 +320,16 @@ export function PlayerMenu({
           </section>
         )}
 
+        {!free && (
+          <p className="suggestion menu-mode">
+            {mode === 'lliga'
+              ? 'Jornada de lliga: els rivals i el seu nivell els posa el calendari de la lliga.'
+              : 'Partida de repte: el nivell i el nombre de rivals els vas triar en començar el repte.'}{' '}
+            El teu nivell del joc lliure no es mou amb aquestes partides.
+          </p>
+        )}
+
+        {free && (
         <div className="menu-seccio nivell-seccio">
         <div className="menu-seccio-cap">
           <span className="menu-seccio-icona" aria-hidden="true">🎯</span>
@@ -399,6 +416,7 @@ export function PlayerMenu({
           Que s’adaptin també durant la partida
         </label>
         </div>
+        )}
 
         {/*
           * El temps de cada torn. Es canvia en calent (no espera cap partida
@@ -461,7 +479,10 @@ export function PlayerMenu({
         </div>
 
         <div className="row menu-accions">
-          <button onClick={() => void startNewGame()}>Partida nova</button>
+          {free && <button onClick={() => void startNewGame()}>Partida nova</button>}
+          <button className={free ? 'secondary' : ''} onClick={onHome}>
+            Inici
+          </button>
           <button className="secondary" onClick={onHistory}>
             Historial
           </button>

@@ -1,10 +1,19 @@
 import type { GameState } from '@remigi/core';
 import { validMisses, type MissedChance } from '../game/missedChances';
 import { validRackOrder, validSortBy, type SortBy } from '../game/rackOrder';
-import type { GameSetup } from '../game/useGame';
+import type { GameMode, GameSetup } from '../game/useGame';
 import type { KeyValueStore } from '@remigi/core';
 
-const KEY = 'remigi:game';
+/**
+ * Cada mode té la seva partida a mitges: deixar una jornada de lliga per fer
+ * una partida lliure no fa perdre la jornada. El joc lliure conserva la clau
+ * de sempre, així les partides desades abans dels modes es reprenen igual.
+ */
+export const SAVED_GAME_KEYS: Record<GameMode, string> = {
+  lliure: 'remigi:game',
+  repte: 'remigi:game:repte',
+  lliga: 'remigi:game:lliga',
+};
 
 export interface SavedGame {
   setup: GameSetup;
@@ -37,12 +46,16 @@ export interface SavedGame {
   rackSortBy?: SortBy;
 }
 
-export async function saveGame(store: KeyValueStore, saved: SavedGame): Promise<void> {
-  await store.set(KEY, JSON.stringify(saved));
+export async function saveGame(
+  store: KeyValueStore,
+  saved: SavedGame,
+  mode: GameMode = 'lliure',
+): Promise<void> {
+  await store.set(SAVED_GAME_KEYS[mode], JSON.stringify(saved));
 }
 
-export async function clearGame(store: KeyValueStore): Promise<void> {
-  await store.remove(KEY);
+export async function clearGame(store: KeyValueStore, mode: GameMode = 'lliure'): Promise<void> {
+  await store.remove(SAVED_GAME_KEYS[mode]);
 }
 
 /**
@@ -53,12 +66,14 @@ export async function clearGame(store: KeyValueStore): Promise<void> {
  * forma abans de retornar-la; davant del dubte val més començar de nou que
  * carregar un estat que faria petar la partida.
  */
-export async function loadGame(store: KeyValueStore): Promise<SavedGame | null> {
-  const raw = await store.get(KEY);
+export async function loadGame(store: KeyValueStore, mode: GameMode = 'lliure'): Promise<SavedGame | null> {
+  const raw = await store.get(SAVED_GAME_KEYS[mode]);
   if (!raw) return null;
   try {
     let saved = JSON.parse(raw) as SavedGame;
     if (!isResumable(saved)) return null;
+    // Una partida desada en un altre mode no es barreja amb la d'aquest.
+    if ((saved.setup.mode ?? 'lliure') !== mode) return null;
     if ('owners' in saved) saved = { ...saved, owners: validOwners(saved.owners) };
     if ('misses' in saved) saved = { ...saved, misses: validMisses(saved.misses) };
     if ('rackOrder' in saved) saved = { ...saved, rackOrder: validRackOrder(saved.rackOrder) };
@@ -86,6 +101,11 @@ function isResumable(value: unknown): boolean {
   const { setup, game } = value as Partial<SavedGame>;
 
   if (!setup || !Array.isArray(setup.opponents) || typeof setup.playerName !== 'string') {
+    return false;
+  }
+  if (setup.opponentNames !== undefined &&
+      (!Array.isArray(setup.opponentNames) || setup.opponentNames.length !== setup.opponents.length ||
+       !setup.opponentNames.every((name) => typeof name === 'string' && name.length > 0))) {
     return false;
   }
   if (setup.opponentRatings !== undefined &&

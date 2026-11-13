@@ -94,3 +94,45 @@ export const RotateIcon = () => (
     <polyline points="18.5 13 21 16 23.5 13" />
   </Icon>
 );
+
+/*
+ * Icones grans de les tres maneres de jugar (pantalla d'inici). Mateix estil
+ * de traç que les dels botons del torn.
+ */
+
+/** Joc lliure: dues fitxes, amb les formes dels colors (cercle i triangle). */
+export const FreePlayIcon = () => (
+  <Icon>
+    <rect x="3" y="4.5" width="8" height="14" rx="1.6" />
+    <rect x="13" y="4.5" width="8" height="14" rx="1.6" />
+    <circle cx="7" cy="11.5" r="2" />
+    <path d="M17 9.5l2.2 4h-4.4z" />
+  </Icon>
+);
+
+/** Repte: la bandera d'arribada, que hi ha un final i un marcador. */
+export const ChallengeIcon = () => (
+  <Icon>
+    <line x1="5" y1="21" x2="5" y2="3.5" />
+    <path d="M5 4h12l-2.5 4 2.5 4H5" />
+  </Icon>
+);
+
+/** Lliga: el trofeu. */
+export const LeagueIcon = () => (
+  <Icon>
+    <path d="M8 4h8v5a4 4 0 0 1-8 0z" />
+    <path d="M8 6H5a2.5 2.5 0 0 0 3 4" />
+    <path d="M16 6h3a2.5 2.5 0 0 1-3 4" />
+    <line x1="12" y1="13" x2="12" y2="17" />
+    <path d="M8.5 20.5h7l-1-3.5h-5z" />
+  </Icon>
+);
+
+/** Localitat: el punt del mapa. */
+export const PinIcon = () => (
+  <Icon>
+    <path d="M12 21s-6.5-6.2-6.5-11a6.5 6.5 0 0 1 13 0c0 4.8-6.5 11-6.5 11z" />
+    <circle cx="12" cy="10" r="2.3" />
+  </Icon>
+);

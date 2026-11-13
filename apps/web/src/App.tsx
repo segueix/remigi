@@ -1,37 +1,132 @@
-import { suggestOpponents, suggestOpponentRatings } from '@remigi/core';
-import { useEffect, useState } from 'react';
-import type { GameSetup } from './game/useGame';
-import { GameScreen } from './screens/GameScreen';
+import { finalScores, randomSeed, type GameState } from '@remigi/core';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { GameMode, GameSetup } from './game/useGame';
+import { readElTaulerHome } from './lliga/elTaulerHome';
+import {
+  YOU,
+  closeSeason,
+  createSeason,
+  difficultyForRating,
+  isFinished,
+  parseLeagueState,
+  rankOf,
+  recordRound,
+  tablePoints,
+  tierName,
+  yourTable,
+  type LeagueConfig,
+  type LeagueSeason,
+  type LeagueState,
+} from './lliga/league';
+import type { LeagueHome } from './lliga/localitats';
+import {
+  abandonChallenge,
+  addGame,
+  challengeTotal,
+  isDone,
+  parseChallengeState,
+  startChallenge,
+  type Challenge,
+  type ChallengeConfig,
+  type ChallengeState,
+} from './repte/challenge';
+import { GameScreen, type ModeFinish } from './screens/GameScreen';
+import { HomeScreen } from './screens/HomeScreen';
+import { LligaScreen } from './screens/LligaScreen';
+import { RepteScreen } from './screens/RepteScreen';
 import { StatsScreen } from './screens/StatsScreen';
+import {
+  DEFAULT_FREE_PLAY,
+  FREE_PLAY_KEY,
+  parseFreePlay,
+  prefsFromSetup,
+  setupFromPrefs,
+  type FreePlayPrefs,
+} from './state/freePlay';
+import { humanWon } from './state/gameOutcome';
 import {
   parseProfileTransferUrl,
   stripProfileTransferParams,
   type ProfileProgress,
 } from './state/profileTransfer';
+import type { SavedGame } from './state/savedGame';
+import { usePersisted } from './state/usePersisted';
 import { useProfile } from './state/useProfile';
+import { useSavedGames } from './state/useSavedGame';
 import { useTileStyle } from './state/useTileStyle';
-import { useSavedGame } from './state/useSavedGame';
+import { leaguePoints, ordinal, signed } from './ui/format';
 
-export type Screen = 'game' | 'stats';
+/** Pantalles: l'inici amb les tres maneres de jugar, la partida i les del repte i la lliga. */
+export type View = 'home' | 'game' | 'repte' | 'lliga';
+
+export const CHALLENGE_KEY = 'remigi:repte';
+export const LEAGUE_KEY = 'remigi:lliga';
+
+/** La partida que es juga ara: es torna a muntar (clau nova) a cada partida que comença. */
+interface Play {
+  key: number;
+  mode: GameMode;
+  setup: GameSetup;
+  saved: SavedGame | null;
+  /** Què diu a dalt a la dreta durant el repte i la lliga. */
+  label?: string;
+}
+
+/*
+ * Es desa dins d'un embolcall (`{ prefs }`) perquè `null` vol dir «encara no
+ * se n'ha triat cap» i no es pot confondre amb «carregant».
+ */
+const parseFreePlayBox = (raw: string | null): { prefs: FreePlayPrefs | null } => {
+  try {
+    const value: unknown = raw ? JSON.parse(raw) : null;
+    if (typeof value !== 'object' || value === null || !('prefs' in value)) return { prefs: null };
+    const prefs = (value as { prefs: unknown }).prefs;
+    return { prefs: prefs ? parseFreePlay(JSON.stringify(prefs)) : null };
+  } catch {
+    return { prefs: null };
+  }
+};
+
+const challengeSession = (challenge: Challenge) => `${challenge.startedAt}#${challenge.games.length}`;
+const leagueSession = (season: LeagueSeason) => `${season.seed}#${season.played}`;
+
+function safeLocalStorage(): Storage | null {
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+}
+
+/** Els punts teus d'una partida acabada (tu sempre ets el primer jugador). */
+function myPoints(game: GameState): number {
+  return finalScores(game).find((score) => score.playerId === game.players[0]?.id)?.points ?? 0;
+}
 
 /**
- * L'app entra directament a la taula de joc: si hi ha una partida a mig jugar
- * es continua, i si no se'n reparteix una de nova amb els rivals que toquen
- * per l'habilitat del perfil. Tot el que abans era la pantalla d'inici (nom,
- * rivals, historial, com es juga) viu ara al menú del teu jugador.
+ * En obrir l'app surten les tres maneres de jugar: a l'esquerra el joc lliure
+ * (la partida de sempre), al mig el repte i a la dreta la lliga. Cada mode té
+ * la seva partida a mitges, i es reprèn en tornar-hi.
  */
 export function App() {
-  const [screen, setScreen] = useState<Screen>('game');
+  const [view, setView] = useState<View>('home');
+  const [statsOpen, setStatsOpen] = useState(false);
+  const [play, setPlay] = useState<Play | null>(null);
+  const [finish, setFinish] = useState<ModeFinish | null>(null);
+  const playKey = useRef(0);
   const profile = useProfile();
-  const savedGame = useSavedGame();
+  const savedGames = useSavedGames();
   const [tileStyle, setTileStyle] = useTileStyle();
+  const freePlay = usePersisted(FREE_PLAY_KEY, parseFreePlayBox);
+  const challenge = usePersisted(CHALLENGE_KEY, parseChallengeState);
+  const league = usePersisted(LEAGUE_KEY, parseLeagueState);
+  const elTaulerHome = useMemo(() => (typeof window === 'undefined' ? null : readElTaulerHome(safeLocalStorage())), []);
   const [pendingProgress, setPendingProgress] = useState<ProfileProgress | null>(() =>
     typeof window === 'undefined' ? null : parseProfileTransferUrl(window.location.href),
   );
 
   /*
-   * El perfil es crea sol la primera vegada, amb un nom de casa: demanar-lo
-   * abans de deixar jugar era la primera pantalla, i ja no hi és. El nom es
+   * El perfil es crea sol la primera vegada, amb un nom de casa. El nom es
    * canvia quan es vulgui des del menú del jugador.
    */
   const { loading: profileLoading, profile: loadedProfile, setName } = profile;
@@ -39,7 +134,300 @@ export function App() {
     if (!profileLoading && !loadedProfile) void setName('Jugador');
   }, [profileLoading, loadedProfile, setName]);
 
-  if (profile.loading || savedGame.loading || !profile.profile) {
+  /*
+   * Les preferències del joc lliure. Si no se n'han desat mai però hi ha una
+   * partida lliure a mitges (d'abans que existissin), es dedueixen d'aquella.
+   */
+  const freePrefs: FreePlayPrefs =
+    freePlay.value?.prefs ??
+    (savedGames.saved.lliure ? prefsFromSetup(savedGames.saved.lliure.setup) : DEFAULT_FREE_PLAY);
+
+  const launch = useCallback((mode: GameMode, setup: GameSetup, saved: SavedGame | null, label?: string) => {
+    playKey.current += 1;
+    setPlay({ key: playKey.current, mode, setup, saved, label });
+    setFinish(null);
+    setStatsOpen(false);
+    setView('game');
+  }, []);
+
+  const goTo = useCallback(
+    (next: Exclude<View, 'game'>) => {
+      setPlay(null);
+      setFinish(null);
+      setStatsOpen(false);
+      savedGames.refresh();
+      setView(next);
+    },
+    [savedGames],
+  );
+
+  /* ---------- Joc lliure ---------- */
+
+  const saveFreeSetup = useCallback(
+    (setup: GameSetup) => {
+      freePlay.update({ prefs: prefsFromSetup(setup) });
+    },
+    [freePlay],
+  );
+
+  const startFree = useCallback(async () => {
+    const current = profile.profile;
+    if (!current) return;
+    const saved = await savedGames.load('lliure');
+    /*
+     * Sempre amb els rivals i el nivell que el jugador havia triat: la partida
+     * a mitges, si n'hi ha, i si no una de nova amb les seves preferències (en
+     * automàtic, al nivell on el va deixar l'última partida lliure).
+     */
+    const setup = saved ? { ...saved.setup, mode: 'lliure' as const } : setupFromPrefs(freePrefs, current);
+    saveFreeSetup(setup);
+    launch('lliure', setup, saved);
+  }, [profile.profile, savedGames, freePrefs, saveFreeSetup, launch]);
+
+  /* ---------- Repte ---------- */
+
+  const playChallenge = useCallback(async () => {
+    const current = challenge.get()?.current;
+    const player = profile.profile;
+    if (!current || isDone(current) || !player) return;
+    const session = challengeSession(current);
+    const label = `Repte · partida ${current.games.length + 1} de ${current.config.games} · ${signed(challengeTotal(current))} punts`;
+    const saved = await savedGames.load('repte');
+    if (saved && saved.setup.session === session) {
+      launch('repte', saved.setup, saved, label);
+      return;
+    }
+    const { level, opponents } = current.config;
+    launch(
+      'repte',
+      {
+        mode: 'repte',
+        playerName: player.name,
+        opponents: Array.from({ length: opponents }, () => level),
+        auto: false,
+        session,
+      },
+      null,
+      label,
+    );
+  }, [challenge, profile.profile, savedGames, launch]);
+
+  const beginChallenge = useCallback(
+    (config: ChallengeConfig) => {
+      challenge.update((state) => startChallenge(state, config));
+      savedGames.clear('repte');
+      void playChallenge();
+    },
+    [challenge, savedGames, playChallenge],
+  );
+
+  const quitChallenge = useCallback(() => {
+    challenge.update(abandonChallenge);
+    savedGames.clear('repte');
+  }, [challenge, savedGames]);
+
+  const challengeFinish = useCallback(
+    (state: ChallengeState): ModeFinish | null => {
+      const current = state.current;
+      if (!current || current.games.length === 0) return null;
+      const last = current.games[current.games.length - 1];
+      const done = isDone(current);
+      return {
+        body: (
+          <div className="final-repte">
+            <p className="final-mode-titol">
+              Repte · partida {current.games.length} de {current.config.games}
+            </p>
+            <dl className="final-mode-xifres">
+              <div>
+                <dt>Aquesta partida</dt>
+                <dd className={last.points >= 0 ? 'points-positive' : 'points-negative'}>{signed(last.points)}</dd>
+              </div>
+              <div>
+                <dt>{done ? 'Total del repte' : 'Total fins ara'}</dt>
+                <dd className={challengeTotal(current) >= 0 ? 'points-positive' : 'points-negative'}>
+                  {signed(challengeTotal(current))}
+                </dd>
+              </div>
+            </dl>
+          </div>
+        ),
+        primary: done
+          ? { label: 'Resultat del repte', run: () => goTo('repte') }
+          : {
+              label: `Següent partida (${current.games.length + 1} de ${current.config.games})`,
+              run: () => void playChallenge(),
+            },
+      };
+    },
+    [goTo, playChallenge],
+  );
+
+  /* ---------- Lliga ---------- */
+
+  const playRound = useCallback(async () => {
+    const season = league.get()?.season;
+    const player = profile.profile;
+    if (!season || isFinished(season) || !player) return;
+    const session = leagueSession(season);
+    const label = `${season.name} · jornada ${season.played + 1}/${season.config.rounds}`;
+    const saved = await savedGames.load('lliga');
+    if (saved && saved.setup.session === session) {
+      launch('lliga', saved.setup, saved, label);
+      return;
+    }
+    const rivals = yourTable(season);
+    launch(
+      'lliga',
+      {
+        mode: 'lliga',
+        playerName: player.name,
+        opponents: rivals.map((rival) => difficultyForRating(rival.rating)),
+        opponentRatings: rivals.map((rival) => rival.rating),
+        opponentNames: rivals.map((rival) => rival.name),
+        auto: false,
+        session,
+      },
+      null,
+      label,
+    );
+  }, [league, profile.profile, savedGames, launch]);
+
+  const startSeason = useCallback(
+    (config: LeagueConfig) => {
+      league.update((state) => ({
+        career: { ...state.career, config },
+        season: createSeason({
+          tier: state.career.tier,
+          config,
+          home: state.career.home,
+          seed: randomSeed(),
+          exclude: state.career.recentNames,
+        }),
+      }));
+      savedGames.clear('lliga');
+    },
+    [league, savedGames],
+  );
+
+  const abandonSeason = useCallback(() => {
+    league.update((state) => ({ ...state, season: null }));
+    savedGames.clear('lliga');
+  }, [league, savedGames]);
+
+  const setHome = useCallback(
+    (home: LeagueHome | null) => {
+      league.update((state) => {
+        const career = { ...state.career, home: home ?? state.career.home, homeAsked: true };
+        let season = state.season;
+        /*
+         * Una temporada que encara no ha començat es torna a sortejar amb el
+         * lloc nou: noms de la lliga i dels rivals del lloc on jugues.
+         */
+        if (home && season && season.played === 0) {
+          season = createSeason({
+            tier: season.tier,
+            config: season.config,
+            home,
+            seed: randomSeed(),
+            exclude: state.career.recentNames,
+          });
+          savedGames.clear('lliga');
+        }
+        return { career, season };
+      });
+    },
+    [league, savedGames],
+  );
+
+  const leagueFinish = useCallback(
+    (state: LeagueState): ModeFinish | null => {
+      const season = state.season;
+      if (!season || season.played === 0) return null;
+      const result = season.results.find((r) => r.round === season.played - 1 && r.ids.includes(YOU));
+      if (!result) return null;
+      const me = result.ids.indexOf(YOU);
+      const place = [...result.scores].sort((a, b) => b - a).indexOf(result.scores[me]) + 1;
+      const done = isFinished(season);
+      const record = done ? state.career.seasons[0] : undefined;
+      return {
+        body: (
+          <div className="final-lliga">
+            <p className="final-mode-titol">
+              {season.name} · jornada {season.played} de {season.config.rounds}
+            </p>
+            <p>
+              Has quedat <strong>{ordinal(place)}</strong> de {result.ids.length} a la taula:{' '}
+              {tablePoints(result.scores)[me] > 0 ? (
+                <>
+                  <strong>+{leaguePoints(tablePoints(result.scores)[me])} punts</strong> de lliga.
+                </>
+              ) : (
+                <>cap punt de lliga.</>
+              )}
+            </p>
+            <p>
+              Classificació: <strong>{ordinal(rankOf(season))}</strong> de {season.config.players}
+              {done ? ' · temporada acabada' : ''}.
+            </p>
+            {record && (
+              <p className="final-lliga-moviment">
+                {record.movement === 'up'
+                  ? `Puges a la ${tierName(record.nextTier, state.career.home)}!`
+                  : record.movement === 'down'
+                    ? `Baixes a la ${tierName(record.nextTier, state.career.home)}.`
+                    : record.movement === 'champion'
+                      ? 'Campió del món!'
+                      : `Continues a la ${tierName(record.nextTier, state.career.home)}.`}
+              </p>
+            )}
+          </div>
+        ),
+        primary: {
+          label: done ? 'Veure el final de la temporada' : 'Veure la classificació',
+          run: () => goTo('lliga'),
+        },
+      };
+    },
+    [goTo],
+  );
+
+  /* ---------- Final de partida ---------- */
+
+  /*
+   * Cada partida acabada del repte o la lliga s'apunta un sol cop: la sessió
+   * de la partida ha de ser la partida o la jornada que toca ara mateix.
+   */
+  const onFinished = useCallback(
+    (game: GameState, setup: GameSetup) => {
+      if (setup.mode === 'repte') {
+        const current = challenge.get()?.current;
+        if (!current || isDone(current) || setup.session !== challengeSession(current)) return;
+        const next = challenge.update((state) => addGame(state, { points: myPoints(game), won: humanWon(game) }));
+        if (next) setFinish(challengeFinish(next));
+      } else if (setup.mode === 'lliga') {
+        const state = league.get();
+        const season = state?.season;
+        if (!state || !season || isFinished(season) || setup.session !== leagueSession(season)) return;
+        const byId = new Map(finalScores(game).map((score) => [score.playerId, score.points]));
+        const scores = game.players.map((player) => byId.get(player.id) ?? 0);
+        const played = recordRound(season, scores);
+        const career = isFinished(played) ? closeSeason(state.career, played) : state.career;
+        const next = league.update({ career, season: played });
+        if (next) setFinish(leagueFinish(next));
+      }
+    },
+    [challenge, league, challengeFinish, leagueFinish],
+  );
+
+  if (
+    profile.loading ||
+    savedGames.loading ||
+    !profile.profile ||
+    !freePlay.value ||
+    !challenge.value ||
+    !league.value
+  ) {
     return (
       <main className="app">
         <p className="muted">Carregant…</p>
@@ -47,14 +435,8 @@ export function App() {
     );
   }
 
-  const setup: GameSetup = savedGame.saved?.setup ?? {
-    playerName: profile.profile.name,
-    opponents: suggestOpponents(profile.profile, 2),
-    opponentRatings: suggestOpponentRatings(profile.profile, 2),
-    auto: true,
-  };
-
-  const classes = [screen === 'game' ? 'app app-joc' : 'app'];
+  const inGame = view === 'game' && play !== null;
+  const classes = [inGame && !statsOpen ? 'app app-joc' : 'app'];
   if (tileStyle === 'invers') classes.push('fitxes-inverses');
 
   function clearTransferUrl() {
@@ -73,27 +455,89 @@ export function App() {
   return (
     <main className={classes.join(' ')}>
       {/*
-       * La partida no es desmunta mai en anar a l'historial: es continua veient
-       * exactament on era en tornar (i els bots poden acabar la seva jugada
-       * mentrestant). Per això l'historial es pinta a sobre, no al lloc.
+       * La partida no es desmunta en anar a l'historial: es continua veient
+       * exactament on era en tornar. Per això l'historial es pinta a sobre.
        */}
-      <div style={{ display: screen === 'game' ? 'contents' : 'none' }}>
-        <GameScreen
-          setup={setup}
-          resume={savedGame.saved?.game}
-          resumeOwners={savedGame.saved?.owners}
-          resumeMisses={savedGame.saved?.misses}
-          resumeRackOrder={savedGame.saved?.rackOrder}
-          resumeRackSortBy={savedGame.saved?.rackSortBy}
-          profile={profile}
-          savedGame={savedGame}
-          onHistory={() => setScreen('stats')}
-          tileStyle={tileStyle}
-          onTileStyle={setTileStyle}
+      {inGame && play && (
+        <div style={{ display: statsOpen ? 'none' : 'contents' }}>
+          <GameScreen
+            key={play.key}
+            setup={play.setup}
+            resume={play.saved?.game}
+            resumeOwners={play.saved?.owners}
+            resumeMisses={play.saved?.misses}
+            resumeRackOrder={play.saved?.rackOrder}
+            resumeRackSortBy={play.saved?.rackSortBy}
+            profile={profile}
+            savedGame={savedGames.forMode(play.mode)}
+            onHistory={() => setStatsOpen(true)}
+            tileStyle={tileStyle}
+            onTileStyle={setTileStyle}
+            mode={play.mode}
+            onHome={() => goTo('home')}
+            onFinished={onFinished}
+            finish={finish}
+            modeLabel={play.label}
+            onFreeSetup={saveFreeSetup}
+          />
+        </div>
+      )}
+
+      {!statsOpen && view === 'home' && (
+        <HomeScreen
+          profile={profile.profile}
+          freePrefs={freePrefs}
+          savedFree={savedGames.saved.lliure}
+          savedRepte={savedGames.saved.repte !== null}
+          savedLliga={savedGames.saved.lliga !== null}
+          challenge={challenge.value}
+          league={league.value}
+          onFree={() => void startFree()}
+          onChallenge={() => setView('repte')}
+          onLeague={() => setView('lliga')}
+          onHistory={() => setStatsOpen(true)}
         />
-      </div>
-      {screen === 'stats' && (
-        <StatsScreen handle={profile} onBack={() => setScreen('game')} />
+      )}
+
+      {!statsOpen && view === 'repte' && (
+        <RepteScreen
+          state={challenge.value}
+          hasSavedGame={
+            savedGames.saved.repte !== null &&
+            challenge.value.current !== null &&
+            savedGames.saved.repte.setup.session === challengeSession(challenge.value.current)
+          }
+          onStart={beginChallenge}
+          onPlay={() => void playChallenge()}
+          onAbandon={quitChallenge}
+          onHome={() => goTo('home')}
+        />
+      )}
+
+      {!statsOpen && view === 'lliga' && (
+        <LligaScreen
+          state={league.value}
+          playerName={profile.profile.name}
+          hasSavedGame={
+            savedGames.saved.lliga !== null &&
+            league.value.season !== null &&
+            savedGames.saved.lliga.setup.session === leagueSession(league.value.season)
+          }
+          elTaulerHome={elTaulerHome}
+          onStartSeason={startSeason}
+          onPlayRound={() => void playRound()}
+          onAbandonSeason={abandonSeason}
+          onSetHome={setHome}
+          onHome={() => goTo('home')}
+        />
+      )}
+
+      {statsOpen && (
+        <StatsScreen
+          handle={profile}
+          onBack={() => setStatsOpen(false)}
+          backLabel={inGame ? 'Torna a la partida' : 'Torna'}
+        />
       )}
 
       {pendingProgress && (

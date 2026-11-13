@@ -25,6 +25,12 @@ El pla complet, fase a fase, és a **[`AGENT.md`](AGENT.md)**.
 per al teu perfil, els rivals s'ajusten al teu nivell, i pots jugar amb el ratolí
 o amb el dit i deixar una partida a mitges per continuar-la després.
 
+En obrir l'app surten **tres maneres de jugar**: el **joc lliure** (la partida
+de sempre, que recorda els rivals i el nivell que has triat), el **repte**
+(unes quantes partides a un nivell fix, i se sumen els punts) i la **lliga**
+(del poble al món, amb els grups C, B i A i els mateixos noms que les lligues
+d'escacs d'El Tauler). Tot el detall és a [`docs/LLIGA.md`](docs/LLIGA.md).
+
 ## Estructura del repositori
 
 ```
@@ -194,6 +200,10 @@ Web Worker, sense React ni DOM.
 - [x] Directes a la taula: sense pantalla d'inici, amb el nom, el nivell, la
       partida nova i l'historial en un menú que s'obre tocant el teu jugador, i
       rivals amb nom d'usuari i avatar de colors.
+- [x] Tres maneres de jugar a l'inici: joc lliure (que recorda rivals i
+      nivell), repte (partides seguides i suma de punts) i lliga (21 graons
+      del poble al món, de Novell a Expert, amb els noms de les lligues
+      d'escacs d'El Tauler).
 - [x] La IA encapsulada com a motor independent i substituïble
       (`remigi-engine`): API pública versionada, artefacte d'un sol fitxer per
       a Node o Web Worker, i regressió comportamental que garanteix que cada

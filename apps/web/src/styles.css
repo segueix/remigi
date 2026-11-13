@@ -2872,3 +2872,869 @@ button.secondary.reset-nivell {
     width: 100%;
   }
 }
+
+/* ==========================================================================
+ * Les tres maneres de jugar: inici, repte i lliga
+ * ========================================================================== */
+
+:root {
+  /* Un color d'identitat per mode, amb el text que hi va a sobre. */
+  --mode-lliure: #15803d;
+  --mode-lliure-text: #ffffff;
+  --mode-repte: #1d4ed8;
+  --mode-repte-text: #ffffff;
+  --mode-lliga: #a16207;
+  --mode-lliga-text: #ffffff;
+  /* Medalles de la classificació. */
+  --plata: #6b7280;
+  --bronze: #b45309;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --mode-lliure: #4ade80;
+    --mode-lliure-text: #052e16;
+    --mode-repte: #93c5fd;
+    --mode-repte-text: #172554;
+    --mode-lliga: #fbbf24;
+    --mode-lliga-text: #422006;
+    --plata: #d1d5db;
+    --bronze: #fdba74;
+  }
+}
+
+.mode-lliure,
+.lliure {
+  --identitat: var(--mode-lliure);
+  --identitat-text: var(--mode-lliure-text);
+}
+
+.mode-repte,
+.repte {
+  --identitat: var(--mode-repte);
+  --identitat-text: var(--mode-repte-text);
+}
+
+.mode-lliga,
+.lliga {
+  --identitat: var(--mode-lliga);
+  --identitat-text: var(--mode-lliga-text);
+}
+
+/* ---------- Inici ---------- */
+
+.app:has(.inici) {
+  max-width: 56rem;
+}
+
+.inici-cap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.inici-cap h1 {
+  margin: 0;
+  font-size: 2.2rem;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+}
+
+.inici-cap p {
+  margin: 0.2rem 0 0;
+}
+
+.inici-jugador {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.35rem 0.8rem 0.35rem 0.4rem;
+  border-radius: 999px;
+  text-align: left;
+}
+
+.inici-jugador-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.inici-modes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.9rem;
+  margin-bottom: 1.25rem;
+}
+
+/* Cada mode és un botó gran sencer: es toca on sigui. */
+.mode-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+  padding: 1.1rem 0.8rem 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--identitat) 35%, var(--vora));
+  border-top: 5px solid var(--identitat);
+  border-radius: 0.9rem;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--identitat) 13%, var(--superficie)),
+    var(--superficie) 65%
+  );
+  color: var(--text);
+  font-weight: 400;
+  text-align: center;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.mode-card:hover:not(:disabled) {
+  filter: none;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgb(0 0 0 / 0.14);
+}
+
+.mode-card:focus-visible {
+  outline: 3px solid var(--identitat);
+  outline-offset: 2px;
+}
+
+.mode-icona {
+  display: grid;
+  place-items: center;
+  width: 3.4rem;
+  height: 3.4rem;
+  border-radius: 50%;
+  background: var(--identitat);
+  color: var(--identitat-text);
+  box-shadow: inset 0 -3px 6px rgb(0 0 0 / 0.18);
+}
+
+.mode-icona .icona {
+  width: 1.9rem;
+  height: 1.9rem;
+}
+
+.mode-titol {
+  font-size: 1.2rem;
+  line-height: 1.2;
+}
+
+.mode-sub {
+  color: var(--text-suau);
+  font-size: 0.85rem;
+  line-height: 1.3;
+}
+
+.mode-estat {
+  width: 100%;
+  padding: 0.35rem 0.4rem;
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--identitat) 9%, var(--superficie));
+  font-size: 0.8rem;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.mode-cta {
+  margin-top: auto;
+  padding: 0.35rem 1.1rem;
+  border-radius: 999px;
+  background: var(--identitat);
+  color: var(--identitat-text);
+  font-weight: 700;
+}
+
+@media (max-width: 560px) {
+  .inici-cap h1 {
+    font-size: 1.8rem;
+  }
+
+  .inici-modes {
+    gap: 0.45rem;
+  }
+
+  .mode-card {
+    gap: 0.35rem;
+    padding: 0.8rem 0.35rem 0.7rem;
+    border-radius: 0.7rem;
+  }
+
+  .mode-icona {
+    width: 2.6rem;
+    height: 2.6rem;
+  }
+
+  .mode-icona .icona {
+    width: 1.45rem;
+    height: 1.45rem;
+  }
+
+  .mode-titol {
+    font-size: 0.98rem;
+  }
+
+  .mode-sub {
+    font-size: 0.72rem;
+  }
+
+  .mode-estat {
+    font-size: 0.7rem;
+    padding: 0.3rem 0.25rem;
+  }
+
+  .mode-cta {
+    padding: 0.3rem 0.7rem;
+    font-size: 0.85rem;
+  }
+}
+
+/* ---------- Pantalles del repte i la lliga ---------- */
+
+.pantalla-mode {
+  border-top: 5px solid var(--identitat);
+}
+
+.mode-cap {
+  margin-top: 0;
+  justify-content: space-between;
+  flex-wrap: nowrap;
+}
+
+.mode-cap h2 {
+  margin: 0;
+  min-width: 0;
+  font-size: 1.3rem;
+  line-height: 1.25;
+}
+
+.mode-cap button {
+  flex: none;
+}
+
+.pantalla-mode h3 {
+  margin: 1.25rem 0 0.4rem;
+  font-size: 1.05rem;
+}
+
+.tria {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.9rem 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.tria legend {
+  padding: 0;
+  margin-bottom: 0.35rem;
+  color: var(--text-suau);
+  font-size: 0.9rem;
+}
+
+.tria button {
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+}
+
+.tria-jornades output {
+  min-width: 2.5rem;
+  text-align: center;
+  font-size: 1.4rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.rajoles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin: 0.9rem 0 0;
+}
+
+.rajola {
+  margin: 0;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--vora);
+  border-left: 4px solid var(--identitat);
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--identitat) 8%, var(--superficie));
+}
+
+.rajola dt {
+  color: var(--text-suau);
+  font-size: 0.8rem;
+}
+
+.rajola dd {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.rajola dd small {
+  color: var(--text-suau);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.repte-config {
+  margin: 0.6rem 0 0;
+  font-weight: 600;
+}
+
+.repte-total {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin: 0.4rem 0 0;
+}
+
+.repte-total span {
+  font-size: 3rem;
+  font-weight: 800;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.repte-total small {
+  color: var(--text-suau);
+  font-size: 1rem;
+}
+
+.repte-partides,
+.repte-historial ul,
+.lliga-palmares ul,
+.lliga-jornades ol {
+  list-style: none;
+  margin: 0.8rem 0 0;
+  padding: 0;
+}
+
+.repte-partides li,
+.repte-historial li,
+.lliga-palmares li,
+.lliga-jornades li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  padding: 0.45rem 0.1rem;
+  border-bottom: 1px solid var(--vora);
+}
+
+.repte-historial,
+.lliga-palmares,
+.lliga-escala,
+.lliga-jornades {
+  margin-top: 1rem;
+}
+
+.repte-historial summary,
+.lliga-palmares summary,
+.lliga-escala summary,
+.lliga-jornades summary {
+  cursor: pointer;
+  font-weight: 600;
+  min-height: 2.75rem;
+  display: flex;
+  align-items: center;
+}
+
+/* ---------- Lliga ---------- */
+
+/* L'escalada: set nivells de tres graons (C, B, A). */
+.escala {
+  display: flex;
+  gap: 0.3rem;
+  margin: 0.9rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.escala-nivell {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+}
+
+.escala-grao {
+  display: grid;
+  place-items: center;
+  height: 1.1rem;
+  border-radius: 3px;
+  background: var(--vora);
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.escala-grao.fet {
+  background: color-mix(in srgb, var(--be) 55%, var(--superficie));
+}
+
+.escala-grao.actual {
+  background: var(--identitat);
+  color: var(--identitat-text);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--identitat) 35%, transparent);
+}
+
+.escala-grao.millor {
+  outline: 2px solid var(--or);
+  outline-offset: 1px;
+}
+
+.escala-nom {
+  grid-column: 1 / -1;
+  overflow: hidden;
+  color: var(--text-suau);
+  font-size: 0.62rem;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lliga-lloc {
+  justify-content: space-between;
+  margin-top: 0.6rem;
+}
+
+.lliga-lloc .link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 2.75rem;
+}
+
+.lliga-lloc .icona {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.lliga-jornada {
+  margin-top: 1rem;
+  padding: 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--identitat) 40%, var(--vora));
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--identitat) 8%, var(--superficie));
+}
+
+.lliga-jornada-cap {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin: 0;
+}
+
+.lliga-jornada-num {
+  font-size: 1.35rem;
+  font-weight: 800;
+}
+
+.lliga-jornada-num small {
+  color: var(--text-suau);
+  font-size: 0.9rem;
+}
+
+.lliga-rivals {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0.6rem 0 0.8rem;
+  padding: 0;
+  list-style: none;
+}
+
+.lliga-rivals li {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.lliga-rivals li > span:last-child {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.lliga-avatar {
+  width: 2rem;
+  height: 2rem;
+  font-size: 0.8rem;
+  letter-spacing: -0.02em;
+}
+
+.lliga-taula-embolcall {
+  margin-top: 1rem;
+  overflow-x: auto;
+}
+
+.lliga-taula {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.lliga-taula caption {
+  margin-bottom: 0.3rem;
+  font-weight: 700;
+  text-align: left;
+}
+
+.lliga-taula th {
+  padding: 0.3rem;
+  color: var(--text-suau);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-align: right;
+}
+
+.lliga-taula th:nth-child(2) {
+  text-align: left;
+}
+
+.lliga-taula td {
+  padding: 0.3rem;
+  border-top: 1px solid var(--vora);
+  text-align: right;
+}
+
+.lliga-taula td.pos {
+  border-left: 4px solid transparent;
+  font-weight: 700;
+  text-align: center;
+}
+
+.lliga-taula td.jugador {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  text-align: left;
+}
+
+.lliga-taula td.pts {
+  font-weight: 800;
+}
+
+.lliga-taula .lliga-avatar {
+  width: 1.65rem;
+  height: 1.65rem;
+  font-size: 0.68rem;
+  border-width: 1.5px;
+}
+
+.lliga-taula tr.zona-puja td.pos {
+  border-left-color: var(--be);
+}
+
+.lliga-taula tr.zona-baixa td.pos {
+  border-left-color: var(--mal);
+}
+
+.lliga-taula tr.tu td {
+  background: color-mix(in srgb, var(--accent) 12%, var(--superficie));
+  font-weight: 700;
+}
+
+.lliga-llegenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.8rem;
+  margin: 0.5rem 0 0;
+}
+
+.llegenda-puja::before,
+.llegenda-baixa::before {
+  content: '';
+  display: inline-block;
+  width: 0.65rem;
+  height: 0.65rem;
+  margin-right: 0.3rem;
+  border-radius: 2px;
+  background: var(--be);
+  vertical-align: -0.05rem;
+}
+
+.llegenda-baixa::before {
+  background: var(--mal);
+}
+
+.lliga-jornades-punts {
+  white-space: nowrap;
+}
+
+.lliga-config {
+  margin-top: 0.5rem;
+}
+
+.lliga-final {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.4rem 1rem;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.lliga-final h3 {
+  margin: 0;
+}
+
+.lliga-final p {
+  margin: 0.2rem 0 0;
+}
+
+.lliga-final .lliga-taula-embolcall {
+  grid-column: 1 / -1;
+}
+
+.lliga-final-pos {
+  --medalla: var(--accent);
+  display: grid;
+  place-items: center;
+  align-content: center;
+  width: 5.5rem;
+  height: 5.5rem;
+  border: 4px solid var(--medalla);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--medalla) 14%, var(--superficie));
+  line-height: 1;
+}
+
+.lliga-final-pos.or {
+  --medalla: var(--or);
+}
+
+.lliga-final-pos.plata {
+  --medalla: var(--plata);
+}
+
+.lliga-final-pos.bronze {
+  --medalla: var(--bronze);
+}
+
+.lliga-final-pos.descens {
+  --medalla: var(--mal);
+}
+
+.lliga-final-num {
+  font-size: 2.2rem;
+  font-weight: 800;
+}
+
+.lliga-final-moviment {
+  font-size: 1.05rem;
+}
+
+.moviment-up .lliga-final-moviment,
+.lliga-palmares .moviment-up .lliga-palmares-pos,
+.lliga-palmares .moviment-champion .lliga-palmares-pos {
+  color: var(--be);
+}
+
+.moviment-down .lliga-final-moviment,
+.lliga-palmares .moviment-down .lliga-palmares-pos {
+  color: var(--mal);
+}
+
+.lliga-palmares-pos {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.lliga-escala ol {
+  margin: 0.5rem 0 0;
+  padding-left: 1.4rem;
+}
+
+.lliga-escala li {
+  padding: 0.25rem 0;
+}
+
+.lliga-escala li span {
+  display: block;
+}
+
+.lliga-escala li.actual strong {
+  color: var(--identitat);
+}
+
+@media (prefers-color-scheme: light) {
+  .lliga-escala li.actual strong {
+    color: color-mix(in srgb, var(--identitat) 80%, black);
+  }
+}
+
+/* «On jugues?» */
+.dialeg-lloc {
+  position: fixed;
+  z-index: 81;
+  left: 50%;
+  top: 50%;
+  display: grid;
+  gap: 0.6rem;
+  width: min(28rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  overflow: auto;
+  transform: translate(-50%, -50%);
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--vora);
+  border-top: 5px solid var(--mode-lliga);
+  border-radius: 0.8rem;
+  background: var(--superficie);
+  box-shadow: 0 1rem 3rem rgb(0 0 0 / 0.3);
+}
+
+.dialeg-lloc h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.dialeg-lloc p {
+  margin: 0;
+}
+
+.dialeg-lloc label {
+  display: grid;
+  gap: 0.2rem;
+  font-size: 0.9rem;
+}
+
+.dialeg-lloc input,
+.dialeg-lloc select {
+  min-height: 2.75rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--vora);
+  border-radius: 0.5rem;
+  background: var(--fons);
+  color: var(--text);
+  font: inherit;
+}
+
+.dialeg-lloc .row {
+  margin-top: 0.3rem;
+}
+
+.dialeg-lloc-comarca {
+  color: var(--be);
+  font-weight: 600;
+}
+
+.dialeg-lloc-lligues {
+  margin: 0;
+  padding-left: 1.3rem;
+  color: var(--text-suau);
+}
+
+/* ---------- Final de partida del repte i la lliga ---------- */
+
+.final-mode {
+  margin: 1rem 0 0;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid var(--vora);
+  border-radius: 0.6rem;
+  background: color-mix(in srgb, var(--accent) 7%, var(--superficie));
+}
+
+.final-mode p {
+  margin: 0.25rem 0 0;
+}
+
+.final-mode-titol {
+  font-weight: 700;
+}
+
+.final-mode-xifres {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin: 0.5rem 0 0;
+}
+
+.final-mode-xifres dt {
+  color: var(--text-suau);
+  font-size: 0.85rem;
+}
+
+.final-mode-xifres dd {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.final-lliga-moviment {
+  font-weight: 700;
+}
+
+.menu-mode {
+  margin-top: 0.8rem;
+}
+
+@media (max-width: 480px) {
+  .lliga-taula .col-pj,
+  .lliga-taula td.jugador .muted {
+    display: none;
+  }
+
+  .rajola dd {
+    font-size: 1.25rem;
+  }
+
+  .lliga-final-pos {
+    width: 4.5rem;
+    height: 4.5rem;
+  }
+
+  .lliga-final-num {
+    font-size: 1.8rem;
+  }
+}
+
+/* Els totals grans del repte, amb els colors de les xapes de punts. */
+.repte-total .points-positive,
+.final-mode-xifres .points-positive {
+  color: var(--be);
+}
+
+.repte-total .points-negative,
+.final-mode-xifres .points-negative {
+  color: var(--mal);
+}
+
+/*
+ * Els rivals de la lliga tenen nom de persona i l'avatar porta les dues
+ * inicials: van més menudes que un emoji perquè hi càpiguen.
+ */
+.player-color.inicials {
+  font-size: 0.88rem;
+  letter-spacing: -0.03em;
+}
+
+.torn-avatar.inicials {
+  font-size: 1rem;
+}
+
+.final-avatar.inicials {
+  font-size: 1.3rem;
+}
+
+.score-avatar.inicials {
+  font-size: 0.7rem;
+}
+
+@media (orientation: landscape) and (max-height: 32rem) {
+  .player-color.inicials {
+    font-size: 0.6rem;
+  }
+}

@@ -135,3 +135,9 @@ comprova de debò si es pot escriure i degrada a memòria si no.
   exemple, no és estat de joc: el motor no en sap res i no n'ha de saber. La web
   ho dedueix comparant la taula d'abans i la de després de cada moviment
   (`game/meldOwners.ts`) i ho desa a part amb la partida.
+- **Les maneres de jugar viuen a la web.** El joc lliure, el repte i la lliga
+  (`docs/LLIGA.md`) són configuracions de partida i marcadors propis: el motor
+  continua veient partides normals amb rivals d'una força donada. La lògica de
+  la lliga i del repte és pura i serialitzable (`apps/web/src/lliga/league.ts`,
+  `apps/web/src/repte/challenge.ts`), com la del motor, i cada mode desa la
+  seva partida a mitges a part.

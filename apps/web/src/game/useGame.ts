@@ -33,9 +33,25 @@ export const BOT_DELAY_MS = Number(import.meta.env.VITE_BOT_DELAY ?? 3000);
  */
 const engine = createEngine();
 
+/** Les tres maneres de jugar que s'ofereixen a l'inici. */
+export type GameMode = 'lliure' | 'repte' | 'lliga';
+
 export interface GameSetup {
+  /** Mode de joc; absent (partides desades velles) val com a joc lliure. */
+  mode?: GameMode;
   playerName: string;
   opponents: DifficultyKey[];
+  /**
+   * Noms fixos dels rivals (els de la lliga). Sense, cada partida en tria del
+   * planter a l'atzar.
+   */
+  opponentNames?: string[];
+  /**
+   * A quina jornada de lliga o partida de repte correspon aquesta partida. Si
+   * ja no lliga amb l'estat del mode (s'ha abandonat el repte, temporada
+   * nova…), la partida desada no es reprèn.
+   */
+  session?: string;
   /** Força exacta dels bots, desada amb la partida. */
   opponentRatings?: number[];
   /**
@@ -82,7 +98,9 @@ export interface GameHandle {
 export function newGameState(setup: GameSetup): GameState {
   // Cada partida té rivals nous: el nom viatja dins de l'estat del joc, així
   // que en reprendre una partida desada tornen exactament els mateixos.
-  const personas = pickPersonas(setup.opponents.length);
+  const personas = setup.opponentNames
+    ? setup.opponentNames.map((name) => ({ name }))
+    : pickPersonas(setup.opponents.length);
   // Qui fa el primer torn es sorteja: de vegades comença un rival.
   const playerCount = setup.opponents.length + 1;
   return createGame({

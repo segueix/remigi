@@ -4,11 +4,13 @@ import type { ProfileHandle } from '../state/useProfile';
 
 interface Props {
   handle: ProfileHandle;
-  /** Tornar a la partida (l'única altra pantalla que hi ha). */
+  /** Tornar on s'era (la partida o la pantalla d'inici). */
   onBack(): void;
+  /** Text del botó de tornar. */
+  backLabel?: string;
 }
 
-export function StatsScreen({ handle, onBack }: Props) {
+export function StatsScreen({ handle, onBack, backLabel = 'Torna a la partida' }: Props) {
   const profile = handle.profile;
   if (!profile) return <p className="muted">Encara no hi ha cap perfil.</p>;
 
@@ -28,7 +30,7 @@ export function StatsScreen({ handle, onBack }: Props) {
           <h2>Historial de {profile.name}</h2>
         </div>
         <button className="secondary" onClick={onBack}>
-          ← Torna a la partida
+          ← {backLabel}
         </button>
       </div>
       {/*

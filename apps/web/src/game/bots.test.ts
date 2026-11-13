@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BOT_PERSONAS, botEmoji, pickPersonas } from './bots';
+import { BOT_PERSONAS, botEmoji, botPersona, pickPersonas } from './bots';
 
 describe('el planter de bots', () => {
   it('té com a mínim 20 personatges, tots diferents', () => {
@@ -37,5 +37,12 @@ describe('el planter de bots', () => {
     // Una partida desada d'una versió anterior porta bots d'un planter antic.
     expect(botEmoji('Bot 1')).toBe('🤖');
     expect(botEmoji('Núria')).toBe('🤖');
+  });
+
+  it('els rivals de la lliga, amb nom i cognom, porten les inicials i sempre els mateixos colors', () => {
+    expect(botEmoji('Mireia Roig')).toBe('MR');
+    expect(botEmoji('Yoon Jae-won')).toBe('YJ');
+    expect(botPersona('Pol Guix')).toEqual(botPersona('Pol Guix'));
+    expect(botPersona('Pol Guix').colors).toHaveLength(2);
   });
 });
