@@ -2155,3 +2155,32 @@ partida. Finalment fusiona.» Detall a `docs/LLIGA.md` (§3 i §4).
 - [2026-11-13] Esperar 30 segons de debò a cada prova no té sentit: el compte
   enrere es prova amb `page.clock` (rellotge simulat de Playwright), que també
   fa avançar els temporitzadors del compositor.
+
+### L'escalada de lligues, en vertical ✅ Feta (2026-11-13)
+
+Demanat pel jugador: «Fes que el llistat de lligues es presenti en vertical i
+no horitzontal.»
+
+- [x] A dalt de la pantalla de la lliga, l'escalada passa de ser una tira
+      horitzontal (set nivells amb el nom retallat: «Munici…», «Comar…») a una
+      **llista vertical**: una fila per lliga, de la local a la mundial, amb el
+      nom sencer («Lliga Comarcal d'Osona») i els seus tres grups en ordre, C, B
+      i A, cadascun amb la força dels rivals. La lliga actual ressaltada, els
+      graons fets en verd i el millor amb vora daurada; a sota, la regla en una
+      frase (de la C a la B, de la B a la A, de la A a la C de la lliga
+      següent).
+- [x] Fora la llista plegable «L'escalada: del poble al món», que repetia el
+      mateix.
+
+**Criteris d'acceptació (verificats)**: prova de navegador que comprova les 7
+files, una sota l'altra i alineades, amb els noms de les lligues, els grups C,
+B, A en ordre i el graó actual; captures al mòbil en clar i fosc. Bateria
+sencera en verd.
+
+### Problemes trobats
+
+- [2026-11-13] **Prova inestable de «Desfer canvis»** (`joc.spec.ts`), anterior
+  a aquesta feina: des que es sorteja qui comença (4e2d75b), de vegades el bot
+  obre abans del teu torn i la prova, que suposava la taula buida, fallava (3
+  de cada 20 execucions locals; a la CI la salvava el reintent). Ara espera el
+  teu torn i compara amb les jugades que ja hi havia: 40 de 40.

@@ -87,7 +87,12 @@ export function LligaScreen({
         </button>
       </div>
 
-      <Ladder tier={tier} best={career.bestTier} />
+      <Ladder tier={tier} best={career.bestTier} home={career.home} />
+      <p className="muted small escala-nota">
+        Es puja d’un en un: de la <strong>C</strong> a la <strong>B</strong>, de la B a la{' '}
+        <strong>A</strong>, i de la A a la C de la lliga següent. Pugen els primers i baixen els
+        últims (una quarta part de la lliga).
+      </p>
 
       <div className="row lliga-lloc">
         <button type="button" className="link" onClick={() => setLocationOpen(true)}>
@@ -157,25 +162,6 @@ export function LligaScreen({
         </details>
       )}
 
-      <details className="lliga-escala">
-        <summary>L’escalada: del poble al món</summary>
-        <p className="muted small">
-          Cada nivell té tres lligues i es puja d’una en una: de la <strong>C</strong> a la{' '}
-          <strong>B</strong>, de la B a la <strong>A</strong>, i de la A a la C del nivell següent.
-          Pugen els primers i baixen els últims (una quarta part de la lliga). La lliga local comença a
-          Novell i la mundial acaba a Expert.
-        </p>
-        <ol>
-          {LEAGUE_LEVELS.map((level, index) => (
-            <li key={level.id} className={tierLevel(tier) === index ? 'actual' : undefined}>
-              <strong>{levelName(index, career.home)}</strong>
-              <span className="small muted">
-                {GROUPS.map((group, g) => `${group} ${tierRating(index * 3 + g)}`).join(' · ')}
-              </span>
-            </li>
-          ))}
-        </ol>
-      </details>
 
       {locationOpen && (
         <LocationDialog
@@ -196,30 +182,44 @@ export function LligaScreen({
 }
 
 /**
- * L'escalada: 7 nivells de 3 graons. Els fets en verd, l'actual en color
- * d'acció i el millor que s'ha arribat amb vora daurada.
+ * L'escalada, en vertical: una fila per lliga, de la local (dalt) a la
+ * mundial (baix), amb el nom sencer i els seus tres grups en l'ordre en què
+ * es juguen, C → B → A, cadascun amb la força dels rivals. Els graons fets en
+ * verd, l'actual en el color de la lliga i el millor que s'ha arribat amb
+ * vora daurada.
  */
-function Ladder({ tier, best }: { tier: number; best: number }) {
+function Ladder({ tier, best, home }: { tier: number; best: number; home: LeagueHome | null }) {
   return (
     <ol
       className="escala"
-      aria-label={`Graó ${tier + 1} de ${TOP_TIER + 1}: ${LEAGUE_LEVELS[tierLevel(tier)].label}, grup ${tierGroup(tier)}. Es puja de la C a la B, de la B a la A i de la A a la C del nivell següent.`}
+      aria-label={`L’escalada de lligues: ets a la ${tierName(tier, home)}. Es puja de la C a la B, de la B a la A i de la A a la C de la lliga següent.`}
     >
       {LEAGUE_LEVELS.map((level, index) => (
-        <li key={level.id} className="escala-nivell" title={level.label}>
-          {GROUPS.map((group, g) => {
-            const step = index * 3 + g;
-            const classes = ['escala-grao'];
-            if (step < tier) classes.push('fet');
-            if (step === tier) classes.push('actual');
-            if (step === best && best > tier) classes.push('millor');
-            return (
-              <span key={group} className={classes.join(' ')}>
-                {group}
-              </span>
-            );
-          })}
-          <span className="escala-nom">{level.label}</span>
+        <li key={level.id} className={tierLevel(tier) === index ? 'escala-nivell actual' : 'escala-nivell'}>
+          <span className="escala-num" aria-hidden="true">
+            {index + 1}
+          </span>
+          <span className="escala-nom">{levelName(index, home)}</span>
+          <span className="escala-graons">
+            {GROUPS.map((group, g) => {
+              const step = index * 3 + g;
+              const classes = ['escala-grao'];
+              if (step < tier) classes.push('fet');
+              if (step === tier) classes.push('actual');
+              if (step === best && best > tier) classes.push('millor');
+              return (
+                <span
+                  key={group}
+                  className={classes.join(' ')}
+                  aria-current={step === tier ? 'step' : undefined}
+                  title={`Grup ${group}: rivals de ${tierRating(step)}`}
+                >
+                  <strong>{group}</strong>
+                  <small>{tierRating(step)}</small>
+                </span>
+              );
+            })}
+          </span>
         </li>
       ))}
     </ol>

@@ -3233,14 +3233,12 @@ button.secondary.reset-nivell {
 
 .repte-historial,
 .lliga-palmares,
-.lliga-escala,
 .lliga-jornades {
   margin-top: 1rem;
 }
 
 .repte-historial summary,
 .lliga-palmares summary,
-.lliga-escala summary,
 .lliga-jornades summary {
   cursor: pointer;
   font-weight: 600;
@@ -3251,9 +3249,12 @@ button.secondary.reset-nivell {
 
 /* ---------- Lliga ---------- */
 
-/* L'escalada: set nivells de tres graons (C, B, A). */
+/*
+ * L'escalada, en vertical: una fila per lliga (de la local a la mundial), amb
+ * els tres grups C → B → A a la dreta.
+ */
 .escala {
-  display: flex;
+  display: grid;
   gap: 0.3rem;
   margin: 0.9rem 0 0;
   padding: 0;
@@ -3261,31 +3262,72 @@ button.secondary.reset-nivell {
 }
 
 .escala-nivell {
-  flex: 1;
-  min-width: 0;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 2px;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.3rem 0.4rem 0.3rem 0.5rem;
+  border: 1px solid var(--vora);
+  border-radius: 0.6rem;
+}
+
+.escala-nivell.actual {
+  border-color: var(--identitat);
+  background: color-mix(in srgb, var(--identitat) 10%, var(--superficie));
+}
+
+.escala-num {
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: var(--vora);
+  color: var(--text);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.escala-nivell.actual .escala-num {
+  background: var(--identitat);
+  color: var(--identitat-text);
+}
+
+.escala-nom {
+  font-size: 0.92rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.escala-graons {
+  display: flex;
+  gap: 0.25rem;
 }
 
 .escala-grao {
   display: grid;
   place-items: center;
-  height: 1.15rem;
-  border-radius: 3px;
+  align-content: center;
+  width: 2.6rem;
+  height: 2.5rem;
+  border-radius: 0.4rem;
   background: var(--vora);
   color: var(--text-suau);
-  font-size: 0.62rem;
-  font-weight: 800;
-  line-height: 1;
+  line-height: 1.05;
 }
 
-.escala-grao.fet {
-  color: var(--text);
+.escala-grao strong {
+  font-size: 0.95rem;
+}
+
+.escala-grao small {
+  font-size: 0.62rem;
+  font-variant-numeric: tabular-nums;
 }
 
 .escala-grao.fet {
   background: color-mix(in srgb, var(--be) 55%, var(--superficie));
+  color: var(--text);
 }
 
 .escala-grao.actual {
@@ -3299,14 +3341,8 @@ button.secondary.reset-nivell {
   outline-offset: 1px;
 }
 
-.escala-nom {
-  grid-column: 1 / -1;
-  overflow: hidden;
-  color: var(--text-suau);
-  font-size: 0.62rem;
-  text-align: center;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.escala-nota {
+  margin: 0.5rem 0 0;
 }
 
 .lliga-lloc {
@@ -3555,29 +3591,6 @@ button.secondary.reset-nivell {
 .lliga-palmares-pos {
   font-weight: 700;
   white-space: nowrap;
-}
-
-.lliga-escala ol {
-  margin: 0.5rem 0 0;
-  padding-left: 1.4rem;
-}
-
-.lliga-escala li {
-  padding: 0.25rem 0;
-}
-
-.lliga-escala li span {
-  display: block;
-}
-
-.lliga-escala li.actual strong {
-  color: var(--identitat);
-}
-
-@media (prefers-color-scheme: light) {
-  .lliga-escala li.actual strong {
-    color: color-mix(in srgb, var(--identitat) 80%, black);
-  }
 }
 
 /* «On jugues?» */

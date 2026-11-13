@@ -106,14 +106,22 @@ test.describe('qui mana és el motor', () => {
   });
 
   test('«Desfer canvis» retorna el torn a com estava', async ({ page }) => {
+    /*
+     * Qui comença es sorteja: si ha començat el bot, quan et toca ja pot haver
+     * baixat jugades. «Com estava» és la taula d'abans del teu torn, no una
+     * taula buida.
+     */
+    await expect(avanca(page)).toBeEnabled();
     const abans = await page.locator('.rack .tile').count();
+    const jugadesAbans = await page.locator('.board .meld').count();
     await page.locator('.rack .tile').first().click();
     await page.getByRole('button', { name: '+ Jugada nova' }).click();
     await expect(page.locator('.rack .tile')).toHaveCount(abans - 1);
+    await expect(page.locator('.board .meld')).toHaveCount(jugadesAbans + 1);
 
     await page.getByRole('button', { name: 'Desfer canvis' }).click();
     await expect(page.locator('.rack .tile')).toHaveCount(abans);
-    await expect(page.locator('.board .meld')).toHaveCount(0);
+    await expect(page.locator('.board .meld')).toHaveCount(jugadesAbans);
   });
 });
 

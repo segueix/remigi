@@ -74,8 +74,11 @@ jugador: pujar vol dir, de debò, jugar contra rivals més forts.
 **Es puja d'un en un: de la C a la B, de la B a la A**, i de la A a la C del
 nivell següent (Municipal A → Comarcal C). En sentit contrari, de la C es baixa
 a la A del nivell anterior. Al primer graó no es baixa; a l'últim no es puja, i
-el primer és «Campió del món». L'escalada de la pantalla mostra les lletres de
-tots els graons (C B A · C B A…), i el final de temporada ho diu així:
+el primer és «Campió del món». A dalt de la pantalla de la lliga, l'escalada és
+una **llista vertical**: una fila per lliga, de la local a la mundial, amb el nom
+sencer i els seus tres grups en ordre (C, B, A) i la força dels rivals de
+cadascun; l'actual en el color de la lliga, els fets en verd. El final de
+temporada ho diu així:
 «Puges al Grup B de la Lliga de Vic», «Puges al Grup A de la Lliga de Vic»,
 «Puges a la Lliga Comarcal d'Osona · Grup C: nivell nou!» (`movementText`).
 

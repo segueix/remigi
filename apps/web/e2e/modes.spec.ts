@@ -123,6 +123,20 @@ test('la lliga fa servir la localitat d’El Tauler i els noms de les lligues d�
   await expect(page.locator('.lliga h2')).toHaveText('Lliga de Vic · Grup C');
   // La lliga local comença a Novell.
   await expect(page.locator('.lliga-lloc')).toContainText('Novell · 800');
+
+  // L'escalada és una llista vertical: una lliga per fila, de la local a la
+  // mundial, cadascuna amb els grups C, B i A en aquest ordre.
+  const nivells = page.locator('.escala-nivell');
+  await expect(nivells).toHaveCount(7);
+  await expect(nivells.first().locator('.escala-nom')).toHaveText('Lliga de Vic');
+  await expect(nivells.nth(1).locator('.escala-nom')).toHaveText("Lliga Comarcal d'Osona");
+  await expect(nivells.last().locator('.escala-nom')).toHaveText('Lliga Mundial');
+  await expect(nivells.first().locator('.escala-grao strong')).toHaveText(['C', 'B', 'A']);
+  await expect(nivells.first().locator('.escala-grao[aria-current="step"]')).toHaveText('C800');
+  const ys = await nivells.evaluateAll((files) => files.map((f) => f.getBoundingClientRect().top));
+  for (let i = 1; i < ys.length; i++) expect(ys[i]).toBeGreaterThan(ys[i - 1]);
+  const xs = await nivells.evaluateAll((files) => files.map((f) => Math.round(f.getBoundingClientRect().left)));
+  expect(new Set(xs).size).toBe(1);
 });
 
 test('una temporada sencera de lliga: jornades, classificació i temporada següent', async ({ page }) => {
