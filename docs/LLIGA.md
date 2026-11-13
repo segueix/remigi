@@ -75,7 +75,8 @@ jugador: pujar vol dir, de debò, jugar contra rivals més forts.
 nivell següent (Municipal A → Comarcal C). En sentit contrari, de la C es baixa
 a la A del nivell anterior. Al primer graó no es baixa; a l'últim no es puja, i
 el primer és «Campió del món». A dalt de la pantalla de la lliga, l'escalada és
-una **llista vertical**: una fila per lliga, de la local a la mundial, amb el nom
+una **llista vertical** com una escala: la mundial a dalt i la local a baix
+(d'on es comença), una fila per lliga amb el nom
 sencer i els seus tres grups en ordre (C, B, A) i la força dels rivals de
 cadascun; l'actual en el color de la lliga, els fets en verd. El final de
 temporada ho diu així:

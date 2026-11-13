@@ -1004,14 +1004,16 @@ input {
 }
 
 /*
- * Els marcs daurats (la fitxa robada i la recol·locada) es perdrien sobre una
- * fitxa groga, que és gairebé del mateix color: sobre les grogues, el daurat
- * es fosqueix fins a un to d'or vell que continua sent el mateix senyal però
- * es veu. A les fitxes clàssiques no cal: allà la fitxa és crema.
+ * Sobre una fitxa groga, el marc daurat (la fitxa robada i la recol·locada) es
+ * confondria amb la fitxa. Abans es fosquejava fins a un or vell, però sobre
+ * la fusta semblava negre i a baix es barrejava amb l'ombra de la fitxa. Ara
+ * és el mateix groc que a les altres fitxes, una mica més separat: entre la
+ * fitxa i el marc hi queda una franja de fusta (o de feltre) que els
+ * distingeix. A les fitxes clàssiques no cal: allà la fitxa és crema.
  */
 .fitxes-inverses .tile-orange.drawn,
 .fitxes-inverses .tile-orange.moved {
-  outline-color: #6b4a00;
+  outline-offset: 3px;
 }
 
 /*

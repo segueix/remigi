@@ -182,11 +182,11 @@ export function LligaScreen({
 }
 
 /**
- * L'escalada, en vertical: una fila per lliga, de la local (dalt) a la
- * mundial (baix), amb el nom sencer i els seus tres grups en l'ordre en què
- * es juguen, C → B → A, cadascun amb la força dels rivals. Els graons fets en
- * verd, l'actual en el color de la lliga i el millor que s'ha arribat amb
- * vora daurada.
+ * L'escalada, en vertical i com una escala de debò: la mundial a dalt de tot i
+ * la local a baix, d'on es comença. Cada fila porta el nom sencer de la lliga
+ * i els seus tres grups en l'ordre en què es juguen, C → B → A, cadascun amb
+ * la força dels rivals. Els graons fets en verd, l'actual en el color de la
+ * lliga i el millor que s'ha arribat amb vora daurada.
  */
 function Ladder({ tier, best, home }: { tier: number; best: number; home: LeagueHome | null }) {
   return (
@@ -194,7 +194,9 @@ function Ladder({ tier, best, home }: { tier: number; best: number; home: League
       className="escala"
       aria-label={`L’escalada de lligues: ets a la ${tierName(tier, home)}. Es puja de la C a la B, de la B a la A i de la A a la C de la lliga següent.`}
     >
-      {LEAGUE_LEVELS.map((level, index) => (
+      {LEAGUE_LEVELS.map((level, index) => ({ level, index }))
+        .reverse()
+        .map(({ level, index }) => (
         <li key={level.id} className={tierLevel(tier) === index ? 'escala-nivell actual' : 'escala-nivell'}>
           <span className="escala-num" aria-hidden="true">
             {index + 1}

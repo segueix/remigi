@@ -2204,3 +2204,28 @@ sencera en verd.
   «arrossegar del faristol a la taula» (3 de 15 execucions). Arreglada igual:
   espera el teu torn i compta respecte de la taula d'abans (30 de 30). És
   l'única altra prova amb partida a l'atzar que comptava fitxes de la taula.
+
+### Escalada al revés, noms dels bots i el marc de la fitxa robada groga ✅ Feta (2026-11-13)
+
+Demanat pel jugador: «Inverteix l'ordre: la local a baix i la mundial a dalt.
+Coses estètiques: Òssa va sense accent. L'usuari PolpVuitMans no hauria de ser
+PopVuitMans? Quan robes una fitxa groga no es veu el requadre que es veu en
+altres colors: és negre en lloc de groc i la part de baix està difuminada.»
+
+- [x] **L'escalada, com una escala**: la Lliga Mundial a dalt de tot i la local
+      a baix, d'on es comença (cada lliga conserva els grups C → B → A).
+- [x] **Noms del planter**: `OssaBruna` (sense accent) i `PopVuitMans`. Les
+      partides desades amb els noms antics conserven l'avatar (`RENAMED` a
+      `game/bots.ts`, amb test).
+- [x] **Marc de la fitxa robada sobre una fitxa groga**: es fosquejava fins a
+      un or vell (#6b4a00) per no confondre's amb la fitxa, però sobre la fusta
+      semblava negre i a baix es barrejava amb l'ombra de la fitxa. Ara és el
+      mateix groc que a la resta de colors, amb 3 px de separació (en comptes
+      d'1): entre la fitxa i el marc hi queda una franja de fusta, i el marc es
+      veu sencer i nítid. El mateix per al marc de «recol·locada» del repàs.
+
+**Criteris d'acceptació (verificats)**: captures de prop (×3) de la fitxa
+robada groga, vermella i negra, en tema clar i fosc i amb fitxes clàssiques;
+prova de navegador de l'escalada (mundial primera, local última, una sota
+l'altra); 206 tests de la web, 176 del motor, build i 155 proves de navegador
+en verd (17 omeses per plataforma).
