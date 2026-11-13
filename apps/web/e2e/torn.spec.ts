@@ -1,5 +1,11 @@
 import { expect, test } from '@playwright/test';
-import { avanca, entraAmbPartida, f, obreMenu } from './ajudants';
+import {
+  avanca,
+  entraAlJocLliure,
+  entraAmbPartida,
+  f,
+  obreMenu,
+} from './ajudants';
 
 /**
  * El torn del jugador: el faristol que es col·loca a mà, el botó únic
@@ -51,7 +57,7 @@ test.describe('el faristol es col·loca a mà', () => {
 
     // I sobreviu a tancar la pestanya: va desat amb la partida.
     await page.reload();
-    await expect(page.locator('.rack .tile').first()).toBeVisible();
+    await entraAlJocLliure(page);
     expect(await etiquetes(page)).toEqual(després);
   });
 

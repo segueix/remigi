@@ -1,10 +1,11 @@
 import { expect, test } from '@playwright/test';
 import {
-  PROFILE_KEY,
   avanca,
   comencaDeZero,
+  entraAlJocLliure,
   jugaContra,
   obreMenu,
+  PROFILE_KEY,
   robaFinsAlFinal,
   tancaMenu,
 } from './ajudants';
@@ -18,6 +19,7 @@ test('el perfil es conserva en tancar i reobrir', async ({ page }) => {
   expect(await habilitat(page)).toBe(1100);
 
   await page.reload();
+  await entraAlJocLliure(page);
   await expect(page.locator('.player .player-nom').first()).toHaveText('Anna');
 });
 
@@ -36,6 +38,7 @@ test('els oponents proposats pugen amb l’habilitat', async ({ page }) => {
     localStorage.setItem(clau, JSON.stringify({ ...perfil, rating: 1600 }));
   }, PROFILE_KEY);
   await page.reload();
+  await entraAlJocLliure(page);
   await obreMenu(page);
   await expect(page.locator('.suggestion')).toContainText('1600 (Expert)');
 });
@@ -50,6 +53,7 @@ test('el nivell es pot canviar manualment des del menú', async ({ page }) => {
     );
   }, PROFILE_KEY);
   await page.reload();
+  await entraAlJocLliure(page);
   await obreMenu(page);
 
   await page.getByRole('button', { name: 'Canvia manualment' }).click();
@@ -142,6 +146,7 @@ test('es pot reiniciar només el nivell i tornar a la calibració de Novell', as
     );
   }, PROFILE_KEY);
   await page.reload();
+  await entraAlJocLliure(page);
 
   await obreMenu(page);
   await expect(page.locator('.nivell-seccio')).toContainText('Nivell i rivals');
@@ -179,6 +184,7 @@ test('una partida a mitges es continua sola en tornar a obrir', async ({ page })
 
   // Es tanca la pestanya i es torna a obrir: la partida és exactament on era.
   await page.reload();
+  await entraAlJocLliure(page);
   await expect(page.locator('.turn-line')).toHaveText(torn!);
   await expect(page.locator('.rack .tile')).toHaveCount(fitxes);
 });
@@ -190,6 +196,7 @@ test('reiniciar el perfil demana confirmació i torna a començar de zero', asyn
     localStorage.setItem(clau, JSON.stringify({ ...perfil, rating: 1600 }));
   }, PROFILE_KEY);
   await page.reload();
+  await entraAlJocLliure(page);
 
   // El reinici viu a l'historial.
   await obreMenu(page);
@@ -214,6 +221,7 @@ test('la força exacta segueix el número i queda congelada en reprendre', async
     localStorage.removeItem('remigi:game');
   }, PROFILE_KEY);
   await page.reload();
+  await entraAlJocLliure(page);
   await expect(page.locator('.player .tag').filter({ hasText: 'Fàcil–Mitjà' })).toHaveCount(2);
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('remigi:game') ?? 'null')?.setup.opponentRatings)).toEqual([1130, 1130]);
   await page.evaluate((key) => {
@@ -221,6 +229,7 @@ test('la força exacta segueix el número i queda congelada en reprendre', async
     localStorage.setItem(key, JSON.stringify({ ...profile, rating: 1500 }));
   }, PROFILE_KEY);
   await page.reload();
+  await entraAlJocLliure(page);
   await expect(page.locator('.player .tag').filter({ hasText: 'Fàcil–Mitjà' })).toHaveCount(2);
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('remigi:game') ?? 'null')?.setup.opponentRatings)).toEqual([1130, 1130]);
 });

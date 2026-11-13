@@ -33,12 +33,12 @@ test('una publicació nova recarrega l’app oberta i conserva les dades', async
     await page.goto(`http://127.0.0.1:${address.port}/remigi/`);
     await page.waitForFunction(() => Boolean(navigator.serviceWorker.controller));
     await page.reload();
-    await expect(page.locator('.rack .tile').first()).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Joc lliure', exact: true })).toBeVisible();
     await page.evaluate(() => localStorage.setItem('test-update-preserved', 'sí'));
     release = 2;
     await page.evaluate(() => window.dispatchEvent(new Event('focus')));
     await expect(page.locator('meta[name="test-release"]')).toHaveAttribute('content', '2');
-    await expect(page.locator('.rack .tile').first()).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Joc lliure', exact: true })).toBeVisible();
     expect(await page.evaluate(() => localStorage.getItem('test-update-preserved'))).toBe('sí');
     // No hi ha una segona recàrrega quan es comprova la mateixa publicació.
     await page.evaluate(() => { document.body.dataset.updateStable = 'sí'; window.dispatchEvent(new Event('focus')); });

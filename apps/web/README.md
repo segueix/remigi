@@ -13,7 +13,8 @@ npm run test:e2e   # proves de navegador sobre el build de producció
 
 ## Estat
 
-**Completa.** Partida contra 1, 2 o 3 bots amb totes les regles aplicades pel
+**Completa.** En obrir-la, tres maneres de jugar —joc lliure, repte i lliga—
+(vegeu [`docs/LLIGA.md`](../../docs/LLIGA.md)). Partida contra 1, 2 o 3 bots amb totes les regles aplicades pel
 motor; cada resultat mou la teva habilitat, que tria els rivals de la partida
 següent; s'hi juga amb el ratolí, amb el dit o amb el teclat; una partida a
 mitges es pot continuar més tard; i es publica sola a GitHub Pages, instal·lable
@@ -24,7 +25,23 @@ al mòbil i jugable sense connexió.
 ```
 src/
 ├── main.tsx                  # punt d'entrada
-├── App.tsx                   # navegació entre pantalles
+├── App.tsx                   # navegació: inici, partida, repte i lliga
+├── lliga/
+│   ├── league.ts             # la lliga: escala, calendari, simulació, classificació
+│   ├── league.test.ts
+│   ├── nomsLliga.js (.d.ts)  # noms dels rivals (còpia d'El Tauler)
+│   ├── localitats.js (.d.ts) # municipis, comarques i orígens (còpia d'El Tauler)
+│   ├── elTaulerHome.ts       # llegeix on jugues a la lliga d'escacs d'El Tauler
+│   └── LocationDialog.tsx    # «On jugues?»
+├── musica/
+│   ├── radioambient.js (.d.ts) # compositor i sintetitzador de música (còpia d'El Tauler)
+│   ├── musica.ts             # peça nova sense repeticions, registre, MP3
+│   ├── musica.test.ts
+│   └── useMusicPrefs.ts      # música sí/no i volum
+├── repte/
+│   ├── challenge.ts          # el repte: partides, total i rècords
+│   └── challenge.test.ts
+├── ui/format.ts              # punts amb signe, ordinals i mitjos punts
 ├── styles.css                # estils (tema clar i fosc)
 ├── appSwitch/
 │   ├── appSwitch.ts          # al mòbil, lliscar el dit pel mig porta a El Tauler
@@ -38,7 +55,9 @@ src/
 │   ├── gameOutcome.ts        # el resultat d'una partida → perfil actualitzat
 │   ├── gameOutcome.test.ts
 │   ├── useRecordResult.ts    # registra el resultat un sol cop per partida
-│   ├── savedGame.ts          # desa i valida la partida en curs
+│   ├── freePlay.ts           # preferències del joc lliure (rivals i nivell)
+│   ├── usePersisted.ts       # un valor desat i validat (repte, lliga, joc lliure)
+│   ├── savedGame.ts          # desa i valida la partida en curs (una per mode)
 │   ├── savedGame.test.ts
 │   └── useSavedGame.ts
 ├── game/
@@ -62,18 +81,26 @@ src/
 │   ├── BoardView.tsx         # la taula
 │   └── RackView.tsx          # el faristol, que es col·loca a mà
 └── screens/
+    ├── HomeScreen.tsx        # inici: joc lliure, repte i lliga, de costat
+    ├── RepteScreen.tsx       # configurar, seguir i acabar un repte
+    ├── LligaScreen.tsx       # temporada, classificació, escalada i palmarès
+    ├── LeagueInterlude.tsx   # 30 s de relax amb música entre jornades
+    ├── MusicScreen.tsx       # la música composta: escoltar, preferides, MP3
     ├── GameScreen.tsx        # la partida, el menú del jugador i el resultat
     └── StatsScreen.tsx       # historial: habilitat, gràfic i reinici
 ```
 
 ## La taula de joc
 
-**L'app entra directament a la taula**: si hi ha una partida a mig jugar es
-continua sola, i si no se'n reparteix una de nova amb els rivals que toquen per
-l'habilitat del perfil. El perfil es crea sol la primera vegada («Jugador»).
-Tot el que abans era la pantalla d'inici viu ara al **menú del teu jugador**
+**En obrir l'app surten tres maneres de jugar**: el joc lliure a l'esquerra,
+el repte al centre i la lliga a la dreta (vegeu `docs/LLIGA.md`). El joc lliure
+continua la partida a mig jugar, si n'hi ha, i si no en reparteix una de nova
+amb els rivals i el nivell que el jugador havia triat (en automàtic, a
+l'habilitat on la va deixar l'última partida lliure). El perfil es crea sol la
+primera vegada («Jugador»). Dins de la partida, la configuració viu al **menú del teu jugador**
 (tocant la teva targeta, a dalt): el nom, el nombre de rivals i el seu nivell
-(automàtic o fixat), «Partida nova», «Historial» i «Com es juga». L'historial
+(automàtic o fixat), «Partida nova», «Inici», «Historial» i «Com es juga». Al
+repte i a la lliga, els rivals els posa el mode i el menú no els deixa canviar. L'historial
 es pinta per sobre de la partida, que no es desmunta: en tornar és exactament
 on era.
 
@@ -287,8 +314,10 @@ El que abans era una llista per repassar a mà ara ho comprova `npm run test:e2e
   n'hi ha cap i roba si no n'hi ha (mai les dues coses).
 - Arrossegar del faristol a la taula amb el ratolí; amb tocs de debò, lliscar
   sobre les fitxes desplaça la taula i mantenir premut arrossega.
-- L'app entra directament a la partida; el nom, els rivals i la partida nova es
-  fan des del menú del jugador, i l'historial en porta el retorn i el reinici.
+- L'app s'obre amb les tres maneres de jugar (`e2e/modes.spec.ts`); el joc
+  lliure recorda els rivals, i el repte i la lliga es juguen de punta a punta.
+- El nom, els rivals i la partida nova es fan des del menú del jugador, i
+  l'historial en porta el retorn i el reinici.
 - El perfil es conserva, els oponents proposats pugen amb l'habilitat, i una
   partida a mitges es continua sola en tornar a obrir (colors inclosos).
 - La fitxa robada es marca i deixa d'estar-ho en jugar; només l'últim moviment

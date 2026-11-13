@@ -1987,3 +1987,220 @@ bloqueig: llavors fallen.
   llindar, així que la prova del faristol passava encara que el bloqueig no hi
   fos. Resolt fent-la començar a la fitxa més a la dreta i acabar a 30 px de
   la vora (~280 px), i comprovant-ho traient el bloqueig.
+
+### Tres maneres de jugar: joc lliure, repte i lliga ✅ Feta (2026-11-13)
+
+Demanat pel jugador: «Fes que quan s'obri l'app remigi apareguin tres opcions:
+a l'esquerra joc lliure, partida normal. Al centre repte, on l'usuari marca un
+número de partides i quan s'acabin es sumen el nombre de punts que ha fet; en
+aquesta opció l'usuari pot marcar un nivell d'expertesa per a les partides. A
+la dreta l'opció de lliga importada d'El Tauler, on marca el número de jugadors
+per lliga i el nombre de partides per acabar la lliga; l'usuari pot decidir si
+la lliga és de partides contra dos o tres adversaris; a nivell local comença a
+nivell bàsic i el mundial acaba a nivell d'expert. Tres lligues A, B, C local,
+comarcal, provincial… però d'A passa a C del següent nivell. Els noms, els
+mateixos que a les lligues d'escacs. Tota la lògica per fer una bona lliga. Si
+el jugador decideix lliure, sempre manté el nivell i el nombre d'adversaris que
+havia marcat, a no ser que s'autoajusti, on el nivell seguirà on el va deixar
+la darrera partida.» Disseny complet a **`docs/LLIGA.md`**.
+
+- [x] **Inici amb tres opcions** (`HomeScreen.tsx`), de costat també al mòbil:
+      joc lliure, repte i lliga, cadascuna amb el seu estat («Partida a mitges ·
+      torn 12», «En curs: partida 3 de 5 · +34 punts», «Lliga de Vic · Grup C ·
+      jornada 2/7 · 3r»). Des del menú del jugador i del final de partida es
+      torna a l'inici («Inici»).
+- [x] **Joc lliure que recorda** (`state/freePlay.ts`, `remigi:lliure`): el
+      nombre de rivals i el nivell (automàtic o fixat) es desen a part de la
+      partida i sobreviuen al final de la partida i a tancar l'app. En
+      automàtic, la força surt de l'habilitat on la va deixar l'última partida
+      lliure.
+- [x] **Repte** (`repte/challenge.ts`, `RepteScreen.tsx`): 3, 5 o 10
+      partides, nivell de Novell a Expert, 1–3 rivals; suma dels punts de
+      `finalScores`, rècord per configuració, historial de 40 reptes, abandonar
+      o repetir.
+- [x] **Lliga** (`lliga/league.ts`, `LligaScreen.tsx`): 7 nivells × grups C, B
+      i A = 21 graons de 40 punts, de Novell (800, Municipal C) a Expert (1600,
+      Mundial A); de la A es puja a la C del nivell següent. Rivals per partida
+      (2 o 3), jugadors (múltiples de la taula: 6/9/12/15 o 8/12/16) i jornades
+      (3–15). Calendari sencer amb llavor, que et fa trobar tots els rivals
+      abans de repetir-ne; resultats de les altres taules simulats amb un model
+      mesurat fent jugar el motor (200 partides per cel·la); punts de lliga per
+      enfrontament (1 per rival superat a la taula), desempats (directe,
+      diferència, victòries); pugen i baixen una quarta part; palmarès, final de
+      temporada i abandonar.
+- [x] **Els noms d'El Tauler**: `nomslliga.js` i `localitats.js` copiats com a
+      mòduls ES amb `.d.ts`; noms de lliga («Lliga Comarcal d'Osona · Grup C»),
+      noms i orígens dels rivals per nivell, i «On jugues?» proposat amb la
+      localitat de la lliga d'escacs (`chess_leagueCareer.home`, mateix origen a
+      `eltauler.cat`; només es llegeix).
+- [x] **Una partida a mitges per mode** (`remigi:game`, `remigi:game:repte`,
+      `remigi:game:lliga`), amb sessió per no comptar mai dues vegades la mateixa
+      partida de repte o jornada de lliga.
+- [x] Rivals de lliga amb nom i cognom: avatar amb les inicials sobre un degradat
+      del planter triat pel nom (`botPersona`).
+
+**Criteris d'acceptació (verificats)**:
+
+- `npm run typecheck` net, `npm test` en verd (176 del motor, sense canvis, i
+  **190** de la web: 39 de nous) i `npm run build` correcte.
+- Proves de navegador: **151 correctes** i 17 omeses per plataforma, amb un
+  fitxer nou, `e2e/modes.spec.ts` (6 proves × 2 projectes, estables repetint-les
+  tres vegades): les tres opcions de costat sense desbordar al mòbil; el joc
+  lliure que recorda 3 Experts després de recarregar sense partida; tornar a
+  l'inici i reprendre; un repte de 3 partides amb el total i sense moure
+  l'habilitat; la localitat d'El Tauler i els noms de les lligues; una temporada
+  sencera de 3 jornades fins a començar la següent.
+- Captures en escriptori, mòbil vertical i apaïsat, tema clar i fosc: inici,
+  «On jugues?», temporada, partida de lliga, final de jornada, classificació,
+  final de temporada, repte i resultat del repte. Cap error de consola.
+
+**Decisions**:
+
+- **Es desfà «Directes a la taula»**: l'app s'obre a l'inici amb els tres
+  modes, perquè ho demana el jugador. El joc lliure continua sent un toc, i la
+  partida a mitges s'hi reprèn.
+- **Només el joc lliure mou l'habilitat.** El repte i la lliga tenen marcador
+  propi; així el nivell automàtic del joc lliure continua on el va deixar
+  l'última partida lliure, que és el que demanava el jugador.
+- **La força de la lliga és absoluta, no relativa** (a El Tauler els rivals
+  són del nivell del jugador): el jugador volia la local a nivell bàsic i la
+  mundial a expert.
+- **Punts de lliga per enfrontament**, com a les lligues d'escacs, i no la suma
+  de punts de partida: una sola partida bloquejada amb 400 punts a la mà
+  decidiria la lliga. La suma queda com a primer desempat de joc («Dif»).
+- **Les dades d'El Tauler són còpies**, no es baixen en temps d'execució: l'app
+  ha de funcionar sense connexió i publicada a GitHub Pages. Afegeixen ~20 kB
+  comprimits al paquet (123 kB en total).
+
+### Problemes trobats
+
+- [2026-11-13] **El joc lliure tornava a 2 rivals automàtics després de
+  recarregar.** Les preferències es desaven dins d'un embolcall (`{ prefs }`)
+  però es llegien com si fossin les preferències mateixes, i la validació les
+  tornava als valors per defecte. Ho va caçar la prova de navegador; resolt
+  llegint l'embolcall i fixat amb la prova.
+- [2026-11-13] **El calendari no et feia trobar tots els rivals**: amb pes 3 per
+  a les teves parelles, en una lliga de 8 amb 3 jornades a vegades et trobaves
+  amb 6 dels 7, perquè el cost de les altres taules ho compensava. Amb pes 10 i
+  60 intents, 0 fallades en 40 llavors per a cada mida.
+- [2026-11-13] **Una prova nova era inestable**: esborrava la partida desada
+  mentre els bots (`VITE_BOT_DELAY=0`) encara jugaven i la tornaven a desar.
+  Resolt sortint primer a l'inici, que desmunta la partida.
+- [2026-11-13] Les inicials dels rivals de lliga no cabien a l'avatar a la mida
+  d'un emoji. Classe `inicials` amb mides pròpies a cada lloc.
+- [2026-11-13] A les proves, el botó «Inici» xoca per nom amb «Reinicia nivell
+  i torna a calibrar»: cal `exact: true`.
+
+### Lliga: de la C a la B i a la A, 30 s de relax entre jornades i música composta ✅ Feta (2026-11-13)
+
+Demanat pel jugador: «Fes que de C es passi a B i després a A. Importa el
+sistema de fer música il·limitada i fes el mateix estil entre partides de la
+lliga que es fa en les partides de 30 segons, un minut i dos minuts per bàndol
+als escacs: quan acabi una partida hi ha 30 segons de relax fins a la següent
+partida. Finalment fusiona.» Detall a `docs/LLIGA.md` (§3 i §4).
+
+- [x] **C → B → A**: ja es pujava d'un graó en un, però no es veia. Ara
+      l'escalada mostra les lletres de tots els graons (C B A · C B A…) i el
+      final de temporada ho diu com és (`movementText`): «Puges al Grup B de la
+      Lliga de Vic», «Puges al Grup A…», «Puges a la Lliga Comarcal d'Osona ·
+      Grup C: nivell nou!». Test que recorre els 21 graons.
+- [x] **Música composta il·limitada** (`musica/`): `radioambient.js` d'El
+      Tauler copiat com a mòdul ES i carregat a demanda (16 kB comprimits, a
+      part). Una peça nova cada vegada, d'estil diferent i sense repetir cap de
+      les 200 darreres, ni tampoc les que han sonat a El Tauler (es llegeix, no
+      s'hi escriu). Registre «Música composta» a l'inici: escoltar en bucle,
+      preferides, MP3 (lamejs de cdnjs, com a El Tauler), compondre'n una de
+      nova, música sí/no i volum.
+- [x] **Entre jornades, 30 s de relax** (`LeagueInterlude.tsx`): resultat en
+      curt, «JORNADA n/N» gran, compte enrere 30→0, la teva posició cara a
+      cara amb la dels rivals de la jornada següent i la música composta («Sona:
+      …», «Silencia»). A zero comença sola la jornada; «Juga ara», «Classificació»
+      i «Inici». El compte (i la música) s'aturen amb l'app amagada. L'última
+      jornada acaba amb el resum de sempre.
+
+**Criteris d'acceptació (verificats)**:
+
+- `npm run typecheck` net, `npm test` en verd (176 del motor i **198** de la
+  web: 8 de nous) i `npm run build` correcte.
+- Proves de navegador: **155 correctes** i 17 omeses per plataforma. Les de la
+  lliga recorren ara la pantalla de relax («Classificació» atura el compte,
+  «Juga ara» no espera, l'última jornada sense relax) i n'hi ha dues de noves:
+  amb el rellotge del navegador simulat, el compte no corre amb l'app amagada
+  i a zero comença sola la jornada amb els rivals anunciats, la música sona i
+  queda al registre (i s'hi marca preferida); i «Silencia» es recorda.
+- Música sentida de debò al Chromium: «Sona: Himne de la lliga · re major ·
+  trompa». MP3 comprovat amb el lamejs real des de Node: MPEG layer III de
+  64 kbps i 22,05 kHz.
+- Captures de la pantalla de relax en clar i fosc al mòbil, de l'escalada amb
+  les lletres i de «Música composta».
+- La injecció de l'enllaç a El Tauler que fa el desplegament
+  (`inject-tauler-link-remigi.py` sobre `GameScreen.tsx`) continua trobant la
+  seva marca.
+
+**Decisions**:
+
+- **El relax és a totes les jornades**, no només amb rellotge: el jugador ho
+  demanava per a les partides de la lliga, i qui vulgui més estona té
+  «Classificació» o «Inici».
+- **El registre de música és de Remigi** (`remigi:musica-registre`), no el
+  d'El Tauler, encara que comparteixin `localStorage`: així cap app no omple la
+  llista de l'altra. Només les empremtes d'El Tauler es llegeixen, per no
+  repetir peces entre les dues.
+
+### Problemes trobats
+
+- [2026-11-13] Les proves de la temporada esperaven el resum de jornada en
+  acabar cada partida; ara les jornades que no són l'última acaben amb la
+  pantalla de relax. Reescrites per recórrer-la.
+- [2026-11-13] Esperar 30 segons de debò a cada prova no té sentit: el compte
+  enrere es prova amb `page.clock` (rellotge simulat de Playwright), que també
+  fa avançar els temporitzadors del compositor.
+
+### L'escalada de lligues, en vertical ✅ Feta (2026-11-13)
+
+Demanat pel jugador: «Fes que el llistat de lligues es presenti en vertical i
+no horitzontal.»
+
+- [x] A dalt de la pantalla de la lliga, l'escalada passa de ser una tira
+      horitzontal (set nivells amb el nom retallat: «Munici…», «Comar…») a una
+      **llista vertical**: una fila per lliga, de la local a la mundial, amb el
+      nom sencer («Lliga Comarcal d'Osona») i els seus tres grups en ordre, C, B
+      i A, cadascun amb la força dels rivals. La lliga actual ressaltada, els
+      graons fets en verd i el millor amb vora daurada; a sota, la regla en una
+      frase (de la C a la B, de la B a la A, de la A a la C de la lliga
+      següent).
+- [x] Fora la llista plegable «L'escalada: del poble al món», que repetia el
+      mateix.
+
+**Criteris d'acceptació (verificats)**: prova de navegador que comprova les 7
+files, una sota l'altra i alineades, amb els noms de les lligues, els grups C,
+B, A en ordre i el graó actual; captures al mòbil en clar i fosc. Bateria
+sencera en verd.
+
+### Problemes trobats
+
+- [2026-11-13] **Prova inestable de «Desfer canvis»** (`joc.spec.ts`), anterior
+  a aquesta feina: des que es sorteja qui comença (4e2d75b), de vegades el bot
+  obre abans del teu torn i la prova, que suposava la taula buida, fallava (3
+  de cada 20 execucions locals; a la CI la salvava el reintent). Ara espera el
+  teu torn i compara amb les jugades que ja hi havia: 40 de 40.
+- [2026-11-13] **Rivals amb força fora del marge** (revisió automàtica de la
+  PR): el soroll de ±8 de `spreadRatings` podia passar el desplaçament de
+  ±80 i, als graons 1, 2, 18 i 19, donar rivals de 796 o de més de 1600 (774
+  de 8.400 temporades generades). `validSeason` descartava aquestes temporades
+  en recarregar, amb tots els resultats. Ara el desplaçament s'encabeix a la
+  seva banda, la força final es limita a 800–1600 i, en carregar, una força
+  fora de marge es corregeix en comptes de llençar la temporada. Proves: cap
+  graó amb 300 llavors i tres mides surt del marge, i totes les temporades
+  generades es desen i es recuperen senceres.
+- [2026-11-13] **El compte enrere podia descomptar l'estona en segon pla**
+  (revisió automàtica): si el mòbil suspèn els temporitzadors amb l'app
+  amagada, el primer toc en tornar descomptava tot el temps passat i la
+  jornada començava de cop. Ara el compte és pur (`lliga/countdown.ts`): en
+  canviar la visibilitat es torna a prendre el temps, i cap pas no descompta
+  més d'un segon. Proves d'unitat i de navegador (un salt de temps sense tocs
+  amb l'app amagada no fa començar la jornada).
+- [2026-11-13] **Una altra prova amb la mateixa suposició de taula buida**:
+  «arrossegar del faristol a la taula» (3 de 15 execucions). Arreglada igual:
+  espera el teu torn i compta respecte de la taula d'abans (30 de 30). És
+  l'única altra prova amb partida a l'atzar que comptava fitxes de la taula.

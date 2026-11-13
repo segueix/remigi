@@ -3,6 +3,7 @@ import {
   avanca,
   baixaGrup,
   comencaDeZero,
+  entraAlJocLliure,
   entraAmbPartida,
   f,
   jugaContra,
@@ -105,14 +106,22 @@ test.describe('qui mana és el motor', () => {
   });
 
   test('«Desfer canvis» retorna el torn a com estava', async ({ page }) => {
+    /*
+     * Qui comença es sorteja: si ha començat el bot, quan et toca ja pot haver
+     * baixat jugades. «Com estava» és la taula d'abans del teu torn, no una
+     * taula buida.
+     */
+    await expect(avanca(page)).toBeEnabled();
     const abans = await page.locator('.rack .tile').count();
+    const jugadesAbans = await page.locator('.board .meld').count();
     await page.locator('.rack .tile').first().click();
     await page.getByRole('button', { name: '+ Jugada nova' }).click();
     await expect(page.locator('.rack .tile')).toHaveCount(abans - 1);
+    await expect(page.locator('.board .meld')).toHaveCount(jugadesAbans + 1);
 
     await page.getByRole('button', { name: 'Desfer canvis' }).click();
     await expect(page.locator('.rack .tile')).toHaveCount(abans);
-    await expect(page.locator('.board .meld')).toHaveCount(0);
+    await expect(page.locator('.board .meld')).toHaveCount(jugadesAbans);
   });
 });
 
@@ -183,7 +192,7 @@ test.describe('moure fitxes', () => {
 
     // I la tria sobreviu a tancar i tornar a obrir.
     await page.reload();
-    await expect(page.locator('.rack .tile').first()).toBeVisible();
+    await entraAlJocLliure(page);
     const colorDespres = await page
       .locator('.rack .tile:not(.tile-joker):not(.tile-orange)')
       .first()
@@ -196,6 +205,9 @@ test.describe('moure fitxes', () => {
   test('arrossegar del faristol a la taula', async ({ page }) => {
     await comencaDeZero(page);
     await jugaContra(page, 1);
+    // Si comença el bot, quan et toca la taula ja pot tenir fitxes seves.
+    await expect(avanca(page)).toBeEnabled();
+    const fitxesAbans = await page.locator('.board .meld .tile').count();
 
     const fitxa = page.locator('.rack .tile').first();
     const caixa = (await fitxa.boundingBox())!;
@@ -208,7 +220,7 @@ test.describe('moure fitxes', () => {
     await page.mouse.move(taula.x + taula.width / 2, taula.y + taula.height / 2, { steps: 8 });
     await page.mouse.up();
 
-    await expect(page.locator('.board .meld .tile')).toHaveCount(1);
+    await expect(page.locator('.board .meld .tile')).toHaveCount(fitxesAbans + 1);
     // L'arrossegament no ha de comptar a més com un clic.
     await expect(page.locator('.tile.selected')).toHaveCount(0);
   });

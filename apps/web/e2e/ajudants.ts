@@ -10,6 +10,15 @@ export const PROFILE_KEY = 'remigi:profile:local';
 export const avanca = (page: Page) =>
   page.getByRole('button', { name: /^(Avançar|Acabar jugada)$/ });
 
+/**
+ * En obrir l'app surten les tres maneres de jugar; el joc lliure (la partida
+ * de sempre, o la que hi hagi a mitges) s'obre amb el botó de l'esquerra.
+ */
+export async function entraAlJocLliure(page: Page): Promise<void> {
+  await page.getByRole('button', { name: 'Joc lliure', exact: true }).click();
+  await expect(page.locator('.rack .tile').first()).toBeVisible();
+}
+
 /** Obre el menú del jugador (tocar la teva targeta, a dalt). */
 export async function obreMenu(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'El teu jugador' }).click();
@@ -23,8 +32,7 @@ export async function tancaMenu(page: Page): Promise<void> {
 }
 
 /**
- * Entra al joc amb un perfil net: l'app reparteix una partida directament, i
- * el nom es posa pel menú del jugador (la pantalla d'inici ja no existeix).
+ * Entra al joc lliure amb un perfil net, i posa el nom pel menú del jugador.
  */
 export async function comencaDeZero(
   page: Page,
@@ -50,7 +58,7 @@ export async function comencaDeZero(
     if (segons !== null) localStorage.setItem('remigi:temps-torn', segons);
   }, [temps]);
   await page.goto('./');
-  await expect(page.locator('.rack .tile').first()).toBeVisible();
+  await entraAlJocLliure(page);
   if (nom !== 'Jugador') {
     await obreMenu(page);
     await page.getByLabel('El teu nom').fill(nom);
@@ -213,7 +221,7 @@ export async function entraAmbPartida(
       },
     ],
   );
-  // L'app entra directament a la partida desada: no cal cap clic.
+  // La partida desada és la del joc lliure: es reprèn des de l'inici.
   await page.goto('./');
-  await expect(page.locator('.rack .tile').first()).toBeVisible();
+  await entraAlJocLliure(page);
 }

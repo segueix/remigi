@@ -62,9 +62,29 @@ export function pickPersonas(count: number, rng: () => number = Math.random): Bo
   return picked;
 }
 
-/** L'avatar (emoji i colors) del bot amb aquest nom. */
+/**
+ * L'avatar (emoji i colors) del bot amb aquest nom. Els rivals de la lliga
+ * tenen nom de persona («Mireia Roig», com a les lligues d'escacs d'El
+ * Tauler): porten les inicials sobre un dels degradats del planter, triat pel
+ * nom, de manera que el mateix rival té sempre el mateix avatar.
+ */
 export function botPersona(name: string): Pick<BotPersona, 'emoji' | 'colors'> {
-  return BOT_PERSONAS.find((persona) => persona.name === name) ?? FALLBACK;
+  const known = BOT_PERSONAS.find((persona) => persona.name === name);
+  if (known) return known;
+  return isPersonName(name) ? personAvatar(name) : FALLBACK;
+}
+
+/** Nom i cognom (el segon mot no és un número, com «Bot 1» de les versions velles). */
+export function isPersonName(name: string): boolean {
+  return /^\S+\s+[^\s\d]/u.test(name.trim());
+}
+
+function personAvatar(name: string): Pick<BotPersona, 'emoji' | 'colors'> {
+  const words = name.trim().split(/\s+/);
+  const initials = (words[0].charAt(0) + words[words.length - 1].charAt(0)).toUpperCase();
+  let hash = 0;
+  for (const char of name) hash = (Math.imul(hash, 31) + char.codePointAt(0)!) >>> 0;
+  return { emoji: initials, colors: BOT_PERSONAS[hash % BOT_PERSONAS.length].colors };
 }
 
 /** L'avatar del bot amb aquest nom. */

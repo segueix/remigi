@@ -17,6 +17,12 @@ export function useRecordResult(
   profile: ProfileHandle,
   adaptive = true,
   opponentRatings?: number[],
+  /**
+   * Només el joc lliure mou l'habilitat del perfil: el repte i la lliga tenen
+   * el seu propi marcador, i així el nivell automàtic del joc lliure continua
+   * on el va deixar l'última partida lliure.
+   */
+  enabled = true,
 ): RatingChange | null {
   // El perfil canvia d'identitat a cada render; es llegeix per referència
   // perquè l'efecte depengui només de la partida.
@@ -27,7 +33,7 @@ export function useRecordResult(
   const [change, setChange] = useState<RatingChange | null>(null);
 
   useEffect(() => {
-    if (game.status !== 'finished') {
+    if (!enabled || game.status !== 'finished') {
       recordedFor.current = null;
       setChange(null);
       return;
@@ -40,7 +46,7 @@ export function useRecordResult(
     const next = profileAfterGame(current, game, opponents, undefined, adaptive, opponentRatings);
     setChange(ratingChange(current, next));
     void profileRef.current.save(next);
-  }, [game, opponents, adaptive, opponentRatings]);
+  }, [game, opponents, adaptive, opponentRatings, enabled]);
 
   return change;
 }
