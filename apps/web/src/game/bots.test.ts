@@ -39,6 +39,15 @@ describe('el planter de bots', () => {
     expect(botEmoji('Núria')).toBe('🤖');
   });
 
+  it('els noms corregits (PopVuitMans, OssaBruna) conserven l’avatar a les partides velles', () => {
+    expect(BOT_PERSONAS.map((p) => p.name)).toContain('PopVuitMans');
+    expect(BOT_PERSONAS.map((p) => p.name)).toContain('OssaBruna');
+    expect(BOT_PERSONAS.map((p) => p.name)).not.toContain('PolpVuitMans');
+    expect(BOT_PERSONAS.map((p) => p.name)).not.toContain('ÓssaBruna');
+    expect(botEmoji('PolpVuitMans')).toBe('🐙');
+    expect(botEmoji('ÓssaBruna')).toBe('🐻');
+  });
+
   it('els rivals de la lliga, amb nom i cognom, porten les inicials i sempre els mateixos colors', () => {
     expect(botEmoji('Mireia Roig')).toBe('MR');
     expect(botEmoji('Yoon Jae-won')).toBe('YJ');

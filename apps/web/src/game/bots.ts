@@ -24,8 +24,8 @@ export const BOT_PERSONAS: readonly BotPersona[] = [
   { name: 'DofiVeloç', emoji: '🐬', colors: ['#7dd3fc', '#0369a1'] },
   { name: 'LleóDaurat', emoji: '🦁', colors: ['#fcd34d', '#b45309'] },
   { name: 'GataMandra', emoji: '🐈', colors: ['#f9a8d4', '#9d174d'] },
-  { name: 'PolpVuitMans', emoji: '🐙', colors: ['#d8b4fe', '#7e22ce'] },
-  { name: 'ÓssaBruna', emoji: '🐻', colors: ['#d6b28a', '#7c4a1e'] },
+  { name: 'PopVuitMans', emoji: '🐙', colors: ['#d8b4fe', '#7e22ce'] },
+  { name: 'OssaBruna', emoji: '🐻', colors: ['#d6b28a', '#7c4a1e'] },
   { name: 'PingüíFred', emoji: '🐧', colors: ['#bae6fd', '#155e75'] },
   { name: 'TauróBlanc', emoji: '🦈', colors: ['#a5b4fc', '#3730a3'] },
   { name: 'PapallonaBlava', emoji: '🦋', colors: ['#93c5fd', '#1d4ed8'] },
@@ -44,6 +44,15 @@ export const BOT_PERSONAS: readonly BotPersona[] = [
   { name: 'ÀguilaUllDeFalcó', emoji: '🦅', colors: ['#fed7aa', '#7c2d12'] },
   { name: 'MussolSavi', emoji: '🦉', colors: ['#bfdbfe', '#1e3a8a'] },
 ];
+
+/**
+ * Noms que el planter ha corregit: les partides desades amb el nom antic
+ * continuen tenint el seu avatar.
+ */
+const RENAMED: Readonly<Record<string, string>> = {
+  PolpVuitMans: 'PopVuitMans',
+  'ÓssaBruna': 'OssaBruna',
+};
 
 /** Avatar de recanvi per a noms que no són al planter (partides antigues). */
 const FALLBACK: Pick<BotPersona, 'emoji' | 'colors'> = {
@@ -69,7 +78,8 @@ export function pickPersonas(count: number, rng: () => number = Math.random): Bo
  * nom, de manera que el mateix rival té sempre el mateix avatar.
  */
 export function botPersona(name: string): Pick<BotPersona, 'emoji' | 'colors'> {
-  const known = BOT_PERSONAS.find((persona) => persona.name === name);
+  const current = RENAMED[name] ?? name;
+  const known = BOT_PERSONAS.find((persona) => persona.name === current);
   if (known) return known;
   return isPersonName(name) ? personAvatar(name) : FALLBACK;
 }
