@@ -1,4 +1,5 @@
 import { DIFFICULTIES, DIFFICULTY_ORDER, type DifficultyKey } from '@remigi/core';
+import { ordinal, signed } from '../ui/format';
 
 /**
  * El repte: un nombre de partides seguides a un nivell fix, i al final se
@@ -22,12 +23,31 @@ export interface ChallengeGame {
   /** Punts teus a la partida (positius si guanyes, negatius si no). */
   points: number;
   won: boolean;
+  /**
+   * Punts de tothom a la partida, en l'ordre de les cadires: tu primer i
+   * després els rivals del repte (`Challenge.rivals`). Les partides d'abans
+   * que el repte els apuntés no en tenen.
+   */
+  scores?: number[];
+  /** Fitxes que li quedaven a cadascú (mateix ordre). */
+  tilesLeft?: number[];
+  /** Cadira del guanyador de la partida (0, tu). */
+  winner?: number;
+  /** Ningú no es va poder desfer de totes les fitxes. */
+  blocked?: boolean;
+  /** Torns que va durar. */
+  turns?: number;
 }
 
 export interface Challenge {
   version: 1;
   config: ChallengeConfig;
   games: ChallengeGame[];
+  /**
+   * Els rivals del repte, els mateixos a totes les partides: així es pot
+   * portar el compte de cadascú i jugar amb tàctica. Buit als reptes d'abans.
+   */
+  rivals: string[];
   startedAt: string;
 }
 
@@ -59,8 +79,138 @@ export function normalizeChallengeConfig(input: Partial<ChallengeConfig> | null 
   };
 }
 
-export function newChallenge(config: ChallengeConfig, date = new Date()): Challenge {
-  return { version: 1, config: normalizeChallengeConfig(config), games: [], startedAt: date.toISOString() };
+export function newChallenge(config: ChallengeConfig, date = new Date(), rivals: string[] = []): Challenge {
+  const clean = normalizeChallengeConfig(config);
+  return { version: 1, config: clean, games: [], rivals: validRivals(rivals, clean.opponents), startedAt: date.toISOString() };
+}
+
+/** Els noms dels rivals, si n'hi ha tants com rivals per partida (si no, cap). */
+function validRivals(value: unknown, count: number): string[] {
+  if (!Array.isArray(value) || value.length !== count) return [];
+  const names = value.filter((name): name is string => typeof name === 'string' && name.trim() !== '');
+  return names.length === count ? names.map((name) => name.slice(0, 40)) : [];
+}
+
+/** Posa rivals fixos a un repte que encara no en té (els reptes d'abans). */
+export function withRivals(state: ChallengeState, rivals: string[]): ChallengeState {
+  const current = state.current;
+  if (!current || current.rivals.length === current.config.opponents) return state;
+  const names = validRivals(rivals, current.config.opponents);
+  return names.length ? { ...state, current: { ...current, rivals: names } } : state;
+}
+
+/* ---------- Classificació del repte ---------- */
+
+export interface StandingRow {
+  /** Cadira: 0 ets tu; 1… els rivals, en l'ordre del repte. */
+  seat: number;
+  name: string;
+  you: boolean;
+  /** Punts acumulats al repte. */
+  total: number;
+  /** Punts a l'última partida (null si no se'n sap). */
+  last: number | null;
+  /** Partides guanyades. */
+  wins: number;
+  /** Posició al repte (empats, mateixa posició). */
+  place: number;
+}
+
+/**
+ * La classificació del repte: tu i els rivals, amb els punts de l'última
+ * partida, el total i les victòries, ordenats pel total (i, a igualtat, per
+ * victòries). Els rivals només sumen les partides que porten la puntuació de
+ * tothom (`scores`); les teves sumen sempre.
+ */
+export function challengeStandings(challenge: Challenge, playerName = 'Tu'): StandingRow[] {
+  const seats = [playerName, ...challenge.rivals];
+  const last = challenge.games[challenge.games.length - 1];
+  const rows: StandingRow[] = seats.map((name, seat) => {
+    let total = 0;
+    let wins = 0;
+    for (const game of challenge.games) {
+      if (seat === 0) {
+        total += game.points;
+        if (game.won) wins++;
+      } else if (game.scores && Number.isFinite(game.scores[seat])) {
+        total += game.scores[seat];
+        if (game.winner === seat) wins++;
+      }
+    }
+    const lastPoints = !last ? null : seat === 0 ? last.points : last.scores?.[seat] ?? null;
+    return { seat, name, you: seat === 0, total, last: lastPoints, wins, place: 0 };
+  });
+  const sorted = [...rows].sort((a, b) => b.total - a.total || b.wins - a.wins || a.seat - b.seat);
+  sorted.forEach((row, i) => {
+    const prev = sorted[i - 1];
+    row.place = prev && prev.total === row.total && prev.wins === row.wins ? prev.place : i + 1;
+  });
+  return sorted;
+}
+
+/** Una dada per jugar amb tàctica: una icona i una frase curta. */
+export interface Insight {
+  icon: string;
+  text: string;
+}
+
+/**
+ * Informació per jugar amb tàctica, en frases curtes amb icona: com ha acabat
+ * la partida, les fitxes que et quedaven, on vas del repte i a quants punts,
+ * què queda i quant val guanyar-ne una, i un consell.
+ */
+export function challengeInsights(challenge: Challenge, standings: StandingRow[]): Insight[] {
+  const out: Insight[] = [];
+  const me = standings.find((row) => row.you);
+  const last = challenge.games[challenge.games.length - 1];
+  if (!me || !last) return out;
+  const played = challenge.games.length;
+  const left = challenge.config.games - played;
+  const leader = standings[0];
+  const rivals = standings.filter((row) => !row.you);
+  const known = rivals.length > 0 && challenge.games.some((game) => game.scores);
+
+  // Com ha acabat l'última partida.
+  if (last.winner !== undefined && last.scores) {
+    const winnerName = challenge.rivals[last.winner - 1] ?? 'Un rival';
+    const turns = last.turns ? ` en ${last.turns} torns` : '';
+    out.push(
+      last.blocked
+        ? { icon: '🧱', text: 'Partida bloquejada: guanya qui té menys punts a la mà.' }
+        : { icon: '🏁', text: `${last.winner === 0 ? 'T’has quedat' : `${winnerName} s’ha quedat`} sense fitxes${turns}.` },
+    );
+  }
+  if (last.tilesLeft && last.tilesLeft[0] > 0 && !last.won) {
+    const n = last.tilesLeft[0];
+    out.push({ icon: '✋', text: `Et quedaven ${n} ${n === 1 ? 'fitxa' : 'fitxes'} a la mà (${signed(last.points)}).` });
+  }
+
+  // On vas del repte.
+  if (known && played > 1) {
+    if (me.place === 1) {
+      const second = standings.find((row) => !row.you);
+      const gap = second ? me.total - second.total : 0;
+      out.push({ icon: '📍', text: gap > 0 ? `Vas 1r, amb ${gap} punts d’avantatge.` : 'Vas 1r, empatat.' });
+    } else {
+      out.push({ icon: '📍', text: `Vas ${ordinal(me.place)}, a ${leader.total - me.total} punts de ${leader.name}.` });
+    }
+  }
+
+  // El que queda, i un consell.
+  if (left > 0) {
+    const wins = challenge.games.filter((game) => game.scores && game.winner !== undefined);
+    const avgWin = wins.length
+      ? Math.round(wins.reduce((sum, game) => sum + (game.scores?.[game.winner ?? 0] ?? 0), 0) / wins.length)
+      : null;
+    const queden = left === 1 ? 'Queda 1 partida' : `Queden ${left} partides`;
+    out.push({ icon: '⏳', text: avgWin !== null ? `${queden} · guanyar-ne una val uns +${avgWin}.` : `${queden}.` });
+    if (known && me.place > 1) {
+      out.push({ icon: '💡', text: 'Si no pots guanyar, desfés-te de fitxes altes i jokers: el que tens a la mà resta.' });
+    } else if (known && me.place === 1) {
+      out.push({ icon: '💡', text: 'Vas primer: posa fitxes sovint i no et quedis jokers a la mà.' });
+    }
+  }
+  return out;
 }
 
 export function isDone(challenge: Challenge): boolean {
@@ -112,9 +262,14 @@ export function addGame(state: ChallengeState, game: ChallengeGame, date = new D
   return { ...state, current: next, history: [record, ...state.history].slice(0, MAX_HISTORY) };
 }
 
-export function startChallenge(state: ChallengeState, config: ChallengeConfig, date = new Date()): ChallengeState {
+export function startChallenge(
+  state: ChallengeState,
+  config: ChallengeConfig,
+  date = new Date(),
+  rivals: string[] = [],
+): ChallengeState {
   const clean = normalizeChallengeConfig(config);
-  return { ...state, current: newChallenge(clean, date), lastConfig: clean };
+  return { ...state, current: newChallenge(clean, date, rivals), lastConfig: clean };
 }
 
 /** Deixa el repte en curs sense apuntar-lo enlloc. */
@@ -134,6 +289,27 @@ function validGame(value: unknown): value is ChallengeGame {
   return isRecord(value) && typeof value.points === 'number' && Number.isFinite(value.points) && typeof value.won === 'boolean';
 }
 
+const numbers = (value: unknown, count: number): number[] | undefined =>
+  Array.isArray(value) && value.length === count && value.every((n) => typeof n === 'number' && Number.isFinite(n))
+    ? (value as number[])
+    : undefined;
+
+/** Una partida desada, amb les dades de tothom només si quadren amb els rivals del repte. */
+function cleanGame(value: ChallengeGame, seats: number): ChallengeGame {
+  const game: ChallengeGame = { points: value.points, won: value.won };
+  if (seats < 2) return game;
+  const scores = numbers(value.scores, seats);
+  if (scores) {
+    game.scores = scores;
+    const tiles = numbers(value.tilesLeft, seats);
+    if (tiles) game.tilesLeft = tiles;
+    if (Number.isInteger(value.winner) && (value.winner as number) >= 0 && (value.winner as number) < seats) game.winner = value.winner;
+    if (typeof value.blocked === 'boolean') game.blocked = value.blocked;
+    if (Number.isInteger(value.turns) && (value.turns as number) > 0) game.turns = value.turns;
+  }
+  return game;
+}
+
 export function parseChallengeState(raw: string | null): ChallengeState {
   if (!raw) return emptyChallengeState();
   try {
@@ -142,11 +318,16 @@ export function parseChallengeState(raw: string | null): ChallengeState {
     let current: Challenge | null = null;
     if (isRecord(value.current) && value.current.version === 1 && Array.isArray(value.current.games)) {
       const config = normalizeChallengeConfig(value.current.config as Partial<ChallengeConfig>);
-      const games = value.current.games.filter(validGame).slice(0, config.games);
+      const rivals = validRivals(value.current.rivals, config.opponents);
+      const games = value.current.games
+        .filter(validGame)
+        .slice(0, config.games)
+        .map((game) => cleanGame(game, rivals.length ? rivals.length + 1 : 0));
       current = {
         version: 1,
         config,
         games,
+        rivals,
         startedAt: typeof value.current.startedAt === 'string' ? value.current.startedAt : new Date(0).toISOString(),
       };
     }

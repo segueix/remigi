@@ -29,14 +29,17 @@ import {
   isDone,
   parseChallengeState,
   startChallenge,
+  withRivals,
   type Challenge,
   type ChallengeConfig,
   type ChallengeState,
 } from './repte/challenge';
+import { pickPersonas } from './game/bots';
 import { GameScreen, type ModeFinish } from './screens/GameScreen';
 import { HomeScreen } from './screens/HomeScreen';
 import { LeagueInterlude } from './screens/LeagueInterlude';
 import { RepteInterlude, type LastGame } from './screens/RepteInterlude';
+import { RepteCarousel } from './screens/RepteCarousel';
 import { LligaScreen } from './screens/LligaScreen';
 import { MusicScreen } from './screens/MusicScreen';
 import { RepteScreen } from './screens/RepteScreen';
@@ -109,7 +112,20 @@ function lastGameOf(game: GameState): LastGame {
   const scores = finalScores(game);
   const mine = scores.find((score) => score.playerId === game.players[0]?.id)?.points ?? 0;
   const place = [...scores].sort((a, b) => b.points - a.points).findIndex((score) => score.points === mine) + 1;
-  return { points: mine, won: humanWon(game), place: Math.max(1, place), players: scores.length };
+  // Per cadires: tu primer i després els rivals, en l'ordre de la partida.
+  const byId = new Map(scores.map((score) => [score.playerId, score.points]));
+  const winner = Math.max(0, game.players.findIndex((player) => player.id === game.winnerId));
+  return {
+    points: mine,
+    won: humanWon(game),
+    place: Math.max(1, place),
+    players: scores.length,
+    scores: game.players.map((player) => byId.get(player.id) ?? 0),
+    tilesLeft: game.players.map((player) => player.rack.length),
+    winner,
+    blocked: (game.players[winner]?.rack.length ?? 0) > 0,
+    turns: game.turn,
+  };
 }
 
 /**
@@ -209,12 +225,19 @@ export function App() {
       return;
     }
     const { level, opponents } = current.config;
+    // Els rivals del repte són sempre els mateixos (els d'abans no en tenien: se'ls tria ara).
+    let rivals = current.rivals;
+    if (rivals.length !== opponents) {
+      const names = pickPersonas(opponents).map((persona) => persona.name);
+      rivals = challenge.update((state) => withRivals(state, names))?.current?.rivals ?? names;
+    }
     launch(
       'repte',
       {
         mode: 'repte',
         playerName: player.name,
         opponents: Array.from({ length: opponents }, () => level),
+        opponentNames: rivals,
         auto: false,
         session,
       },
@@ -225,7 +248,9 @@ export function App() {
 
   const beginChallenge = useCallback(
     (config: ChallengeConfig) => {
-      challenge.update((state) => startChallenge(state, config));
+      // Els rivals del repte es trien ara i són els mateixos a totes les partides.
+      const rivals = pickPersonas(config.opponents).map((persona) => persona.name);
+      challenge.update((state) => startChallenge(state, config, new Date(), rivals));
       savedGames.clear('repte');
       void playChallenge();
     },
@@ -241,7 +266,6 @@ export function App() {
     (state: ChallengeState, lastGame?: LastGame): ModeFinish | null => {
       const current = state.current;
       if (!current || current.games.length === 0) return null;
-      const last = current.games[current.games.length - 1];
       const done = isDone(current);
       return {
         body: (
@@ -249,18 +273,7 @@ export function App() {
             <p className="final-mode-titol">
               Repte · partida {current.games.length} de {current.config.games}
             </p>
-            <dl className="final-mode-xifres">
-              <div>
-                <dt>Aquesta partida</dt>
-                <dd className={last.points >= 0 ? 'points-positive' : 'points-negative'}>{signed(last.points)}</dd>
-              </div>
-              <div>
-                <dt>{done ? 'Total del repte' : 'Total fins ara'}</dt>
-                <dd className={challengeTotal(current) >= 0 ? 'points-positive' : 'points-negative'}>
-                  {signed(challengeTotal(current))}
-                </dd>
-              </div>
-            </dl>
+            <RepteCarousel challenge={current} playerName={profile.profile?.name ?? 'Tu'} history={state.history} />
           </div>
         ),
         primary: done
@@ -278,7 +291,7 @@ export function App() {
           done || !lastGame ? undefined : (
             <RepteInterlude
               state={state}
-              last={lastGame}
+              playerName={profile.profile?.name ?? 'Tu'}
               onPlayNow={() => void playChallenge()}
               onChallenge={() => goTo('repte')}
               onHome={() => goTo('home')}
@@ -286,7 +299,7 @@ export function App() {
           ),
       };
     },
-    [goTo, playChallenge],
+    [goTo, playChallenge, profile.profile],
   );
 
   /* ---------- Lliga ---------- */
@@ -445,7 +458,15 @@ export function App() {
         const current = challenge.get()?.current;
         if (!current || isDone(current) || setup.session !== challengeSession(current)) return;
         const last = lastGameOf(game);
-        const next = challenge.update((state) => addGame(state, { points: last.points, won: last.won }));
+        // La puntuació de tothom només si la partida és dels rivals del repte.
+        const sameRivals =
+          current.rivals.length > 0 &&
+          game.players.length === current.rivals.length + 1 &&
+          current.rivals.every((name, i) => game.players[i + 1]?.name === name);
+        const extra = sameRivals
+          ? { scores: last.scores, tilesLeft: last.tilesLeft, winner: last.winner, blocked: last.blocked, turns: last.turns }
+          : {};
+        const next = challenge.update((state) => addGame(state, { points: last.points, won: last.won, ...extra }));
         if (next) setFinish(challengeFinish(next, last));
       } else if (setup.mode === 'lliga') {
         const state = league.get();
@@ -559,6 +580,7 @@ export function App() {
           onAbandon={quitChallenge}
           onHome={() => goTo('home')}
           onProfile={() => setStatsOpen(true)}
+          playerName={profile.profile.name}
         />
       )}
 

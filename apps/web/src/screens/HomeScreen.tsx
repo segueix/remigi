@@ -29,7 +29,7 @@ interface Props {
   onChallenge(): void;
   onLeague(): void;
   onHistory(): void;
-  /** La música composta per l'app (la que sona entre jornades de la lliga). */
+  /** La música infinita (composta per l'app, la que sona entre partides del repte i jornades de la lliga). */
   onMusic(): void;
 }
 
@@ -150,7 +150,7 @@ export function HomeScreen({
 
       <div className="row inici-extres">
         <button type="button" className="secondary" onClick={onMusic}>
-          🎵 Música composta
+          🎵 Música infinita
         </button>
         <button type="button" className="secondary" onClick={onHistory}>
           Historial

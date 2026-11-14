@@ -71,6 +71,28 @@ per a aquella mateixa configuració; l'historial guarda els 40 últims reptes.
   l'aturen. L'última acaba amb el resum i el resultat del repte. El compte
   enrere i la música són les mateixes peces que a la lliga
   (`screens/interlude.tsx`).
+- **Els rivals són els mateixos a tot el repte** (`Challenge.rivals`, triats en
+  començar-lo) i cada partida apunta la **puntuació de tothom**
+  (`ChallengeGame.scores`, per cadires: tu primer), les fitxes que li quedaven a
+  cadascú, qui l'ha guanyada, si s'ha bloquejat i quants torns ha durat.
+- **El final de cada partida, simple i visual** (`RepteCarousel.tsx`): entre
+  partides i a l'última, un carrusel de tres pàgines que es passen fent
+  lliscar el dit o tocant els **tres punts** de sota: 1) la partida (qui l'ha
+  guanyada, en gran, i una barra per jugador: cap a la dreta els punts
+  guanyats i cap a l'esquerra els perduts); 2) el repte (podi pel total
+  acumulat, amb les victòries de cadascú); 3) tàctica (targetes amb icona i el
+  rècord a batre). Entre partides ja no hi ha el marcador de xifres ni la
+  píndola del resultat: tot és al carrusel.
+- **Classificació del repte** a la pantalla del repte (`RepteStandings.tsx`,
+  `challengeStandings`): la taula amb la partida, el total i les victòries.
+- **Informació per jugar amb tàctica** (`challengeInsights`, frases curtes amb
+  icona): com ha acabat la
+  partida (sense fitxes o bloquejada), les fitxes que et quedaven, on vas del
+  repte i a quants punts del primer (o quin avantatge tens), quantes partides
+  queden i quant ha valgut de mitjana guanyar-ne una, i un consell segons si
+  vas primer o no.
+- Els reptes d'abans, sense rivals fixos, en reben en jugar la partida
+  següent; les partides ja jugades només hi porten els teus punts.
 
 ## 3. Lliga
 
@@ -282,7 +304,7 @@ quadra es descarta i es conserva la trajectòria; una trajectòria que no quadra
 torna a començar. Cada jornada té sessió (`llavor#jornada`) i només es
 comptabilitza la que toca.
 
-## 4. Música composta il·limitada
+## 4. Música infinita
 
 És el sistema d'El Tauler (`radioambient.js`, LLIGA.md §8 de
 `segueix/eltauler`), copiat a `apps/web/src/musica/radioambient.js` com a mòdul
@@ -297,7 +319,7 @@ de les 200 darreres (`remigi:musica-vistes`), i també es tenen en compte les qu
 ja han sonat a la lliga d'escacs d'El Tauler (`eltauler_league_jingle_seen`,
 només es llegeix).
 
-**Música composta** (botó de l'inici, `MusicScreen.tsx`) és el registre, com el
+**Música infinita** (botó de l'inici, `MusicScreen.tsx`; abans «Música composta») és el registre, com el
 d'El Tauler: de cada peça només es desa la recepta (estil i llavor), així que
 es poden tornar a **escoltar** en bucle, marcar com a **preferides** o **baixar
 en MP3** (quatre voltes, uns 2 minuts, amb lamejs de cdnjs carregat només el

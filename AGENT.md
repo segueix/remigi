@@ -2400,3 +2400,64 @@ que a la pàgina principal surti el nom de la lliga i la divisió.»
 (baseline regenerat), build; proves de navegador noves del mode clar/fosc a
 totes les modalitats i del nom de la lliga a l'inici, i les de la lliga
 adaptades (perfil nou: Lliga Local, Divisió C).
+
+### «Música composta» passa a dir-se «Música infinita» ✅ Feta (2026-11-14)
+
+Demanat pel jugador: «canvia música composta per música infinita». El botó de
+l'inici («🎵 Música infinita») i el títol de la pantalla (`MusicScreen.tsx`).
+La música és la mateixa: una peça nova, composta en aquell moment, cada vegada.
+A El Tauler, el mateix nom a la Configuració.
+
+**Criteris d'acceptació (verificats)**: typecheck, tests de la web i prova de
+navegador de la música entre jornades (que entra pel botó nou).
+
+### Repte: la puntuació de tothom, el total acumulat i informació per jugar amb tàctica ✅ Feta (2026-11-14)
+
+Demanat pel jugador: «Al final de cada partida del repte vull saber la
+puntuació dels altres jugadors, per saber qui ha guanyat; i, si no és la
+primera, el resultat d'aquella i l'acumulat total. Així es pot jugar amb
+tàctica. Dona més informació interessant.»
+
+- [x] **Rivals fixos al repte** (`Challenge.rivals`): es trien en començar-lo i
+      són els mateixos a totes les partides (`opponentNames`); els reptes d'abans
+      en reben en la partida següent (`withRivals`).
+- [x] **Puntuació de tothom** a cada partida (`ChallengeGame.scores`, per
+      cadires), amb les fitxes que quedaven, el guanyador, si s'ha bloquejat i
+      els torns. Es desa validat (si no quadra, la partida es queda amb els teus
+      punts).
+- [x] **Classificació del repte** (`RepteStandings.tsx`): entre partides, al
+      final i a la pantalla del repte. Primera partida: punts de cadascú i 👑;
+      després, partida, total acumulat i victòries, pel total. Al final, qui
+      guanya el repte.
+- [x] **Informació per jugar amb tàctica** (`challengeInsights`): com ha acabat
+      la partida, les fitxes que et quedaven, on vas i a quants punts, les
+      partides que queden i quant val de mitjana guanyar-ne una, i un consell.
+      Entre partides, «Següent: contra X i Y, nivell Mitjà».
+
+**Criteris d'acceptació (verificats)**: 5 tests nous de la classificació
+(primera partida, acumulat que suma zero, informació, desat i reptes d'abans);
+proves de navegador del repte ampliades (el mateix rival a totes les partides,
+la taula entre partides amb el total des de la segona i la classificació final);
+captura de la classificació.
+
+### Repte: el final de partida, simple i visual, en un carrusel de tres pàgines ✅ Feta (2026-11-14)
+
+Demanat pel jugador: «Vull que sigui simplificat però molt visual a la finestra
+que s'obre quan acaba la partida: tres punts a baix i scroll lateral per veure
+més informació.»
+
+- [x] `RepteCarousel.tsx`: tres pàgines amb `scroll-snap` (es passen fent
+      lliscar el dit) i **tres punts** a sota (es poden tocar; el de la pàgina
+      oberta s'allarga). 1) **La partida**: el guanyador en gran i barres
+      divergents per jugador (verd cap a la dreta, vermell cap a l'esquerra).
+      2) **El repte**: podi pel total acumulat, amb 🏆×victòries. 3)
+      **Tàctica**: `challengeInsights` en targetes amb icona i el rècord a batre.
+- [x] Entre partides, la finestra queda en: la partida que toca, el compte
+      enrere, el carrusel, «Següent: contra…», la música i els botons (fora el
+      marcador de xifres i la píndola del resultat). A l'última, el mateix
+      carrusel al resum.
+
+**Criteris d'acceptació (verificats)**: proves de navegador del repte amb el
+carrusel (tres punts, pàgina activa en tocar-los i en lliscar, barres, podi
+amb el total, tàctica, i que no eixampla la finestra); 225 tests de la web;
+captures en un mòbil (390 px).

@@ -149,7 +149,7 @@ export function MusicScreen({ onHome }: Props) {
     <section className="card pantalla-mode musica lliga">
       <div className="franja-fitxes" aria-hidden="true" />
       <div className="row mode-cap">
-        <h2>Música composta</h2>
+        <h2>Música infinita</h2>
         <button type="button" className="secondary" onClick={onHome}>
           ← Inici
         </button>
