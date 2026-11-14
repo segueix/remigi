@@ -2400,3 +2400,13 @@ que a la pàgina principal surti el nom de la lliga i la divisió.»
 (baseline regenerat), build; proves de navegador noves del mode clar/fosc a
 totes les modalitats i del nom de la lliga a l'inici, i les de la lliga
 adaptades (perfil nou: Lliga Local, Divisió C).
+
+### «Música composta» passa a dir-se «Música infinita» ✅ Feta (2026-11-14)
+
+Demanat pel jugador: «canvia música composta per música infinita». El botó de
+l'inici («🎵 Música infinita») i el títol de la pantalla (`MusicScreen.tsx`).
+La música és la mateixa: una peça nova, composta en aquell moment, cada vegada.
+A El Tauler, el mateix nom a la Configuració.
+
+**Criteris d'acceptació (verificats)**: typecheck, tests de la web i prova de
+navegador de la música entre jornades (que entra pel botó nou).

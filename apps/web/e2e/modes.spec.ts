@@ -268,10 +268,10 @@ test('entre jornades: 30 segons de relax amb música composta, i la jornada seg�
   await expect(page.locator('.player .player-nom')).toHaveText(['Jugador', ...rivals]);
   await expect(page.locator('.nivell-mode')).toContainText('jornada 2/7');
 
-  // La peça que ha sonat es pot tornar a escoltar des de «Música composta».
+  // La peça que ha sonat es pot tornar a escoltar des de «Música infinita».
   await obreMenu(page);
   await inici(page).click();
-  await page.getByRole('button', { name: '🎵 Música composta' }).click();
+  await page.getByRole('button', { name: '🎵 Música infinita' }).click();
   await expect(page.locator('.musica-peca')).toHaveCount(1);
   await page.locator('.musica-peca').getByRole('button', { name: 'Marca com a preferida' }).click();
   await expect(page.locator('.musica-peca').getByRole('button', { name: 'Treu de les preferides' })).toBeVisible();

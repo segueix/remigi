@@ -282,7 +282,7 @@ quadra es descarta i es conserva la trajectòria; una trajectòria que no quadra
 torna a començar. Cada jornada té sessió (`llavor#jornada`) i només es
 comptabilitza la que toca.
 
-## 4. Música composta il·limitada
+## 4. Música infinita
 
 És el sistema d'El Tauler (`radioambient.js`, LLIGA.md §8 de
 `segueix/eltauler`), copiat a `apps/web/src/musica/radioambient.js` com a mòdul
@@ -297,7 +297,7 @@ de les 200 darreres (`remigi:musica-vistes`), i també es tenen en compte les qu
 ja han sonat a la lliga d'escacs d'El Tauler (`eltauler_league_jingle_seen`,
 només es llegeix).
 
-**Música composta** (botó de l'inici, `MusicScreen.tsx`) és el registre, com el
+**Música infinita** (botó de l'inici, `MusicScreen.tsx`; abans «Música composta») és el registre, com el
 d'El Tauler: de cada peça només es desa la recepta (estil i llavor), així que
 es poden tornar a **escoltar** en bucle, marcar com a **preferides** o **baixar
 en MP3** (quatre voltes, uns 2 minuts, amb lamejs de cdnjs carregat només el
