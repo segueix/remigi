@@ -198,6 +198,13 @@ una temporada començada conserva les jornades i el calendari amb què es va cre
   començades abans els canvien en carregar-les (`catalanRivals`, amb la llavor
   de la temporada: sempre els mateixos). A Europa, al món i per a qui juga des
   de fora dels Països Catalans, els noms són del país, castellans inclosos.
+- **Els cognoms catalans de cada lloc**, també a les lligues locals: al País
+  Valencià, els més estesos (Ferrer, Martí, Sanchis, Soler, Llopis…); a les
+  Illes, els de cada illa (`placeCulture`: Mallorca, Menorca o les Pitiüses,
+  pel lloc del rival o, si no se sap, del jugador); a la Catalunya Nord, en
+  català (Vidal, Bosch, Pujol, Font, Roca, Sicre…); i a l'Alguer, els catalans
+  que s'hi conserven (Pons, Serra, Canelles, Garau, Fois, Galceran…), amb els
+  sards com a gent d'altres orígens.
 - No es repeteixen els noms de les darreres temporades (`recentNames`, 90).
 - **Avatar**: les inicials sobre un dels degradats del planter, triat pel nom
   (sempre el mateix per al mateix rival).

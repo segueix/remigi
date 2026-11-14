@@ -45,7 +45,7 @@ import {
   type LeagueSeason,
 } from './league';
 import { normalizeHome, type LeagueHome } from './localitats';
-import { CATALAN_FORMS, isCastilianName } from './nomsLliga';
+import { CATALAN_FORMS, CULTURES, isCastilianName } from './nomsLliga';
 
 const VIC: LeagueHome = { territory: 'cat', municipi: 'Vic', comarca: 'Osona', provincia: 'Barcelona', pais: '' };
 
@@ -236,6 +236,26 @@ describe('els rivals', () => {
       }
     }
   }, 30_000);
+
+  it('a la lliga local, els cognoms catalans del lloc: cada illa, la Catalunya Nord, l’Alguer i el País Valencià', () => {
+    const surnames = (code: string) => CULTURES[code].s ?? [];
+    const cases: [Parameters<typeof normalizeHome>[0], string][] = [
+      [{ territory: 'bal', municipi: 'Palma', comarca: 'Mallorca' }, 'bal'],
+      [{ territory: 'bal', municipi: 'Maó', comarca: 'Menorca' }, 'menorca'],
+      [{ territory: 'bal', municipi: 'Eivissa', comarca: 'Eivissa' }, 'pitiuses'],
+      [{ territory: 'nord', municipi: 'Perpinyà' }, 'nord'],
+      [{ territory: 'alguer', municipi: "l'Alguer" }, 'alguer'],
+      [{ territory: 'val', municipi: 'Gandia' }, 'val'],
+    ];
+    for (const [where, code] of cases) {
+      for (const seed of [1, 2, 3]) {
+        // Graó 0: la lliga del poble, tota del lloc.
+        for (const rival of createSeason({ tier: 0, config: DEFAULT_CONFIG, home: normalizeHome(where), seed }).rivals) {
+          expect(surnames(code)).toContain(rival.name.split(' ').slice(1).join(' '));
+        }
+      }
+    }
+  });
 
   it('una temporada començada amb noms castellans, en carregar-la, els passa a català', () => {
     const season = recordRound(createSeason({ tier: TERRITORIAL_TIER, config: DEFAULT_CONFIG, home: VIC, seed: 5 }), [40, -10, -10, -20]);

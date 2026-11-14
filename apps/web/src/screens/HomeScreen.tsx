@@ -34,7 +34,8 @@ interface Props {
 }
 
 /**
- * La pantalla d'inici: tres maneres de jugar, l'una al costat de l'altra.
+ * La pantalla d'inici: tres maneres de jugar, l'una al costat de l'altra,
+ * sobre el feltre de la taula de joc, i el jugador a dalt a l'esquerra.
  * A l'esquerra el joc lliure (la partida de sempre), al mig el repte (unes
  * quantes partides a un nivell fix i se sumen els punts) i a la dreta la
  * lliga (del poble al món, com a les lligues d'escacs d'El Tauler).
@@ -88,11 +89,8 @@ export function HomeScreen({
   return (
     <section className="inici">
       <div className="franja-fitxes" aria-hidden="true" />
+      {/* El jugador, a dalt a l'esquerra; el nom del joc, a la dreta. */}
       <header className="inici-cap">
-        <div>
-          <h1>Remigi</h1>
-          <p className="muted">Tria com vols jugar</p>
-        </div>
         <button type="button" className="secondary inici-jugador" onClick={onHistory} aria-label="El teu historial">
           <span className="player-color" aria-hidden="true">
             {profile.name.trim().charAt(0).toUpperCase() || '?'}
@@ -104,6 +102,10 @@ export function HomeScreen({
             </span>
           </span>
         </button>
+        <div className="inici-titol">
+          <h1>Remigi</h1>
+          <p className="muted">Tria com vols jugar</p>
+        </div>
       </header>
 
       <div className="inici-modes">
