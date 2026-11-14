@@ -2509,3 +2509,23 @@ que diuen les regles del Rummikub.»
 desats d'abans, temporada començada que conserva les jornades) i del repte
 acabat; la prova de navegador de la temporada sencera comprova que no hi ha
 comptador i que les voltes canvien les jornades (6 → 3).
+
+### Lligues dels Països Catalans sense noms castellans ✅ Feta (2026-11-14)
+
+Demanat pel jugador: «Substitueix els noms i cognoms castellans de totes les
+lligues dins dels Països Catalans, des de les locals, a Remigi i El Tauler.»
+
+- [x] `nomsLliga.js` tornat a copiar d'El Tauler (segueix/eltauler,
+      `nomslliga.js`): la barreja d'altres orígens de cada territori ja no té
+      noms castellans ni de l'Amèrica hispana (la seva part passa als noms del
+      territori), i els noms valencians i de la Franja ja no tenen formes
+      castellanes. Nous: `isCastilianName`, `catalanRivalName`, `CATALAN_FORMS`.
+- [x] `catalanRivals` (`league.ts`): una temporada començada amb noms
+      castellans els canvia per catalans del territori en carregar-la, sempre
+      els mateixos (llavor de la temporada); els resultats van per identificador.
+
+**Criteris d'acceptació (verificats)**: cap nom castellà ni forma castellana
+del graó 0 al 14 des dels set territoris (20 llavors per graó); una temporada
+desada amb noms castellans es carrega amb noms catalans, la resta igual i de
+manera determinista; a Europa no es toca. El castellà es manté a Europa, al
+món i per a qui juga des de fora.

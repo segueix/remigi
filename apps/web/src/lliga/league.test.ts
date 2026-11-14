@@ -44,7 +44,8 @@ import {
   zoneSize,
   type LeagueSeason,
 } from './league';
-import type { LeagueHome } from './localitats';
+import { normalizeHome, type LeagueHome } from './localitats';
+import { CATALAN_FORMS, isCastilianName } from './nomsLliga';
 
 const VIC: LeagueHome = { territory: 'cat', municipi: 'Vic', comarca: 'Osona', provincia: 'Barcelona', pais: '' };
 
@@ -214,6 +215,53 @@ describe('els rivals', () => {
     const a = createSeason({ tier: 5, config: DEFAULT_CONFIG, home: VIC, seed: 7, date: new Date(0) });
     const b = createSeason({ tier: 5, config: DEFAULT_CONFIG, home: VIC, seed: 7, date: new Date(0) });
     expect(a).toEqual(b);
+  });
+
+  it('cap nom castellà del municipi als Països Catalans, des de cap territori', () => {
+    const homes = (
+      [['cat', 'Vic'], ['val', 'Gandia'], ['bal', 'Palma'], ['and', 'Andorra la Vella'], ['nord', 'Perpinyà'],
+        ['franja', 'Fraga'], ['alguer', "l'Alguer"]] as const
+    ).map(([territory, municipi]) => normalizeHome({ territory, municipi }));
+    const forms = new Set(Object.keys(CATALAN_FORMS));
+    const config = { opponents: 2 as const, players: 6, legs: 1 as const, rounds: 3 };
+    for (const home of homes) {
+      // Del graó 0 (Municipal C) al 14 (Països Catalans A).
+      for (let tier = 0; tier <= 14; tier++) {
+        for (let seed = 1; seed <= 20; seed++) {
+          for (const rival of createSeason({ tier, config, home, seed }).rivals) {
+            expect(isCastilianName(rival.name)).toBe(false);
+            for (const word of rival.name.split(' ')) expect(forms.has(word)).toBe(false);
+          }
+        }
+      }
+    }
+  }, 30_000);
+
+  it('una temporada començada amb noms castellans, en carregar-la, els passa a català', () => {
+    const season = recordRound(createSeason({ tier: TERRITORIAL_TIER, config: DEFAULT_CONFIG, home: VIC, seed: 5 }), [40, -10, -10, -20]);
+    const old = {
+      ...season,
+      rivals: season.rivals.map((r, i) => (i === 0 ? { ...r, name: 'Lucía Navarro' } : i === 1 ? { ...r, name: 'Carmen Ferrer' } : r)),
+    };
+    const raw = JSON.stringify({ career: newCareer(VIC), season: old });
+    const parsed = parseLeagueState(raw).season!;
+    expect(isCastilianName(parsed.rivals[0].name)).toBe(false);
+    expect(parsed.rivals[0].name).toMatch(/^\S+ \S+/);
+    expect(parsed.rivals[1].name).toBe('Carme Ferrer');
+    // La resta, els identificadors i els resultats, tal com eren.
+    expect(parsed.rivals.slice(2)).toEqual(season.rivals.slice(2));
+    expect(parsed.rivals.map((r) => r.id)).toEqual(season.rivals.map((r) => r.id));
+    expect(parsed.results).toEqual(season.results);
+    expect(new Set(parsed.rivals.map((r) => r.name)).size).toBe(parsed.rivals.length);
+    // El nom nou no repeteix el cognom de cap altre rival.
+    const surname = (name: string) => name.split(' ').slice(1).join(' ');
+    expect(parsed.rivals.slice(1).map((r) => surname(r.name))).not.toContain(surname(parsed.rivals[0].name));
+    // Cada càrrega, els mateixos noms.
+    expect(parseLeagueState(raw).season!.rivals).toEqual(parsed.rivals);
+    // A Europa (graó 15) no es toca.
+    const europe = createSeason({ tier: 15, config: DEFAULT_CONFIG, home: VIC, seed: 5 });
+    const spanish = { ...europe, rivals: europe.rivals.map((r, i) => (i === 0 ? { ...r, name: 'Lucía Navarro' } : r)) };
+    expect(parseLeagueState(JSON.stringify({ career: newCareer(VIC), season: spanish })).season!.rivals[0].name).toBe('Lucía Navarro');
   });
 
   it('no repeteix els noms de les temporades anteriors', () => {

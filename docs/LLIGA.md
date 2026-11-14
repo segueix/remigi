@@ -185,7 +185,19 @@ una temporada començada conserva les jornades i el calendari amb què es va cre
   de pobles de la comarca a la comarcal… de països a l'europea i la mundial).
   Els dos fitxers són **còpies** convertides a mòdul ES
   (`apps/web/src/lliga/nomsLliga.js` i `localitats.js`, amb els seus `.d.ts`).
-  Si canvien a El Tauler, s'han de tornar a copiar.
+  Si canvien a El Tauler, s'han de tornar a copiar (es pot fer amb un script:
+  el cos de la funció d'El Tauler, desindentat, i `export { … }` amb el que
+  retorna; la conversió dona exactament el fitxer d'aquí).
+- **Cap nom castellà a les lligues dels Països Catalans** (del municipi als
+  Països Catalans, des de qualsevol territori): la gent d'altres orígens de
+  cada territori ja no inclou noms castellans ni de l'Amèrica hispana (la
+  seva part són noms del territori), i els noms de cada territori no tenen
+  formes castellanes (Amparo, Paco, Carmen, Pallarés… → Fina, Cento, Carme,
+  Pallarès). A la Catalana, des de Vic, un 88 % de noms catalans (abans, 60 %);
+  la resta, marroquins, romanesos, xinesos i pakistanesos. Les temporades
+  començades abans els canvien en carregar-les (`catalanRivals`, amb la llavor
+  de la temporada: sempre els mateixos). A Europa, al món i per a qui juga des
+  de fora dels Països Catalans, els noms són del país, castellans inclosos.
 - No es repeteixen els noms de les darreres temporades (`recentNames`, 90).
 - **Avatar**: les inicials sobre un dels degradats del planter, triat pel nom
   (sempre el mateix per al mateix rival).
