@@ -2461,3 +2461,24 @@ més informació.»
 carrusel (tres punts, pàgina activa en tocar-los i en lliscar, barres, podi
 amb el total, tàctica, i que no eixampla la finestra); 225 tests de la web;
 captures en un mòbil (390 px).
+
+### Lliga: la mateixa pantalla d'entre jornades, amb dues pàgines més ✅ Feta (2026-11-14)
+
+Demanat pel jugador: «Aplica-ho també a la lliga, però que la part principal
+sigui la mateixa; amb scrolling tindrà més informació.»
+
+- [x] `components/Carousel.tsx` i `components/ResultBars.tsx`: el carrusel
+      (pàgines amb `scroll-snap`, tres punts, alçada de la pàgina que es veu) i
+      les barres del resultat, comuns al repte i a la lliga.
+- [x] Entre jornades, la primera pàgina és la de sempre (tu cara a cara amb
+      els rivals de la jornada següent). Pàgina 2: la teva partida (guanyador
+      i barres, amb els punts de lliga de cadascú). Pàgina 3: la classificació
+      en curt amb les zones i la tàctica (`leagueInsights`: a quants punts de
+      l'ascens o del descens, què queda en joc i com puntua una taula). A dalt
+      (resultat, jornada i compte enrere) i a baix (música i botons), igual.
+
+**Criteris d'acceptació (verificats)**: 2 tests nous (la teva taula de la
+jornada i la tàctica, també sense descens al primer graó); la prova de
+navegador de la temporada sencera passa pel carrusel (pàgina 1 la de sempre,
+barres, classificació i que no eixampla la finestra); 227 tests de la web;
+captures a 390 px.

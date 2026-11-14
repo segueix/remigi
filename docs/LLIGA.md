@@ -275,8 +275,17 @@ jornada no surt el resum llarg sinó una pantalla amb poc text
   si quedes últim;
 - la **jornada que toca, gran i en un requadre** («JORNADA 3/7»);
 - «comença en» i el **compte enrere de 30 a 0**;
-- la teva posició a la classificació **cara a cara** amb la dels rivals de la
-  jornada següent (posició, punts i força);
+- un **carrusel de tres pàgines** (`Carousel`, el mateix que el del repte), que
+  es passa fent lliscar el dit o tocant els **tres punts** de sota. La primera
+  és la principal i és la de sempre: la teva posició a la classificació
+  **cara a cara** amb la dels rivals de la jornada següent (posició, punts i
+  força). Les altres hi afegeixen informació: **la teva partida** (qui ha
+  guanyat la taula, en gran, i una barra per jugador amb els punts de la
+  partida i els de lliga, `yourTableResult`) i **la lliga** (la classificació
+  en curt, els de dalt i els del teu voltant, amb les zones d'ascens i de
+  descens, i la tàctica: on ets respecte de les zones i a quants punts,
+  quantes jornades i punts queden en joc i com puntua una taula,
+  `leagueInsights`). El carrusel agafa l'alçada de la pàgina que es veu;
 - la **música composta** en aquell moment (§4), amb el seu nom («Sona: Rumba de
   la classificació · la menor · flauta») i «Silencia».
 
