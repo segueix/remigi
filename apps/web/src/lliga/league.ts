@@ -216,12 +216,20 @@ export function renameDivision(name: string): string {
 
 export type TableRivals = 2 | 3;
 
+/** Voltes de la lliga: 1, et trobes un cop amb cada rival; 2, anada i tornada. */
+export type LeagueLegs = 1 | 2;
+
 export interface LeagueConfig {
   /** Rivals a cada partida: 2 (taules de 3) o 3 (taules de 4). */
   opponents: TableRivals;
   /** Jugadors de la lliga, tu inclòs: sempre un múltiple de la mida de la taula. */
   players: number;
-  /** Jornades (partides) per acabar la lliga. */
+  /** Una volta o anada i tornada. */
+  legs: LeagueLegs;
+  /**
+   * Jornades (partides) per acabar la lliga. No es trien: són les que calen per
+   * trobar-te amb tots els rivals, per cada volta (vegeu `leagueRounds`).
+   */
   rounds: number;
 }
 
@@ -230,19 +238,23 @@ export const PLAYER_OPTIONS: Record<TableRivals, readonly number[]> = {
   2: [6, 9, 12, 15],
   3: [8, 12, 16],
 };
-export const MIN_ROUNDS = 3;
-export const MAX_ROUNDS = 15;
-export const DEFAULT_CONFIG: LeagueConfig = { opponents: 3, players: 8, rounds: 7 };
+export const DEFAULT_CONFIG: LeagueConfig = { opponents: 3, players: 8, legs: 1, rounds: 3 };
 
 /** Jornades perquè, ben repartides, et trobis amb cada rival un cop. */
 export function roundsToMeetAll(config: Pick<LeagueConfig, 'opponents' | 'players'>): number {
   return Math.ceil((config.players - 1) / config.opponents);
 }
 
+/** Jornades de la lliga: les d'una volta, o el doble si és d'anada i tornada. */
+export function leagueRounds(config: Pick<LeagueConfig, 'opponents' | 'players' | 'legs'>): number {
+  return roundsToMeetAll(config) * config.legs;
+}
+
 /**
  * Configuració vàlida a partir del que sigui (desat, formulari): la mida de la
- * lliga es corregeix al múltiple de la taula més proper, i les jornades al
- * marge permès.
+ * lliga es corregeix al múltiple de la taula més proper, i les jornades surten
+ * de la mida i de les voltes. Una configuració d'abans de les voltes (amb les
+ * jornades triades a mà) passa a anada i tornada si en tenia més d'una volta.
  */
 export function normalizeConfig(input: Partial<LeagueConfig> | null | undefined): LeagueConfig {
   const opponents: TableRivals = input?.opponents === 2 ? 2 : input?.opponents === 3 ? 3 : DEFAULT_CONFIG.opponents;
@@ -251,10 +263,14 @@ export function normalizeConfig(input: Partial<LeagueConfig> | null | undefined)
   const players = Number.isFinite(wanted)
     ? options.reduce((best, n) => (Math.abs(n - wanted) < Math.abs(best - wanted) ? n : best), options[0])
     : opponents === DEFAULT_CONFIG.opponents ? DEFAULT_CONFIG.players : options[1];
-  const rounds = Number.isFinite(Number(input?.rounds))
-    ? Math.min(MAX_ROUNDS, Math.max(MIN_ROUNDS, Math.round(Number(input?.rounds))))
-    : DEFAULT_CONFIG.rounds;
-  return { opponents, players, rounds };
+  const oldRounds = Number(input?.rounds);
+  const legs: LeagueLegs =
+    input?.legs === 1 || input?.legs === 2
+      ? input.legs
+      : Number.isFinite(oldRounds) && oldRounds > roundsToMeetAll({ opponents, players })
+        ? 2
+        : DEFAULT_CONFIG.legs;
+  return { opponents, players, legs, rounds: leagueRounds({ opponents, players, legs }) };
 }
 
 /** Quants pugen (i quants baixen): una quarta part de la lliga, com a mínim un. */
@@ -900,7 +916,16 @@ function validHome(value: unknown): LeagueHome | null {
 
 function validSeason(value: unknown): LeagueSeason | null {
   if (!isRecord(value) || value.version !== 1) return null;
-  const config = normalizeConfig(value.config as Partial<LeagueConfig>);
+  /*
+   * Les jornades d'una temporada començada es respecten tal com es van desar
+   * (abans es podien triar a mà): el calendari ja és fet.
+   */
+  const stored = isRecord(value.config) ? Number(value.config.rounds) : NaN;
+  const normalized = normalizeConfig(value.config as Partial<LeagueConfig>);
+  const config: LeagueConfig = {
+    ...normalized,
+    rounds: Number.isInteger(stored) && stored >= 1 ? stored : normalized.rounds,
+  };
   const rivals = Array.isArray(value.rivals) ? value.rivals : null;
   const schedule = Array.isArray(value.schedule) ? value.schedule : null;
   const results = Array.isArray(value.results) ? value.results : null;

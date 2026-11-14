@@ -138,6 +138,20 @@ describe('la classificació del repte', () => {
     ]);
   });
 
+  it('acabat el repte, diu com has quedat (no «vas»)', () => {
+    const config = { games: 2, level: 'expert' as const, opponents: 2 as const };
+    let state = startChallenge(emptyChallengeState(), config, new Date(), RIVALS);
+    state = addGame(addGame(state, g1), g2);
+    const won = challengeInsights(state.current!, challengeStandings(state.current!, 'Anna'));
+    expect(won).toContainEqual({ icon: '🏆', text: 'Has guanyat el repte, amb 3 punts d’avantatge.' });
+    expect(won.some((line) => line.text.startsWith('Vas '))).toBe(false);
+    expect(won.some((line) => line.icon === '⏳' || line.icon === '💡')).toBe(false);
+    let lost = startChallenge(emptyChallengeState(), config, new Date(), RIVALS);
+    lost = addGame(addGame(lost, g1), { ...g2, points: -35, won: false, scores: [-35, 50, -15], winner: 1 });
+    const second = challengeInsights(lost.current!, challengeStandings(lost.current!, 'Anna'));
+    expect(second).toContainEqual({ icon: '🏁', text: 'Has quedat 3r del repte, a 137 punts de GuineuAstuta, que l’ha guanyat.' });
+  });
+
   it('es desa i es recupera tal com era; les partides que no quadren perden només les dades de tothom', () => {
     let state = startChallenge(emptyChallengeState(), CONFIG, new Date(), RIVALS);
     state = addGame(addGame(state, g1), g2);

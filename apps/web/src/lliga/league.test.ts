@@ -24,6 +24,7 @@ import {
   placementRating,
   placementTier,
   rankOf,
+  roundsToMeetAll,
   renameDivision,
   recordRound,
   serializeLeagueState,
@@ -121,10 +122,35 @@ describe("l'escala de lligues", () => {
 });
 
 describe('la configuració', () => {
-  it('ajusta la mida de la lliga a un múltiple de la taula i les jornades al marge', () => {
-    expect(normalizeConfig({ opponents: 2, players: 8, rounds: 50 })).toEqual({ opponents: 2, players: 9, rounds: 15 });
-    expect(normalizeConfig({ opponents: 3, players: 9, rounds: 1 })).toEqual({ opponents: 3, players: 8, rounds: 3 });
+  it('ajusta la mida de la lliga a un múltiple de la taula i les jornades surten dels jugadors', () => {
+    // Una volta: les jornades justes per trobar-te amb tothom.
+    expect(normalizeConfig({ opponents: 2, players: 8, legs: 1 })).toEqual({ opponents: 2, players: 9, legs: 1, rounds: 4 });
+    expect(normalizeConfig({ opponents: 3, players: 16, legs: 1 })).toEqual({ opponents: 3, players: 16, legs: 1, rounds: 5 });
+    // Anada i tornada: el doble.
+    expect(normalizeConfig({ opponents: 3, players: 9, legs: 2 })).toEqual({ opponents: 3, players: 8, legs: 2, rounds: 6 });
+    expect(normalizeConfig({ opponents: 2, players: 15, legs: 2 })).toEqual({ opponents: 2, players: 15, legs: 2, rounds: 14 });
+    // Les jornades no es poden triar: unes de demanades a mà no compten.
+    expect(normalizeConfig({ opponents: 3, players: 8, legs: 1, rounds: 12 }).rounds).toBe(3);
     expect(normalizeConfig(null)).toEqual(DEFAULT_CONFIG);
+    expect(DEFAULT_CONFIG.rounds).toBe(roundsToMeetAll(DEFAULT_CONFIG));
+  });
+
+  it('una configuració d’abans de les voltes: més d’una volta de jornades és anada i tornada', () => {
+    expect(normalizeConfig({ opponents: 3, players: 8, rounds: 7 })).toEqual({ opponents: 3, players: 8, legs: 2, rounds: 6 });
+    expect(normalizeConfig({ opponents: 3, players: 8, rounds: 3 })).toEqual({ opponents: 3, players: 8, legs: 1, rounds: 3 });
+  });
+
+  it('una temporada començada conserva les jornades amb què es va desar', () => {
+    const season = createSeason({ tier: 10, config: { opponents: 3, players: 8, legs: 1, rounds: 3 }, home: VIC, seed: 4 });
+    // Una temporada d'abans, amb 7 jornades triades a mà.
+    const old = {
+      ...season,
+      config: { opponents: 3, players: 8, rounds: 7 },
+      schedule: [...season.schedule, ...season.schedule, season.schedule[0]],
+    };
+    const parsed = parseLeagueState(JSON.stringify({ career: newCareer(VIC), season: old }));
+    expect(parsed.season?.config.rounds).toBe(7);
+    expect(parsed.season?.schedule).toHaveLength(7);
   });
 });
 
@@ -292,7 +318,7 @@ describe('la classificació', () => {
   });
 
   it('els punts de lliga de tothom quadren amb les partides jugades', () => {
-    const season = playSeason(createSeason({ tier: 10, config: { opponents: 2, players: 9, rounds: 8 }, home: VIC, seed: 8 }), () => [30, -10, -20]);
+    const season = playSeason(createSeason({ tier: 10, config: { opponents: 2, players: 9, legs: 2, rounds: 8 }, home: VIC, seed: 8 }), () => [30, -10, -20]);
     const rows = standings(season);
     // Cada taula de tres reparteix 3 punts; tres taules per jornada.
     expect(rows.reduce((sum, row) => sum + row.points, 0)).toBe(8 * 3 * 3);
@@ -440,7 +466,7 @@ describe('el desat', () => {
 });
 
 describe('entre jornades: la teva partida i la tàctica', () => {
-  const config = { opponents: 3 as const, players: 8, rounds: 7 };
+  const config = { opponents: 3 as const, players: 8, legs: 2 as const, rounds: 6 };
 
   it('la teva taula de la jornada, amb els punts de la partida i els de lliga', () => {
     const season = recordRound(createSeason({ tier: TERRITORIAL_TIER, config, home: VIC, seed: 3 }), [60, -10, -20, -30]);
@@ -458,7 +484,7 @@ describe('entre jornades: la teva partida i la tàctica', () => {
     const winning = leagueInsights(season);
     expect(winning[0].icon).toBe('⬆️');
     expect(winning[0].text).toMatch(/^Ets a la zona d’ascens/);
-    expect(winning).toContainEqual({ icon: '⏳', text: 'Queden 6 jornades: fins a 18 punts en joc per a tu.' });
+    expect(winning).toContainEqual({ icon: '⏳', text: 'Queden 5 jornades: fins a 15 punts en joc per a tu.' });
     expect(winning[winning.length - 1].text).toBe('No cal guanyar la partida: cada rival que acaba per sota teu és 1 punt (3 si la guanyes).');
     // Perdent-ho tot, a la zona de descens.
     let losing = createSeason({ tier: TERRITORIAL_TIER, config, home: VIC, seed: 3 });

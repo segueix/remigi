@@ -412,7 +412,16 @@ test.describe('explicar les regles', () => {
     await expect(explicacio).toContainText('mateix número');
     await expect(explicacio).toContainText('mateix color');
     // I hi ha el cas que enganya: fitxes que sumen 30 sense ser jugada vàlida.
-    await expect(page.locator('.exemple.malament')).toContainText('no és ni grup ni escala');
+    await expect(explicacio.locator('.exemple.malament').filter({ hasText: 'Sumen 30' })).toContainText(
+      'no és ni grup ni escala',
+    );
+    // El joker, com al Rummikub: val la fitxa que substitueix, també per sortir.
+    await expect(explicacio.getByRole('heading', { name: 'El joker (comodí)' })).toBeVisible();
+    await expect(explicacio).toContainText('val el número de la fitxa que substitueix');
+    await expect(explicacio.locator('.exemple.malament').filter({ hasText: 'joker' })).toContainText(
+      'Per sortir en necessites 30',
+    );
+    await expect(explicacio).toContainText('resta 30 punts');
   });
 
   test('durant el torn diu per què una jugada no suma punts', async ({ page }) => {
