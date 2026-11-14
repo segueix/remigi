@@ -14,6 +14,20 @@ Cada mode té **la seva partida a mitges** (`remigi:game`, `remigi:game:repte`,
 fa perdre res. El joc lliure conserva la clau de sempre, així que les partides
 desades abans dels modes es reprenen igual.
 
+**En tornar-hi, la partida és exactament com era**, també després de tancar i
+tornar a obrir l'app:
+
+- les fitxes que tenies **a mig col·locar** a la taula (sense acabar la jugada)
+  hi tornen a ser, i es poden desfer com abans (`serializeDraft` /
+  `restoreDraft`: el desat es valida contra la partida —mateix torn, mateixes
+  fitxes, cap fitxa de la taula al faristol— i, si no lliga, el torn comença
+  net);
+- la **fitxa acabada de robar** continua marcada;
+- el **rellotge del torn** continua amb el temps que quedava
+  (`remigi:rellotge:<mode>`, desat cada segon): sortir i tornar no dona temps
+  de més. Tampoc obrir i tancar el menú del jugador, que abans tornava a
+  començar el torn sencer.
+
 Codi: `apps/web/src/screens/HomeScreen.tsx`, `RepteScreen.tsx`,
 `LligaScreen.tsx`; lògica pura a `apps/web/src/lliga/league.ts`,
 `apps/web/src/repte/challenge.ts` i `apps/web/src/state/freePlay.ts`; tot ho
@@ -48,6 +62,15 @@ per a aquella mateixa configuració; l'historial guarda els 40 últims reptes.
 - El repte va a l'historial **en el moment** d'acabar l'última partida, no quan
   es torna a obrir la pantalla.
 - Es pot abandonar (no queda enlloc) o repetir amb la mateixa configuració.
+- **Les partides s'encadenen** com les jornades de la lliga
+  (`RepteInterlude.tsx`): en acabar-ne una que no és l'última, 30 segons de
+  relax amb el resultat en curt («Victòria · +87», «2n de 3 · −34»), la partida
+  que toca gran («PARTIDA 3/5»), el compte enrere, el marcador del repte (total,
+  victòries i el rècord a batre), els rivals de la següent i la música composta
+  en aquell moment. A zero comença sola; «Juga ara» no espera; «Repte» i «Inici»
+  l'aturen. L'última acaba amb el resum i el resultat del repte. El compte
+  enrere i la música són les mateixes peces que a la lliga
+  (`screens/interlude.tsx`).
 
 ## 3. Lliga
 
@@ -75,13 +98,37 @@ jugador: pujar vol dir, de debò, jugar contra rivals més forts.
 nivell següent (Municipal A → Comarcal C). En sentit contrari, de la C es baixa
 a la A del nivell anterior. Al primer graó no es baixa; a l'últim no es puja, i
 el primer és «Campió del món». A dalt de la pantalla de la lliga, l'escalada és
-una **llista vertical** com una escala: la mundial a dalt i la local a baix
-(d'on es comença), una fila per lliga amb el nom
+una **llista vertical** com una escala: la mundial a dalt i la local a baix,
+una fila per lliga amb el nom
 sencer i els seus tres grups en ordre (C, B, A) i la força dels rivals de
-cadascun; l'actual en el color de la lliga, els fets en verd. El final de
+cadascun; l'actual en el color de la lliga, els fets en verd. Els graons de sota
+de la lliga del territori no es pinten mai com a fets: no s'hi puja, només s'hi
+baixa. El final de
 temporada ho diu així:
 «Puges al Grup B de la Lliga de Vic», «Puges al Grup A de la Lliga de Vic»,
 «Puges a la Lliga Comarcal d'Osona · Grup C: nivell nou!» (`movementText`).
+
+### On es comença
+
+**Com a mínim a la lliga del territori, Grup C** (`START_TIER` = 9): la Lliga
+Catalana (també a la Catalunya Nord), la Valenciana, la Balear, l'Andorrana, la
+de la Franja o la de Sardenya (a l'Alguer), segons on jugues (rivals de 1160,
+Mitjà). Començar a
+la Lliga Local C (Novell, 800) voldria dir, per a algú de 1300, unes 12
+temporades guanyant rivals molt més fluixos abans de trobar-ne del seu nivell.
+
+- **La primera temporada es col·loca pel nivell** (`placementTier`): el graó
+  més alt entre la C i la A de la lliga del territori amb els rivals uns 80
+  punts per sota de la teva habilitat (fins a 1240: C; 1280–1319: B; des de
+  1320: A). Els Països Catalans, l'Europea i la Mundial no es regalen.
+- Qui **encara calibra** el nivell no té habilitat per col·locar-lo
+  (`placementRating` → `null`): comença a la C.
+- A partir de la segona temporada **només mana l'escala** (`upcomingTier`):
+  es pot baixar a la provincial, la comarcal i la local, que hi són per a qui
+  baixa.
+- Les **trajectòries d'abans** que no havien arribat mai a la lliga del
+  territori (`bestTier` < 9) hi pugen en llegir-les, un sol cop; una temporada
+  que tenien començada per sota es descarta per tornar-la a començar allà.
 
 ### Configuració de la temporada
 
@@ -120,10 +167,27 @@ les temporades següents.
 Remigi viu a `eltauler.cat/remigi/`, al mateix origen que El Tauler, i
 comparteixen `localStorage`. Si el jugador ja va dir a la lliga d'escacs on
 juga (`chess_leagueCareer.home`), «On jugues?» surt **ja omplert** amb aquell
-lloc i ho diu. Només es llegeix: Remigi no hi escriu mai. A Catalunya el
-municipi es tria d'una llista (Idescat) i en surten comarca i província; als
-altres territoris es tria la comarca i el municipi s'escriu; fora dels Països
-Catalans s'escriuen país i municipi. Amb «Ara no», les lligues es diuen «Lliga
+lloc i ho diu. Només es llegeix: Remigi no hi escriu mai. El municipi es tria
+d'una llista i en surten comarca i província: a Catalunya, els 947 d'Idescat;
+al País Valencià, la Catalunya Nord, la Franja, les Balears, Andorra i
+l'Alguer, els de `localitats.js` d'El Tauler (llistes de la Viquipèdia). Fora
+de Catalunya, si no hi és, s'escriu i es tria la comarca; fora dels Països
+Catalans s'escriuen país i municipi.
+
+**Noms dels nivells fora de Catalunya** (`placeName`, com `leaguePlaceName`
+d'El Tauler): cap nivell no repeteix l'àrea del de sota.
+
+| territori | comarcal | provincial | territori |
+|---|---|---|---|
+| País Valencià, Franja | Lliga Comarcal de la Safor | Lliga Provincial de València | Lliga Valenciana (de la Franja) |
+| Illes Balears | Lliga Insular de Mallorca | Lliga de les Gimnèsies o de les Pitiüses | Lliga Balear |
+| Catalunya Nord | Lliga Comarcal del Rosselló | Lliga de la Catalunya Nord | Lliga Catalana |
+| Andorra | Tercera Divisió Andorrana | Segona Divisió Andorrana | Lliga Andorrana |
+| l'Alguer | Lliga de la Nurra | Lliga Provincial de Sàsser | Lliga de Sardenya |
+
+Els rivals tenen origen a tots els nivells de casa (municipis de la comarca o
+de l'illa, del grup d'illes, de la Catalunya Nord, parròquies i pobles
+d'Andorra, llocs de la Nurra, de la província de Sàsser i de Sardenya). Amb «Ara no», les lligues es diuen «Lliga
 Local», «Lliga Comarcal»… Una temporada que encara no ha començat es torna a
 sortejar amb el lloc nou.
 
@@ -248,7 +312,13 @@ música entre jornades o canviar-ne el volum (`remigi:musica`).
   persones; la força relativa entre nivells del motor és més abrupta que
   l'Elo (vegeu `AGENT.md`, «Un esglaó entre Avançat i Expert»).
 - Al primer graó, la meitat dels rivals queden encabits a 800 (el mínim del
-  motor): la lliga local és Novell de debò.
+  motor): la lliga local és Novell de debò (només s'hi arriba baixant).
+- Algú que jugui per primer cop (calibrant, o d'habilitat baixa) comença
+  contra rivals de 1160 (Mitjà). Si li van grans, baixa a la provincial: el
+  descens fa de col·locació per sota.
+- Les llistes de municipis de fora de Catalunya són de la Viquipèdia (novembre
+  de 2026). A la Catalunya Nord només hi ha els de parla catalana: la Fenolleda
+  (occitana) treu els rivals de la comarcal de tota la Catalunya Nord.
 - Les dades de localitats i noms són còpies: no se sincronitzen soles amb El
   Tauler.
 - Abandonar una temporada permet fugir d'un descens. És deliberat (no es vol

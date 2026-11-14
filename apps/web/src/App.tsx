@@ -6,7 +6,9 @@ import {
   YOU,
   closeSeason,
   createSeason,
+  placementRating,
   difficultyForRating,
+  upcomingTier,
   isFinished,
   parseLeagueState,
   rankOf,
@@ -34,6 +36,7 @@ import {
 import { GameScreen, type ModeFinish } from './screens/GameScreen';
 import { HomeScreen } from './screens/HomeScreen';
 import { LeagueInterlude } from './screens/LeagueInterlude';
+import { RepteInterlude, type LastGame } from './screens/RepteInterlude';
 import { LligaScreen } from './screens/LligaScreen';
 import { MusicScreen } from './screens/MusicScreen';
 import { RepteScreen } from './screens/RepteScreen';
@@ -101,9 +104,12 @@ function safeLocalStorage(): Storage | null {
   }
 }
 
-/** Els punts teus d'una partida acabada (tu sempre ets el primer jugador). */
-function myPoints(game: GameState): number {
-  return finalScores(game).find((score) => score.playerId === game.players[0]?.id)?.points ?? 0;
+/** Com t'ha anat una partida acabada: punts, si l'has guanyada i en quina posició has quedat. */
+function lastGameOf(game: GameState): LastGame {
+  const scores = finalScores(game);
+  const mine = scores.find((score) => score.playerId === game.players[0]?.id)?.points ?? 0;
+  const place = [...scores].sort((a, b) => b.points - a.points).findIndex((score) => score.points === mine) + 1;
+  return { points: mine, won: humanWon(game), place: Math.max(1, place), players: scores.length };
 }
 
 /**
@@ -194,6 +200,8 @@ export function App() {
     const player = profile.profile;
     if (!current || isDone(current) || !player) return;
     const session = challengeSession(current);
+    // El compositor de la música d'entre partides es baixa mentre es juga.
+    void loadRadio().catch(() => {});
     const label = `Repte · partida ${current.games.length + 1} de ${current.config.games} · ${signed(challengeTotal(current))} punts`;
     const saved = await savedGames.load('repte');
     if (saved && saved.setup.session === session) {
@@ -230,7 +238,7 @@ export function App() {
   }, [challenge, savedGames]);
 
   const challengeFinish = useCallback(
-    (state: ChallengeState): ModeFinish | null => {
+    (state: ChallengeState, lastGame?: LastGame): ModeFinish | null => {
       const current = state.current;
       if (!current || current.games.length === 0) return null;
       const last = current.games[current.games.length - 1];
@@ -261,6 +269,21 @@ export function App() {
               label: `Següent partida (${current.games.length + 1} de ${current.config.games})`,
               run: () => void playChallenge(),
             },
+        /*
+         * Com a la lliga: entre partida i partida, 30 segons de relax amb
+         * música i la següent comença sola. L'última partida acaba amb el
+         * resum de sempre i el resultat del repte.
+         */
+        interlude:
+          done || !lastGame ? undefined : (
+            <RepteInterlude
+              state={state}
+              last={lastGame}
+              onPlayNow={() => void playChallenge()}
+              onChallenge={() => goTo('repte')}
+              onHome={() => goTo('home')}
+            />
+          ),
       };
     },
     [goTo, playChallenge],
@@ -300,19 +323,24 @@ export function App() {
 
   const startSeason = useCallback(
     (config: LeagueConfig) => {
-      league.update((state) => ({
-        career: { ...state.career, config },
-        season: createSeason({
-          tier: state.career.tier,
-          config,
-          home: state.career.home,
-          seed: randomSeed(),
-          exclude: state.career.recentNames,
-        }),
-      }));
+      // La primera temporada es col·loca pel nivell (de la Catalana C a la A).
+      const rating = placementRating(profile.profile);
+      league.update((state) => {
+        const tier = upcomingTier(state.career, rating);
+        return {
+          career: { ...state.career, config, tier, bestTier: Math.max(state.career.bestTier, tier) },
+          season: createSeason({
+            tier,
+            config,
+            home: state.career.home,
+            seed: randomSeed(),
+            exclude: state.career.recentNames,
+          }),
+        };
+      });
       savedGames.clear('lliga');
     },
-    [league, savedGames],
+    [league, savedGames, profile.profile],
   );
 
   const abandonSeason = useCallback(() => {
@@ -416,8 +444,9 @@ export function App() {
       if (setup.mode === 'repte') {
         const current = challenge.get()?.current;
         if (!current || isDone(current) || setup.session !== challengeSession(current)) return;
-        const next = challenge.update((state) => addGame(state, { points: myPoints(game), won: humanWon(game) }));
-        if (next) setFinish(challengeFinish(next));
+        const last = lastGameOf(game);
+        const next = challenge.update((state) => addGame(state, { points: last.points, won: last.won }));
+        if (next) setFinish(challengeFinish(next, last));
       } else if (setup.mode === 'lliga') {
         const state = league.get();
         const season = state?.season;
@@ -481,6 +510,8 @@ export function App() {
             resumeMisses={play.saved?.misses}
             resumeRackOrder={play.saved?.rackOrder}
             resumeRackSortBy={play.saved?.rackSortBy}
+            resumeDraft={play.saved?.draft}
+            resumeDrawnTileId={play.saved?.drawnTileId}
             profile={profile}
             savedGame={savedGames.forMode(play.mode)}
             onHistory={() => setStatsOpen(true)}
@@ -540,6 +571,7 @@ export function App() {
             savedGames.saved.lliga.setup.session === leagueSession(league.value.season)
           }
           elTaulerHome={elTaulerHome}
+          playerRating={placementRating(profile.profile)}
           onStartSeason={startSeason}
           onPlayRound={() => void playRound()}
           onAbandonSeason={abandonSeason}

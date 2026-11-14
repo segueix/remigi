@@ -21,9 +21,10 @@ interface Props {
 
 /**
  * «On jugues?», com a la lliga d'escacs d'El Tauler: la localitat dona nom a
- * les lligues (Lliga de Vic, Lliga Comarcal d'Osona…) i origen als rivals. A
- * Catalunya el municipi es tria d'una llista i en surten la comarca i la
- * província; als altres territoris es tria la comarca i el municipi s'escriu.
+ * les lligues (Lliga de Vic, Lliga Comarcal d'Osona…) i origen als rivals. El
+ * municipi es tria d'una llista (Catalunya, el País Valencià, les Balears, la
+ * Catalunya Nord, la Franja, Andorra i l'Alguer) i en surten la comarca i la
+ * província. Fora de Catalunya, si no hi és, s'escriu i es tria la comarca.
  */
 export function LocationDialog({ initial, fromElTauler, onSave, onSkip }: Props) {
   const ids = useId();
@@ -34,12 +35,13 @@ export function LocationDialog({ initial, fromElTauler, onSave, onSkip }: Props)
 
   const comarcaList = useMemo(() => (territory === 'cat' || territory === 'fora' ? [] : comarques(territory)), [territory]);
   const suggestions = useMemo(
-    () => (territory === 'cat' ? searchMunicipalities(municipi, { territory: 'cat', limit: 8 }) : []),
+    () => (territory === 'fora' ? [] : searchMunicipalities(municipi, { territory, limit: 8 })),
     [territory, municipi],
   );
-  const catHit = territory === 'cat' ? findMunicipality(municipi, 'cat') : null;
+  // El municipi de la llista: en surten la comarca i la província.
+  const hit = territory === 'fora' ? null : findMunicipality(municipi, territory);
   const home = normalizeHome({ territory, municipi, comarca, provincia: '', pais });
-  const valid = home !== null && (territory !== 'cat' || catHit !== null) && (territory !== 'fora' || pais.trim() !== '');
+  const valid = home !== null && (territory !== 'cat' || hit !== null) && (territory !== 'fora' || pais.trim() !== '');
 
   return (
     <>
@@ -49,7 +51,7 @@ export function LocationDialog({ initial, fromElTauler, onSave, onSkip }: Props)
         <p className="muted small">
           {fromElTauler
             ? 'És el lloc que tens a la lliga d’escacs d’El Tauler. Les lligues de Remigi porten els mateixos noms.'
-            : 'La lliga comença al teu municipi i puja per la comarca, la província i el país fins al món, amb els mateixos noms que les lligues d’escacs d’El Tauler.'}
+            : 'Les lligues porten el nom del teu lloc, com les d’escacs d’El Tauler. Comences, com a mínim, a la del teu territori.'}
         </p>
         <label>
           Territori
@@ -73,7 +75,7 @@ export function LocationDialog({ initial, fromElTauler, onSave, onSkip }: Props)
             <input value={pais} onChange={(event) => setPais(event.target.value)} maxLength={60} />
           </label>
         )}
-        {comarcaList.length > 0 && (
+        {comarcaList.length > 0 && !hit && (
           <label>
             {territory === 'bal' ? 'Illa o comarca' : 'Comarca'}
             <select value={comarca} onChange={(event) => setComarca(event.target.value)}>
@@ -91,22 +93,22 @@ export function LocationDialog({ initial, fromElTauler, onSave, onSkip }: Props)
           <input
             value={municipi}
             onChange={(event) => setMunicipi(event.target.value)}
-            list={territory === 'cat' ? `${ids}-municipis` : undefined}
+            list={territory === 'fora' ? undefined : `${ids}-municipis`}
             maxLength={60}
             autoComplete="off"
             aria-label="Municipi"
           />
         </label>
-        {territory === 'cat' && (
+        {territory !== 'fora' && (
           <datalist id={`${ids}-municipis`}>
             {suggestions.map((m) => (
               <option key={m.name} value={m.name} />
             ))}
           </datalist>
         )}
-        {catHit && (
+        {hit && (
           <p className="small dialeg-lloc-comarca">
-            {catHit.comarca} · {catHit.province}
+            {hit.comarca === hit.province ? hit.comarca : `${hit.comarca} · ${hit.province}`}
           </p>
         )}
         {valid && home && (

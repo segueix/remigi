@@ -2229,3 +2229,134 @@ robada groga, vermella i negra, en tema clar i fosc i amb fitxes clàssiques;
 prova de navegador de l'escalada (mundial primera, local última, una sota
 l'altra); 206 tests de la web, 176 del motor, build i 155 proves de navegador
 en verd (17 omeses per plataforma).
+
+### La partida es reprèn tal com era, i el repte s'encadena ✅ Feta (2026-11-14)
+
+Demanat pel jugador: «Fes que si un jugador surt a mitja partida d'un mode a
+Remigi, la partida segueixi tal com la va deixar, tant a lliure, repte o lliga.
+Fes que a repte les partides també s'encadenin mostrant resultats i compte
+enrere.»
+
+- [x] **Comprovat abans de tocar res** (Chromium, els tres modes, sortint a
+      l'inici i recarregant): torn, sac i fitxes ja es conservaven, però es
+      perdien tres coses — les fitxes a mig col·locar tornaven al faristol, la
+      marca de la fitxa robada desapareixia i el rellotge del torn tornava a
+      començar (117 s → 120 s).
+- [x] **Fitxes a mig col·locar**: l'esborrany del torn es desa amb la partida
+      (`serializeDraft`) i es restaura validat contra la partida
+      (`restoreDraft`: mateix torn i jugador, exactament les mateixes fitxes,
+      cap fitxa de la taula al faristol); si no lliga, el torn comença net.
+- [x] **Fitxa acabada de robar**: es desa (`drawnTileId`) i continua marcada.
+- [x] **Rellotge del torn**: `useTurnClock` porta el temps que queda del torn
+      i el desa cada segon (`remigi:rellotge:<mode>`); en tornar a la partida
+      continua per allà. De passada, obrir i tancar el menú del jugador ja no
+      torna a començar el torn sencer (abans sí).
+- [x] **Repte encadenat** (`RepteInterlude.tsx`): entre partides, 30 s de
+      relax com a la lliga (resultat en curt, «PARTIDA n/N», compte enrere,
+      total, victòries i rècord, rivals de la següent, música composta). Les
+      peces comunes amb la lliga són a `screens/interlude.tsx`.
+
+**Criteris d'acceptació (verificats)**: el mateix recorregut real pels tres
+modes amb recàrrega pel mig dona ara estats idèntics abans i després (fitxa a
+mig col·locar, marca de robada i rellotge); 212 tests de la web (3 nous de
+l'esborrany, 3 del rellotge) i 176 del motor; 159 proves de navegador (17
+omeses per plataforma), amb noves: represa exacta (amb recàrrega, el menú no
+reinicia el rellotge, i «Desfer canvis» funciona després de reprendre), el
+repte amb la pantalla de relax («Juga ara», «Repte» que atura el compte) i la
+partida següent que comença sola als 30 s (rellotge simulat). Captures en clar i
+fosc.
+
+### Problemes trobats
+
+- [2026-11-14] **El rellotge es reiniciava en tancar el menú**: el compte
+  enrere es tornava a armar amb la durada sencera cada cop que tornava a
+  córrer. Resolt amb el pressupost del torn (`startingBudget`), que també és el
+  que fa possible la represa.
+- [2026-11-14] En reprendre una partida, l'efecte que reinicia el torn a cada
+  moviment s'executava també en muntar i esborrava l'esborrany restaurat. Ara
+  només actua quan la partida canvia de debò (es compara amb la partida per a
+  la qual es va fer l'esborrany), cosa que també aguanta el doble muntatge del
+  mode estricte.
+- [2026-11-14] Una execució de la prova de navegador de la lliga (la jornada 2
+  que comença sola després del relax) va fallar un cop: la partida no havia
+  aparegut. No s'ha reproduït en 126 execucions seguides (també amb 4 processos
+  en paral·lel); queda apuntat per si torna a sortir.
+
+### La lliga comença com a mínim a la lliga del territori ✅ Feta (2026-11-14)
+
+Demanat pel jugador: «Fes que comenci com a mínim a Catalunya, País
+Valencià…», després de la proposta de no fer començar tothom a la Lliga Local
+C (Novell, 800): algú de 1300 s'hi passaria unes 12 temporades guanyant rivals
+molt més fluixos.
+
+- [x] **Mínim**: les trajectòries noves comencen al Grup C de la lliga del
+      territori (`START_TIER` = 9: Catalana, Valenciana, Balear, Andorrana, de
+      la Catalunya Nord, de la Franja o Algueresa; rivals de 1160, Mitjà).
+- [x] **Col·locació de la primera temporada** (`placementTier`,
+      `upcomingTier`): entre la C i la A d'aquesta lliga, amb els rivals uns 80
+      punts per sota de l'habilitat (fins a 1240: C; 1280: B; 1320: A). Qui
+      calibra encara (`placementRating` → `null`) comença a la C. Els Països
+      Catalans, l'Europea i la Mundial no es regalen.
+- [x] Des de la segona temporada només mana l'escala: es pot baixar a la
+      provincial, la comarcal i la local.
+- [x] **Trajectòries d'abans** que no havien arribat mai a la lliga del
+      territori (`bestTier` < 9): hi pugen en llegir-les (un sol cop) i la
+      temporada que tenien per sota es descarta per tornar-la a començar allà.
+- [x] Pantalla: el títol, l'escalada i l'inici ja diuen on es jugarà; una nota
+      a «Nova temporada» explica el mínim i la col·locació; els graons de sota
+      del territori no es pinten mai com a fets.
+- [x] El Tauler, a la seva branca: el mateix mínim (sense col·locació, perquè
+      allà els rivals ja són del nivell del jugador).
+
+**Criteris d'acceptació (verificats)**: 217 tests de la web (5 nous: el
+mínim, la col·locació per habilitat, el calibratge, el descens després de la
+primera temporada i la migració) i 176 del motor; les 20 proves de navegador
+dels modes amb les expectatives noves; comprovat a Chromium amb un perfil de
+1300 a Gandia («Lliga Valenciana · Grup B», rivals de 1200) i amb una
+trajectòria vella a la Lliga Local B (puja a la Valenciana).
+
+### Comarques i províncies fora de Catalunya ✅ Feta (2026-11-14)
+
+Diagnòstic (2026-11-14) dels noms i dels orígens dels rivals dels nivells de
+sota (`levelName`, `rivalOrigins`, dades a `localitats.js`, còpia d'El Tauler):
+
+- **Illes Balears**: les illes fan de «comarca» («Lliga Comarcal de
+  Mallorca»), i la província és tot el territori: «Lliga Provincial d'Illes
+  Balears» (hauria de ser «de les Illes Balears») és la mateixa lliga que la
+  Balear, amb rivals només de les altres tres illes.
+- **Catalunya Nord**: «Lliga Provincial dels Pirineus Orientals» i «Lliga de la
+  Catalunya Nord» són pràcticament la mateixa àrea (el departament, amb la
+  Fenolleda).
+- **L'Alguer**: municipal, comarcal i territorial són tots l'Alguer, i cap
+  nivell fins als Països Catalans no té origen per als rivals.
+- **Andorra**: comarcal, provincial i territorial són totes «Andorra».
+- **Franja**: la provincial és la província aragonesa (Osca, Saragossa,
+  Terol), amb rivals només d'una o dues comarques de la Franja.
+- **País Valencià**: correcte, però la comarcal no té orígens (no hi ha llista
+  de municipis).
+
+Demanat pel jugador: «Aplica proposta a Remigi i El Tauler, fusiona i fes
+publicar». Cap nivell no repeteix l'àrea del de sota:
+
+- [x] **Balears**: Lliga Insular de l'illa → Lliga de les Gimnèsies (Mallorca i
+      Menorca) o de les Pitiüses (Eivissa i Formentera) → Lliga Balear.
+- [x] **Catalunya Nord**: comarca → Lliga de la Catalunya Nord → Lliga Catalana
+      (amb rivals del Principat i del Nord, cadascun amb el nom del seu lloc:
+      `originTerritory`).
+- [x] **Andorra**: Tercera i Segona Divisió Andorrana → Lliga Andorrana, amb
+      rivals de parròquies i pobles.
+- [x] **L'Alguer**: Lliga de la Nurra → Provincial de Sàsser → Lliga de
+      Sardenya, amb llocs de cada àrea i noms sobretot italians.
+- [x] **Municipis** per als orígens de la comarcal i per triar-los a «On
+      jugues?»: 542 del País Valencià, 198 de la Catalunya Nord, 57 de la
+      Franja (Viquipèdia) i els 67 de les Balears. L'Horta Oest, suprimida el
+      2022, ja no és a la llista de comarques: una localitat desada amb ella es
+      corregeix amb la comarca del municipi.
+- [x] «des Castell» (article salat). Fet a `localitats.js`, `nomslliga.js` i
+      `core.js` d'El Tauler i copiat aquí amb el mateix convertidor (que
+      reprodueix exactament les còpies d'abans).
+
+**Criteris d'acceptació (verificats)**: 220 tests de la web (3 nous: noms
+de les Balears, de la Catalunya Nord, d'Andorra i de l'Alguer, i rivals amb
+origen a tots els nivells de casa de sis territoris) i 176 del motor; El Tauler,
+2.881 proves; comprovat a Chromium a les dues apps.

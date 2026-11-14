@@ -26,15 +26,17 @@ import {
   sortRack,
   type SortBy,
 } from '../game/rackOrder';
-import { useTurnClock } from '../game/useTurnClock';
+import { loadClock, saveClock, useTurnClock, type ClockState } from '../game/useTurnClock';
 import { useTurnSeconds, type TurnSeconds } from '../state/useTurnSeconds';
 import { MIN_JEROGLIFICS, useJeroglifics } from '../state/useJeroglifics';
 import { QuizScreen } from './QuizScreen';
 import {
   findAutoMeldIndex,
+  hasChanges,
   invalidMeldIndexes,
   missingOpeningPoints,
   openingPoints,
+  serializeDraft,
   type Destination,
 } from '../game/turnDraft';
 import { BOT_DELAY_MS, useGame, type GameHandle, type GameMode, type GameSetup } from '../game/useGame';
@@ -58,6 +60,10 @@ interface Props {
   resumeRackOrder?: SavedGame['rackOrder'];
   /** Amb quin criteri s'havia ordenat, si encara no s'ha retocat a mà. */
   resumeRackSortBy?: SavedGame['rackSortBy'];
+  /** Les fitxes que el jugador tenia a mig col·locar quan va sortir. */
+  resumeDraft?: SavedGame['draft'];
+  /** La fitxa que acabava de robar. */
+  resumeDrawnTileId?: SavedGame['drawnTileId'];
   profile: ProfileHandle;
   savedGame: SavedGameHandle;
   /** Obre l'historial (les estadístiques). */
@@ -111,6 +117,8 @@ export function GameScreen({
   resumeMisses,
   resumeRackOrder,
   resumeRackSortBy,
+  resumeDraft,
+  resumeDrawnTileId,
   profile,
   savedGame,
   onHistory,
@@ -129,7 +137,7 @@ export function GameScreen({
    * resultat i el desat fan servir aquesta, no la inicial.
    */
   const [currentSetup, setCurrentSetup] = useState(setup);
-  const handle = useGame(setup, resume, resumeOwners, resumeMisses);
+  const handle = useGame(setup, resume, resumeOwners, resumeMisses, resumeDraft, resumeDrawnTileId);
   const { game, draft, selectedTileId, error, highlighted, drawnTileId, isHumanTurn } = handle;
   const change = useRecordResult(
     game,
@@ -203,9 +211,11 @@ export function GameScreen({
   }, [game.status, rotation.resetToPortrait]);
 
   // La partida es desa a cada moviment, i s'esborra quan s'acaba: així es pot
-  // tancar la pestanya a mitges i continuar-la després.
+  // tancar la pestanya a mitges (o anar a un altre mode) i continuar-la
+  // després exactament on era, amb les fitxes a mig col·locar i la fitxa
+  // acabada de robar.
   const { persist, clear } = savedGame;
-  const { tileOwners, misses } = handle;
+  const { tileOwners, misses, draft: liveDraft, drawnTileId: liveDrawn } = handle;
   useEffect(() => {
     if (game.status === 'playing') {
       persist({
@@ -215,11 +225,13 @@ export function GameScreen({
         misses,
         rackOrder,
         rackSortBy: rackSortBy.current ?? undefined,
+        draft: liveDraft && hasChanges(liveDraft) ? serializeDraft(liveDraft, game) : undefined,
+        drawnTileId: liveDrawn ?? undefined,
       });
     } else {
       clear();
     }
-  }, [game, currentSetup, tileOwners, misses, rackOrder, persist, clear]);
+  }, [game, currentSetup, tileOwners, misses, rackOrder, liveDraft, liveDrawn, persist, clear]);
 
   /* Cada jeroglífic nou de la partida va també a la col·lecció del menú. */
   const { add: addJeroglifics } = jeroglifics;
@@ -440,11 +452,19 @@ export function GameScreen({
     );
   }, [timeUp]);
 
+  /*
+   * El temps del torn es desa cada segon (a part de la partida): en tornar a
+   * una partida deixada a mitges, el torn continua amb el temps que tenia.
+   */
+  const [savedClock] = useState(() => (resume ? loadClock(mode) : null));
+  const saveTurnClock = useCallback((clock: ClockState) => saveClock(mode, clock), [mode]);
   const secondsLeft = useTurnClock(
     turnSeconds,
     isHumanTurn && game.status === 'playing' && !menuOpen && quiz === null,
     `${game.turn}:${game.currentPlayer}`,
     onTimeUp,
+    savedClock,
+    saveTurnClock,
   );
 
   /*

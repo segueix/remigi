@@ -4007,3 +4007,49 @@ button.secondary.reset-nivell {
   color: var(--text-suau);
   font-size: 0.9rem;
 }
+
+/* El marcador del repte a la pantalla de relax: total, victòries i rècord. */
+.interludi-marcador {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  width: 100%;
+  margin: 0;
+}
+
+.interludi-marcador div {
+  padding: 0.45rem 0.4rem;
+  border: 1px solid var(--vora);
+  border-top: 3px solid var(--identitat);
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--identitat) 7%, var(--superficie));
+}
+
+.interludi-marcador dt {
+  color: var(--text-suau);
+  font-size: 0.75rem;
+}
+
+.interludi-marcador dd {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.interludi-marcador dd small {
+  color: var(--text-suau);
+  font-size: 0.85rem;
+}
+
+.interludi-marcador .points-positive {
+  color: var(--be);
+}
+
+.interludi-marcador .points-negative {
+  color: var(--mal);
+}
+
+.interludi-seguent {
+  margin: 0;
+}

@@ -1,5 +1,5 @@
 import { DIFFICULTY_ORDER, createRng, shuffleInPlace, type DifficultyKey, type Rng } from '@remigi/core';
-import { ppccCityTerritory, rivalOrigins, type LeagueHome } from './localitats';
+import { islandGroup, originTerritory, rivalOrigins, type LeagueHome } from './localitats';
 import { rivalNames } from './nomsLliga';
 
 /**
@@ -45,6 +45,17 @@ const TIER_STEP = (MAX_RATING - MIN_RATING) / (TIER_COUNT - 1);
 /** Dispersió dels rivals al voltant de la força del graó (±80: dos graons). */
 export const RIVAL_SPREAD = 80;
 
+/**
+ * On comença l'escalada, com a mínim: la lliga del territori (Catalana,
+ * Valenciana, Balear…), Grup C. Els nivells de sota (municipal, comarcal i
+ * provincial) hi són per a qui baixa, no per començar-hi.
+ */
+export const START_TIER = LEAGUE_LEVELS.findIndex((level) => level.id === 'territorial') * GROUPS.length;
+/** Fins on pot arribar la col·locació de la primera temporada: la mateixa lliga, Grup A. */
+export const PLACEMENT_MAX_TIER = START_TIER + 2;
+/** La primera temporada es juga una mica per sota del teu nivell (dos graons). */
+export const PLACEMENT_MARGIN = 80;
+
 export function clampTier(tier: number): number {
   return Number.isFinite(tier) ? Math.min(TOP_TIER, Math.max(0, Math.round(tier))) : 0;
 }
@@ -70,6 +81,28 @@ export function difficultyForRating(rating: number): DifficultyKey {
   return DIFFICULTY_ORDER[Math.min(DIFFICULTY_ORDER.length - 1, Math.max(0, index))];
 }
 
+/**
+ * Graó de la primera temporada segons la teva habilitat: el més alt entre la
+ * Lliga Catalana (o la del teu territori) C i A que tingui els rivals uns 80
+ * punts per sota teu, perquè hi siguis favorit sense avorrir-te. Qui encara
+ * calibra el nivell (`null`) comença a la C. Els Països Catalans, l'Europea i
+ * la Mundial no es regalen: s'hi arriba jugant.
+ */
+export function placementTier(rating: number | null): number {
+  if (rating === null || !Number.isFinite(rating)) return START_TIER;
+  let tier = START_TIER;
+  for (let t = START_TIER + 1; t <= PLACEMENT_MAX_TIER; t++) {
+    if (tierRating(t) <= rating - PLACEMENT_MARGIN) tier = t;
+  }
+  return tier;
+}
+
+/** L'habilitat que compta per col·locar-te: cap mentre encara es calibra. */
+export function placementRating(profile: { rating: number; adaptiveCalibrating?: boolean } | null): number | null {
+  if (!profile || profile.adaptiveCalibrating === true) return null;
+  return profile.rating;
+}
+
 /* ---------- Noms ---------- */
 
 /** «de Vic», «d'Osona», «del Bages», «dels Ports», «de la Selva», «de l'Anoia». */
@@ -79,21 +112,55 @@ export function catalanDe(name: string): string {
   let m: RegExpExecArray | null;
   if ((m = /^el\s+(.+)$/i.exec(s))) return `del ${m[1]}`;
   if ((m = /^els\s+(.+)$/i.exec(s))) return `dels ${m[1]}`;
-  if (/^(la|les)\s+/i.test(s) || /^l['’]/i.test(s)) return `de ${s}`;
+  // L'article salat de les Balears: «des Castell», «de sa Pobla».
+  if ((m = /^es\s+(.+)$/i.exec(s))) return `des ${m[1]}`;
+  if (/^(la|les|sa|ses)\s+/i.test(s) || /^l['’]/i.test(s)) return `de ${s}`;
   // Vocal (o h muda) al davant: «d'». La i i la u davant de vocal són consonants.
   if (/^h?[aeiouàèéíïòóúü]/i.test(s) && !/^h?[iuíúïü][aeiouàèéíòóú]/i.test(s)) return `d'${s}`;
   return `de ${s}`;
 }
 
+/**
+ * La lliga del territori: [nom, curt]. Qui juga a la Catalunya Nord hi juga la
+ * Lliga Catalana (el nivell de sota ja és la Catalunya Nord), i qui juga a
+ * l'Alguer, la de Sardenya.
+ */
 const TERRITORY_NAMES: Record<string, [string, string]> = {
   cat: ['Lliga Catalana', 'Catalana'],
   val: ['Lliga Valenciana', 'Valenciana'],
   bal: ['Lliga Balear', 'Balear'],
   and: ['Lliga Andorrana', 'Andorrana'],
-  nord: ['Lliga de la Catalunya Nord', 'Catalunya Nord'],
+  nord: ['Lliga Catalana', 'Catalana'],
   franja: ['Lliga de la Franja', 'Franja'],
-  alguer: ['Lliga Algueresa', 'Algueresa'],
+  alguer: ['Lliga de Sardenya', 'Sardenya'],
 };
+
+/**
+ * Les lligues comarcal i provincial: [nom, curt]. Cap nivell no repeteix
+ * l'àrea del de sota (com a El Tauler, `leaguePlaceName`): a les Balears,
+ * l'illa i el grup d'illes; a la Catalunya Nord, la comarca i la Catalunya
+ * Nord; a Andorra (sense comarques ni províncies), la Tercera i la Segona
+ * Divisió; a l'Alguer, la Nurra i la província de Sàsser.
+ */
+function placeName(id: 'comarcal' | 'provincial', h: LeagueHome | null): [string, string] {
+  const t = h?.territory ?? 'cat';
+  if (id === 'comarcal') {
+    if (t === 'bal') return [h?.comarca ? `Lliga Insular ${catalanDe(h.comarca)}` : 'Lliga Insular', 'Insular'];
+    if (t === 'and') return ['Tercera Divisió Andorrana', 'Tercera Divisió'];
+    if (t === 'alguer') return ['Lliga de la Nurra', 'Nurra'];
+    return [h?.comarca ? `Lliga Comarcal ${catalanDe(h.comarca)}` : 'Lliga Comarcal', 'Comarcal'];
+  }
+  if (t === 'bal') {
+    const group = islandGroup(h?.comarca ?? '');
+    return group
+      ? [`Lliga ${catalanDe(group.name)}`, group.name.replace(/^les\s+/, '')]
+      : ['Lliga Interinsular', 'Interinsular'];
+  }
+  if (t === 'nord') return ['Lliga de la Catalunya Nord', 'Catalunya Nord'];
+  if (t === 'and') return ['Segona Divisió Andorrana', 'Segona Divisió'];
+  if (t === 'alguer') return [`Lliga Provincial ${catalanDe(h?.provincia || 'Sàsser')}`, 'Provincial'];
+  return [h?.provincia ? `Lliga Provincial ${catalanDe(h.provincia)}` : 'Lliga Provincial', 'Provincial'];
+}
 
 /** Nom de la lliga d'un nivell per a la localitat del jugador (com a El Tauler). */
 export function levelName(level: number, home: LeagueHome | null): string {
@@ -102,9 +169,9 @@ export function levelName(level: number, home: LeagueHome | null): string {
     case 'municipal':
       return h?.municipi ? `Lliga ${catalanDe(h.municipi)}` : 'Lliga Local';
     case 'comarcal':
-      return h?.comarca ? `Lliga Comarcal ${catalanDe(h.comarca)}` : 'Lliga Comarcal';
+      return placeName('comarcal', h)[0];
     case 'provincial':
-      return h?.provincia ? `Lliga Provincial ${catalanDe(h.provincia)}` : 'Lliga Provincial';
+      return placeName('provincial', h)[0];
     case 'territorial': {
       const t = TERRITORY_NAMES[h?.territory ?? 'cat'];
       if (t) return t[0];
@@ -119,9 +186,10 @@ export function levelName(level: number, home: LeagueHome | null): string {
   }
 }
 
-/** Nom curt del nivell: «Municipal», «Catalana», «Mundial». */
+/** Nom curt del nivell: «Municipal», «Catalana», «Mundial» (i «Insular», «Nurra»…). */
 export function levelShort(level: number, home: LeagueHome | null): string {
   const entry = LEAGUE_LEVELS[Math.min(6, Math.max(0, level))];
+  if (entry.id === 'comarcal' || entry.id === 'provincial') return placeName(entry.id, home)[1];
   if (entry.id !== 'territorial') return entry.label;
   const t = TERRITORY_NAMES[home?.territory ?? 'cat'];
   return t ? t[1] : 'Nacional';
@@ -266,7 +334,7 @@ export function createSeason(options: CreateSeasonOptions): LeagueSeason {
     count,
     random: rng,
     exclude: options.exclude ?? [],
-    territoryOf: ppccCityTerritory,
+    territoryOf: originTerritory,
   });
   const ratings = shuffleInPlace(spreadRatings(tierRating(tier), count, rng), rng);
   const rivals: LeagueRival[] = names.map((name, i) => ({
@@ -654,14 +722,24 @@ const MAX_RECENT_NAMES = 90;
 
 export function newCareer(home: LeagueHome | null = null): LeagueCareer {
   return {
-    tier: 0,
-    bestTier: 0,
+    tier: START_TIER,
+    bestTier: START_TIER,
     home,
     homeAsked: false,
     config: { ...DEFAULT_CONFIG },
     seasons: [],
     recentNames: [],
   };
+}
+
+/**
+ * Graó de la temporada que es començarà ara. La primera (encara no n'has
+ * acabat cap) es col·loca segons la teva habilitat (`placementTier`); després
+ * només mana l'escala: on t'han deixat l'ascens, el descens o la permanència.
+ */
+export function upcomingTier(career: LeagueCareer, rating: number | null): number {
+  if (career.seasons.length > 0) return clampTier(career.tier);
+  return Math.max(clampTier(career.tier), placementTier(rating));
 }
 
 /**
@@ -791,7 +869,19 @@ export function parseLeagueState(raw: string | null): LeagueState {
         : [],
     };
     career.bestTier = Math.max(career.bestTier, career.tier);
-    return { career, season: validSeason(value.season) };
+    let season = validSeason(value.season);
+    /*
+     * Trajectòries d'abans que l'escalada comencés a la lliga del territori:
+     * qui no hi havia arribat mai hi puja (un sol cop: després ja té el
+     * millor graó a la Catalana i, si baixa, baixa), i la temporada que tenia
+     * per sota es descarta per tornar-la a començar allà.
+     */
+    if (career.bestTier < START_TIER) {
+      career.tier = START_TIER;
+      career.bestTier = START_TIER;
+      if (season && season.tier < START_TIER) season = null;
+    }
+    return { career, season };
   } catch {
     return { career: newCareer(), season: null };
   }
