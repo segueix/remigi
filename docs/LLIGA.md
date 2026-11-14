@@ -158,12 +158,18 @@ Sardenya (a l'Alguer).
 |---|---|
 | Rivals per partida | 2 (taules de 3) o 3 (taules de 4) |
 | Jugadors a la lliga, tu inclòs | taules de 3: 6, 9, 12 o 15 · taules de 4: 8, 12 o 16 |
-| Jornades (partides per acabar la lliga) | de 3 a 15; per defecte 7 |
+| Voltes | una volta (per defecte) o anada i tornada |
 
 La mida de la lliga és sempre un múltiple de la taula: cada jornada tothom
-juga. La pantalla diu si amb les jornades triades et trobes amb tots els rivals
-(`ceil((jugadors − 1) / rivals per partida)`). La configuració es recorda per a
-les temporades següents.
+juga. **Les jornades no es trien**: són les que calen per trobar-te amb tots
+els rivals, `ceil((jugadors − 1) / rivals per partida)`, i el doble si és
+d'anada i tornada (`leagueRounds`). Van de 3 (8 jugadors en taules de 4, o 6
+en taules de 3, una volta) a 14 (15 jugadors en taules de 3, anada i tornada).
+La configuració es recorda per a les temporades següents.
+
+Abans les jornades es triaven a mà (de 3 a 15). Una configuració desada d'aleshores
+passa a anada i tornada si tenia més jornades que una volta, i a una volta si no;
+una temporada començada conserva les jornades i el calendari amb què es va crear.
 
 **Pugen i baixen** una quarta part de la lliga, com a mínim un
 (`round(jugadors / 4)`): 2 de 6, 2 de 8, 3 de 12, 4 de 16.
@@ -221,7 +227,7 @@ millora el millor amb intercanvis entre taules; el cost és, per a cada parella
 d'una taula, el quadrat de les vegades que ja s'han trobat, amb pes 10 per a les
 teves parelles. Amb les jornades justes, **et trobes amb tots els rivals abans
 de repetir-ne cap** (comprovat amb 40 llavors per a cada mida: cap fallada).
-El pitjor cas (16 jugadors, 15 jornades) tarda ~0,3 s, un sol cop per temporada.
+Amb 16 jugadors i 15 jornades (el màxim d'abans) tardava ~0,3 s; ara amb 16 jugadors en són com a molt 10.
 
 ### Puntuació i classificació
 

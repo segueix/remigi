@@ -197,13 +197,15 @@ test('una temporada sencera de lliga: jornades, classificació i temporada segü
   await page.getByRole('dialog').getByRole('button', { name: 'Ara no' }).click();
   await expect(page.locator('.lliga h2')).toHaveText('Lliga Local · Divisió C');
 
-  // Partides de tres (dos rivals), sis jugadors i tres jornades.
+  // Partides de tres (dos rivals) i sis jugadors: les jornades no es trien, en surten.
   const tria = (llegenda: string) => page.locator('.tria').filter({ hasText: llegenda });
   await tria('Rivals per partida').getByRole('button', { name: '2', exact: true }).click();
   await tria('Jugadors a la lliga').getByRole('button', { name: '6', exact: true }).click();
-  while ((await page.locator('.tria-jornades output').textContent()) !== '3') {
-    await page.getByRole('button', { name: 'Una jornada menys' }).click();
-  }
+  await expect(page.getByRole('button', { name: /jornada (menys|més)/ })).toHaveCount(0);
+  await tria('Voltes').getByRole('button', { name: 'Anada i tornada' }).click();
+  await expect(page.locator('.lliga-jornades')).toContainText('Seran 6 jornades');
+  await tria('Voltes').getByRole('button', { name: 'Una volta' }).click();
+  await expect(page.locator('.lliga-jornades')).toContainText('Seran 3 jornades');
   await page.getByRole('button', { name: 'Comença la temporada' }).click();
   await expect(page.locator('.lliga-taula tbody tr')).toHaveCount(6);
 
@@ -311,7 +313,7 @@ test('entre jornades: 30 segons de relax amb música composta, i la jornada seg�
   // A la vista, a zero comença sola la jornada 2 amb els rivals anunciats.
   await page.clock.runFor(31_000);
   await expect(page.locator('.player .player-nom')).toHaveText(['Jugador', ...rivals]);
-  await expect(page.locator('.nivell-mode')).toContainText('jornada 2/7');
+  await expect(page.locator('.nivell-mode')).toContainText('jornada 2/3');
 
   // La peça que ha sonat es pot tornar a escoltar des de «Música infinita».
   await obreMenu(page);
@@ -443,5 +445,5 @@ test('amb la lliga començada, l’inici en diu el nom i la divisió', async ({ 
   await page.getByRole('button', { name: 'Comença la temporada' }).click();
   await page.getByRole('button', { name: '← Inici' }).click();
   await expect(targeta.locator('.mode-lliga-nom')).toHaveText('Lliga de Vic · Divisió C');
-  await expect(targeta.locator('.mode-estat')).toHaveText('Jornada 1/7');
+  await expect(targeta.locator('.mode-estat')).toHaveText('Jornada 1/3');
 });

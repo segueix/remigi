@@ -2482,3 +2482,30 @@ jornada i la tàctica, també sense descens al primer graó); la prova de
 navegador de la temporada sencera passa pel carrusel (pàgina 1 la de sempre,
 barres, classificació i que no eixampla la finestra); 227 tests de la web;
 captures a 390 px.
+
+### Repte acabat, lliga sense triar jornades i el joker a les instruccions ✅ Feta (2026-11-14)
+
+Demanat pel jugador: «Quan acaba [el repte] també hi diu la posició que vas,
+però hauria de dir que ja has guanyat o la posició. A la lliga et deixa escollir
+les jornades però no hauries de poder: si esculls jugadors, són les jornades a
+jugar; com a molt, un o dos cops amb cada jugador, com anada i tornada. A les
+instruccions digues quants punts val un comodí i si serveix per sortir; fes el
+que diuen les regles del Rummikub.»
+
+- [x] Repte: a la tercera pàgina del final, l'última partida ja no diu «Vas
+      2n…» sinó «Has guanyat el repte, amb N punts d'avantatge» (🏆) o «Has
+      quedat 3r del repte, a N punts de X, que l'ha guanyat» (🏁).
+- [x] Lliga: fora el comptador de jornades. `LeagueConfig.legs` (1 o 2) i
+      `leagueRounds`: les jornades són les justes per trobar-te amb tots els
+      rivals, o el doble amb «Anada i tornada». Els desats d'abans es
+      conserven (vegeu `docs/LLIGA.md`).
+- [x] Instruccions (`ComEsJuga`): secció «El joker (comodí)». Com al Rummikub
+      —que és el que ja fa el motor—, el joker val el número que substitueix,
+      també per als 30 punts de la sortida (no és un valor fix de 25), i si et
+      queda a la mà en acabar resta 30 punts. Exemples d'escala que obre i de
+      grup que no arriba.
+
+**Criteris d'acceptació (verificats)**: tests nous de configuració (voltes,
+desats d'abans, temporada començada que conserva les jornades) i del repte
+acabat; la prova de navegador de la temporada sencera comprova que no hi ha
+comptador i que les voltes canvien les jornades (6 → 3).

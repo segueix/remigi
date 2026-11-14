@@ -9,6 +9,9 @@ const t = (color: TileColor, value: number): Tile => ({
   value,
 });
 
+/** Joker d'exemple. */
+const joker = (n: string): Tile => ({ id: `exemple-joker-${n}`, kind: 'joker' });
+
 function Exemple({ fitxes, nota, malament }: { fitxes: Tile[]; nota: string; malament?: boolean }) {
   return (
     <li className={malament ? 'exemple malament' : 'exemple'}>
@@ -68,6 +71,31 @@ export function ComEsJuga({ obertPerDefecte }: { obertPerDefecte?: boolean }) {
           nota="Sumen 30, però no és ni grup ni escala: compta 0 punts."
         />
       </ul>
+
+      <h4>El joker (comodí)</h4>
+      <p>
+        Hi ha <strong>dos jokers</strong> i fan de qualsevol fitxa en un grup o una escala. Com al
+        Rummikub, el joker <strong>val el número de la fitxa que substitueix</strong>, també per a
+        la sortida: no és un valor fix.
+      </p>
+      <ul className="exemples">
+        <Exemple
+          fitxes={[t('blue', 9), t('blue', 10), joker('a')]}
+          nota="El joker fa d’11 blau: l’escala suma 9 + 10 + 11 = 30. Ja pots obrir."
+        />
+        <Exemple
+          fitxes={[t('red', 5), t('black', 5), joker('b')]}
+          malament
+          nota="El joker fa de 5: el grup suma 15. Per sortir en necessites 30."
+        />
+      </ul>
+      <p className="muted small">
+        Si en acabar la partida <strong>et queda un joker a la mà, resta 30 punts</strong> (les
+        altres fitxes resten el seu número), i aquests punts se’ls emporta qui guanya. Un cop has
+        obert, també pots fer servir en una altra jugada un joker que ja és a la taula (per
+        exemple, posant-hi la fitxa que fa), sempre que en acabar el torn tot sigui vàlid: no te’l
+        pots endur al faristol.
+      </p>
 
       <p className="muted small">
         Compte també amb això: les fitxes d’una mateixa jugada han d’anar totes a la{' '}

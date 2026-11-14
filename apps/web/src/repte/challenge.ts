@@ -185,8 +185,22 @@ export function challengeInsights(challenge: Challenge, standings: StandingRow[]
     out.push({ icon: '✋', text: `Et quedaven ${n} ${n === 1 ? 'fitxa' : 'fitxes'} a la mà (${signed(last.points)}).` });
   }
 
-  // On vas del repte.
-  if (known && played > 1) {
+  // On vas del repte; acabat, com has quedat.
+  if (known && left === 0) {
+    const second = standings.find((row) => !row.you);
+    if (me.place === 1) {
+      const gap = second ? me.total - second.total : 0;
+      out.push({
+        icon: '🏆',
+        text: gap > 0 ? `Has guanyat el repte, amb ${gap} punts d’avantatge.` : 'Has guanyat el repte, empatat al primer lloc.',
+      });
+    } else {
+      out.push({
+        icon: '🏁',
+        text: `Has quedat ${ordinal(me.place)} del repte, a ${leader.total - me.total} punts de ${leader.name}, que l’ha guanyat.`,
+      });
+    }
+  } else if (known && played > 1) {
     if (me.place === 1) {
       const second = standings.find((row) => !row.you);
       const gap = second ? me.total - second.total : 0;

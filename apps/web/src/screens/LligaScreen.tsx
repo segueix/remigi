@@ -5,8 +5,6 @@ import { botPersona } from '../game/bots';
 import {
   GROUPS,
   LEAGUE_LEVELS,
-  MAX_ROUNDS,
-  MIN_ROUNDS,
   PLAYER_OPTIONS,
   RIVAL_SPREAD,
   TOP_TIER,
@@ -17,7 +15,6 @@ import {
   movementText,
   normalizeConfig,
   rivalById,
-  roundsToMeetAll,
   standings,
   tablePoints,
   tierGroup,
@@ -29,6 +26,7 @@ import {
   zoneOf,
   zoneSize,
   type LeagueConfig,
+  type LeagueLegs,
   type LeagueSeason,
   type LeagueState,
   type Movement,
@@ -270,7 +268,6 @@ function SeasonSetup({
   onStart(): void;
   finished: boolean;
 }) {
-  const meetAll = roundsToMeetAll(config);
   return (
     <div className="lliga-config">
       <h3>{finished ? 'La temporada següent' : 'Nova temporada'}</h3>
@@ -316,33 +313,24 @@ function SeasonSetup({
           </button>
         ))}
       </fieldset>
-      <fieldset className="tria tria-jornades">
-        <legend>Jornades</legend>
-        <button
-          type="button"
-          className="secondary"
-          aria-label="Una jornada menys"
-          disabled={config.rounds <= MIN_ROUNDS}
-          onClick={() => onChange(normalizeConfig({ ...config, rounds: config.rounds - 1 }))}
-        >
-          −
-        </button>
-        <output aria-live="polite">{config.rounds}</output>
-        <button
-          type="button"
-          className="secondary"
-          aria-label="Una jornada més"
-          disabled={config.rounds >= MAX_ROUNDS}
-          onClick={() => onChange(normalizeConfig({ ...config, rounds: config.rounds + 1 }))}
-        >
-          +
-        </button>
+      <fieldset className="tria tria-voltes">
+        <legend>Voltes</legend>
+        {([1, 2] as LeagueLegs[]).map((legs) => (
+          <button
+            key={legs}
+            type="button"
+            className={config.legs === legs ? '' : 'secondary'}
+            aria-pressed={config.legs === legs}
+            onClick={() => onChange(normalizeConfig({ ...config, legs }))}
+          >
+            {legs === 1 ? 'Una volta' : 'Anada i tornada'}
+          </button>
+        ))}
       </fieldset>
-      <p className="muted small">
-        {config.rounds >= meetAll
-          ? `Amb ${config.rounds} jornades et trobes amb tots els rivals.`
-          : `Amb ${config.rounds} jornades no et trobaràs amb tothom: en calen ${meetAll}.`}{' '}
-        Pugen els {zoneSize(config.players)} primers i baixen els {zoneSize(config.players)} últims.
+      <p className="muted small lliga-jornades">
+        Seran <strong>{config.rounds} jornades</strong>: les que calen per trobar-te amb tots els rivals
+        {config.legs === 2 ? ' dos cops (anada i tornada)' : ''}. Pugen els {zoneSize(config.players)}{' '}
+        primers i baixen els {zoneSize(config.players)} últims.
       </p>
       <div className="row">
         <button type="button" onClick={onStart}>
