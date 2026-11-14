@@ -98,13 +98,36 @@ jugador: pujar vol dir, de debò, jugar contra rivals més forts.
 nivell següent (Municipal A → Comarcal C). En sentit contrari, de la C es baixa
 a la A del nivell anterior. Al primer graó no es baixa; a l'últim no es puja, i
 el primer és «Campió del món». A dalt de la pantalla de la lliga, l'escalada és
-una **llista vertical** com una escala: la mundial a dalt i la local a baix
-(d'on es comença), una fila per lliga amb el nom
+una **llista vertical** com una escala: la mundial a dalt i la local a baix,
+una fila per lliga amb el nom
 sencer i els seus tres grups en ordre (C, B, A) i la força dels rivals de
-cadascun; l'actual en el color de la lliga, els fets en verd. El final de
+cadascun; l'actual en el color de la lliga, els fets en verd. Els graons de sota
+de la lliga del territori no es pinten mai com a fets: no s'hi puja, només s'hi
+baixa. El final de
 temporada ho diu així:
 «Puges al Grup B de la Lliga de Vic», «Puges al Grup A de la Lliga de Vic»,
 «Puges a la Lliga Comarcal d'Osona · Grup C: nivell nou!» (`movementText`).
+
+### On es comença
+
+**Com a mínim a la lliga del territori, Grup C** (`START_TIER` = 9): la Lliga
+Catalana, la Valenciana, la Balear, l'Andorrana, la de la Catalunya Nord, la de
+la Franja o l'Algueresa, segons on jugues (rivals de 1160, Mitjà). Començar a
+la Lliga Local C (Novell, 800) voldria dir, per a algú de 1300, unes 12
+temporades guanyant rivals molt més fluixos abans de trobar-ne del seu nivell.
+
+- **La primera temporada es col·loca pel nivell** (`placementTier`): el graó
+  més alt entre la C i la A de la lliga del territori amb els rivals uns 80
+  punts per sota de la teva habilitat (fins a 1240: C; 1280–1319: B; des de
+  1320: A). Els Països Catalans, l'Europea i la Mundial no es regalen.
+- Qui **encara calibra** el nivell no té habilitat per col·locar-lo
+  (`placementRating` → `null`): comença a la C.
+- A partir de la segona temporada **només mana l'escala** (`upcomingTier`):
+  es pot baixar a la provincial, la comarcal i la local, que hi són per a qui
+  baixa.
+- Les **trajectòries d'abans** que no havien arribat mai a la lliga del
+  territori (`bestTier` < 9) hi pugen en llegir-les, un sol cop; una temporada
+  que tenien començada per sota es descarta per tornar-la a començar allà.
 
 ### Configuració de la temporada
 
@@ -271,7 +294,13 @@ música entre jornades o canviar-ne el volum (`remigi:musica`).
   persones; la força relativa entre nivells del motor és més abrupta que
   l'Elo (vegeu `AGENT.md`, «Un esglaó entre Avançat i Expert»).
 - Al primer graó, la meitat dels rivals queden encabits a 800 (el mínim del
-  motor): la lliga local és Novell de debò.
+  motor): la lliga local és Novell de debò (només s'hi arriba baixant).
+- Algú que jugui per primer cop (calibrant, o d'habilitat baixa) comença
+  contra rivals de 1160 (Mitjà). Si li van grans, baixa a la provincial: el
+  descens fa de col·locació per sota.
+- Fora de Catalunya, els noms i els orígens dels rivals dels nivells comarcal i
+  provincial no sempre tenen sentit (vegeu `AGENT.md`, «Comarques i províncies
+  fora de Catalunya»).
 - Les dades de localitats i noms són còpies: no se sincronitzen soles amb El
   Tauler.
 - Abandonar una temporada permet fugir d'un descens. És deliberat (no es vol

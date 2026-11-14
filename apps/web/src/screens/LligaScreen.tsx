@@ -9,6 +9,7 @@ import {
   MIN_ROUNDS,
   PLAYER_OPTIONS,
   RIVAL_SPREAD,
+  START_TIER,
   TOP_TIER,
   YOU,
   difficultyForRating,
@@ -24,6 +25,7 @@ import {
   tierLevel,
   tierName,
   tierRating,
+  upcomingTier,
   yourTable,
   zoneOf,
   zoneSize,
@@ -44,6 +46,8 @@ interface Props {
   hasSavedGame: boolean;
   /** La localitat que el jugador té a la lliga d'escacs d'El Tauler, si n'hi ha. */
   elTaulerHome: LeagueHome | null;
+  /** La teva habilitat per col·locar-te la primera temporada (`null`: encara es calibra). */
+  playerRating: number | null;
   onStartSeason(config: LeagueConfig): void;
   onPlayRound(): void;
   onAbandonSeason(): void;
@@ -62,6 +66,7 @@ export function LligaScreen({
   playerName,
   hasSavedGame,
   elTaulerHome,
+  playerRating,
   onStartSeason,
   onPlayRound,
   onAbandonSeason,
@@ -74,8 +79,9 @@ export function LligaScreen({
   const [confirmAbandon, setConfirmAbandon] = useState(false);
   const running = season !== null && !isFinished(season);
   const finished = season !== null && isFinished(season);
-  const tier = running && season ? season.tier : career.tier;
-  const title = running && season ? season.name : tierName(career.tier, career.home);
+  const next = upcomingTier(career, playerRating);
+  const tier = running && season ? season.tier : next;
+  const title = running && season ? season.name : tierName(next, career.home);
 
   return (
     <section className="card pantalla-mode lliga">
@@ -137,7 +143,9 @@ export function LligaScreen({
         <SeasonSetup
           config={config}
           onChange={setConfig}
-          nextName={tierName(career.tier, career.home)}
+          nextName={tierName(next, career.home)}
+          first={career.seasons.length === 0}
+          calibrating={playerRating === null}
           onStart={() => onStartSeason(config)}
           finished={finished}
         />
@@ -183,10 +191,12 @@ export function LligaScreen({
 
 /**
  * L'escalada, en vertical i com una escala de debò: la mundial a dalt de tot i
- * la local a baix, d'on es comença. Cada fila porta el nom sencer de la lliga
+ * la local a baix. Cada fila porta el nom sencer de la lliga
  * i els seus tres grups en l'ordre en què es juguen, C → B → A, cadascun amb
  * la força dels rivals. Els graons fets en verd, l'actual en el color de la
- * lliga i el millor que s'ha arribat amb vora daurada.
+ * lliga i el millor que s'ha arribat amb vora daurada. Es comença a la lliga
+ * del territori: les de sota no es pinten mai com a fetes (no s'hi ha pujat;
+ * hi estàs si has baixat).
  */
 function Ladder({ tier, best, home }: { tier: number; best: number; home: LeagueHome | null }) {
   return (
@@ -206,7 +216,7 @@ function Ladder({ tier, best, home }: { tier: number; best: number; home: League
             {GROUPS.map((group, g) => {
               const step = index * 3 + g;
               const classes = ['escala-grao'];
-              if (step < tier) classes.push('fet');
+              if (step < tier && step >= START_TIER) classes.push('fet');
               if (step === tier) classes.push('actual');
               if (step === best && best > tier) classes.push('millor');
               return (
@@ -232,12 +242,17 @@ function SeasonSetup({
   config,
   onChange,
   nextName,
+  first,
+  calibrating,
   onStart,
   finished,
 }: {
   config: LeagueConfig;
   onChange(config: LeagueConfig): void;
   nextName: string;
+  /** Encara no has acabat cap temporada: et col·loquem pel nivell. */
+  first: boolean;
+  calibrating: boolean;
   onStart(): void;
   finished: boolean;
 }) {
@@ -250,6 +265,15 @@ function SeasonSetup({
         toquen; la resta de taules es juguen alhora. Cada partida és un enfrontament contra cada rival de
         la taula: 1 punt per cada un que acabi per sota teu.
       </p>
+      {first && (
+        <p className="muted small lliga-colocacio">
+          {calibrating
+            ? 'L’escalada comença com a mínim a la lliga del teu territori, al Grup C. '
+            : 'L’escalada comença com a mínim a la lliga del teu territori: pel teu nivell, et col·loquem entre el Grup C i el A, amb rivals una mica per sota teu. '}
+          Les lligues de sota (provincial, comarcal i local) hi són per si baixes; els Països Catalans,
+          l’Europea i la Mundial, te les has de guanyar.
+        </p>
+      )}
       <fieldset className="tria">
         <legend>Rivals per partida</legend>
         {([2, 3] as TableRivals[]).map((opponents) => (

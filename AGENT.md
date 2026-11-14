@@ -2281,3 +2281,63 @@ fosc.
   que comença sola després del relax) va fallar un cop: la partida no havia
   aparegut. No s'ha reproduït en 126 execucions seguides (també amb 4 processos
   en paral·lel); queda apuntat per si torna a sortir.
+
+### La lliga comença com a mínim a la lliga del territori ✅ Feta (2026-11-14)
+
+Demanat pel jugador: «Fes que comenci com a mínim a Catalunya, País
+Valencià…», després de la proposta de no fer començar tothom a la Lliga Local
+C (Novell, 800): algú de 1300 s'hi passaria unes 12 temporades guanyant rivals
+molt més fluixos.
+
+- [x] **Mínim**: les trajectòries noves comencen al Grup C de la lliga del
+      territori (`START_TIER` = 9: Catalana, Valenciana, Balear, Andorrana, de
+      la Catalunya Nord, de la Franja o Algueresa; rivals de 1160, Mitjà).
+- [x] **Col·locació de la primera temporada** (`placementTier`,
+      `upcomingTier`): entre la C i la A d'aquesta lliga, amb els rivals uns 80
+      punts per sota de l'habilitat (fins a 1240: C; 1280: B; 1320: A). Qui
+      calibra encara (`placementRating` → `null`) comença a la C. Els Països
+      Catalans, l'Europea i la Mundial no es regalen.
+- [x] Des de la segona temporada només mana l'escala: es pot baixar a la
+      provincial, la comarcal i la local.
+- [x] **Trajectòries d'abans** que no havien arribat mai a la lliga del
+      territori (`bestTier` < 9): hi pugen en llegir-les (un sol cop) i la
+      temporada que tenien per sota es descarta per tornar-la a començar allà.
+- [x] Pantalla: el títol, l'escalada i l'inici ja diuen on es jugarà; una nota
+      a «Nova temporada» explica el mínim i la col·locació; els graons de sota
+      del territori no es pinten mai com a fets.
+- [x] El Tauler, a la seva branca: el mateix mínim (sense col·locació, perquè
+      allà els rivals ja són del nivell del jugador).
+
+**Criteris d'acceptació (verificats)**: 217 tests de la web (5 nous: el
+mínim, la col·locació per habilitat, el calibratge, el descens després de la
+primera temporada i la migració) i 176 del motor; les 20 proves de navegador
+dels modes amb les expectatives noves; comprovat a Chromium amb un perfil de
+1300 a Gandia («Lliga Valenciana · Grup B», rivals de 1200) i amb una
+trajectòria vella a la Lliga Local B (puja a la Valenciana).
+
+### Comarques i províncies fora de Catalunya ⏳ Pendent (proposta feta)
+
+Diagnòstic (2026-11-14) dels noms i dels orígens dels rivals dels nivells de
+sota (`levelName`, `rivalOrigins`, dades a `localitats.js`, còpia d'El Tauler):
+
+- **Illes Balears**: les illes fan de «comarca» («Lliga Comarcal de
+  Mallorca»), i la província és tot el territori: «Lliga Provincial d'Illes
+  Balears» (hauria de ser «de les Illes Balears») és la mateixa lliga que la
+  Balear, amb rivals només de les altres tres illes.
+- **Catalunya Nord**: «Lliga Provincial dels Pirineus Orientals» i «Lliga de la
+  Catalunya Nord» són pràcticament la mateixa àrea (el departament, amb la
+  Fenolleda).
+- **L'Alguer**: municipal, comarcal i territorial són tots l'Alguer, i cap
+  nivell fins als Països Catalans no té origen per als rivals.
+- **Andorra**: comarcal, provincial i territorial són totes «Andorra».
+- **Franja**: la provincial és la província aragonesa (Osca, Saragossa,
+  Terol), amb rivals només d'una o dues comarques de la Franja.
+- **País Valencià**: correcte, però la comarcal no té orígens (no hi ha llista
+  de municipis).
+
+Proposta (pendent que el jugador triï): que cap nivell repeteixi l'àrea del
+de sota. Balears: illa → Gimnèsies/Pitiüses → Balear. Catalunya Nord: comarca →
+Catalunya Nord → Catalana. L'Alguer: la Nurra → província de Sàsser →
+Sardenya. Andorra: «divisions» de la Lliga Andorrana. Llistes de municipis per
+als orígens de la comarcal. S'ha de fer a `localitats.js` d'El Tauler i tornar
+a copiar.

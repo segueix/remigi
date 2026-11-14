@@ -140,9 +140,10 @@ test('la lliga fa servir la localitat d’El Tauler i els noms de les lligues d�
   await expect(dialeg).toContainText("Lliga Comarcal d'Osona");
   await expect(dialeg).toContainText('Lliga Mundial');
   await dialeg.getByRole('button', { name: 'Desa' }).click();
-  await expect(page.locator('.lliga h2')).toHaveText('Lliga de Vic · Grup C');
-  // La lliga local comença a Novell.
-  await expect(page.locator('.lliga-lloc')).toContainText('Novell · 800');
+  // L'escalada comença com a mínim a la lliga del territori (la Catalana, Grup C).
+  await expect(page.locator('.lliga h2')).toHaveText('Lliga Catalana · Grup C');
+  await expect(page.locator('.lliga-lloc')).toContainText('Mitjà · 1160');
+  await expect(page.locator('.lliga-colocacio')).toContainText('com a mínim a la lliga del teu territori');
 
   // L'escalada és una llista vertical, com una escala: la mundial a dalt i la
   // local a baix, cadascuna amb els grups C, B i A en aquest ordre.
@@ -152,7 +153,8 @@ test('la lliga fa servir la localitat d’El Tauler i els noms de les lligues d�
   await expect(nivells.nth(5).locator('.escala-nom')).toHaveText("Lliga Comarcal d'Osona");
   await expect(nivells.last().locator('.escala-nom')).toHaveText('Lliga de Vic');
   await expect(nivells.last().locator('.escala-grao strong')).toHaveText(['C', 'B', 'A']);
-  await expect(nivells.last().locator('.escala-grao[aria-current="step"]')).toHaveText('C800');
+  await expect(nivells.nth(3).locator('.escala-nom')).toHaveText('Lliga Catalana');
+  await expect(nivells.nth(3).locator('.escala-grao[aria-current="step"]')).toHaveText('C1160');
   const ys = await nivells.evaluateAll((files) => files.map((f) => f.getBoundingClientRect().top));
   for (let i = 1; i < ys.length; i++) expect(ys[i]).toBeGreaterThan(ys[i - 1]);
   const xs = await nivells.evaluateAll((files) => files.map((f) => Math.round(f.getBoundingClientRect().left)));
@@ -163,7 +165,7 @@ test('una temporada sencera de lliga: jornades, classificació i temporada segü
   await obreNet(page);
   await page.getByRole('button', { name: 'Lliga', exact: true }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Ara no' }).click();
-  await expect(page.locator('.lliga h2')).toHaveText('Lliga Local · Grup C');
+  await expect(page.locator('.lliga h2')).toHaveText('Lliga Catalana · Grup C');
 
   // Partides de tres (dos rivals), sis jugadors i tres jornades.
   const tria = (llegenda: string) => page.locator('.tria').filter({ hasText: llegenda });
@@ -209,7 +211,7 @@ test('una temporada sencera de lliga: jornades, classificació i temporada segü
   // Final de temporada: cadascú ha jugat les tres jornades.
   await expect(page.locator('.lliga-final')).toBeVisible();
   await expect(page.locator('.lliga-final-moviment')).toContainText(
-    /Continues al Grup C de la Lliga Local|Puges al Grup B de la Lliga Local/,
+    /Continues al Grup C de la Lliga Catalana|Puges al Grup B de la Lliga Catalana|Baixes a la Lliga Provincial · Grup A/,
   );
   const jugades = await page.locator('.lliga-final .lliga-taula tbody tr td.col-pj').allTextContents();
   if (jugades.length > 0) expect(new Set(jugades)).toEqual(new Set(['3']));

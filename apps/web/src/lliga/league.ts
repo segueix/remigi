@@ -45,6 +45,17 @@ const TIER_STEP = (MAX_RATING - MIN_RATING) / (TIER_COUNT - 1);
 /** Dispersió dels rivals al voltant de la força del graó (±80: dos graons). */
 export const RIVAL_SPREAD = 80;
 
+/**
+ * On comença l'escalada, com a mínim: la lliga del territori (Catalana,
+ * Valenciana, Balear…), Grup C. Els nivells de sota (municipal, comarcal i
+ * provincial) hi són per a qui baixa, no per començar-hi.
+ */
+export const START_TIER = LEAGUE_LEVELS.findIndex((level) => level.id === 'territorial') * GROUPS.length;
+/** Fins on pot arribar la col·locació de la primera temporada: la mateixa lliga, Grup A. */
+export const PLACEMENT_MAX_TIER = START_TIER + 2;
+/** La primera temporada es juga una mica per sota del teu nivell (dos graons). */
+export const PLACEMENT_MARGIN = 80;
+
 export function clampTier(tier: number): number {
   return Number.isFinite(tier) ? Math.min(TOP_TIER, Math.max(0, Math.round(tier))) : 0;
 }
@@ -68,6 +79,28 @@ export function tierRating(tier: number): number {
 export function difficultyForRating(rating: number): DifficultyKey {
   const index = Math.round((Math.min(MAX_RATING, Math.max(MIN_RATING, rating)) - MIN_RATING) / 200);
   return DIFFICULTY_ORDER[Math.min(DIFFICULTY_ORDER.length - 1, Math.max(0, index))];
+}
+
+/**
+ * Graó de la primera temporada segons la teva habilitat: el més alt entre la
+ * Lliga Catalana (o la del teu territori) C i A que tingui els rivals uns 80
+ * punts per sota teu, perquè hi siguis favorit sense avorrir-te. Qui encara
+ * calibra el nivell (`null`) comença a la C. Els Països Catalans, l'Europea i
+ * la Mundial no es regalen: s'hi arriba jugant.
+ */
+export function placementTier(rating: number | null): number {
+  if (rating === null || !Number.isFinite(rating)) return START_TIER;
+  let tier = START_TIER;
+  for (let t = START_TIER + 1; t <= PLACEMENT_MAX_TIER; t++) {
+    if (tierRating(t) <= rating - PLACEMENT_MARGIN) tier = t;
+  }
+  return tier;
+}
+
+/** L'habilitat que compta per col·locar-te: cap mentre encara es calibra. */
+export function placementRating(profile: { rating: number; adaptiveCalibrating?: boolean } | null): number | null {
+  if (!profile || profile.adaptiveCalibrating === true) return null;
+  return profile.rating;
 }
 
 /* ---------- Noms ---------- */
@@ -654,14 +687,24 @@ const MAX_RECENT_NAMES = 90;
 
 export function newCareer(home: LeagueHome | null = null): LeagueCareer {
   return {
-    tier: 0,
-    bestTier: 0,
+    tier: START_TIER,
+    bestTier: START_TIER,
     home,
     homeAsked: false,
     config: { ...DEFAULT_CONFIG },
     seasons: [],
     recentNames: [],
   };
+}
+
+/**
+ * Graó de la temporada que es començarà ara. La primera (encara no n'has
+ * acabat cap) es col·loca segons la teva habilitat (`placementTier`); després
+ * només mana l'escala: on t'han deixat l'ascens, el descens o la permanència.
+ */
+export function upcomingTier(career: LeagueCareer, rating: number | null): number {
+  if (career.seasons.length > 0) return clampTier(career.tier);
+  return Math.max(clampTier(career.tier), placementTier(rating));
 }
 
 /**
@@ -791,7 +834,19 @@ export function parseLeagueState(raw: string | null): LeagueState {
         : [],
     };
     career.bestTier = Math.max(career.bestTier, career.tier);
-    return { career, season: validSeason(value.season) };
+    let season = validSeason(value.season);
+    /*
+     * Trajectòries d'abans que l'escalada comencés a la lliga del territori:
+     * qui no hi havia arribat mai hi puja (un sol cop: després ja té el
+     * millor graó a la Catalana i, si baixa, baixa), i la temporada que tenia
+     * per sota es descarta per tornar-la a començar allà.
+     */
+    if (career.bestTier < START_TIER) {
+      career.tier = START_TIER;
+      career.bestTier = START_TIER;
+      if (season && season.tier < START_TIER) season = null;
+    }
+    return { career, season };
   } catch {
     return { career: newCareer(), season: null };
   }

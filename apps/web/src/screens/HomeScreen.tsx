@@ -1,7 +1,16 @@
 import { DIFFICULTIES, adaptiveLevelLabel, type PlayerProfile } from '@remigi/core';
 import { ComEsJuga } from '../components/ComEsJuga';
 import { ChallengeIcon, FreePlayIcon, LeagueIcon } from '../components/icons';
-import { isFinished, rankOf, tierName, tierRating, difficultyForRating, type LeagueState } from '../lliga/league';
+import {
+  difficultyForRating,
+  isFinished,
+  placementRating,
+  rankOf,
+  tierName,
+  tierRating,
+  upcomingTier,
+  type LeagueState,
+} from '../lliga/league';
 import { challengeTotal, describeChallenge, isDone, type ChallengeState } from '../repte/challenge';
 import type { FreePlayPrefs } from '../state/freePlay';
 import type { SavedGame } from '../state/savedGame';
@@ -65,9 +74,10 @@ export function HomeScreen({
 
   /* Lliga: on ets i com vas. */
   const season = league.season;
+  const nextTier = upcomingTier(league.career, placementRating(profile));
   const leagueStatus = season && !isFinished(season)
     ? `${season.name} · jornada ${season.played + 1}/${season.config.rounds}${season.played > 0 ? ` · ${ordinal(rankOf(season))}` : ''}`
-    : `${tierName(league.career.tier, league.career.home)} · rivals ${DIFFICULTIES[difficultyForRating(tierRating(league.career.tier))].label}`;
+    : `${tierName(nextTier, league.career.home)} · rivals ${DIFFICULTIES[difficultyForRating(tierRating(nextTier))].label}`;
 
   return (
     <section className="inici">

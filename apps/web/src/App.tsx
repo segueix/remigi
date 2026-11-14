@@ -6,7 +6,9 @@ import {
   YOU,
   closeSeason,
   createSeason,
+  placementRating,
   difficultyForRating,
+  upcomingTier,
   isFinished,
   parseLeagueState,
   rankOf,
@@ -321,19 +323,24 @@ export function App() {
 
   const startSeason = useCallback(
     (config: LeagueConfig) => {
-      league.update((state) => ({
-        career: { ...state.career, config },
-        season: createSeason({
-          tier: state.career.tier,
-          config,
-          home: state.career.home,
-          seed: randomSeed(),
-          exclude: state.career.recentNames,
-        }),
-      }));
+      // La primera temporada es col·loca pel nivell (de la Catalana C a la A).
+      const rating = placementRating(profile.profile);
+      league.update((state) => {
+        const tier = upcomingTier(state.career, rating);
+        return {
+          career: { ...state.career, config, tier, bestTier: Math.max(state.career.bestTier, tier) },
+          season: createSeason({
+            tier,
+            config,
+            home: state.career.home,
+            seed: randomSeed(),
+            exclude: state.career.recentNames,
+          }),
+        };
+      });
       savedGames.clear('lliga');
     },
-    [league, savedGames],
+    [league, savedGames, profile.profile],
   );
 
   const abandonSeason = useCallback(() => {
@@ -564,6 +571,7 @@ export function App() {
             savedGames.saved.lliga.setup.session === leagueSession(league.value.season)
           }
           elTaulerHome={elTaulerHome}
+          playerRating={placementRating(profile.profile)}
           onStartSeason={startSeason}
           onPlayRound={() => void playRound()}
           onAbandonSeason={abandonSeason}
