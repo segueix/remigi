@@ -2529,3 +2529,24 @@ del graó 0 al 14 des dels set territoris (20 llavors per graó); una temporada
 desada amb noms castellans es carrega amb noms catalans, la resta igual i de
 manera determinista; a Europa no es toca. El castellà es manté a Europa, al
 món i per a qui juga des de fora.
+
+### Cognoms catalans de cada lloc i l'inici sobre el feltre ✅ Feta (2026-11-14)
+
+Demanat pel jugador: «Al País Valencià, Balears, Catalunya Nord i l'Alguer, a
+cada un posa els principals cognoms catalans del lloc, així com a les seves
+lligues locals. Fes que les tres targetes inicials del Remigi tinguin de fons
+el tauler; posa l'usuari a dalt a l'esquerra.»
+
+- [x] `nomsLliga.js` tornat a copiar d'El Tauler: cognoms catalans més estesos
+      del País Valencià; a les Illes, els de cada illa (Mallorca, Menorca, les
+      Pitiüses: `placeCulture`); a la Catalunya Nord, en català (fora les
+      grafies franceses); a l'Alguer, els catalans que s'hi conserven, i els
+      sards (abans la majoria, com a italians) ara són la gent d'altres
+      orígens, en la mateixa proporció que als altres territoris.
+- [x] Inici: les tres targetes amb el feltre de la taula de joc de fons (el
+      mateix de `.board`), amb els colors de cada mode en la versió clara; el
+      jugador a dalt a l'esquerra i el nom del joc a la dreta.
+
+**Criteris d'acceptació (verificats)**: test nou dels cognoms del lloc a la
+lliga local (Palma, Maó, Eivissa, Perpinyà, l'Alguer, Gandia); captures de
+l'inici a 390 i 1280 px, en clar i en fosc, amb la lliga començada.

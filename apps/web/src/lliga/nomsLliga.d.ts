@@ -62,3 +62,9 @@ export const CASTILIAN_CULTURES: readonly string[];
 export const DIVERSE: Readonly<Record<string, readonly (readonly [string, number])[]>>;
 export const TERRITORY_CULTURE: Readonly<Record<string, string>>;
 export const CULTURES: Readonly<Record<string, { f: string[]; m: string[]; s?: string[]; sf?: string[]; sm?: string[]; order?: string }>>;
+/**
+ * Cultura dels noms d'un territori dels Països Catalans per a un rival d'un
+ * lloc (o, si no se sap, del lloc del jugador): a les Illes, la de cada illa
+ * (`bal` és Mallorca, `menorca`, `pitiuses`).
+ */
+export function placeCulture(territory: string, origin?: string | null, home?: LeagueHome | null): string;
