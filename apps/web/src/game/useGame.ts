@@ -13,9 +13,11 @@ import { updateOwners, type TileOwners } from './meldOwners';
 import {
   hasChanges,
   moveTile,
+  restoreDraft,
   startTurn,
   toMove,
   type Destination,
+  type SavedDraft,
   type TurnDraft,
 } from './turnDraft';
 
@@ -134,14 +136,31 @@ export function useGame(
   initialGame?: GameState,
   initialOwners?: readonly (readonly [string, number])[],
   initialMisses?: readonly MissedChance[],
+  /** El torn a mig fer de la partida represa (fitxes a mig col·locar). */
+  initialDraft?: SavedDraft,
+  /** La fitxa que el jugador acabava de robar, per tornar-la a marcar. */
+  initialDrawnTileId?: string,
 ): GameHandle {
   const setupRef = useRef(initialSetup);
   const [game, setGame] = useState<GameState>(() => initialGame ?? newGameState(initialSetup));
-  const [draft, setDraft] = useState<TurnDraft | null>(() => draftFor(game));
+  /*
+   * Una partida represa continua exactament on era: si el jugador havia
+   * deixat fitxes a mig col·locar, hi tornen a ser (si el desat lliga amb la
+   * partida; si no, el torn comença net).
+   */
+  const [draft, setDraft] = useState<TurnDraft | null>(
+    () => (initialGame && initialDraft ? restoreDraft(game, initialDraft) : null) ?? draftFor(game),
+  );
+  /* La partida per a la qual es va fer l'esborrany: en represa, no s'ha de refer. */
+  const draftGame = useRef(game);
   const [selectedTileId, setSelectedTileId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [highlighted, setHighlighted] = useState<ReadonlySet<string>>(new Set());
-  const [drawnTileId, setDrawnTileId] = useState<string | null>(null);
+  const [drawnTileId, setDrawnTileId] = useState<string | null>(() =>
+    initialDrawnTileId && game.players[0]?.rack.some((tile) => tile.id === initialDrawnTileId)
+      ? initialDrawnTileId
+      : null,
+  );
   /*
    * D'una partida represa se'n saben els autors si es van desar; d'una de més
    * antiga, no, i llavors les jugades que ja hi havia es queden sense marc en
@@ -152,6 +171,8 @@ export function useGame(
 
   // Cada vegada que el motor avança, el torn comença de zero.
   useEffect(() => {
+    if (draftGame.current === game) return;
+    draftGame.current = game;
     setDraft(draftFor(game));
     setSelectedTileId(null);
     setError(null);

@@ -2229,3 +2229,55 @@ robada groga, vermella i negra, en tema clar i fosc i amb fitxes clàssiques;
 prova de navegador de l'escalada (mundial primera, local última, una sota
 l'altra); 206 tests de la web, 176 del motor, build i 155 proves de navegador
 en verd (17 omeses per plataforma).
+
+### La partida es reprèn tal com era, i el repte s'encadena ✅ Feta (2026-11-14)
+
+Demanat pel jugador: «Fes que si un jugador surt a mitja partida d'un mode a
+Remigi, la partida segueixi tal com la va deixar, tant a lliure, repte o lliga.
+Fes que a repte les partides també s'encadenin mostrant resultats i compte
+enrere.»
+
+- [x] **Comprovat abans de tocar res** (Chromium, els tres modes, sortint a
+      l'inici i recarregant): torn, sac i fitxes ja es conservaven, però es
+      perdien tres coses — les fitxes a mig col·locar tornaven al faristol, la
+      marca de la fitxa robada desapareixia i el rellotge del torn tornava a
+      començar (117 s → 120 s).
+- [x] **Fitxes a mig col·locar**: l'esborrany del torn es desa amb la partida
+      (`serializeDraft`) i es restaura validat contra la partida
+      (`restoreDraft`: mateix torn i jugador, exactament les mateixes fitxes,
+      cap fitxa de la taula al faristol); si no lliga, el torn comença net.
+- [x] **Fitxa acabada de robar**: es desa (`drawnTileId`) i continua marcada.
+- [x] **Rellotge del torn**: `useTurnClock` porta el temps que queda del torn
+      i el desa cada segon (`remigi:rellotge:<mode>`); en tornar a la partida
+      continua per allà. De passada, obrir i tancar el menú del jugador ja no
+      torna a començar el torn sencer (abans sí).
+- [x] **Repte encadenat** (`RepteInterlude.tsx`): entre partides, 30 s de
+      relax com a la lliga (resultat en curt, «PARTIDA n/N», compte enrere,
+      total, victòries i rècord, rivals de la següent, música composta). Les
+      peces comunes amb la lliga són a `screens/interlude.tsx`.
+
+**Criteris d'acceptació (verificats)**: el mateix recorregut real pels tres
+modes amb recàrrega pel mig dona ara estats idèntics abans i després (fitxa a
+mig col·locar, marca de robada i rellotge); 212 tests de la web (3 nous de
+l'esborrany, 3 del rellotge) i 176 del motor; 159 proves de navegador (17
+omeses per plataforma), amb noves: represa exacta (amb recàrrega, el menú no
+reinicia el rellotge, i «Desfer canvis» funciona després de reprendre), el
+repte amb la pantalla de relax («Juga ara», «Repte» que atura el compte) i la
+partida següent que comença sola als 30 s (rellotge simulat). Captures en clar i
+fosc.
+
+### Problemes trobats
+
+- [2026-11-14] **El rellotge es reiniciava en tancar el menú**: el compte
+  enrere es tornava a armar amb la durada sencera cada cop que tornava a
+  córrer. Resolt amb el pressupost del torn (`startingBudget`), que també és el
+  que fa possible la represa.
+- [2026-11-14] En reprendre una partida, l'efecte que reinicia el torn a cada
+  moviment s'executava també en muntar i esborrava l'esborrany restaurat. Ara
+  només actua quan la partida canvia de debò (es compara amb la partida per a
+  la qual es va fer l'esborrany), cosa que també aguanta el doble muntatge del
+  mode estricte.
+- [2026-11-14] Una execució de la prova de navegador de la lliga (la jornada 2
+  que comença sola després del relax) va fallar un cop: la partida no havia
+  aparegut. No s'ha reproduït en 126 execucions seguides (també amb 4 processos
+  en paral·lel); queda apuntat per si torna a sortir.

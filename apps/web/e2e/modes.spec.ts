@@ -86,16 +86,36 @@ test('el repte suma els punts de totes les partides i no mou el nivell del joc l
   await page.locator('.tria').filter({ hasText: 'Rivals per partida' }).getByRole('button', { name: '1', exact: true }).click();
   await page.getByRole('button', { name: 'Comença el repte' }).click();
 
+  const num = (text: string | null) => Number(text!.replace('−', '-').replace('+', '').split(' ').pop());
   const punts: number[] = [];
   for (let partida = 1; partida <= 3; partida++) {
     await expect(page.locator('.nivell-mode')).toContainText(`partida ${partida} de 3`);
     await expect(page.locator('.player')).toHaveCount(2);
     await expect(page.locator('.player .tag').filter({ hasText: 'Novell' })).toHaveCount(1);
-    await acabaLaPartida(page, '.final-repte');
-    await expect(page.locator('.final-repte')).toContainText(`partida ${partida} de 3`);
-    const text = (await page.locator('.final-mode-xifres dd').first().textContent())!;
-    punts.push(Number(text.replace('−', '-').replace('+', '')));
-    await page.getByRole('button', { name: partida < 3 ? /Següent partida/ : 'Resultat del repte' }).click();
+    if (partida < 3) {
+      // Entre partides, com a la lliga: el resultat en curt, la partida que
+      // toca i el compte enrere, amb el total del repte fins ara.
+      await acabaLaPartida(page, '.interludi');
+      await expect(page.locator('.interludi-jornada')).toContainText(`Partida${partida + 1}/3`);
+      await expect(page.locator('.interludi-compte strong')).toHaveText(/^(30|29|28|27)$/);
+      punts.push(num(await page.locator('.interludi-resultat').textContent()));
+      const fins = punts.reduce((a, b) => a + b, 0);
+      await expect(page.locator('.interludi-marcador dd').first()).toHaveText(
+        fins > 0 ? `+${fins}` : fins < 0 ? `−${Math.abs(fins)}` : '0',
+      );
+      // La primera, sense esperar; la segona, aturant el compte per anar al repte.
+      if (partida === 1) await page.getByRole('button', { name: 'Juga ara' }).click();
+      else {
+        await page.locator('.interludi').getByRole('button', { name: 'Repte', exact: true }).click();
+        await page.getByRole('button', { name: 'Juga la partida 3' }).click();
+      }
+    } else {
+      // L'última acaba amb el resum de sempre.
+      await acabaLaPartida(page, '.final-repte');
+      await expect(page.locator('.final-repte')).toContainText('partida 3 de 3');
+      punts.push(num(await page.locator('.final-mode-xifres dd').first().textContent()));
+      await page.getByRole('button', { name: 'Resultat del repte' }).click();
+    }
   }
 
   const total = punts.reduce((a, b) => a + b, 0);
@@ -264,4 +284,53 @@ test('la música entre jornades es pot silenciar i ho recorda', async ({ page })
   await page.locator('.interludi-musica').getByRole('button', { name: 'Silencia' }).click();
   await expect(page.locator('.interludi-musica')).toContainText('Sense música');
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('remigi:musica') ?? '{}').on)).toBe(false);
+});
+
+test('entre partides del repte, 30 segons de relax i la següent comença sola', async ({ page }) => {
+  await page.clock.install();
+  await obreNet(page);
+  await page.getByRole('button', { name: 'Repte', exact: true }).click();
+  await page.getByRole('button', { name: '3', exact: true }).first().click();
+  await page.getByRole('button', { name: 'Comença el repte' }).click();
+  await acabaLaPartida(page, '.interludi');
+  await expect(page.locator('.interludi-seguent')).toContainText('2 rivals de nivell Mitjà');
+  await page.clock.runFor(31_000);
+  await expect(page.locator('.nivell-mode')).toContainText('partida 2 de 3');
+  await expect(page.locator('.rack .tile').first()).toBeVisible();
+});
+
+test('en tornar a una partida deixada a mitges, és exactament com era', async ({ page }) => {
+  await obreNet(page, { 'remigi:temps-torn': '120' });
+  await entraAlJocLliure(page);
+  // Roba una fitxa (queda marcada), espera el torn i en deixa una a mig col·locar.
+  await avanca(page).click();
+  await expect(avanca(page)).toBeEnabled();
+  await expect(page.locator('.rack .tile.drawn')).toHaveCount(1);
+  const robada = await page.locator('.rack .tile.drawn').getAttribute('aria-label');
+  const fitxesTaula = await page.locator('.board .meld .tile').count();
+  await page.locator('.rack .tile:not(.drawn)').first().click();
+  await page.getByRole('button', { name: '+ Jugada nova' }).click();
+  await expect(page.locator('.board .meld .tile')).toHaveCount(fitxesTaula + 1);
+  const faristol = await page.locator('.rack .tile').count();
+
+  // El rellotge no torna a començar en obrir i tancar el menú.
+  await page.waitForTimeout(2200);
+  const abansMenu = Number(await page.locator('.rellotge-segons').textContent());
+  expect(abansMenu).toBeLessThan(120);
+  await obreMenu(page);
+  await page.locator('.menu-fons').click({ position: { x: 5, y: 5 } });
+  expect(Number(await page.locator('.rellotge-segons').textContent())).toBeLessThanOrEqual(abansMenu);
+
+  // Surt a l'inici, tanca i torna a obrir l'app, i torna al joc lliure.
+  await obreMenu(page);
+  await page.getByRole('button', { name: 'Inici', exact: true }).click();
+  await page.reload();
+  await entraAlJocLliure(page);
+  await expect(page.locator('.board .meld .tile')).toHaveCount(fitxesTaula + 1);
+  await expect(page.locator('.rack .tile')).toHaveCount(faristol);
+  await expect(page.locator('.rack .tile.drawn')).toHaveAttribute('aria-label', robada!);
+  expect(Number(await page.locator('.rellotge-segons').textContent())).toBeLessThanOrEqual(abansMenu);
+  // I la jugada a mig fer es pot desfer com abans.
+  await page.getByRole('button', { name: 'Desfer canvis' }).click();
+  await expect(page.locator('.board .meld .tile')).toHaveCount(fitxesTaula);
 });

@@ -14,6 +14,20 @@ Cada mode té **la seva partida a mitges** (`remigi:game`, `remigi:game:repte`,
 fa perdre res. El joc lliure conserva la clau de sempre, així que les partides
 desades abans dels modes es reprenen igual.
 
+**En tornar-hi, la partida és exactament com era**, també després de tancar i
+tornar a obrir l'app:
+
+- les fitxes que tenies **a mig col·locar** a la taula (sense acabar la jugada)
+  hi tornen a ser, i es poden desfer com abans (`serializeDraft` /
+  `restoreDraft`: el desat es valida contra la partida —mateix torn, mateixes
+  fitxes, cap fitxa de la taula al faristol— i, si no lliga, el torn comença
+  net);
+- la **fitxa acabada de robar** continua marcada;
+- el **rellotge del torn** continua amb el temps que quedava
+  (`remigi:rellotge:<mode>`, desat cada segon): sortir i tornar no dona temps
+  de més. Tampoc obrir i tancar el menú del jugador, que abans tornava a
+  començar el torn sencer.
+
 Codi: `apps/web/src/screens/HomeScreen.tsx`, `RepteScreen.tsx`,
 `LligaScreen.tsx`; lògica pura a `apps/web/src/lliga/league.ts`,
 `apps/web/src/repte/challenge.ts` i `apps/web/src/state/freePlay.ts`; tot ho
@@ -48,6 +62,15 @@ per a aquella mateixa configuració; l'historial guarda els 40 últims reptes.
 - El repte va a l'historial **en el moment** d'acabar l'última partida, no quan
   es torna a obrir la pantalla.
 - Es pot abandonar (no queda enlloc) o repetir amb la mateixa configuració.
+- **Les partides s'encadenen** com les jornades de la lliga
+  (`RepteInterlude.tsx`): en acabar-ne una que no és l'última, 30 segons de
+  relax amb el resultat en curt («Victòria · +87», «2n de 3 · −34»), la partida
+  que toca gran («PARTIDA 3/5»), el compte enrere, el marcador del repte (total,
+  victòries i el rècord a batre), els rivals de la següent i la música composta
+  en aquell moment. A zero comença sola; «Juga ara» no espera; «Repte» i «Inici»
+  l'aturen. L'última acaba amb el resum i el resultat del repte. El compte
+  enrere i la música són les mateixes peces que a la lliga
+  (`screens/interlude.tsx`).
 
 ## 3. Lliga
 

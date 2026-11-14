@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { secondsLeft } from './useTurnClock';
+import { secondsLeft, startingBudget } from './useTurnClock';
 
 describe('els segons que queden del torn', () => {
   const start = 1_000_000;
@@ -21,5 +21,24 @@ describe('els segons que queden del torn', () => {
    */
   it('amb el temps passat de llarg, zero (mai negatiu)', () => {
     expect(secondsLeft(start + 30_000, start + 120_000)).toBe(0);
+  });
+});
+
+describe('el temps desat d’un torn deixat a mitges', () => {
+  const saved = { key: '7:0', seconds: 60, leftMs: 41_500 };
+
+  it('continua amb el que quedava si és el mateix torn i la mateixa durada', () => {
+    expect(startingBudget(60, '7:0', saved)).toBe(41_500);
+  });
+
+  it('un altre torn o una altra durada comencen sencers', () => {
+    expect(startingBudget(60, '9:0', saved)).toBe(60_000);
+    expect(startingBudget(30, '7:0', saved)).toBe(30_000);
+    expect(startingBudget(60, '7:0', null)).toBe(60_000);
+  });
+
+  it('mai més del torn sencer ni menys de zero', () => {
+    expect(startingBudget(60, '7:0', { ...saved, leftMs: 999_999 })).toBe(60_000);
+    expect(startingBudget(60, '7:0', { ...saved, leftMs: -5 })).toBe(0);
   });
 });

@@ -49,6 +49,60 @@ export function startTurn(state: GameState, playerIndex: number): TurnDraft {
   };
 }
 
+/**
+ * L'esborrany tal com es desa amb la partida: on tenies cada fitxa (taula i
+ * faristol) a mig torn. Només els identificadors: les fitxes es tornen a
+ * prendre de la partida en restaurar-lo, i així un desat manipulat no pot
+ * inventar-ne cap.
+ */
+export interface SavedDraft {
+  /** Torn i jugador de la partida quan es va desar: si no coincideixen, no val. */
+  turn: number;
+  player: number;
+  board: string[][];
+  rack: string[];
+}
+
+export function serializeDraft(draft: TurnDraft, state: GameState): SavedDraft {
+  return {
+    turn: state.turn,
+    player: state.currentPlayer,
+    board: draft.board.map((meld) => meld.map((tile) => tile.id)),
+    rack: draft.rack.map((tile) => tile.id),
+  };
+}
+
+/**
+ * Torna a posar el torn tal com el jugador el va deixar (fitxes a mig
+ * col·locar incloses), o `null` si el desat no lliga amb la partida: un altre
+ * torn, una altra fitxa, una fitxa que ja era a la taula endut al faristol...
+ * Davant del dubte, el torn torna a començar net.
+ */
+export function restoreDraft(state: GameState, saved: unknown): TurnDraft | null {
+  if (typeof saved !== 'object' || saved === null) return null;
+  const s = saved as Partial<SavedDraft>;
+  if (s.turn !== state.turn || s.player !== state.currentPlayer) return null;
+  if (state.status !== 'playing' || state.players[state.currentPlayer]?.kind !== 'human') return null;
+  if (!Array.isArray(s.board) || !Array.isArray(s.rack)) return null;
+  if (!s.board.every((meld) => Array.isArray(meld) && meld.length > 0 && meld.every((id) => typeof id === 'string'))) {
+    return null;
+  }
+  if (!s.rack.every((id) => typeof id === 'string')) return null;
+  const fresh = startTurn(state, state.currentPlayer);
+  const byId = new Map([...fresh.board.flat(), ...fresh.rack].map((tile) => [tile.id, tile]));
+  const savedIds = [...s.board.flat(), ...s.rack];
+  // Exactament les mateixes fitxes, cap de més ni de menys ni repetida.
+  if (savedIds.length !== byId.size || new Set(savedIds).size !== savedIds.length) return null;
+  if (!savedIds.every((id) => byId.has(id))) return null;
+  // Les fitxes que ja eren a la taula no poden haver tornat al faristol.
+  if (s.rack.some((id) => fresh.locked.has(id))) return null;
+  return {
+    board: s.board.map((meld) => meld.map((id) => byId.get(id)!)),
+    rack: s.rack.map((id) => byId.get(id)!),
+    locked: fresh.locked,
+  };
+}
+
 /** Fitxes que el jugador ha posat a la taula durant aquest torn. */
 export function playedTileIds(draft: TurnDraft): Set<string> {
   return new Set(

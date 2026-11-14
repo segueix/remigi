@@ -9,6 +9,8 @@ import {
   moveTile,
   openingPoints,
   playedTileIds,
+  restoreDraft,
+  serializeDraft,
   startTurn,
   toMove,
   type TurnDraft,
@@ -365,5 +367,49 @@ describe('les escales s’endrecen soles mentre es construeixen', () => {
     const result = insertSmart(group, { id: 'red-7-b', kind: 'number', color: 'red', value: 7 } as Tile);
     // Repetits: no és material d'escala; la fitxa va al final i au.
     expect(result.map((t) => t.id)).toEqual(['red-7-a', 'blue-7-a', 'red-7-b']);
+  });
+});
+
+describe('el torn a mig fer, desat i restaurat', () => {
+  const state = {
+    status: 'playing',
+    turn: 7,
+    currentPlayer: 0,
+    board: [[t('red', 1), t('blue', 1), t('black', 1)]],
+    players: [
+      { kind: 'human', rack: [t('orange', 1), t('red', 9), t('red', 10)] },
+      { kind: 'ai', rack: [t('blue', 9)] },
+    ],
+  } as unknown as GameState;
+
+  it('torna a posar les fitxes a mig col·locar on eren', () => {
+    let d = startTurn(state, 0);
+    d = moveTile(d, 'orange-1-a', { kind: 'meld', index: 0 });
+    d = moveTile(d, 'red-9-a', { kind: 'new' });
+    const restored = restoreDraft(state, JSON.parse(JSON.stringify(serializeDraft(d, state))));
+    expect(restored).not.toBeNull();
+    expect(ids(restored!.board)).toEqual(ids(d.board));
+    expect(restored!.rack.map((x) => x.id)).toEqual(['red-10-a']);
+    expect(restored!.locked.has('red-1-a')).toBe(true);
+    expect(hasChanges(restored!)).toBe(true);
+  });
+
+  it('no val si és d’un altre torn o d’un altre jugador', () => {
+    const saved = serializeDraft(startTurn(state, 0), state);
+    expect(restoreDraft({ ...state, turn: 8 } as GameState, saved)).toBeNull();
+    expect(restoreDraft({ ...state, currentPlayer: 1 } as GameState, saved)).toBeNull();
+  });
+
+  it('no val si les fitxes no quadren amb la partida', () => {
+    const saved = serializeDraft(startTurn(state, 0), state);
+    // Una fitxa que no és de la partida, una de menys i una de repetida.
+    expect(restoreDraft(state, { ...saved, rack: [...saved.rack, 'blue-13-b'] })).toBeNull();
+    expect(restoreDraft(state, { ...saved, rack: saved.rack.slice(1) })).toBeNull();
+    expect(restoreDraft(state, { ...saved, rack: [...saved.rack.slice(1), saved.rack[0], saved.rack[0]] })).toBeNull();
+    // Una fitxa que ja era a la taula no pot haver tornat al faristol.
+    expect(
+      restoreDraft(state, { ...saved, board: [['blue-1-a', 'black-1-a']], rack: [...saved.rack, 'red-1-a'] }),
+    ).toBeNull();
+    expect(restoreDraft(state, 'res')).toBeNull();
   });
 });

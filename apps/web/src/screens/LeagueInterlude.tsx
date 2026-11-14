@@ -1,6 +1,4 @@
 import { DIFFICULTIES } from '@remigi/core';
-import { useEffect, useRef, useState } from 'react';
-import { resyncCountdown, startCountdown, tickCountdown } from '../lliga/countdown';
 import { botPersona } from '../game/bots';
 import {
   YOU,
@@ -10,19 +8,14 @@ import {
   yourTable,
   type LeagueSeason,
 } from '../lliga/league';
-import {
-  composeNew,
-  jinglePlayer,
-  pauseMusic,
-  registerPiece,
-  resumeMusic,
-  stopMusic,
-} from '../musica/musica';
-import { safeStorage, useMusicPrefs } from '../musica/useMusicPrefs';
 import { leaguePoints, ordinal, signed } from '../ui/format';
-
-/** Els segons de relax entre jornada i jornada, com a les lligues ràpides d'El Tauler. */
-export const INTERLUDE_SECONDS = 30;
+import {
+  InterludeBox,
+  InterludeCountdown,
+  InterludeMusic,
+  useInterludeCountdown,
+  useInterludeMusic,
+} from './interlude';
 
 interface Props {
   /** La temporada, amb la jornada que s'acaba de jugar ja apuntada. */
@@ -47,85 +40,8 @@ interface Props {
  * ningú davant.
  */
 export function LeagueInterlude({ season, playerName, onPlayNow, onStandings, onHome }: Props) {
-  const [music, setMusic] = useMusicPrefs();
-  const [left, setLeft] = useState(INTERLUDE_SECONDS * 1000);
-  const [playing, setPlaying] = useState<string | null>(null);
-  const clock = useRef(startCountdown(INTERLUDE_SECONDS * 1000, performance.now()));
-  const onPlayNowRef = useRef(onPlayNow);
-  onPlayNowRef.current = onPlayNow;
-
-  useEffect(() => {
-    clock.current = startCountdown(INTERLUDE_SECONDS * 1000, performance.now());
-    let done = false;
-    /*
-     * En amagar-se o tornar l'app, el temps es torna a prendre: si el mòbil ha
-     * suspès els temporitzadors en segon pla, l'estona amagada no es descompta
-     * (vegeu `countdown.ts`).
-     */
-    const onVisibility = () => {
-      clock.current = resyncCountdown(clock.current, performance.now());
-      if (document.hidden) pauseMusic();
-      else resumeMusic();
-    };
-    document.addEventListener('visibilitychange', onVisibility);
-    const timer = setInterval(() => {
-      const hidden = document.hidden;
-      if (hidden) pauseMusic();
-      else resumeMusic();
-      clock.current = tickCountdown(clock.current, performance.now(), hidden);
-      setLeft(clock.current.left);
-      if (clock.current.left <= 0 && !done) {
-        done = true;
-        clearInterval(timer);
-        onPlayNowRef.current();
-      }
-    }, 200);
-    return () => {
-      clearInterval(timer);
-      document.removeEventListener('visibilitychange', onVisibility);
-    };
-  }, []);
-
-  /*
-   * La música: una peça nova cada vegada, en bucle fins que comença la partida
-   * (o s'atura). Si generar-la triga una mica, comença pel punt on va el
-   * compte enrere: el bucle no té final que s'hagi de fer coincidir.
-   */
-  const musicOn = music.on && music.volume > 0;
-  const volume = useRef(music.volume);
-  volume.current = music.volume;
-  useEffect(() => {
-    if (!musicOn) return;
-    let cancelled = false;
-    void jinglePlayer()
-      .then(({ R, player }) => {
-        if (cancelled || !player.supported()) return;
-        const store = safeStorage();
-        const spec = composeNew(R, store);
-        return player
-          .play(spec, {
-            volume: volume.current,
-            startedAt: () => Math.max(0, (INTERLUDE_SECONDS * 1000 - clock.current.left) / 1000),
-          })
-          .then((ok) => {
-            if (!ok) return;
-            if (cancelled) {
-              player.stop(true);
-              return;
-            }
-            registerPiece(store, spec);
-            setPlaying(R.jingleTitle(spec));
-          });
-      })
-      .catch(() => {
-        // Sense àudio (o sense el compositor), la pausa es fa igual en silenci.
-      });
-    return () => {
-      cancelled = true;
-      stopMusic(true);
-      setPlaying(null);
-    };
-  }, [musicOn]);
+  const countdown = useInterludeCountdown(onPlayNow);
+  const music = useInterludeMusic(countdown.elapsed);
 
   const round = season.played; // jornada que s'acaba de jugar (des d'1)
   const mine = season.results.find((result) => result.round === round - 1 && result.ids.includes(YOU));
@@ -138,7 +54,6 @@ export function LeagueInterlude({ season, playerName, onPlayNow, onStandings, on
   const rankOf = (id: string) => table.findIndex((row) => row.id === id) + 1;
   const myRow = table.find((row) => row.id === YOU);
   const next = yourTable(season);
-  const seconds = Math.max(0, Math.ceil(left / 1000));
 
   return (
     <section className="card interludi lliga" aria-labelledby="interludi-titol">
@@ -151,20 +66,9 @@ export function LeagueInterlude({ season, playerName, onPlayNow, onStandings, on
         </p>
       )}
 
-      <div className="interludi-jornada">
-        <span id="interludi-titol" className="interludi-jornada-text">
-          Jornada
-        </span>
-        <span className="interludi-jornada-num">
-          {round + 1}
-          <small>/{season.config.rounds}</small>
-        </span>
-      </div>
+      <InterludeBox label="Jornada" value={round + 1} total={season.config.rounds} />
 
-      <p className="interludi-compte" role="timer" aria-label={`Comença en ${seconds} segons`}>
-        <span className="muted">comença en</span>
-        <strong>{seconds}</strong>
-      </p>
+      <InterludeCountdown seconds={countdown.seconds} />
 
       <div className="interludi-cares">
         <div className="interludi-pos tu">
@@ -201,24 +105,7 @@ export function LeagueInterlude({ season, playerName, onPlayNow, onStandings, on
         </ul>
       </div>
 
-      <p className="interludi-musica small">
-        {musicOn ? (
-          playing ? (
-            <span title="Peça composta ara mateix per l’app: cada vegada n’és una de nova">🎵 Sona: {playing}</span>
-          ) : (
-            <span className="muted">🎵 Component la música…</span>
-          )
-        ) : (
-          <span className="muted">Sense música</span>
-        )}
-        <button
-          type="button"
-          className="link"
-          onClick={() => setMusic({ ...music, on: !musicOn, volume: music.volume > 0 ? music.volume : 60 })}
-        >
-          {musicOn ? 'Silencia' : 'Posa música'}
-        </button>
-      </p>
+      <InterludeMusic {...music} />
 
       <div className="row interludi-accions">
         <button type="button" onClick={onPlayNow}>

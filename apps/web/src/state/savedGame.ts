@@ -1,6 +1,7 @@
 import type { GameState } from '@remigi/core';
 import { validMisses, type MissedChance } from '../game/missedChances';
 import { validRackOrder, validSortBy, type SortBy } from '../game/rackOrder';
+import type { SavedDraft } from '../game/turnDraft';
 import type { GameMode, GameSetup } from '../game/useGame';
 import type { KeyValueStore } from '@remigi/core';
 
@@ -44,6 +45,14 @@ export interface SavedGame {
   rackOrder?: string[];
   /** Últim criteri automàtic triat; evita confondre color i número en mans ambigües. */
   rackSortBy?: SortBy;
+  /**
+   * El torn a mig fer: les fitxes que el jugador tenia a mig col·locar a la
+   * taula. Es valida en restaurar-lo (`restoreDraft`); si no lliga amb la
+   * partida, el torn comença net.
+   */
+  draft?: SavedDraft;
+  /** La fitxa acabada de robar, perquè en tornar continuï marcada. */
+  drawnTileId?: string;
 }
 
 export async function saveGame(
@@ -78,6 +87,7 @@ export async function loadGame(store: KeyValueStore, mode: GameMode = 'lliure'):
     if ('misses' in saved) saved = { ...saved, misses: validMisses(saved.misses) };
     if ('rackOrder' in saved) saved = { ...saved, rackOrder: validRackOrder(saved.rackOrder) };
     if ('rackSortBy' in saved) saved = { ...saved, rackSortBy: validSortBy(saved.rackSortBy) };
+    if ('drawnTileId' in saved && typeof saved.drawnTileId !== 'string') saved = { ...saved, drawnTileId: undefined };
     return saved;
   } catch {
     return null;
