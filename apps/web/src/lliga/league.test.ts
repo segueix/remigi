@@ -12,6 +12,8 @@ import {
   closeSeason,
   createSeason,
   isFinished,
+  levelName,
+  levelShort,
   makeSchedule,
   movementText,
   newCareer,
@@ -298,6 +300,54 @@ describe('la classificació', () => {
   it('la teva taula de cada jornada són els rivals del calendari', () => {
     const season = createSeason({ tier: 0, config: DEFAULT_CONFIG, home: VIC, seed: 30 });
     expect(yourTable(season).map((r) => r.id)).toEqual(season.schedule[0][0].slice(1));
+  });
+});
+
+describe('fora de Catalunya, cap nivell no repeteix l’àrea del de sota', () => {
+  const home = (territory: LeagueHome['territory'], municipi: string, comarca: string, provincia: string): LeagueHome => ({
+    territory, municipi, comarca, provincia, pais: '',
+  });
+  const names = (h: LeagueHome) => [0, 1, 2, 3].map((level) => levelName(level, h));
+
+  it('Balears: illa, Gimnèsies o Pitiüses, Balear', () => {
+    expect(names(home('bal', 'Palma', 'Mallorca', 'Illes Balears'))).toEqual([
+      'Lliga de Palma', 'Lliga Insular de Mallorca', 'Lliga de les Gimnèsies', 'Lliga Balear',
+    ]);
+    expect(names(home('bal', 'es Castell', 'Menorca', 'Illes Balears'))[0]).toBe('Lliga des Castell');
+    expect(levelName(2, home('bal', 'Eivissa', 'Eivissa', 'Illes Balears'))).toBe('Lliga de les Pitiüses');
+    expect(levelShort(2, home('bal', 'Eivissa', 'Eivissa', 'Illes Balears'))).toBe('Pitiüses');
+  });
+
+  it('Catalunya Nord, Andorra i l’Alguer', () => {
+    expect(names(home('nord', 'Perpinyà', 'el Rosselló', 'els Pirineus Orientals'))).toEqual([
+      'Lliga de Perpinyà', 'Lliga Comarcal del Rosselló', 'Lliga de la Catalunya Nord', 'Lliga Catalana',
+    ]);
+    expect(names(home('and', 'Encamp', 'Andorra', 'Andorra'))).toEqual([
+      "Lliga d'Encamp", 'Tercera Divisió Andorrana', 'Segona Divisió Andorrana', 'Lliga Andorrana',
+    ]);
+    expect(tierName(4, home('and', 'Encamp', 'Andorra', 'Andorra'))).toBe('Tercera Divisió Andorrana · Grup B');
+    expect(names(home('alguer', "l'Alguer", "l'Alguer", 'Sàsser'))).toEqual([
+      "Lliga de l'Alguer", 'Lliga de la Nurra', 'Lliga Provincial de Sàsser', 'Lliga de Sardenya',
+    ]);
+    expect(tierName(START_TIER, home('alguer', "l'Alguer", "l'Alguer", 'Sàsser'))).toBe('Lliga de Sardenya · Grup C');
+  });
+
+  it('els rivals tenen origen a tots els nivells de casa, també a l’Alguer i a Andorra', () => {
+    const homes = [
+      home('val', 'Gandia', 'la Safor', 'València'),
+      home('bal', 'Maó', 'Menorca', 'Illes Balears'),
+      home('nord', 'Prada', 'el Conflent', 'els Pirineus Orientals'),
+      home('and', 'Encamp', 'Andorra', 'Andorra'),
+      home('franja', 'Fraga', 'el Baix Cinca', 'Osca'),
+      home('alguer', "l'Alguer", "l'Alguer", 'Sàsser'),
+    ];
+    for (const h of homes) {
+      for (const tier of [3, 6, START_TIER]) {
+        const season = createSeason({ tier, config: DEFAULT_CONFIG, home: h, seed: 5 });
+        expect(season.name).toBe(tierName(tier, h));
+        for (const rival of season.rivals) expect(rival.origin).toBeTruthy();
+      }
+    }
   });
 });
 

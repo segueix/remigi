@@ -111,8 +111,9 @@ temporada ho diu així:
 ### On es comença
 
 **Com a mínim a la lliga del territori, Grup C** (`START_TIER` = 9): la Lliga
-Catalana, la Valenciana, la Balear, l'Andorrana, la de la Catalunya Nord, la de
-la Franja o l'Algueresa, segons on jugues (rivals de 1160, Mitjà). Començar a
+Catalana (també a la Catalunya Nord), la Valenciana, la Balear, l'Andorrana, la
+de la Franja o la de Sardenya (a l'Alguer), segons on jugues (rivals de 1160,
+Mitjà). Començar a
 la Lliga Local C (Novell, 800) voldria dir, per a algú de 1300, unes 12
 temporades guanyant rivals molt més fluixos abans de trobar-ne del seu nivell.
 
@@ -166,10 +167,27 @@ les temporades següents.
 Remigi viu a `eltauler.cat/remigi/`, al mateix origen que El Tauler, i
 comparteixen `localStorage`. Si el jugador ja va dir a la lliga d'escacs on
 juga (`chess_leagueCareer.home`), «On jugues?» surt **ja omplert** amb aquell
-lloc i ho diu. Només es llegeix: Remigi no hi escriu mai. A Catalunya el
-municipi es tria d'una llista (Idescat) i en surten comarca i província; als
-altres territoris es tria la comarca i el municipi s'escriu; fora dels Països
-Catalans s'escriuen país i municipi. Amb «Ara no», les lligues es diuen «Lliga
+lloc i ho diu. Només es llegeix: Remigi no hi escriu mai. El municipi es tria
+d'una llista i en surten comarca i província: a Catalunya, els 947 d'Idescat;
+al País Valencià, la Catalunya Nord, la Franja, les Balears, Andorra i
+l'Alguer, els de `localitats.js` d'El Tauler (llistes de la Viquipèdia). Fora
+de Catalunya, si no hi és, s'escriu i es tria la comarca; fora dels Països
+Catalans s'escriuen país i municipi.
+
+**Noms dels nivells fora de Catalunya** (`placeName`, com `leaguePlaceName`
+d'El Tauler): cap nivell no repeteix l'àrea del de sota.
+
+| territori | comarcal | provincial | territori |
+|---|---|---|---|
+| País Valencià, Franja | Lliga Comarcal de la Safor | Lliga Provincial de València | Lliga Valenciana (de la Franja) |
+| Illes Balears | Lliga Insular de Mallorca | Lliga de les Gimnèsies o de les Pitiüses | Lliga Balear |
+| Catalunya Nord | Lliga Comarcal del Rosselló | Lliga de la Catalunya Nord | Lliga Catalana |
+| Andorra | Tercera Divisió Andorrana | Segona Divisió Andorrana | Lliga Andorrana |
+| l'Alguer | Lliga de la Nurra | Lliga Provincial de Sàsser | Lliga de Sardenya |
+
+Els rivals tenen origen a tots els nivells de casa (municipis de la comarca o
+de l'illa, del grup d'illes, de la Catalunya Nord, parròquies i pobles
+d'Andorra, llocs de la Nurra, de la província de Sàsser i de Sardenya). Amb «Ara no», les lligues es diuen «Lliga
 Local», «Lliga Comarcal»… Una temporada que encara no ha començat es torna a
 sortejar amb el lloc nou.
 
@@ -298,9 +316,9 @@ música entre jornades o canviar-ne el volum (`remigi:musica`).
 - Algú que jugui per primer cop (calibrant, o d'habilitat baixa) comença
   contra rivals de 1160 (Mitjà). Si li van grans, baixa a la provincial: el
   descens fa de col·locació per sota.
-- Fora de Catalunya, els noms i els orígens dels rivals dels nivells comarcal i
-  provincial no sempre tenen sentit (vegeu `AGENT.md`, «Comarques i províncies
-  fora de Catalunya»).
+- Les llistes de municipis de fora de Catalunya són de la Viquipèdia (novembre
+  de 2026). A la Catalunya Nord només hi ha els de parla catalana: la Fenolleda
+  (occitana) treu els rivals de la comarcal de tota la Catalunya Nord.
 - Les dades de localitats i noms són còpies: no se sincronitzen soles amb El
   Tauler.
 - Abandonar una temporada permet fugir d'un descens. És deliberat (no es vol

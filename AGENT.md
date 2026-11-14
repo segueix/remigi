@@ -2315,7 +2315,7 @@ dels modes amb les expectatives noves; comprovat a Chromium amb un perfil de
 1300 a Gandia («Lliga Valenciana · Grup B», rivals de 1200) i amb una
 trajectòria vella a la Lliga Local B (puja a la Valenciana).
 
-### Comarques i províncies fora de Catalunya ⏳ Pendent (proposta feta)
+### Comarques i províncies fora de Catalunya ✅ Feta (2026-11-14)
 
 Diagnòstic (2026-11-14) dels noms i dels orígens dels rivals dels nivells de
 sota (`levelName`, `rivalOrigins`, dades a `localitats.js`, còpia d'El Tauler):
@@ -2335,9 +2335,28 @@ sota (`levelName`, `rivalOrigins`, dades a `localitats.js`, còpia d'El Tauler):
 - **País Valencià**: correcte, però la comarcal no té orígens (no hi ha llista
   de municipis).
 
-Proposta (pendent que el jugador triï): que cap nivell repeteixi l'àrea del
-de sota. Balears: illa → Gimnèsies/Pitiüses → Balear. Catalunya Nord: comarca →
-Catalunya Nord → Catalana. L'Alguer: la Nurra → província de Sàsser →
-Sardenya. Andorra: «divisions» de la Lliga Andorrana. Llistes de municipis per
-als orígens de la comarcal. S'ha de fer a `localitats.js` d'El Tauler i tornar
-a copiar.
+Demanat pel jugador: «Aplica proposta a Remigi i El Tauler, fusiona i fes
+publicar». Cap nivell no repeteix l'àrea del de sota:
+
+- [x] **Balears**: Lliga Insular de l'illa → Lliga de les Gimnèsies (Mallorca i
+      Menorca) o de les Pitiüses (Eivissa i Formentera) → Lliga Balear.
+- [x] **Catalunya Nord**: comarca → Lliga de la Catalunya Nord → Lliga Catalana
+      (amb rivals del Principat i del Nord, cadascun amb el nom del seu lloc:
+      `originTerritory`).
+- [x] **Andorra**: Tercera i Segona Divisió Andorrana → Lliga Andorrana, amb
+      rivals de parròquies i pobles.
+- [x] **L'Alguer**: Lliga de la Nurra → Provincial de Sàsser → Lliga de
+      Sardenya, amb llocs de cada àrea i noms sobretot italians.
+- [x] **Municipis** per als orígens de la comarcal i per triar-los a «On
+      jugues?»: 542 del País Valencià, 198 de la Catalunya Nord, 57 de la
+      Franja (Viquipèdia) i els 67 de les Balears. L'Horta Oest, suprimida el
+      2022, ja no és a la llista de comarques: una localitat desada amb ella es
+      corregeix amb la comarca del municipi.
+- [x] «des Castell» (article salat). Fet a `localitats.js`, `nomslliga.js` i
+      `core.js` d'El Tauler i copiat aquí amb el mateix convertidor (que
+      reprodueix exactament les còpies d'abans).
+
+**Criteris d'acceptació (verificats)**: 220 tests de la web (3 nous: noms
+de les Balears, de la Catalunya Nord, d'Andorra i de l'Alguer, i rivals amb
+origen a tots els nivells de casa de sis territoris) i 176 del motor; El Tauler,
+2.881 proves; comprovat a Chromium a les dues apps.

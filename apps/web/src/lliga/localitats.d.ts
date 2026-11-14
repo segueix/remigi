@@ -47,3 +47,7 @@ export function rivalOrigins(
   random?: () => number,
 ): string[];
 export function ppccCityTerritory(city: string): TerritoryId | null;
+/** Grup d'illes (Gimnèsies o Pitiüses) d'una illa de les Balears. */
+export function islandGroup(island: string): { name: string; islands: string[] } | null;
+/** Territori d'on és un rival: ciutat dels Països Catalans, o municipi de la Catalunya Nord o de Catalunya. */
+export function originTerritory(place: string): TerritoryId | null;
