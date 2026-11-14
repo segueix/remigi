@@ -148,16 +148,22 @@ export function challengeStandings(challenge: Challenge, playerName = 'Tu'): Sta
   return sorted;
 }
 
+/** Una dada per jugar amb tàctica: una icona i una frase curta. */
+export interface Insight {
+  icon: string;
+  text: string;
+}
+
 /**
- * Informació per jugar amb tàctica, en frases curtes: on vas del repte i a
- * quants punts, com ha acabat l'última partida, què queda i, si no vas
- * primer, què et cal.
+ * Informació per jugar amb tàctica, en frases curtes amb icona: com ha acabat
+ * la partida, les fitxes que et quedaven, on vas del repte i a quants punts,
+ * què queda i quant val guanyar-ne una, i un consell.
  */
-export function challengeInsights(challenge: Challenge, standings: StandingRow[]): string[] {
-  const lines: string[] = [];
+export function challengeInsights(challenge: Challenge, standings: StandingRow[]): Insight[] {
+  const out: Insight[] = [];
   const me = standings.find((row) => row.you);
   const last = challenge.games[challenge.games.length - 1];
-  if (!me || !last) return lines;
+  if (!me || !last) return out;
   const played = challenge.games.length;
   const left = challenge.config.games - played;
   const leader = standings[0];
@@ -166,46 +172,46 @@ export function challengeInsights(challenge: Challenge, standings: StandingRow[]
 
   // Com ha acabat l'última partida.
   if (last.winner !== undefined && last.scores) {
-    const winnerName = last.winner === 0 ? 'Tu' : challenge.rivals[last.winner - 1] ?? 'Un rival';
-    const how = last.blocked
-      ? 'partida bloquejada: guanya qui tenia menys punts a la mà'
-      : `${last.winner === 0 ? 't’has quedat' : 's’ha quedat'} sense fitxes${last.turns ? ` en ${last.turns} torns` : ''}`;
-    lines.push(`${last.winner === 0 ? 'Has guanyat la partida' : `Ha guanyat ${winnerName}`} (${how}).`);
+    const winnerName = challenge.rivals[last.winner - 1] ?? 'Un rival';
+    const turns = last.turns ? ` en ${last.turns} torns` : '';
+    out.push(
+      last.blocked
+        ? { icon: '🧱', text: 'Partida bloquejada: guanya qui té menys punts a la mà.' }
+        : { icon: '🏁', text: `${last.winner === 0 ? 'T’has quedat' : `${winnerName} s’ha quedat`} sense fitxes${turns}.` },
+    );
   }
   if (last.tilesLeft && last.tilesLeft[0] > 0 && !last.won) {
-    lines.push(`Et quedaven ${last.tilesLeft[0]} ${last.tilesLeft[0] === 1 ? 'fitxa' : 'fitxes'} a la mà (${signed(last.points)} punts).`);
+    const n = last.tilesLeft[0];
+    out.push({ icon: '✋', text: `Et quedaven ${n} ${n === 1 ? 'fitxa' : 'fitxes'} a la mà (${signed(last.points)}).` });
   }
 
   // On vas del repte.
   if (known && played > 1) {
     if (me.place === 1) {
-      const second = standings.find((row) => !row.you && row !== me);
+      const second = standings.find((row) => !row.you);
       const gap = second ? me.total - second.total : 0;
-      lines.push(gap > 0 ? `Vas primer del repte, amb ${gap} punts d’avantatge sobre ${second?.name}.` : 'Vas primer del repte, empatat.');
+      out.push({ icon: '📍', text: gap > 0 ? `Vas 1r, amb ${gap} punts d’avantatge.` : 'Vas 1r, empatat.' });
     } else {
-      lines.push(`Vas ${ordinal(me.place)} del repte, a ${leader.total - me.total} punts de ${leader.name}.`);
+      out.push({ icon: '📍', text: `Vas ${ordinal(me.place)}, a ${leader.total - me.total} punts de ${leader.name}.` });
     }
   }
 
-  // El que queda, i què et cal.
+  // El que queda, i un consell.
   if (left > 0) {
     const wins = challenge.games.filter((game) => game.scores && game.winner !== undefined);
     const avgWin = wins.length
       ? Math.round(wins.reduce((sum, game) => sum + (game.scores?.[game.winner ?? 0] ?? 0), 0) / wins.length)
       : null;
-    const queden = `${left === 1 ? 'Queda 1 partida' : `Queden ${left} partides`}`;
-    lines.push(avgWin !== null ? `${queden}. Guanyar-ne una ha valgut, de mitjana, +${avgWin} punts.` : `${queden}.`);
+    const queden = left === 1 ? 'Queda 1 partida' : `Queden ${left} partides`;
+    out.push({ icon: '⏳', text: avgWin !== null ? `${queden} · guanyar-ne una val uns +${avgWin}.` : `${queden}.` });
     if (known && me.place > 1) {
-      lines.push(
-        'Tàctica: si veus que no guanyaràs la partida, desfés-te de les fitxes altes i dels jokers (30 punts): el que et queda a la mà resta, i el que hi queda als altres és per a qui guanya.',
-      );
+      out.push({ icon: '💡', text: 'Si no pots guanyar, desfés-te de fitxes altes i jokers: el que tens a la mà resta.' });
     } else if (known && me.place === 1) {
-      lines.push('Tàctica: per mantenir el primer lloc, no cal arriscar: posa fitxes sovint i no et quedis amb jokers a la mà.');
+      out.push({ icon: '💡', text: 'Vas primer: posa fitxes sovint i no et quedis jokers a la mà.' });
     }
   }
-  return lines;
+  return out;
 }
-
 
 export function isDone(challenge: Challenge): boolean {
   return challenge.games.length >= challenge.config.games;

@@ -149,7 +149,9 @@ export function RepteStandings({
       {lines.length > 0 && (
         <ul className="repte-info">
           {lines.map((line) => (
-            <li key={line}>{line}</li>
+            <li key={line.text}>
+              <span aria-hidden="true">{line.icon}</span> {line.text}
+            </li>
           ))}
         </ul>
       )}

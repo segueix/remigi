@@ -3810,6 +3810,8 @@ button.secondary.reset-nivell {
 
 .interludi {
   display: grid;
+  /* Una sola columna de l'amplada de la targeta: el carrusel no la pot eixamplar. */
+  grid-template-columns: minmax(0, 1fr);
   justify-items: center;
   gap: 0.7rem;
   text-align: center;
@@ -4195,4 +4197,303 @@ button.secondary.reset-nivell {
 
 .repte-info li + li {
   margin-top: 0.3rem;
+}
+
+/* ---------- Repte: el final de partida en tres pàgines (carrusel) ---------- */
+
+.carrusel {
+  align-self: stretch;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  margin-top: 0.9rem;
+  text-align: left;
+}
+
+.carrusel-pista {
+  display: flex;
+  width: 100%;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--fons) 50%, var(--superficie));
+  border: 1px solid var(--vora);
+}
+
+.carrusel-pista::-webkit-scrollbar {
+  display: none;
+}
+
+.carrusel-diapo {
+  flex: 0 0 100%;
+  min-width: 0;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  padding: 0.85rem 0.9rem 1rem;
+}
+
+.carrusel-titol {
+  margin: 0 0 0.7rem;
+  color: var(--text-suau);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.carrusel-avatar {
+  flex: none;
+  width: 1.8rem;
+  height: 1.8rem;
+  font-size: 0.85rem;
+  border-width: 1.5px;
+}
+
+.carrusel-avatar.inicials {
+  font-size: 0.7rem;
+}
+
+.carrusel-avatar.gran {
+  width: 3.2rem;
+  height: 3.2rem;
+  font-size: 1.5rem;
+  border-width: 2px;
+}
+
+.carrusel-avatar.gran.inicials {
+  font-size: 1.05rem;
+}
+
+/* 1. La partida: el guanyador en gran i una barra per jugador */
+.carrusel-guanyador {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  margin-bottom: 0.8rem;
+  text-align: center;
+}
+
+.carrusel-guanyador strong {
+  font-size: 1.2rem;
+}
+
+.carrusel-guanyador.jo strong {
+  color: var(--or);
+}
+
+.carrusel-barres {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.carrusel-barres li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 5.5rem) minmax(0, 1fr) 3.4rem;
+  align-items: center;
+  gap: 0.45rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.carrusel-barres li.jo {
+  font-weight: 700;
+}
+
+.carrusel-nom {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.88rem;
+}
+
+/* Eix al mig: els punts guanyats creixen cap a la dreta i els perduts, cap a l'esquerra. */
+.carrusel-eix {
+  position: relative;
+  height: 0.9rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--vora) 55%, transparent);
+}
+
+.carrusel-eix::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -0.15rem;
+  bottom: -0.15rem;
+  width: 2px;
+  background: var(--text-suau);
+  opacity: 0.6;
+}
+
+.carrusel-eix .barra {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  min-width: 3px;
+  border-radius: 999px;
+}
+
+.carrusel-eix .barra.positiva {
+  left: 50%;
+  background: var(--be);
+}
+
+.carrusel-eix .barra.negativa {
+  right: 50%;
+  background: var(--mal);
+}
+
+.carrusel-punts {
+  font-weight: 800;
+  text-align: right;
+}
+
+/* 2. El repte: el podi pel total */
+.carrusel-podi {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 0.3rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.carrusel-podi li {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  max-width: 7.5rem;
+  min-width: 0;
+  text-align: center;
+}
+
+.podi-nom {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.podi-total {
+  font-size: 1.15rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.podi-graó {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.15rem;
+  width: 100%;
+  padding-top: 0.4rem;
+  border-radius: 0.55rem 0.55rem 0 0;
+  background: color-mix(in srgb, var(--plata) 30%, var(--superficie));
+  border: 1px solid var(--vora);
+  border-bottom: 0;
+}
+
+.podi-graó strong {
+  font-size: 1.05rem;
+}
+
+.podi-victories {
+  font-size: 0.78rem;
+}
+
+.carrusel-podi .podi-1 .podi-graó {
+  height: 5.2rem;
+  background: color-mix(in srgb, var(--or) 30%, var(--superficie));
+}
+
+.carrusel-podi .podi-2 .podi-graó {
+  height: 3.9rem;
+}
+
+.carrusel-podi .podi-3 .podi-graó {
+  height: 2.9rem;
+  background: color-mix(in srgb, var(--bronze) 28%, var(--superficie));
+}
+
+.carrusel-podi li.jo .podi-nom {
+  color: var(--accent);
+}
+
+.carrusel-resta {
+  margin: 0.5rem 0 0;
+  font-size: 0.88rem;
+  text-align: center;
+}
+
+.carrusel-resta.jo {
+  font-weight: 700;
+}
+
+/* 3. Tàctica: targetes amb icona */
+.carrusel-info {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.carrusel-info li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: 0.6rem;
+  background: var(--superficie);
+  border: 1px solid var(--vora);
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+
+.carrusel-icona {
+  flex: none;
+  font-size: 1.1rem;
+  line-height: 1.2;
+}
+
+/* Els tres punts de sota */
+.carrusel-punts-nav {
+  display: flex;
+  justify-content: center;
+  gap: 0.55rem;
+  margin-top: 0.55rem;
+}
+
+.carrusel-punt {
+  width: 0.7rem;
+  height: 0.7rem;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--text-suau) 45%, transparent);
+  box-shadow: none;
+  cursor: pointer;
+}
+
+.carrusel-punt[aria-selected='true'] {
+  width: 1.6rem;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+.carrusel-punt:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }

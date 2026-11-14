@@ -39,7 +39,7 @@ import { GameScreen, type ModeFinish } from './screens/GameScreen';
 import { HomeScreen } from './screens/HomeScreen';
 import { LeagueInterlude } from './screens/LeagueInterlude';
 import { RepteInterlude, type LastGame } from './screens/RepteInterlude';
-import { RepteStandings } from './screens/RepteStandings';
+import { RepteCarousel } from './screens/RepteCarousel';
 import { LligaScreen } from './screens/LligaScreen';
 import { MusicScreen } from './screens/MusicScreen';
 import { RepteScreen } from './screens/RepteScreen';
@@ -266,7 +266,6 @@ export function App() {
     (state: ChallengeState, lastGame?: LastGame): ModeFinish | null => {
       const current = state.current;
       if (!current || current.games.length === 0) return null;
-      const last = current.games[current.games.length - 1];
       const done = isDone(current);
       return {
         body: (
@@ -274,19 +273,7 @@ export function App() {
             <p className="final-mode-titol">
               Repte · partida {current.games.length} de {current.config.games}
             </p>
-            <dl className="final-mode-xifres">
-              <div>
-                <dt>Aquesta partida</dt>
-                <dd className={last.points >= 0 ? 'points-positive' : 'points-negative'}>{signed(last.points)}</dd>
-              </div>
-              <div>
-                <dt>{done ? 'Total del repte' : 'Total fins ara'}</dt>
-                <dd className={challengeTotal(current) >= 0 ? 'points-positive' : 'points-negative'}>
-                  {signed(challengeTotal(current))}
-                </dd>
-              </div>
-            </dl>
-            <RepteStandings challenge={current} playerName={profile.profile?.name ?? 'Tu'} />
+            <RepteCarousel challenge={current} playerName={profile.profile?.name ?? 'Tu'} history={state.history} />
           </div>
         ),
         primary: done
@@ -305,7 +292,6 @@ export function App() {
             <RepteInterlude
               state={state}
               playerName={profile.profile?.name ?? 'Tu'}
-              last={lastGame}
               onPlayNow={() => void playChallenge()}
               onChallenge={() => goTo('repte')}
               onHome={() => goTo('home')}

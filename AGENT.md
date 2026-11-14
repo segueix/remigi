@@ -2439,3 +2439,25 @@ tàctica. Dona més informació interessant.»
 proves de navegador del repte ampliades (el mateix rival a totes les partides,
 la taula entre partides amb el total des de la segona i la classificació final);
 captura de la classificació.
+
+### Repte: el final de partida, simple i visual, en un carrusel de tres pàgines ✅ Feta (2026-11-14)
+
+Demanat pel jugador: «Vull que sigui simplificat però molt visual a la finestra
+que s'obre quan acaba la partida: tres punts a baix i scroll lateral per veure
+més informació.»
+
+- [x] `RepteCarousel.tsx`: tres pàgines amb `scroll-snap` (es passen fent
+      lliscar el dit) i **tres punts** a sota (es poden tocar; el de la pàgina
+      oberta s'allarga). 1) **La partida**: el guanyador en gran i barres
+      divergents per jugador (verd cap a la dreta, vermell cap a l'esquerra).
+      2) **El repte**: podi pel total acumulat, amb 🏆×victòries. 3)
+      **Tàctica**: `challengeInsights` en targetes amb icona i el rècord a batre.
+- [x] Entre partides, la finestra queda en: la partida que toca, el compte
+      enrere, el carrusel, «Següent: contra…», la música i els botons (fora el
+      marcador de xifres i la píndola del resultat). A l'última, el mateix
+      carrusel al resum.
+
+**Criteris d'acceptació (verificats)**: proves de navegador del repte amb el
+carrusel (tres punts, pàgina activa en tocar-los i en lliscar, barres, podi
+amb el total, tàctica, i que no eixampla la finestra); 225 tests de la web;
+captures en un mòbil (390 px).

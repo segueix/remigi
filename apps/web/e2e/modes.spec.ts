@@ -104,23 +104,29 @@ test('el repte suma els punts de totes les partides i no mou el nivell del joc l
       await acabaLaPartida(page, '.interludi');
       await expect(page.locator('.interludi-jornada')).toContainText(`Partida${partida + 1}/3`);
       await expect(page.locator('.interludi-compte strong')).toHaveText(/^(30|29|28|27)$/);
-      punts.push(num(await page.locator('.interludi-resultat').textContent()));
+      // El resultat, simple i visual, en tres pàgines amb tres punts a sota.
+      const carrusel = page.locator('.interludi .carrusel');
+      await expect(carrusel.locator('.carrusel-punt')).toHaveCount(3);
+      expect(await carrusel.evaluate((el) => el.getBoundingClientRect().width)).toBeLessThanOrEqual(
+        await page.locator('.interludi').evaluate((el) => el.getBoundingClientRect().width),
+      );
+      await expect(carrusel.locator('.carrusel-punt').first()).toHaveAttribute('aria-selected', 'true');
+      // 1. La partida: qui ha guanyat i una barra per jugador.
+      await expect(carrusel.locator('.carrusel-guanyador')).toBeVisible();
+      await expect(carrusel.locator('.carrusel-barres li')).toHaveCount(2);
+      await expect(carrusel.locator('.carrusel-barres')).toContainText(rival);
+      punts.push(num(await carrusel.locator('.carrusel-barres li.jo .carrusel-punts').textContent()));
       const fins = punts.reduce((a, b) => a + b, 0);
-      await expect(page.locator('.interludi-marcador dd').first()).toHaveText(signat(fins));
-      // La puntuació de tothom: qui ha guanyat i, des de la segona, el total.
-      const taula = page.locator('.interludi .repte-taula');
-      await expect(taula.locator('tbody tr')).toHaveCount(2);
-      await expect(taula).toContainText(rival);
-      await expect(taula.locator('.repte-corona')).toHaveCount(1);
-      if (partida === 1) {
-        await expect(taula.locator('caption')).toHaveText('Resultat de la partida');
-        await expect(taula.locator('thead th')).toHaveCount(3);
-      } else {
-        await expect(taula.locator('caption')).toHaveText('Classificació després de 2 partides');
-        await expect(taula.locator('thead th')).toHaveText(['#', 'Jugador', 'Partida 2', 'Total', 'Vict.']);
-        await expect(taula.locator('tr.jo td').nth(2)).toHaveText(signat(fins));
-      }
-      await expect(page.locator('.interludi .repte-info li').first()).toBeVisible();
+      // 2. El repte: el podi amb el total acumulat.
+      await carrusel.getByRole('tab', { name: /^Pàgina 2/ }).click();
+      await expect(carrusel.locator('.carrusel-punt').nth(1)).toHaveAttribute('aria-selected', 'true');
+      await expect(carrusel.locator('.carrusel-podi li.jo .podi-total')).toHaveText(signat(fins));
+      await expect(carrusel.locator('.carrusel-diapo').nth(1).locator('.carrusel-titol')).toHaveText(
+        partida === 1 ? 'El repte, després d’1 partida' : 'El repte, després de 2 partides',
+      );
+      // 3. Tàctica.
+      await carrusel.getByRole('tab', { name: /^Pàgina 3/ }).click();
+      await expect(carrusel.locator('.carrusel-info li').first()).toBeVisible();
       // La primera, sense esperar; la segona, aturant el compte per anar al repte.
       if (partida === 1) await page.getByRole('button', { name: 'Juga ara' }).click();
       else {
@@ -131,9 +137,12 @@ test('el repte suma els punts de totes les partides i no mou el nivell del joc l
       // L'última acaba amb el resum de sempre.
       await acabaLaPartida(page, '.final-repte');
       await expect(page.locator('.final-repte')).toContainText('partida 3 de 3');
-      await expect(page.locator('.final-repte .repte-taula caption')).toHaveText('Classificació final del repte');
-      await expect(page.locator('.final-repte .repte-guanyador')).toContainText('repte');
-      punts.push(num(await page.locator('.final-mode-xifres dd').first().textContent()));
+      const final = page.locator('.final-repte .carrusel');
+      punts.push(num(await final.locator('.carrusel-barres li.jo .carrusel-punts').textContent()));
+      // El carrusel cap a la finestra (no l'eixampla).
+      const ample = await final.evaluate((el) => el.getBoundingClientRect().width);
+      expect(ample).toBeLessThanOrEqual(await page.locator('.game-over').evaluate((el) => el.getBoundingClientRect().width));
+      await expect(final.locator('.carrusel-diapo').nth(1).locator('.carrusel-titol')).toHaveText('Resultat del repte');
       await page.getByRole('button', { name: 'Resultat del repte' }).click();
     }
   }
@@ -317,7 +326,11 @@ test('entre partides del repte, 30 segons de relax i la següent comença sola',
   await page.getByRole('button', { name: 'Comença el repte' }).click();
   await acabaLaPartida(page, '.interludi');
   await expect(page.locator('.interludi-seguent')).toContainText(/contra .+ i .+, nivell Mitjà/);
-  await expect(page.locator('.interludi .repte-taula tbody tr')).toHaveCount(3);
+  await expect(page.locator('.interludi .carrusel-barres li')).toHaveCount(3);
+  // Es passa de pàgina fent lliscar el carrusel.
+  const pista = page.locator('.interludi .carrusel-pista');
+  await pista.evaluate((el) => el.scrollTo({ left: el.clientWidth * 2 }));
+  await expect(page.locator('.interludi .carrusel-punt').nth(2)).toHaveAttribute('aria-selected', 'true');
   await page.clock.runFor(31_000);
   await expect(page.locator('.nivell-mode')).toContainText('partida 2 de 3');
   await expect(page.locator('.rack .tile').first()).toBeVisible();

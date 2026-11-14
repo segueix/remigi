@@ -75,12 +75,18 @@ per a aquella mateixa configuració; l'historial guarda els 40 últims reptes.
   començar-lo) i cada partida apunta la **puntuació de tothom**
   (`ChallengeGame.scores`, per cadires: tu primer), les fitxes que li quedaven a
   cadascú, qui l'ha guanyada, si s'ha bloquejat i quants torns ha durat.
-- **Classificació del repte** (`RepteStandings.tsx`, `challengeStandings`):
-  entre partida i partida, al final i a la pantalla del repte. A la primera,
-  els punts de cadascú i la corona per a qui ha guanyat; a partir de la segona,
-  també el total acumulat i les victòries, ordenats pel total. Al final, qui ha
-  guanyat el repte.
-- **Informació per jugar amb tàctica** (`challengeInsights`): com ha acabat la
+- **El final de cada partida, simple i visual** (`RepteCarousel.tsx`): entre
+  partides i a l'última, un carrusel de tres pàgines que es passen fent
+  lliscar el dit o tocant els **tres punts** de sota: 1) la partida (qui l'ha
+  guanyada, en gran, i una barra per jugador: cap a la dreta els punts
+  guanyats i cap a l'esquerra els perduts); 2) el repte (podi pel total
+  acumulat, amb les victòries de cadascú); 3) tàctica (targetes amb icona i el
+  rècord a batre). Entre partides ja no hi ha el marcador de xifres ni la
+  píndola del resultat: tot és al carrusel.
+- **Classificació del repte** a la pantalla del repte (`RepteStandings.tsx`,
+  `challengeStandings`): la taula amb la partida, el total i les victòries.
+- **Informació per jugar amb tàctica** (`challengeInsights`, frases curtes amb
+  icona): com ha acabat la
   partida (sense fitxes o bloquejada), les fitxes que et quedaven, on vas del
   repte i a quants punts del primer (o quin avantatge tens), quantes partides
   queden i quant ha valgut de mitjana guanyar-ne una, i un consell segons si

@@ -118,18 +118,24 @@ describe('la classificació del repte', () => {
     expect(rows.reduce((sum, r) => sum + r.total, 0)).toBe(0);
   });
 
-  it('informació per jugar amb tàctica', () => {
+  it('informació per jugar amb tàctica: frases curtes amb icona', () => {
     let state = startChallenge(emptyChallengeState(), CONFIG, new Date(), RIVALS);
     state = addGame(state, g1);
     const first = challengeInsights(state.current!, challengeStandings(state.current!, 'Anna'));
-    expect(first[0]).toBe('Ha guanyat GuineuAstuta (s’ha quedat sense fitxes en 31 torns).');
-    expect(first).toContain('Et quedaven 3 fitxes a la mà (−12 punts).');
-    expect(first).toContain('Queden 2 partides. Guanyar-ne una ha valgut, de mitjana, +40 punts.');
+    expect(first).toEqual([
+      { icon: '🏁', text: 'GuineuAstuta s’ha quedat sense fitxes en 31 torns.' },
+      { icon: '✋', text: 'Et quedaven 3 fitxes a la mà (−12).' },
+      { icon: '⏳', text: 'Queden 2 partides · guanyar-ne una val uns +40.' },
+      { icon: '💡', text: 'Si no pots guanyar, desfés-te de fitxes altes i jokers: el que tens a la mà resta.' },
+    ]);
     state = addGame(state, g2);
     const second = challengeInsights(state.current!, challengeStandings(state.current!, 'Anna'));
-    expect(second[0]).toBe('Has guanyat la partida (partida bloquejada: guanya qui tenia menys punts a la mà).');
-    expect(second).toContain('Vas primer del repte, amb 3 punts d’avantatge sobre GuineuAstuta.');
-    expect(second).toContain('Queda 1 partida. Guanyar-ne una ha valgut, de mitjana, +38 punts.');
+    expect(second.map((i) => i.text)).toEqual([
+      'Partida bloquejada: guanya qui té menys punts a la mà.',
+      'Vas 1r, amb 3 punts d’avantatge.',
+      'Queda 1 partida · guanyar-ne una val uns +38.',
+      'Vas primer: posa fitxes sovint i no et quedis jokers a la mà.',
+    ]);
   });
 
   it('es desa i es recupera tal com era; les partides que no quadren perden només les dades de tothom', () => {
