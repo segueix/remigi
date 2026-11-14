@@ -8,7 +8,7 @@ import {
   type Rng,
 } from '@remigi/core';
 import { islandGroup, originTerritory, rivalOrigins, type LeagueHome } from './localitats';
-import { rivalNames } from './nomsLliga';
+import { catalanRivalName, fold, rivalNames } from './nomsLliga';
 
 /**
  * La lliga de Remigi (docs/LLIGA.md): la mateixa escala que les lligues
@@ -997,11 +997,32 @@ export function parseLeagueState(raw: string | null): LeagueState {
     const season = validSeason(value.season);
     // Els noms d'abans («· Grup B», «· Lliga B») amb el d'ara («· Divisió B»).
     if (season) season.name = renameDivision(season.name);
+    if (season) season.rivals = catalanRivals(season, career.home);
     career.seasons = career.seasons.map((record) => ({ ...record, name: renameDivision(record.name) }));
     return { career, season };
   } catch {
     return { career: newCareer(), season: null };
   }
+}
+
+/**
+ * Rivals d'una temporada començada quan encara hi sortien noms castellans: a
+ * les lligues dels Països Catalans (del municipi als Països Catalans) passen a
+ * tenir nom català del seu territori (`catalanRivalName`). Els resultats van
+ * per identificador, així que no cal tocar res més. La llavor és la de la
+ * temporada: cada càrrega dona els mateixos noms.
+ */
+export function catalanRivals(season: LeagueSeason, home: LeagueHome | null): LeagueRival[] {
+  const level = tierLevel(season.tier);
+  const options = {
+    random: createRng((season.seed ^ 0x9e3779b9) >>> 0),
+    taken: new Set(season.rivals.map((rival) => fold(rival.name))),
+    territoryOf: originTerritory,
+  };
+  return season.rivals.map((rival) => {
+    const name = catalanRivalName(rival.name, level, home, rival.origin, options);
+    return name === rival.name ? rival : { ...rival, name };
+  });
 }
 
 export function serializeLeagueState(state: LeagueState): string {
