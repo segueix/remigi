@@ -7,8 +7,8 @@ import {
   type PlayerProfile,
   type Rng,
 } from '@remigi/core';
-import { islandGroup, originTerritory, rivalOrigins, type LeagueHome } from './localitats';
-import { catalanRivalName, fold, rivalNames } from './nomsLliga';
+import { cityCountry, islandGroup, originArea, originTerritory, rivalOrigins, type LeagueHome } from './localitats';
+import { catalanRivalNames, fold, rivalNames } from './nomsLliga';
 
 /**
  * La lliga de Remigi (docs/LLIGA.md): la mateixa escala que les lligues
@@ -363,6 +363,7 @@ export function createSeason(options: CreateSeasonOptions): LeagueSeason {
     random: rng,
     exclude: options.exclude ?? [],
     territoryOf: originTerritory,
+    countryOf: cityCountry,
   });
   const ratings = shuffleInPlace(spreadRatings(tierRating(tier), count, rng), rng);
   const rivals: LeagueRival[] = names.map((name, i) => ({
@@ -471,6 +472,21 @@ export function yourTable(season: LeagueSeason, round = season.played): LeagueRi
     .filter((id) => id !== YOU)
     .map((id) => season.rivals.find((rival) => rival.id === id))
     .filter((rival): rival is LeagueRival => rival !== undefined);
+}
+
+/**
+ * D'on és un jugador de la temporada, amb la part de la lliga que hi
+ * representa (`originArea`: la comarca, l'illa, el territori o el país):
+ * «Manlleu · Osona», «Gandia · País Valencià», «Lió · França». Tu, amb la
+ * teva població. A la lliga local, res: tothom és del poble.
+ */
+export function placeOf(season: LeagueSeason, id: string, home: LeagueHome | null): string {
+  const level = tierLevel(season.tier);
+  if (level === 0) return '';
+  const place = id === YOU ? home?.municipi ?? '' : rivalById(season, id)?.origin ?? '';
+  if (!place) return '';
+  const area = originArea(level, home, place);
+  return area ? `${place} · ${area}` : place;
 }
 
 export function rivalById(season: LeagueSeason, id: string): LeagueRival | undefined {
@@ -1019,10 +1035,10 @@ export function catalanRivals(season: LeagueSeason, home: LeagueHome | null): Le
     taken: new Set(season.rivals.map((rival) => fold(rival.name))),
     territoryOf: originTerritory,
   };
-  return season.rivals.map((rival) => {
-    const name = catalanRivalName(rival.name, level, home, rival.origin, options);
-    return name === rival.name ? rival : { ...rival, name };
-  });
+  // Primer les formes castellanes d'abans i després els noms castellans, sense
+  // que cap nom nou en repeteixi cap altre.
+  const names = catalanRivalNames(season.rivals, level, home, options);
+  return season.rivals.map((rival, i) => (names[i] === rival.name ? rival : { ...rival, name: names[i] }));
 }
 
 export function serializeLeagueState(state: LeagueState): string {

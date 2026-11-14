@@ -21,6 +21,7 @@ import {
   nextTier,
   normalizeConfig,
   parseLeagueState,
+  placeOf,
   placementRating,
   placementTier,
   rankOf,
@@ -255,6 +256,33 @@ describe('els rivals', () => {
         }
       }
     }
+  });
+
+  it('a les lligues de més d’una part, cadascú de la seva població i totes les parts hi són', () => {
+    const big = { opponents: 3 as const, players: 16, legs: 1 as const, rounds: 5 };
+    // Provincial (graó 6): poblacions de comarques diferents de la província.
+    const provincial = createSeason({ tier: 6, config: big, home: VIC, seed: 4 });
+    const comarques = provincial.rivals.map((r) => normalizeHome({ municipi: r.origin })?.comarca);
+    expect(new Set(comarques).size).toBeGreaterThanOrEqual(10);
+    provincial.rivals.forEach((r) => expect(normalizeHome({ municipi: r.origin })?.provincia).toBe('Barcelona'));
+    expect(placeOf(provincial, provincial.rivals[0].id, VIC)).toMatch(/^.+ · .+$/);
+    expect(placeOf(provincial, YOU, VIC)).toBe('Vic · Osona');
+    // Catalana (graó 9): les quatre províncies.
+    const catalana = createSeason({ tier: TERRITORIAL_TIER, config: big, home: VIC, seed: 4 });
+    const provinces = catalana.rivals.map((r) => normalizeHome({ municipi: r.origin })?.provincia);
+    expect(new Set(provinces)).toEqual(new Set(['Barcelona', 'Girona', 'Lleida', 'Tarragona']));
+    // Països Catalans (graó 12): tots els territoris; Europa (graó 15): ciutat · país.
+    const ppcc = createSeason({ tier: 12, config: big, home: VIC, seed: 4 });
+    const territories = new Set(ppcc.rivals.map((r) => placeOf(ppcc, r.id, VIC).split(' · ')[1] ?? r.origin));
+    expect(territories.size).toBe(7);
+    expect(placeOf(ppcc, YOU, VIC)).toBe('Vic · Catalunya');
+    const europe = createSeason({ tier: 15, config: big, home: VIC, seed: 4 });
+    europe.rivals.forEach((r) => expect(placeOf(europe, r.id, VIC)).toMatch(/^.+ · .+$/));
+    // Comarcal: només la població (tots són de la comarca); local: res.
+    const comarcal = createSeason({ tier: 3, config: DEFAULT_CONFIG, home: VIC, seed: 4 });
+    expect(placeOf(comarcal, comarcal.rivals[0].id, VIC)).toBe(comarcal.rivals[0].origin);
+    const local = createSeason({ tier: 0, config: DEFAULT_CONFIG, home: VIC, seed: 4 });
+    expect(placeOf(local, YOU, VIC)).toBe('');
   });
 
   it('una temporada començada amb noms castellans, en carregar-la, els passa a català', () => {

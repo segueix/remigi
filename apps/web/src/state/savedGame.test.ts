@@ -1,6 +1,6 @@
 import { MemoryStore, applyMove, createGame, decideAiMove } from '@remigi/core';
 import { describe, expect, it } from 'vitest';
-import { clearGame, loadGame, saveGame, type SavedGame } from './savedGame';
+import { clearGame, loadGame, saveGame, withOpponentNames, type SavedGame } from './savedGame';
 
 const setup = { playerName: 'Anna', opponents: ['easy', 'medium'] as const };
 
@@ -155,4 +155,31 @@ it('conserva la força contínua i rebutja una configuració numèrica malmesa',
     await saveGame(store, { ...saved, setup: { ...saved.setup, opponentRatings: ratings } });
     expect(await loadGame(store)).toBeNull();
   }
+});
+
+describe('una jornada de lliga desada, amb els noms d’ara', () => {
+  it('canvia els noms dels rivals a la configuració i a la partida, i res més', () => {
+    const game = createGame({
+      seed: 3,
+      players: [
+        { name: 'Jo', kind: 'human' },
+        { name: 'Lucía Navarro', kind: 'ai', aiLevel: 'easy' },
+        { name: 'Jordi Puig', kind: 'ai', aiLevel: 'easy' },
+      ],
+    });
+    const saved: SavedGame = {
+      setup: { playerName: 'Jo', opponents: ['easy', 'easy'], opponentNames: ['Lucía Navarro', 'Jordi Puig'] },
+      game,
+    };
+    const renamed = withOpponentNames(saved, ['Anna Pons', 'Jordi Puig']);
+    expect(renamed.setup.opponentNames).toEqual(['Anna Pons', 'Jordi Puig']);
+    expect(renamed.game.players.map((p) => p.name)).toEqual(['Jo', 'Anna Pons', 'Jordi Puig']);
+    expect(renamed.game.players[1].rack).toEqual(game.players[1].rack);
+    expect(renamed.game.board).toBe(game.board);
+    // Si ja coincideixen, o no en quadra el nombre, tal com era.
+    expect(withOpponentNames(saved, ['Lucía Navarro', 'Jordi Puig'])).toBe(saved);
+    expect(withOpponentNames(saved, ['Anna Pons'])).toBe(saved);
+    const free: SavedGame = { setup: { playerName: 'Jo', opponents: ['easy'] }, game };
+    expect(withOpponentNames(free, ['Anna Pons'])).toBe(free);
+  });
 });

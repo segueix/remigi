@@ -3541,6 +3541,19 @@ button.secondary.reset-nivell {
   font-weight: 800;
 }
 
+/* D'on és cada jugador, a sota del nom (també al mòbil). */
+.lliga-lloc,
+.interludi-lloc {
+  display: block;
+  color: var(--text-suau);
+  font-size: 0.72rem;
+  font-weight: 400;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .lliga-taula .lliga-avatar {
   width: 1.65rem;
   height: 1.65rem;

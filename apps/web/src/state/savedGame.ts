@@ -132,3 +132,21 @@ function isResumable(value: unknown): boolean {
   if (typeof game.currentPlayer !== 'number') return false;
   return game.currentPlayer >= 0 && game.currentPlayer < game.players.length;
 }
+
+/**
+ * La mateixa partida desada amb els noms dels rivals canviats (en l'ordre de
+ * `setup.opponentNames`: el jugador 0 és el humà, i el rival i és el jugador
+ * i + 1). Si no hi ha noms fixos o no en quadra el nombre, tal com era.
+ */
+export function withOpponentNames(saved: SavedGame, names: readonly string[]): SavedGame {
+  const current = saved.setup.opponentNames;
+  if (!current || current.length !== names.length || current.every((name, i) => name === names[i])) return saved;
+  return {
+    ...saved,
+    setup: { ...saved.setup, opponentNames: [...names] },
+    game: {
+      ...saved.game,
+      players: saved.game.players.map((player, i) => (i === 0 || !names[i - 1] ? player : { ...player, name: names[i - 1] })),
+    },
+  };
+}

@@ -58,7 +58,7 @@ import {
   stripProfileTransferParams,
   type ProfileProgress,
 } from './state/profileTransfer';
-import type { SavedGame } from './state/savedGame';
+import { withOpponentNames, type SavedGame } from './state/savedGame';
 import { usePersisted } from './state/usePersisted';
 import { useProfile } from './state/useProfile';
 import { useSavedGames } from './state/useSavedGame';
@@ -313,11 +313,14 @@ export function App() {
     const session = leagueSession(season);
     const label = `${season.name} · jornada ${season.played + 1}/${season.config.rounds}`;
     const saved = await savedGames.load('lliga');
+    const rivals = yourTable(season);
     if (saved && saved.setup.session === session) {
-      launch('lliga', saved.setup, saved, label);
+      // Els rivals amb els noms d'ara: una jornada desada abans que la lliga
+      // en canviés els noms (castellans → catalans) duu els d'abans.
+      const current = withOpponentNames(saved, rivals.map((rival) => rival.name));
+      launch('lliga', current.setup, current, label);
       return;
     }
-    const rivals = yourTable(season);
     launch(
       'lliga',
       {
@@ -436,6 +439,7 @@ export function App() {
           <LeagueInterlude
             season={season}
             playerName={profile.profile?.name ?? 'Tu'}
+            home={state.career.home}
             onPlayNow={() => void playRound()}
             onStandings={() => goTo('lliga')}
             onHome={() => goTo('home')}
