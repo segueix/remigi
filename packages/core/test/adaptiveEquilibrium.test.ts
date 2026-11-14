@@ -67,7 +67,9 @@ describe('força contínua del motor', () => {
 
   it('gradua els jokers, les extensions i la reordenació sense salts de capacitat', () => {
     expect(difficultyByRating(900).jokerRate).toBeCloseTo(0.125);
-    expect(difficultyByRating(1100).extensionRate).toBeCloseTo(0.5);
+    // Fàcil (1000) ja allarga jugades en un 60% dels torns i Mitjà (1200), sempre.
+    expect(difficultyByRating(1100).extensionRate).toBeCloseTo(0.8);
+    expect(difficultyByRating(900).extensionRate).toBeCloseTo(0.525);
     expect(difficultyByRating(1300).rearrangeRate).toBeCloseTo(0.1);
     expect(difficultyByRating(1500).rearrangeRate).toBeCloseTo(0.6);
     expect(difficultyByRating(1145).extensionRate).toBeGreaterThan(difficultyByRating(1130).extensionRate!);

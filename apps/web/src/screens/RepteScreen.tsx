@@ -21,6 +21,8 @@ interface Props {
   onPlay(): void;
   onAbandon(): void;
   onHome(): void;
+  /** El perfil, amb la configuració (mode clar o fosc, temps per torn, fitxes). */
+  onProfile(): void;
 }
 
 /**
@@ -28,7 +30,7 @@ interface Props {
  * en acabar se sumen els punts de totes. Mentre dura, aquí es veu com va; en
  * acabar, el total i si és un rècord per a aquella configuració.
  */
-export function RepteScreen({ state, hasSavedGame, onStart, onPlay, onAbandon, onHome }: Props) {
+export function RepteScreen({ state, hasSavedGame, onStart, onPlay, onAbandon, onHome, onProfile }: Props) {
   const current = state.current;
   const [configuring, setConfiguring] = useState(!current);
   const [config, setConfig] = useState<ChallengeConfig>(state.lastConfig);
@@ -42,9 +44,14 @@ export function RepteScreen({ state, hasSavedGame, onStart, onPlay, onAbandon, o
       <div className="franja-fitxes" aria-hidden="true" />
       <div className="row mode-cap">
         <h2>Repte</h2>
-        <button type="button" className="secondary" onClick={onHome}>
-          ← Inici
-        </button>
+        <div className="row mode-cap-accions">
+          <button type="button" className="secondary" onClick={onProfile} aria-label="El teu perfil i la configuració">
+            ⚙️ Perfil
+          </button>
+          <button type="button" className="secondary" onClick={onHome}>
+            ← Inici
+          </button>
+        </div>
       </div>
 
       {current && !isDone(current) && !showConfig && (

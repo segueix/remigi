@@ -194,7 +194,7 @@ export function GameScreen({
       ),
     );
   }, [drawnTileId, game.players]);
-  const [turnSeconds, setTurnSeconds] = useTurnSeconds();
+  const [turnSeconds] = useTurnSeconds();
   /* Avís de temps exhaurit; s'apaga sol al cap d'uns segons. */
   const [timedOut, setTimedOut] = useState<string | null>(null);
   /* Els jeroglífics es poden jugar des del final de partida o des del menú. */
@@ -605,8 +605,6 @@ export function GameScreen({
             current={currentSetup}
             tileStyle={tileStyle}
             onTileStyle={onTileStyle}
-            turnSeconds={turnSeconds}
-            onTurnSeconds={setTurnSeconds}
             jeroglifics={jeroglifics.items.length}
             onJeroglifics={() => {
               setMenuOpen(false);

@@ -17,9 +17,8 @@ import {
 import type { ProfileHandle } from '../state/useProfile';
 import { MIN_JEROGLIFICS } from '../state/useJeroglifics';
 import type { TileStyle } from '../state/useTileStyle';
-import { TURN_OPTIONS, type TurnSeconds } from '../state/useTurnSeconds';
 import { ComEsJuga } from './ComEsJuga';
-import { ColorShape } from './TileView';
+import { SettingsPanel } from './SettingsPanel';
 
 interface Props {
   profile: ProfileHandle;
@@ -27,9 +26,6 @@ interface Props {
   current: GameSetup;
   tileStyle: TileStyle;
   onTileStyle(style: TileStyle): void;
-  /** Temps per torn; s'aplica de seguida, també a la partida que jugues ara. */
-  turnSeconds: TurnSeconds;
-  onTurnSeconds(seconds: TurnSeconds): void;
   /** Jeroglífics a la col·lecció; amb prou n'apareix l'opció de jugar-los. */
   jeroglifics: number;
   onJeroglifics(): void;
@@ -55,8 +51,6 @@ export function PlayerMenu({
   current,
   tileStyle,
   onTileStyle,
-  turnSeconds,
-  onTurnSeconds,
   jeroglifics,
   onJeroglifics,
   onNewGame,
@@ -418,65 +412,7 @@ export function PlayerMenu({
         </div>
         )}
 
-        {/*
-          * El temps de cada torn. Es canvia en calent (no espera cap partida
-          * nova) perquè es vegi de seguida al rellotge de la taula. Quan
-          * s'acaba, el que tinguessis a mig col·locar es desfà i robes.
-          */}
-        <div className="temps-torn" role="group" aria-label="Temps per torn">
-          <span className="muted">Temps per torn:</span>
-          {TURN_OPTIONS.map((option) => (
-            <button
-              key={option}
-              type="button"
-              className={turnSeconds === option ? '' : 'secondary'}
-              aria-pressed={turnSeconds === option}
-              onClick={() => onTurnSeconds(option)}
-            >
-              {option} s
-            </button>
-          ))}
-          <button
-            type="button"
-            className={turnSeconds === null ? '' : 'secondary'}
-            aria-pressed={turnSeconds === null}
-            onClick={() => onTurnSeconds(null)}
-          >
-            sense límit
-          </button>
-        </div>
-
-        {/*
-          * L'aspecte de les fitxes: es tria mirant, amb una mostra de cada.
-          * El predeterminat (color amb número blanc) va primer.
-          */}
-        <div className="tria-fitxes" role="group" aria-label="Aspecte de les fitxes">
-          <span className="muted">Fitxes:</span>
-          <button
-            type="button"
-            className="mostra-fitxa fitxes-inverses"
-            aria-pressed={tileStyle === 'invers'}
-            aria-label="Fitxes de color amb el número i la forma en blanc"
-            onClick={() => onTileStyle('invers')}
-          >
-            <span className="tile tile-red mostra" aria-hidden="true">
-              7
-              <ColorShape color="red" />
-            </span>
-          </button>
-          <button
-            type="button"
-            className="mostra-fitxa classica"
-            aria-pressed={tileStyle === 'classic'}
-            aria-label="Fitxes de crema amb el número i la forma de color"
-            onClick={() => onTileStyle('classic')}
-          >
-            <span className="tile tile-red mostra" aria-hidden="true">
-              7
-              <ColorShape color="red" />
-            </span>
-          </button>
-        </div>
+        <SettingsPanel tileStyle={tileStyle} onTileStyle={onTileStyle} />
 
         <div className="row menu-accions">
           {free && <button onClick={() => void startNewGame()}>Partida nova</button>}

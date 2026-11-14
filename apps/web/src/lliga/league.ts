@@ -1,4 +1,12 @@
-import { DIFFICULTY_ORDER, createRng, shuffleInPlace, type DifficultyKey, type Rng } from '@remigi/core';
+import {
+  DIFFICULTY_ORDER,
+  createRng,
+  shuffleInPlace,
+  suggestOpponentRatings,
+  type DifficultyKey,
+  type PlayerProfile,
+  type Rng,
+} from '@remigi/core';
 import { islandGroup, originTerritory, rivalOrigins, type LeagueHome } from './localitats';
 import { rivalNames } from './nomsLliga';
 
@@ -30,7 +38,7 @@ export const LEAGUE_LEVELS = [
   { id: 'mundial', label: 'Mundial' },
 ] as const;
 
-/** Grups de cada nivell, del més fluix al més fort. */
+/** Divisions de cada nivell, de la més fluixa a la més forta. */
 export const GROUPS = ['C', 'B', 'A'] as const;
 export type GroupId = (typeof GROUPS)[number];
 
@@ -45,16 +53,14 @@ const TIER_STEP = (MAX_RATING - MIN_RATING) / (TIER_COUNT - 1);
 /** Dispersió dels rivals al voltant de la força del graó (±80: dos graons). */
 export const RIVAL_SPREAD = 80;
 
+/** La lliga del territori (Catalana, Valenciana, Balear…), Divisió C. */
+export const TERRITORIAL_TIER = LEAGUE_LEVELS.findIndex((level) => level.id === 'territorial') * GROUPS.length;
 /**
- * On comença l'escalada, com a mínim: la lliga del territori (Catalana,
- * Valenciana, Balear…), Grup C. Els nivells de sota (municipal, comarcal i
- * provincial) hi són per a qui baixa, no per començar-hi.
+ * Fins on pot arribar la col·locació de la primera temporada: la lliga del
+ * territori, Divisió A. Els Països Catalans, l'Europea i la Mundial no es
+ * regalen: s'hi arriba jugant.
  */
-export const START_TIER = LEAGUE_LEVELS.findIndex((level) => level.id === 'territorial') * GROUPS.length;
-/** Fins on pot arribar la col·locació de la primera temporada: la mateixa lliga, Grup A. */
-export const PLACEMENT_MAX_TIER = START_TIER + 2;
-/** La primera temporada es juga una mica per sota del teu nivell (dos graons). */
-export const PLACEMENT_MARGIN = 80;
+export const PLACEMENT_MAX_TIER = TERRITORIAL_TIER + 2;
 
 export function clampTier(tier: number): number {
   return Number.isFinite(tier) ? Math.min(TOP_TIER, Math.max(0, Math.round(tier))) : 0;
@@ -65,7 +71,7 @@ export function tierLevel(tier: number): number {
   return Math.floor(clampTier(tier) / GROUPS.length);
 }
 
-/** Grup (C, B o A) d'un graó. */
+/** Divisió (C, B o A) d'un graó. */
 export function tierGroup(tier: number): GroupId {
   return GROUPS[clampTier(tier) % GROUPS.length];
 }
@@ -82,25 +88,26 @@ export function difficultyForRating(rating: number): DifficultyKey {
 }
 
 /**
- * Graó de la primera temporada segons la teva habilitat: el més alt entre la
- * Lliga Catalana (o la del teu territori) C i A que tingui els rivals uns 80
- * punts per sota teu, perquè hi siguis favorit sense avorrir-te. Qui encara
- * calibra el nivell (`null`) comença a la C. Els Països Catalans, l'Europea i
- * la Mundial no es regalen: s'hi arriba jugant.
+ * Graó de la primera temporada: el del teu nivell. És el més alt amb els
+ * rivals a la teva força o per sota (de Municipal C fins a la Divisió A de la
+ * lliga del territori, com a màxim). Sense nivell conegut, Municipal C.
  */
 export function placementTier(rating: number | null): number {
-  if (rating === null || !Number.isFinite(rating)) return START_TIER;
-  let tier = START_TIER;
-  for (let t = START_TIER + 1; t <= PLACEMENT_MAX_TIER; t++) {
-    if (tierRating(t) <= rating - PLACEMENT_MARGIN) tier = t;
+  if (rating === null || !Number.isFinite(rating)) return 0;
+  let tier = 0;
+  for (let t = 1; t <= PLACEMENT_MAX_TIER; t++) {
+    if (tierRating(t) <= rating) tier = t;
   }
   return tier;
 }
 
-/** L'habilitat que compta per col·locar-te: cap mentre encara es calibra. */
-export function placementRating(profile: { rating: number; adaptiveCalibrating?: boolean } | null): number | null {
-  if (!profile || profile.adaptiveCalibrating === true) return null;
-  return profile.rating;
+/**
+ * El teu nivell: la força dels rivals que el joc lliure et posaria ara en
+ * automàtic (amb la calibració a mig fer, el punt on és la calibració).
+ */
+export function placementRating(profile: PlayerProfile | null): number | null {
+  if (!profile) return null;
+  return suggestOpponentRatings(profile, 1)[0] ?? null;
 }
 
 /* ---------- Noms ---------- */
@@ -195,9 +202,14 @@ export function levelShort(level: number, home: LeagueHome | null): string {
   return t ? t[1] : 'Nacional';
 }
 
-/** «Lliga de Vic · Grup C». */
+/** «Lliga de Vic · Divisió C». Cada nivell té tres divisions: la C, la B i la A. */
 export function tierName(tier: number, home: LeagueHome | null): string {
-  return `${levelName(tierLevel(tier), home)} · Grup ${tierGroup(tier)}`;
+  return `${levelName(tierLevel(tier), home)} · Divisió ${tierGroup(tier)}`;
+}
+
+/** Un nom desat d'abans («Lliga de Vic · Grup B») amb el d'ara («· Divisió B»). */
+export function renameDivision(name: string): string {
+  return typeof name === 'string' ? name.replace(/ · (?:Grup|Lliga) ([ABC])$/, ' · Divisió $1') : name;
 }
 
 /* ---------- Configuració ---------- */
@@ -278,7 +290,7 @@ export interface LeagueSeason {
   seed: number;
   tier: number;
   config: LeagueConfig;
-  /** Nom fixat en crear-la («Lliga de Vic · Grup C»). */
+  /** Nom fixat en crear-la («Lliga de Vic · Divisió C»). */
   name: string;
   rivals: LeagueRival[];
   /** Calendari sencer: jornada → taules → jugadors. */
@@ -673,15 +685,13 @@ export function nextTier(tier: number, rank: number, players: number): number {
 
 /**
  * On jugaràs la temporada següent, en paraules. Dins d'un nivell es passa de
- * la C a la B i de la B a la A («Puges al Grup B de la Lliga de Vic»); de la A
- * es passa a la C del nivell següent («nivell nou»).
+ * la Divisió C a la B i de la B a la A («Puges a la Divisió B de la Lliga de
+ * Vic»); de la A es passa a la C del nivell següent («nivell nou»).
  */
 export function movementText(from: number, to: number, movement: Movement, home: LeagueHome | null): string {
   if (movement === 'champion') return 'Campió del món!';
   const sameLevel = tierLevel(from) === tierLevel(to);
-  const where = sameLevel
-    ? `al Grup ${tierGroup(to)} de la ${levelName(tierLevel(to), home)}`
-    : `a la ${tierName(to, home)}`;
+  const where = `a la Divisió ${tierGroup(to)} de la ${levelName(tierLevel(to), home)}`;
   if (movement === 'up') return `Puges ${where}${sameLevel ? '' : ': nivell nou!'}`;
   if (movement === 'down') return `Baixes ${where}`;
   return `Continues ${where}`;
@@ -722,8 +732,8 @@ const MAX_RECENT_NAMES = 90;
 
 export function newCareer(home: LeagueHome | null = null): LeagueCareer {
   return {
-    tier: START_TIER,
-    bestTier: START_TIER,
+    tier: 0,
+    bestTier: 0,
     home,
     homeAsked: false,
     config: { ...DEFAULT_CONFIG },
@@ -739,7 +749,7 @@ export function newCareer(home: LeagueHome | null = null): LeagueCareer {
  */
 export function upcomingTier(career: LeagueCareer, rating: number | null): number {
   if (career.seasons.length > 0) return clampTier(career.tier);
-  return Math.max(clampTier(career.tier), placementTier(rating));
+  return placementTier(rating);
 }
 
 /**
@@ -869,18 +879,10 @@ export function parseLeagueState(raw: string | null): LeagueState {
         : [],
     };
     career.bestTier = Math.max(career.bestTier, career.tier);
-    let season = validSeason(value.season);
-    /*
-     * Trajectòries d'abans que l'escalada comencés a la lliga del territori:
-     * qui no hi havia arribat mai hi puja (un sol cop: després ja té el
-     * millor graó a la Catalana i, si baixa, baixa), i la temporada que tenia
-     * per sota es descarta per tornar-la a començar allà.
-     */
-    if (career.bestTier < START_TIER) {
-      career.tier = START_TIER;
-      career.bestTier = START_TIER;
-      if (season && season.tier < START_TIER) season = null;
-    }
+    const season = validSeason(value.season);
+    // Els noms d'abans («· Grup B», «· Lliga B») amb el d'ara («· Divisió B»).
+    if (season) season.name = renameDivision(season.name);
+    career.seasons = career.seasons.map((record) => ({ ...record, name: renameDivision(record.name) }));
     return { career, season };
   } catch {
     return { career: newCareer(), season: null };

@@ -1,6 +1,8 @@
 import { DIFFICULTIES, STARTING_RATING, adaptiveLevelLabel, difficultyByRating, type GameRecord } from '@remigi/core';
 import { useState } from 'react';
+import { SettingsPanel } from '../components/SettingsPanel';
 import type { ProfileHandle } from '../state/useProfile';
+import type { TileStyle } from '../state/useTileStyle';
 
 interface Props {
   handle: ProfileHandle;
@@ -8,9 +10,12 @@ interface Props {
   onBack(): void;
   /** Text del botó de tornar. */
   backLabel?: string;
+  /** L'aspecte de les fitxes (per a la configuració, com al menú de la partida). */
+  tileStyle: TileStyle;
+  onTileStyle(style: TileStyle): void;
 }
 
-export function StatsScreen({ handle, onBack, backLabel = 'Torna a la partida' }: Props) {
+export function StatsScreen({ handle, onBack, backLabel = 'Torna a la partida', tileStyle, onTileStyle }: Props) {
   const profile = handle.profile;
   if (!profile) return <p className="muted">Encara no hi ha cap perfil.</p>;
 
@@ -66,6 +71,9 @@ export function StatsScreen({ handle, onBack, backLabel = 'Torna a la partida' }
           <dd>{winRate === null ? '—' : `${winRate}%`}</dd>
         </div>
       </dl>
+
+      {/* La configuració, també des de l'inici, el repte i la lliga (no només a la partida). */}
+      <SettingsPanel tileStyle={tileStyle} onTileStyle={onTileStyle} />
 
       {profile.history.length === 0 ? (
         <p className="notice">

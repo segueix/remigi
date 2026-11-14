@@ -14,6 +14,18 @@
       content="remigi, remigio, remigi online, remigio online, jugar remigi, jugar remigio, remigi gratis, remigio gratis, joc remigi"
     />
     <meta name="theme-color" content="#0f766e" />
+    <script>
+      /* Mode clar o fosc abans de pintar res (state/theme.ts fa la resta). */
+      (function () {
+        var choice = null;
+        try { choice = localStorage.getItem('remigi:tema'); } catch (e) {}
+        var dark = choice === 'dark';
+        if (choice !== 'dark' && choice !== 'light') {
+          try { dark = window.matchMedia('(prefers-color-scheme: dark)').matches; } catch (e) {}
+        }
+        document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+      })();
+    </script>
 
     <link rel="canonical" href="https://eltauler.cat/remigi/" />
     <link rel="alternate" hreflang="ca" href="https://eltauler.cat/remigi/" />

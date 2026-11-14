@@ -34,12 +34,19 @@ export interface AiParams {
 }
 
 export const DIFFICULTIES: Record<DifficultyKey, AiParams> = {
+  /*
+   * Els nivells baixos també allarguen les jugades de la taula, una part dels
+   * torns: sense, a 800–1000 gairebé ningú no podia posar res, la bossa es
+   * buidava en poques rondes i la partida s'acabava bloquejada (vegeu
+   * AGENT.md, «Els rivals de nivell baix posen més fitxes»).
+   */
   rookie: {
     key: 'rookie',
     label: 'Novell',
     rating: 800,
-    mistakeRate: 0.35,
-    extendsBoard: false,
+    mistakeRate: 0.28,
+    extendsBoard: true,
+    extensionRate: 0.45,
     usesJokers: false,
     rearrangesTable: false,
     rearrangeRate: 0,
@@ -48,8 +55,9 @@ export const DIFFICULTIES: Record<DifficultyKey, AiParams> = {
     key: 'easy',
     label: 'Fàcil',
     rating: 1000,
-    mistakeRate: 0.2,
-    extendsBoard: false,
+    mistakeRate: 0.18,
+    extendsBoard: true,
+    extensionRate: 0.6,
     usesJokers: true,
     rearrangesTable: false,
     rearrangeRate: 0,
@@ -126,7 +134,7 @@ export function difficultyByRating(value: number): AiParams {
     // Els jokers tenen molt impacte als nivells baixos: una corba cúbica
     // evita que el punt mig ja jugui pràcticament com Fàcil.
     jokerRate: Number(lower.usesJokers) + (Number(upper.usesJokers) - Number(lower.usesJokers)) * fraction ** 3,
-    extendsBoard: upper.extendsBoard,
-    extensionRate: mix(Number(lower.extendsBoard), Number(upper.extendsBoard)),
+    extendsBoard: lower.extendsBoard || upper.extendsBoard,
+    extensionRate: mix(lower.extensionRate ?? Number(lower.extendsBoard), upper.extensionRate ?? Number(upper.extendsBoard)),
   };
 }

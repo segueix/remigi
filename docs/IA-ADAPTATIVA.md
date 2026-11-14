@@ -11,8 +11,8 @@ els paràmetres que el limiten o hi introdueixen errors «humans»:
 
 | Nivell | Elo | Error per torn | Allarga la taula | Juga jokers | Torns amb reordenació |
 |---|---|---|---|---|---|
-| Novell (`rookie`) | 800 | 35% | no | no | mai |
-| Fàcil (`easy`) | 1000 | 20% | no | sí | mai |
+| Novell (`rookie`) | 800 | 28% | 45% dels torns | no | mai |
+| Fàcil (`easy`) | 1000 | 18% | 60% dels torns | sí | mai |
 | Mitjà (`medium`) | 1200 | 10% | sí | sí | mai |
 | Avançat (`advanced`) | 1400 | 4% | sí | sí | 20% |
 | Expert (`expert`) | 1600 | 0% | sí | sí | 100% |
@@ -25,6 +25,16 @@ de torns (`rearrangeRate`) que gradua el salt entre els dos nivells alts. Amb el
 20% de l'Avançat, l'Expert li guanya el 76% dels duels, just el que prediu la
 diferència d'Elo (abans d'aquest canvi, quan l'Avançat no reordenava mai, l'Expert
 els guanyava tots). Es pot comprovar amb `npm run simulate -- --ladder 200`.
+
+**Els nivells baixos també allarguen la taula** (motor 1.5.0, novembre de
+2026), una part dels torns (`extensionRate`). Abans Novell i Fàcil no ho feien
+mai i, a més, s'equivocaven molt (35% i 20%): a 800–1000 només hi havia jugada
+en un 15–20% dels torns, la bossa es buidava en poques rondes i la partida
+s'acabava bloquejada sense que ningú pogués posar res. Mesurat amb 40 partides
+de 4 bots del mateix nivell: a 800, les fitxes posades per jugador passen de 12
+a 18, els torns amb jugada del 15% al 24% i les rondes de 16 a 19. L'ordre de
+força es manté (taules barrejades de 300 partides: 800/1000/1200 guanyen el
+11/34/56%; abans, 2/6/92), amb salts més suaus entre els nivells baixos.
 
 «Error per torn» (`mistakeRate`) és la probabilitat que el bot «no vegi» la
 millor jugada trobada i robi fitxa, que és exactament l'error més habitual d'un

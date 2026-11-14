@@ -2360,3 +2360,43 @@ publicar». Cap nivell no repeteix l'àrea del de sota:
 de les Balears, de la Catalunya Nord, d'Andorra i de l'Alguer, i rivals amb
 origen a tots els nivells de casa de sis territoris) i 176 del motor; El Tauler,
 2.881 proves; comprovat a Chromium a les dues apps.
+
+### Rivals baixos més actius, lliga al teu nivell, divisions i mode clar/fosc ✅ Feta (2026-11-14)
+
+Demanat pel jugador: «Fes que als nivells baixos els bots tendeixin a posar
+alguna fitxa més perquè no s'acabi en poques rondes on ningú pot posar res.
+Que la lliga comenci al nivell que té el jugador, com a màxim la lliga
+catalana, valenciana… a la divisió que toca. Canvia Lliga A, Lliga B… per
+Divisió A, Divisió B. Que a totes les modalitats el perfil tingui la
+configuració i es pugui escollir mode fosc o clar. Si ja has començat lliga,
+que a la pàgina principal surti el nom de la lliga i la divisió.»
+
+- [x] **Rivals de nivell baix** (motor 1.5.0): Novell i Fàcil també allarguen
+      les jugades de la taula (45% i 60% dels torns) i s'equivoquen menys (28% i
+      18%; abans 35% i 20%, sense allargar mai). Mesurat (`rondes.ts`, `forca.ts`
+      a l'scratchpad; 40 i 300 partides): a 4 jugadors i 800, de 12 a 18 fitxes
+      posades per jugador, del 15% al 24% de torns amb jugada i de 16 a 19
+      rondes. L'ordre de força es manté (800/1000/1200: 11/34/56% de victòries;
+      abans 2/6/92). Baseline del motor regenerat a consciència.
+- [x] **Lliga al teu nivell** (`placementTier`, `placementRating`): el nivell
+      del joc lliure automàtic (també calibrant), al graó més alt amb rivals de
+      la teva força o per sota, com a molt la Divisió A de la lliga del
+      territori. S'ha tret el mínim d'aquest matí (i la migració que hi pujava
+      les trajectòries).
+- [x] **Divisions**: «Lliga de Vic · Divisió B», «Puges a la Divisió A de la
+      Lliga de Vic». Els noms desats amb «Grup» es renomenen en llegir-los.
+- [x] **Mode clar o fosc** (`state/theme.ts`): Automàtic (segueix el sistema),
+      Clar o Fosc, a `data-theme` de `<html>` (un script a `index.html` el posa
+      abans de pintar). El bloc **Configuració** (`SettingsPanel`: aspecte,
+      temps per torn i fitxes) surt al menú del jugador de la partida (lliure,
+      repte i lliga) i al perfil (des de l'inici, i amb «⚙️ Perfil» des del
+      repte i la lliga). El temps per torn és ara un valor compartit
+      (`useSyncExternalStore`): el perfil i el rellotge de la partida no es
+      desincronitzen.
+- [x] **Inici**: amb la lliga començada, la targeta en porta el nom i la
+      divisió, i a sota la jornada i la posició.
+
+**Criteris d'acceptació (verificats)**: 220 tests de la web i 176 del motor
+(baseline regenerat), build; proves de navegador noves del mode clar/fosc a
+totes les modalitats i del nom de la lliga a l'inici, i les de la lliga
+adaptades (perfil nou: Lliga Local, Divisió C).

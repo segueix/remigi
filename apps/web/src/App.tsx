@@ -558,6 +558,7 @@ export function App() {
           onPlay={() => void playChallenge()}
           onAbandon={quitChallenge}
           onHome={() => goTo('home')}
+          onProfile={() => setStatsOpen(true)}
         />
       )}
 
@@ -572,11 +573,13 @@ export function App() {
           }
           elTaulerHome={elTaulerHome}
           playerRating={placementRating(profile.profile)}
+          calibrating={profile.profile.adaptiveCalibrating === true}
           onStartSeason={startSeason}
           onPlayRound={() => void playRound()}
           onAbandonSeason={abandonSeason}
           onSetHome={setHome}
           onHome={() => goTo('home')}
+          onProfile={() => setStatsOpen(true)}
         />
       )}
 
@@ -585,6 +588,8 @@ export function App() {
           handle={profile}
           onBack={() => setStatsOpen(false)}
           backLabel={inGame ? 'Torna a la partida' : 'Torna'}
+          tileStyle={tileStyle}
+          onTileStyle={setTileStyle}
         />
       )}
 

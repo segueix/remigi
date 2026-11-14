@@ -74,12 +74,12 @@ per a aquella mateixa configuració; l'historial guarda els 40 últims reptes.
 
 ## 3. Lliga
 
-### L'escala: set nivells, tres grups cadascun
+### L'escala: set nivells, tres divisions cadascun
 
 Els noms són els de les lligues d'escacs d'El Tauler (`LLIGA.md` §6 de
 `segueix/eltauler`), amb la localitat del jugador:
 
-| Nivell | Lliga (exemple: Vic) | Grup C | Grup B | Grup A |
+| Nivell | Lliga (exemple: Vic) | Divisió C | Divisió B | Divisió A |
 |---|---|---|---|---|
 | Municipal | Lliga de Vic | 800 | 840 | 880 |
 | Comarcal | Lliga Comarcal d'Osona | 920 | 960 | 1000 |
@@ -100,35 +100,35 @@ a la A del nivell anterior. Al primer graó no es baixa; a l'últim no es puja, 
 el primer és «Campió del món». A dalt de la pantalla de la lliga, l'escalada és
 una **llista vertical** com una escala: la mundial a dalt i la local a baix,
 una fila per lliga amb el nom
-sencer i els seus tres grups en ordre (C, B, A) i la força dels rivals de
-cadascun; l'actual en el color de la lliga, els fets en verd. Els graons de sota
-de la lliga del territori no es pinten mai com a fets: no s'hi puja, només s'hi
-baixa. El final de
-temporada ho diu així:
-«Puges al Grup B de la Lliga de Vic», «Puges al Grup A de la Lliga de Vic»,
-«Puges a la Lliga Comarcal d'Osona · Grup C: nivell nou!» (`movementText`).
+sencer i les seves tres divisions en ordre (C, B, A) i la força dels rivals de
+cadascuna; l'actual en el color de la lliga, els fets en verd. Els graons de sota
+d'on vas començar no es pinten mai com a fets. La lliga es diu amb la divisió
+(«Lliga Catalana · Divisió B»; abans, «Grup B»: els noms desats d'abans
+s'actualitzen, `renameDivision`). El final de temporada ho diu així:
+«Puges a la Divisió B de la Lliga de Vic», «Puges a la Divisió A de la Lliga de
+Vic», «Puges a la Divisió C de la Lliga Comarcal d'Osona: nivell nou!»
+(`movementText`). A l'inici, amb la lliga començada, la targeta de la lliga en
+porta el nom i la divisió, i a sota la jornada i la posició.
 
 ### On es comença
 
-**Com a mínim a la lliga del territori, Grup C** (`START_TIER` = 9): la Lliga
-Catalana (també a la Catalunya Nord), la Valenciana, la Balear, l'Andorrana, la
-de la Franja o la de Sardenya (a l'Alguer), segons on jugues (rivals de 1160,
-Mitjà). Començar a
-la Lliga Local C (Novell, 800) voldria dir, per a algú de 1300, unes 12
-temporades guanyant rivals molt més fluixos abans de trobar-ne del seu nivell.
+**Al teu nivell, com a molt a la Divisió A de la lliga del territori**
+(`placementTier`, `PLACEMENT_MAX_TIER` = 11): la Lliga Catalana (també a la
+Catalunya Nord), la Valenciana, la Balear, l'Andorrana, la de la Franja o la de
+Sardenya (a l'Alguer).
 
-- **La primera temporada es col·loca pel nivell** (`placementTier`): el graó
-  més alt entre la C i la A de la lliga del territori amb els rivals uns 80
-  punts per sota de la teva habilitat (fins a 1240: C; 1280–1319: B; des de
-  1320: A). Els Països Catalans, l'Europea i la Mundial no es regalen.
-- Qui **encara calibra** el nivell no té habilitat per col·locar-lo
-  (`placementRating` → `null`): comença a la C.
+- El teu nivell és el del joc lliure en automàtic (`placementRating`:
+  `suggestOpponentRatings`), també mentre es calibra (el punt on és la
+  calibració; un perfil nou, Novell).
+- La primera temporada es juga al graó més alt amb els rivals a la teva força o
+  per sota (menys d'un graó): amb 800, la Lliga Local C; amb 1100, la Provincial
+  B (1080); amb 1240 o més, la Lliga Catalana A. Els Països Catalans, l'Europea
+  i la Mundial no es regalen.
 - A partir de la segona temporada **només mana l'escala** (`upcomingTier`):
-  es pot baixar a la provincial, la comarcal i la local, que hi són per a qui
-  baixa.
-- Les **trajectòries d'abans** que no havien arribat mai a la lliga del
-  territori (`bestTier` < 9) hi pugen en llegir-les, un sol cop; una temporada
-  que tenien començada per sota es descarta per tornar-la a començar allà.
+  es puja i es baixa des d'on t'hagi deixat la temporada.
+- *Abans* (14-11-2026, unes hores) es començava com a mínim a la lliga del
+  territori i les trajectòries que no hi havien arribat hi pujaven; ara ja no
+  hi ha mínim i no es toca cap trajectòria.
 
 ### Configuració de la temporada
 
@@ -312,10 +312,10 @@ música entre jornades o canviar-ne el volum (`remigi:musica`).
   persones; la força relativa entre nivells del motor és més abrupta que
   l'Elo (vegeu `AGENT.md`, «Un esglaó entre Avançat i Expert»).
 - Al primer graó, la meitat dels rivals queden encabits a 800 (el mínim del
-  motor): la lliga local és Novell de debò (només s'hi arriba baixant).
-- Algú que jugui per primer cop (calibrant, o d'habilitat baixa) comença
-  contra rivals de 1160 (Mitjà). Si li van grans, baixa a la provincial: el
-  descens fa de col·locació per sota.
+  motor): la lliga local és Novell de debò .
+- La col·locació és tan bona com el teu nivell del joc lliure: amb poques
+  partides (o la calibració a mig fer), pot quedar curta o llarga; l'escala ho
+  corregeix en una o dues temporades.
 - Les llistes de municipis de fora de Catalunya són de la Viquipèdia (novembre
   de 2026). A la Catalunya Nord només hi ha els de parla catalana: la Fenolleda
   (occitana) treu els rivals de la comarcal de tota la Catalunya Nord.
