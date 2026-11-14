@@ -4093,3 +4093,106 @@ button.secondary.reset-nivell {
 .interludi-seguent {
   margin: 0;
 }
+
+/* ---------- Repte: classificació i informació per jugar amb tàctica ---------- */
+
+.repte-classificacio {
+  margin-top: 1rem;
+  text-align: left;
+}
+
+.repte-guanyador {
+  margin: 0 0 0.6rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.65rem;
+  border-left: 4px solid var(--or);
+  background: color-mix(in srgb, var(--or) 10%, var(--superficie));
+  font-weight: 700;
+}
+
+.repte-taula {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.repte-taula caption {
+  margin-bottom: 0.3rem;
+  font-weight: 700;
+  text-align: left;
+}
+
+.repte-taula thead th {
+  padding: 0.3rem;
+  color: var(--text-suau);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-align: right;
+}
+
+.repte-taula thead th:nth-child(2) {
+  text-align: left;
+}
+
+.repte-taula td,
+.repte-taula tbody th {
+  padding: 0.35rem 0.3rem;
+  border-top: 1px solid var(--vora);
+  text-align: right;
+}
+
+.repte-taula td.repte-pos {
+  font-weight: 700;
+  text-align: center;
+}
+
+.repte-taula .repte-cel-jugador {
+  text-align: left;
+  font-weight: 600;
+}
+
+.repte-taula .repte-jugador {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.repte-taula .repte-nom {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.repte-taula .repte-avatar {
+  flex: none;
+  width: 1.65rem;
+  height: 1.65rem;
+  font-size: 0.8rem;
+  border-width: 1.5px;
+}
+
+.repte-taula .repte-avatar.inicials {
+  font-size: 0.66rem;
+}
+
+.repte-taula tr.jo td,
+.repte-taula tr.jo th {
+  background: color-mix(in srgb, var(--accent) 12%, var(--superficie));
+  font-weight: 700;
+}
+
+.repte-info {
+  margin: 0.7rem 0 0;
+  padding: 0.6rem 0.75rem 0.6rem 1.6rem;
+  border-radius: 0.65rem;
+  border-left: 4px solid var(--franja-2);
+  background: color-mix(in srgb, var(--franja-2) 6%, var(--superficie));
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.repte-info li + li {
+  margin-top: 0.3rem;
+}

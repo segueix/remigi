@@ -2410,3 +2410,32 @@ A El Tauler, el mateix nom a la Configuració.
 
 **Criteris d'acceptació (verificats)**: typecheck, tests de la web i prova de
 navegador de la música entre jornades (que entra pel botó nou).
+
+### Repte: la puntuació de tothom, el total acumulat i informació per jugar amb tàctica ✅ Feta (2026-11-14)
+
+Demanat pel jugador: «Al final de cada partida del repte vull saber la
+puntuació dels altres jugadors, per saber qui ha guanyat; i, si no és la
+primera, el resultat d'aquella i l'acumulat total. Així es pot jugar amb
+tàctica. Dona més informació interessant.»
+
+- [x] **Rivals fixos al repte** (`Challenge.rivals`): es trien en començar-lo i
+      són els mateixos a totes les partides (`opponentNames`); els reptes d'abans
+      en reben en la partida següent (`withRivals`).
+- [x] **Puntuació de tothom** a cada partida (`ChallengeGame.scores`, per
+      cadires), amb les fitxes que quedaven, el guanyador, si s'ha bloquejat i
+      els torns. Es desa validat (si no quadra, la partida es queda amb els teus
+      punts).
+- [x] **Classificació del repte** (`RepteStandings.tsx`): entre partides, al
+      final i a la pantalla del repte. Primera partida: punts de cadascú i 👑;
+      després, partida, total acumulat i victòries, pel total. Al final, qui
+      guanya el repte.
+- [x] **Informació per jugar amb tàctica** (`challengeInsights`): com ha acabat
+      la partida, les fitxes que et quedaven, on vas i a quants punts, les
+      partides que queden i quant val de mitjana guanyar-ne una, i un consell.
+      Entre partides, «Següent: contra X i Y, nivell Mitjà».
+
+**Criteris d'acceptació (verificats)**: 5 tests nous de la classificació
+(primera partida, acumulat que suma zero, informació, desat i reptes d'abans);
+proves de navegador del repte ampliades (el mateix rival a totes les partides,
+la taula entre partides amb el total des de la segona i la classificació final);
+captura de la classificació.

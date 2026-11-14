@@ -87,11 +87,17 @@ test('el repte suma els punts de totes les partides i no mou el nivell del joc l
   await page.getByRole('button', { name: 'Comença el repte' }).click();
 
   const num = (text: string | null) => Number(text!.replace('−', '-').replace('+', '').split(' ').pop());
+  const signat = (n: number) => (n > 0 ? `+${n}` : n < 0 ? `−${Math.abs(n)}` : '0');
   const punts: number[] = [];
+  let rival = '';
   for (let partida = 1; partida <= 3; partida++) {
     await expect(page.locator('.nivell-mode')).toContainText(`partida ${partida} de 3`);
     await expect(page.locator('.player')).toHaveCount(2);
     await expect(page.locator('.player .tag').filter({ hasText: 'Novell' })).toHaveCount(1);
+    // El rival del repte és el mateix a totes les partides.
+    const nom = (await page.locator('.player .player-nom').nth(1).textContent())!.trim();
+    if (partida === 1) rival = nom;
+    else expect(nom).toBe(rival);
     if (partida < 3) {
       // Entre partides, com a la lliga: el resultat en curt, la partida que
       // toca i el compte enrere, amb el total del repte fins ara.
@@ -100,9 +106,21 @@ test('el repte suma els punts de totes les partides i no mou el nivell del joc l
       await expect(page.locator('.interludi-compte strong')).toHaveText(/^(30|29|28|27)$/);
       punts.push(num(await page.locator('.interludi-resultat').textContent()));
       const fins = punts.reduce((a, b) => a + b, 0);
-      await expect(page.locator('.interludi-marcador dd').first()).toHaveText(
-        fins > 0 ? `+${fins}` : fins < 0 ? `−${Math.abs(fins)}` : '0',
-      );
+      await expect(page.locator('.interludi-marcador dd').first()).toHaveText(signat(fins));
+      // La puntuació de tothom: qui ha guanyat i, des de la segona, el total.
+      const taula = page.locator('.interludi .repte-taula');
+      await expect(taula.locator('tbody tr')).toHaveCount(2);
+      await expect(taula).toContainText(rival);
+      await expect(taula.locator('.repte-corona')).toHaveCount(1);
+      if (partida === 1) {
+        await expect(taula.locator('caption')).toHaveText('Resultat de la partida');
+        await expect(taula.locator('thead th')).toHaveCount(3);
+      } else {
+        await expect(taula.locator('caption')).toHaveText('Classificació després de 2 partides');
+        await expect(taula.locator('thead th')).toHaveText(['#', 'Jugador', 'Partida 2', 'Total', 'Vict.']);
+        await expect(taula.locator('tr.jo td').nth(2)).toHaveText(signat(fins));
+      }
+      await expect(page.locator('.interludi .repte-info li').first()).toBeVisible();
       // La primera, sense esperar; la segona, aturant el compte per anar al repte.
       if (partida === 1) await page.getByRole('button', { name: 'Juga ara' }).click();
       else {
@@ -113,6 +131,8 @@ test('el repte suma els punts de totes les partides i no mou el nivell del joc l
       // L'última acaba amb el resum de sempre.
       await acabaLaPartida(page, '.final-repte');
       await expect(page.locator('.final-repte')).toContainText('partida 3 de 3');
+      await expect(page.locator('.final-repte .repte-taula caption')).toHaveText('Classificació final del repte');
+      await expect(page.locator('.final-repte .repte-guanyador')).toContainText('repte');
       punts.push(num(await page.locator('.final-mode-xifres dd').first().textContent()));
       await page.getByRole('button', { name: 'Resultat del repte' }).click();
     }
@@ -296,7 +316,8 @@ test('entre partides del repte, 30 segons de relax i la següent comença sola',
   await page.getByRole('button', { name: '3', exact: true }).first().click();
   await page.getByRole('button', { name: 'Comença el repte' }).click();
   await acabaLaPartida(page, '.interludi');
-  await expect(page.locator('.interludi-seguent')).toContainText('2 rivals de nivell Mitjà');
+  await expect(page.locator('.interludi-seguent')).toContainText(/contra .+ i .+, nivell Mitjà/);
+  await expect(page.locator('.interludi .repte-taula tbody tr')).toHaveCount(3);
   await page.clock.runFor(31_000);
   await expect(page.locator('.nivell-mode')).toContainText('partida 2 de 3');
   await expect(page.locator('.rack .tile').first()).toBeVisible();

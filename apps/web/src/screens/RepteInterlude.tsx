@@ -1,6 +1,7 @@
 import { DIFFICULTIES } from '@remigi/core';
 import { bestFor, challengeTotal, challengeWins, type ChallengeState } from '../repte/challenge';
 import { ordinal, signed } from '../ui/format';
+import { RepteStandings } from './RepteStandings';
 import {
   InterludeBox,
   InterludeCountdown,
@@ -16,11 +17,20 @@ export interface LastGame {
   /** Posició a la taula (1 = guanyador) i quants jugadors hi havia. */
   place: number;
   players: number;
+  /** Punts i fitxes que li quedaven a cadascú, per cadires (tu primer). */
+  scores: number[];
+  tilesLeft: number[];
+  /** Cadira del guanyador, si la partida s'ha bloquejat i quants torns ha durat. */
+  winner: number;
+  blocked: boolean;
+  turns: number;
 }
 
 interface Props {
   /** El repte, amb la partida que s'acaba de jugar ja apuntada. */
   state: ChallengeState;
+  /** El teu nom, per a la classificació. */
+  playerName: string;
   last: LastGame;
   /** Comença la partida següent (a zero, o amb «Juga ara»). */
   onPlayNow(): void;
@@ -36,7 +46,7 @@ interface Props {
  * rècord a batre). A zero comença sola la partida següent; «Juga ara» no
  * espera; «Repte» i «Inici» l'aturen. L'última partida acaba amb el resum.
  */
-export function RepteInterlude({ state, last, onPlayNow, onChallenge, onHome }: Props) {
+export function RepteInterlude({ state, playerName, last, onPlayNow, onChallenge, onHome }: Props) {
   const countdown = useInterludeCountdown(onPlayNow);
   const music = useInterludeMusic(countdown.elapsed);
   const current = state.current;
@@ -76,8 +86,20 @@ export function RepteInterlude({ state, last, onPlayNow, onChallenge, onHome }: 
           <dd>{record ? signed(record.total) : '—'}</dd>
         </div>
       </dl>
+      {/* Qui ha guanyat la partida, els punts de tothom i el total del repte. */}
+      <RepteStandings challenge={current} playerName={playerName} />
+
       <p className="muted small interludi-seguent">
-        Següent: {current.config.opponents} {current.config.opponents === 1 ? 'rival' : 'rivals'} de nivell{' '}
+        Següent:{' '}
+        {current.rivals.length > 0 ? (
+          <>
+            contra <strong>{listCa(current.rivals)}</strong>, nivell{' '}
+          </>
+        ) : (
+          <>
+            {current.config.opponents} {current.config.opponents === 1 ? 'rival' : 'rivals'} de nivell{' '}
+          </>
+        )}
         <strong>{DIFFICULTIES[current.config.level].label}</strong>
       </p>
 
@@ -96,4 +118,10 @@ export function RepteInterlude({ state, last, onPlayNow, onChallenge, onHome }: 
       </div>
     </section>
   );
+}
+
+/** «A», «A i B», «A, B i C». */
+function listCa(names: string[]): string {
+  if (names.length <= 1) return names.join('');
+  return `${names.slice(0, -1).join(', ')} i ${names[names.length - 1]}`;
 }

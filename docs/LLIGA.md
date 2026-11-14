@@ -71,6 +71,22 @@ per a aquella mateixa configuració; l'historial guarda els 40 últims reptes.
   l'aturen. L'última acaba amb el resum i el resultat del repte. El compte
   enrere i la música són les mateixes peces que a la lliga
   (`screens/interlude.tsx`).
+- **Els rivals són els mateixos a tot el repte** (`Challenge.rivals`, triats en
+  començar-lo) i cada partida apunta la **puntuació de tothom**
+  (`ChallengeGame.scores`, per cadires: tu primer), les fitxes que li quedaven a
+  cadascú, qui l'ha guanyada, si s'ha bloquejat i quants torns ha durat.
+- **Classificació del repte** (`RepteStandings.tsx`, `challengeStandings`):
+  entre partida i partida, al final i a la pantalla del repte. A la primera,
+  els punts de cadascú i la corona per a qui ha guanyat; a partir de la segona,
+  també el total acumulat i les victòries, ordenats pel total. Al final, qui ha
+  guanyat el repte.
+- **Informació per jugar amb tàctica** (`challengeInsights`): com ha acabat la
+  partida (sense fitxes o bloquejada), les fitxes que et quedaven, on vas del
+  repte i a quants punts del primer (o quin avantatge tens), quantes partides
+  queden i quant ha valgut de mitjana guanyar-ne una, i un consell segons si
+  vas primer o no.
+- Els reptes d'abans, sense rivals fixos, en reben en jugar la partida
+  següent; les partides ja jugades només hi porten els teus punts.
 
 ## 3. Lliga
 

@@ -12,6 +12,7 @@ import {
   type ChallengeState,
 } from '../repte/challenge';
 import { signed } from '../ui/format';
+import { RepteStandings } from './RepteStandings';
 
 interface Props {
   state: ChallengeState;
@@ -23,6 +24,8 @@ interface Props {
   onHome(): void;
   /** El perfil, amb la configuració (mode clar o fosc, temps per torn, fitxes). */
   onProfile(): void;
+  /** El teu nom, per a la classificació del repte. */
+  playerName: string;
 }
 
 /**
@@ -30,7 +33,7 @@ interface Props {
  * en acabar se sumen els punts de totes. Mentre dura, aquí es veu com va; en
  * acabar, el total i si és un rècord per a aquella configuració.
  */
-export function RepteScreen({ state, hasSavedGame, onStart, onPlay, onAbandon, onHome, onProfile }: Props) {
+export function RepteScreen({ state, hasSavedGame, onStart, onPlay, onAbandon, onHome, onProfile, playerName }: Props) {
   const current = state.current;
   const [configuring, setConfiguring] = useState(!current);
   const [config, setConfig] = useState<ChallengeConfig>(state.lastConfig);
@@ -74,6 +77,7 @@ export function RepteScreen({ state, hasSavedGame, onStart, onPlay, onAbandon, o
               <dd>{challengeWins(current)}</dd>
             </div>
           </dl>
+          {current.games.length > 0 && <RepteStandings challenge={current} playerName={playerName} />}
           <GameList games={current.games} />
           <div className="row">
             <button type="button" onClick={onPlay}>
@@ -118,6 +122,7 @@ export function RepteScreen({ state, hasSavedGame, onStart, onPlay, onAbandon, o
               return null;
             })()}
           </p>
+          <RepteStandings challenge={current} playerName={playerName} insights={false} />
           <GameList games={current.games} />
           <div className="row">
             <button type="button" onClick={() => onStart(current.config)}>
