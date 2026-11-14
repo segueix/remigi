@@ -222,6 +222,22 @@ test('una temporada sencera de lliga: jornades, classificació i temporada segü
   await expect(page.locator('.interludi-compte strong')).toHaveText(/^(30|29|28|27)$/);
   rivals = await page.locator('.interludi-rival-text strong').allTextContents();
   expect(rivals).toHaveLength(2);
+  // La part principal és la de sempre; fent lliscar, la teva partida i la lliga.
+  const carrusel = page.locator('.interludi .carrusel');
+  await expect(carrusel.locator('.carrusel-punt')).toHaveCount(3);
+  await expect(carrusel.locator('.carrusel-punt').first()).toHaveAttribute('aria-selected', 'true');
+  await expect(carrusel.locator('.carrusel-diapo').first().locator('.interludi-cares')).toBeVisible();
+  await carrusel.getByRole('tab', { name: /^Pàgina 2/ }).click();
+  await expect(carrusel.locator('.carrusel-punt').nth(1)).toHaveAttribute('aria-selected', 'true');
+  await expect(carrusel.locator('.carrusel-barres li')).toHaveCount(3);
+  await expect(carrusel.locator('.carrusel-barres li.jo .carrusel-nota')).toContainText('de lliga');
+  await carrusel.locator('.carrusel-pista').evaluate((el) => el.scrollTo({ left: el.clientWidth * 2 }));
+  await expect(carrusel.locator('.carrusel-punt').nth(2)).toHaveAttribute('aria-selected', 'true');
+  await expect(carrusel.locator('.carrusel-classificacio li.jo')).toContainText('Tu');
+  await expect(carrusel.locator('.carrusel-info li').first()).toBeVisible();
+  expect(await carrusel.evaluate((el) => el.getBoundingClientRect().width)).toBeLessThanOrEqual(
+    await page.locator('.interludi').evaluate((el) => el.getBoundingClientRect().width),
+  );
   await page.getByRole('button', { name: 'Classificació' }).click();
   await expect(page.locator('.lliga-rivals strong')).toHaveText(rivals);
 

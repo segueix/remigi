@@ -675,6 +675,96 @@ export function zoneOf(tier: number, rank: number, players: number): Movement {
   return 'stay';
 }
 
+/** Una dada per jugar amb tàctica: una icona i una frase curta. */
+export interface LeagueInsight {
+  icon: string;
+  text: string;
+}
+
+/** «1 punt», «2,5 punts». */
+function pointsText(points: number): string {
+  const value = Number.isInteger(points) ? String(points) : points.toFixed(1).replace('.', ',');
+  return `${value} ${points === 1 ? 'punt' : 'punts'}`;
+}
+
+/**
+ * Informació per jugar amb tàctica entre jornades, en frases curtes amb
+ * icona: on ets respecte de la zona d'ascens i de la de descens (i a quants
+ * punts), quantes jornades i punts queden en joc, i com puntua una taula.
+ */
+export function leagueInsights(season: LeagueSeason, playerName = 'Tu'): LeagueInsight[] {
+  const out: LeagueInsight[] = [];
+  const table = standings(season, playerName);
+  const players = season.config.players;
+  const rank = table.findIndex((row) => row.id === YOU) + 1;
+  const me = table[rank - 1];
+  if (!me) return out;
+  const zone = zoneSize(players);
+  const tier = clampTier(season.tier);
+  const canGoUp = tier < TOP_TIER;
+  const canGoDown = tier > 0;
+  const lastUp = table[zone - 1];
+  const firstOut = table[zone];
+  const lastSafe = table[players - zone - 1];
+  const firstDown = table[players - zone];
+
+  if (rank <= zone && canGoUp) {
+    const lead = firstOut ? me.points - firstOut.points : 0;
+    out.push({
+      icon: '⬆️',
+      text: lead > 0 ? `Ets a la zona d’ascens, amb ${pointsText(lead)} de marge.` : 'Ets a la zona d’ascens, però empatat amb el primer de fora.',
+    });
+  } else if (rank > players - zone && canGoDown) {
+    const gap = lastSafe ? lastSafe.points - me.points : 0;
+    out.push({
+      icon: '⬇️',
+      text: gap > 0 ? `Ets a la zona de descens: et calen ${pointsText(gap)} per sortir-ne.` : 'Ets a la zona de descens, empatat amb el primer que se salva.',
+    });
+  } else {
+    if (canGoUp && lastUp) out.push({ icon: '⬆️', text: `Ets ${ordinalOf(rank)}: la zona d’ascens és a ${pointsText(Math.max(0, lastUp.points - me.points))}.` });
+    if (canGoDown && firstDown) {
+      const margin = me.points - firstDown.points;
+      if (margin <= season.config.opponents * 2) out.push({ icon: '⚠️', text: `Compte: la zona de descens és a ${pointsText(Math.max(0, margin))}.` });
+    }
+  }
+
+  const left = season.config.rounds - season.played;
+  if (left > 0) {
+    const max = left * season.config.opponents;
+    out.push({
+      icon: '⏳',
+      text: `${left === 1 ? 'Queda 1 jornada' : `Queden ${left} jornades`}: fins a ${pointsText(max)} en joc per a tu.`,
+    });
+  }
+  out.push({
+    icon: '💡',
+    text: `No cal guanyar la partida: cada rival que acaba per sota teu és 1 punt (${season.config.opponents} si la guanyes).`,
+  });
+  return out;
+}
+
+function ordinalOf(n: number): string {
+  return n === 1 ? '1r' : n === 2 ? '2n' : n === 3 ? '3r' : n === 4 ? '4t' : `${n}è`;
+}
+
+/** La teva taula de la jornada `round` (des de 0): jugadors, punts de la partida i punts de lliga. */
+export function yourTableResult(
+  season: LeagueSeason,
+  round: number,
+  playerName = 'Tu',
+): { id: string; name: string; you: boolean; score: number; leaguePoints: number }[] {
+  const result = season.results.find((r) => r.round === round && r.ids.includes(YOU));
+  if (!result) return [];
+  const gained = tablePoints(result.scores);
+  return result.ids.map((id, i) => ({
+    id,
+    name: id === YOU ? playerName : rivalById(season, id)?.name ?? id,
+    you: id === YOU,
+    score: result.scores[i],
+    leaguePoints: gained[i],
+  }));
+}
+
 /** Graó de la temporada següent segons la posició final. */
 export function nextTier(tier: number, rank: number, players: number): number {
   const zone = zoneOf(tier, rank, players);

@@ -4212,7 +4212,10 @@ button.secondary.reset-nivell {
 
 .carrusel-pista {
   display: flex;
+  align-items: flex-start;
   width: 100%;
+  overflow-y: hidden;
+  transition: height 0.25s ease;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   overscroll-behavior-x: contain;
@@ -4294,7 +4297,7 @@ button.secondary.reset-nivell {
 
 .carrusel-barres li {
   display: grid;
-  grid-template-columns: auto minmax(0, 5.5rem) minmax(0, 1fr) 3.4rem;
+  grid-template-columns: auto minmax(0, 6.5rem) minmax(0, 1fr) 3.4rem;
   align-items: center;
   gap: 0.45rem;
   font-variant-numeric: tabular-nums;
@@ -4496,4 +4499,74 @@ button.secondary.reset-nivell {
 .carrusel-punt:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+
+/* Nota curta sota el nom d'una barra (p. ex. els punts de lliga guanyats). */
+.carrusel-nota {
+  display: block;
+  color: var(--text-suau);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+/* Lliga: la classificació en curt (els de dalt i els del teu voltant). */
+.carrusel-classificacio {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0 0 0.7rem;
+  padding: 0;
+  list-style: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.carrusel-classificacio li {
+  display: grid;
+  grid-template-columns: 1.6rem auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.25rem 0.4rem;
+  border-left: 4px solid transparent;
+  border-radius: 0.45rem;
+  font-size: 0.88rem;
+}
+
+.carrusel-classificacio li.zona-puja {
+  border-left-color: var(--be);
+}
+
+.carrusel-classificacio li.zona-baixa {
+  border-left-color: var(--mal);
+}
+
+.carrusel-classificacio li.jo {
+  background: color-mix(in srgb, var(--accent) 12%, var(--superficie));
+  font-weight: 700;
+}
+
+.carrusel-classificacio li.buit {
+  display: block;
+  padding: 0;
+  color: var(--text-suau);
+  text-align: center;
+  line-height: 0.8;
+}
+
+.classif-pos {
+  font-weight: 700;
+  text-align: center;
+}
+
+.classif-nom {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.classif-punts {
+  font-weight: 700;
+}
+
+/* La primera pàgina de la lliga és la de sempre: dins del carrusel, centrada. */
+.carrusel-diapo .interludi-cares {
+  margin: 0 auto;
 }

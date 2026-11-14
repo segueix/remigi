@@ -12,6 +12,7 @@ import {
   closeSeason,
   createSeason,
   isFinished,
+  leagueInsights,
   levelName,
   levelShort,
   makeSchedule,
@@ -37,6 +38,7 @@ import {
   upcomingTier,
   winChances,
   yourTable,
+  yourTableResult,
   zoneOf,
   zoneSize,
   type LeagueSeason,
@@ -434,5 +436,39 @@ describe('el desat', () => {
     expect(parsed.season).toBeNull();
     expect(parsed.career.tier).toBe(5);
     expect(parsed.career.home?.municipi).toBe('Vic');
+  });
+});
+
+describe('entre jornades: la teva partida i la tàctica', () => {
+  const config = { opponents: 3 as const, players: 8, rounds: 7 };
+
+  it('la teva taula de la jornada, amb els punts de la partida i els de lliga', () => {
+    const season = recordRound(createSeason({ tier: TERRITORIAL_TIER, config, home: VIC, seed: 3 }), [60, -10, -20, -30]);
+    const rows = yourTableResult(season, 0, 'Anna');
+    expect(rows).toHaveLength(4);
+    expect(rows[0]).toMatchObject({ you: true, name: 'Anna', score: 60, leaguePoints: 3 });
+    expect(rows.slice(1).map((r) => r.leaguePoints)).toEqual([2, 1, 0]);
+    expect(rows.slice(1).every((r) => !r.you && r.name !== r.id)).toBe(true);
+    expect(yourTableResult(season, 5)).toEqual([]);
+  });
+
+  it('on ets respecte de les zones, què queda en joc i com puntua una taula', () => {
+    let season = createSeason({ tier: TERRITORIAL_TIER, config, home: VIC, seed: 3 });
+    season = recordRound(season, [60, -10, -20, -30]);
+    const winning = leagueInsights(season);
+    expect(winning[0].icon).toBe('⬆️');
+    expect(winning[0].text).toMatch(/^Ets a la zona d’ascens/);
+    expect(winning).toContainEqual({ icon: '⏳', text: 'Queden 6 jornades: fins a 18 punts en joc per a tu.' });
+    expect(winning[winning.length - 1].text).toBe('No cal guanyar la partida: cada rival que acaba per sota teu és 1 punt (3 si la guanyes).');
+    // Perdent-ho tot, a la zona de descens.
+    let losing = createSeason({ tier: TERRITORIAL_TIER, config, home: VIC, seed: 3 });
+    for (let i = 0; i < 3; i++) losing = recordRound(losing, [-90, 30, 30, 30]);
+    const down = leagueInsights(losing);
+    expect(down[0].icon).toBe('⬇️');
+    expect(down[0].text).toMatch(/^Ets a la zona de descens/);
+    // Al primer graó no es baixa: cap avís de descens.
+    let bottom = createSeason({ tier: 0, config, home: VIC, seed: 3 });
+    for (let i = 0; i < 3; i++) bottom = recordRound(bottom, [-90, 30, 30, 30]);
+    expect(leagueInsights(bottom).some((line) => line.icon === '⬇️' || line.icon === '⚠️')).toBe(false);
   });
 });
