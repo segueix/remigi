@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useSyncExternalStore } from 'react';
 
 /**
  * El temps que tens per jugar cada torn. És una preferència del dispositiu,
@@ -35,23 +35,47 @@ export function readTurnSeconds(raw: string | null): TurnSeconds {
   return seconds;
 }
 
+/*
+ * Un sol valor per a tota l'app: el menú de la partida i la configuració del
+ * perfil el canvien i el rellotge de la taula el llegeix, encara que la partida
+ * quedi oberta (amagada) mentre es mira el perfil.
+ */
+const listeners = new Set<() => void>();
+let current: TurnSeconds | undefined;
+
+function getTurnSeconds(): TurnSeconds {
+  if (current === undefined) {
+    try {
+      current = readTurnSeconds(localStorage.getItem(KEY));
+    } catch {
+      current = DEFAULT_TURN_SECONDS;
+    }
+  }
+  return current;
+}
+
+function setTurnSeconds(next: TurnSeconds): void {
+  current = next;
+  try {
+    localStorage.setItem(KEY, next === null ? 'cap' : String(next));
+  } catch {
+    // Sense emmagatzematge, la tria dura mentre duri la pestanya.
+  }
+  listeners.forEach((listener) => listener());
+}
+
+function subscribe(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
 export function useTurnSeconds(): [TurnSeconds, (seconds: TurnSeconds) => void] {
-  const [seconds, setSeconds] = useState<TurnSeconds>(() => {
-    try {
-      return readTurnSeconds(localStorage.getItem(KEY));
-    } catch {
-      return DEFAULT_TURN_SECONDS;
-    }
-  });
-
-  const set = useCallback((next: TurnSeconds) => {
-    setSeconds(next);
-    try {
-      localStorage.setItem(KEY, next === null ? 'cap' : String(next));
-    } catch {
-      // Sense emmagatzematge, la tria dura mentre duri la pestanya.
-    }
-  }, []);
-
+  const seconds = useSyncExternalStore(subscribe, getTurnSeconds, () => DEFAULT_TURN_SECONDS);
+  const set = useCallback((next: TurnSeconds) => setTurnSeconds(next), []);
   return [seconds, set];
+}
+
+/** Per a les proves: oblida el valor llegit (es tornarà a llegir de localStorage). */
+export function resetTurnSecondsCache(): void {
+  current = undefined;
 }

@@ -140,10 +140,11 @@ test('la lliga fa servir la localitat d’El Tauler i els noms de les lligues d�
   await expect(dialeg).toContainText("Lliga Comarcal d'Osona");
   await expect(dialeg).toContainText('Lliga Mundial');
   await dialeg.getByRole('button', { name: 'Desa' }).click();
-  // L'escalada comença com a mínim a la lliga del territori (la Catalana, Grup C).
-  await expect(page.locator('.lliga h2')).toHaveText('Lliga Catalana · Grup C');
-  await expect(page.locator('.lliga-lloc')).toContainText('Mitjà · 1160');
-  await expect(page.locator('.lliga-colocacio')).toContainText('com a mínim a la lliga del teu territori');
+  // La lliga comença al nivell del jugador: un perfil nou (que comença a
+  // calibrar a Novell) juga la lliga local, Divisió C.
+  await expect(page.locator('.lliga h2')).toHaveText('Lliga de Vic · Divisió C');
+  await expect(page.locator('.lliga-lloc')).toContainText('Novell · 800');
+  await expect(page.locator('.lliga-colocacio')).toContainText('Comences a la lliga i la divisió del teu nivell');
 
   // L'escalada és una llista vertical, com una escala: la mundial a dalt i la
   // local a baix, cadascuna amb els grups C, B i A en aquest ordre.
@@ -154,7 +155,7 @@ test('la lliga fa servir la localitat d’El Tauler i els noms de les lligues d�
   await expect(nivells.last().locator('.escala-nom')).toHaveText('Lliga de Vic');
   await expect(nivells.last().locator('.escala-grao strong')).toHaveText(['C', 'B', 'A']);
   await expect(nivells.nth(3).locator('.escala-nom')).toHaveText('Lliga Catalana');
-  await expect(nivells.nth(3).locator('.escala-grao[aria-current="step"]')).toHaveText('C1160');
+  await expect(nivells.last().locator('.escala-grao[aria-current="step"]')).toHaveText('C800');
   const ys = await nivells.evaluateAll((files) => files.map((f) => f.getBoundingClientRect().top));
   for (let i = 1; i < ys.length; i++) expect(ys[i]).toBeGreaterThan(ys[i - 1]);
   const xs = await nivells.evaluateAll((files) => files.map((f) => Math.round(f.getBoundingClientRect().left)));
@@ -165,7 +166,7 @@ test('una temporada sencera de lliga: jornades, classificació i temporada segü
   await obreNet(page);
   await page.getByRole('button', { name: 'Lliga', exact: true }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Ara no' }).click();
-  await expect(page.locator('.lliga h2')).toHaveText('Lliga Catalana · Grup C');
+  await expect(page.locator('.lliga h2')).toHaveText('Lliga Local · Divisió C');
 
   // Partides de tres (dos rivals), sis jugadors i tres jornades.
   const tria = (llegenda: string) => page.locator('.tria').filter({ hasText: llegenda });
@@ -211,7 +212,7 @@ test('una temporada sencera de lliga: jornades, classificació i temporada segü
   // Final de temporada: cadascú ha jugat les tres jornades.
   await expect(page.locator('.lliga-final')).toBeVisible();
   await expect(page.locator('.lliga-final-moviment')).toContainText(
-    /Continues al Grup C de la Lliga Catalana|Puges al Grup B de la Lliga Catalana|Baixes a la Lliga Provincial · Grup A/,
+    /Continues a la Divisió C de la Lliga Local|Puges a la Divisió B de la Lliga Local/,
   );
   const jugades = await page.locator('.lliga-final .lliga-taula tbody tr td.col-pj').allTextContents();
   if (jugades.length > 0) expect(new Set(jugades)).toEqual(new Set(['3']));
@@ -335,4 +336,62 @@ test('en tornar a una partida deixada a mitges, és exactament com era', async (
   // I la jugada a mig fer es pot desfer com abans.
   await page.getByRole('button', { name: 'Desfer canvis' }).click();
   await expect(page.locator('.board .meld .tile')).toHaveCount(fitxesTaula);
+});
+
+test('a totes les modalitats el perfil té la configuració, amb el mode clar o fosc', async ({ page }) => {
+  await obreNet(page);
+  const html = page.locator('html');
+  await expect(html).toHaveAttribute('data-theme', 'light');
+  const fons = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+  const clar = await fons();
+
+  // Des de l'inici: el perfil.
+  await page.getByRole('button', { name: 'El teu historial' }).click();
+  const config = page.getByRole('region', { name: 'Configuració' });
+  await expect(config.getByRole('group', { name: 'Temps per torn' })).toBeVisible();
+  await expect(config.getByRole('group', { name: 'Aspecte de les fitxes' })).toBeVisible();
+  await config.getByRole('button', { name: 'Fosc' }).click();
+  await expect(html).toHaveAttribute('data-theme', 'dark');
+  expect(await fons()).not.toBe(clar);
+  // Es recorda en tornar a obrir l'app.
+  await page.reload();
+  await expect(html).toHaveAttribute('data-theme', 'dark');
+
+  // El repte i la lliga hi porten amb «Perfil».
+  await page.getByRole('button', { name: 'Repte', exact: true }).click();
+  await page.getByRole('button', { name: 'El teu perfil i la configuració' }).click();
+  await expect(page.getByRole('region', { name: 'Configuració' })).toBeVisible();
+  await page.getByRole('button', { name: /Torna/ }).click();
+  await page.getByRole('button', { name: '← Inici' }).click();
+  await page.getByRole('button', { name: 'Lliga', exact: true }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Ara no' }).click();
+  await page.getByRole('button', { name: 'El teu perfil i la configuració' }).click();
+  await expect(page.getByRole('region', { name: 'Configuració' })).toBeVisible();
+  await page.getByRole('button', { name: /Torna/ }).click();
+  await page.getByRole('button', { name: '← Inici' }).click();
+
+  // I a la partida, al menú del jugador (aquí, el joc lliure).
+  await entraAlJocLliure(page);
+  await obreMenu(page);
+  const menu = page.locator('.menu-usuari').getByRole('region', { name: 'Configuració' });
+  await expect(menu.getByRole('button', { name: 'Fosc' })).toHaveAttribute('aria-pressed', 'true');
+  await menu.getByRole('button', { name: 'Clar' }).click();
+  await expect(html).toHaveAttribute('data-theme', 'light');
+  await menu.getByRole('button', { name: 'Automàtic' }).click();
+  // En automàtic segueix el sistema (el navegador de la prova és clar).
+  await expect(html).toHaveAttribute('data-theme', 'light');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await expect(html).toHaveAttribute('data-theme', 'dark');
+});
+
+test('amb la lliga començada, l’inici en diu el nom i la divisió', async ({ page }) => {
+  await obreNet(page, { chess_leagueCareer: JSON.stringify({ home: { territory: 'cat', municipi: 'Vic' } }) });
+  const targeta = page.getByRole('button', { name: 'Lliga', exact: true });
+  await expect(targeta.locator('.mode-lliga-nom')).toHaveCount(0);
+  await targeta.click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Desa' }).click();
+  await page.getByRole('button', { name: 'Comença la temporada' }).click();
+  await page.getByRole('button', { name: '← Inici' }).click();
+  await expect(targeta.locator('.mode-lliga-nom')).toHaveText('Lliga de Vic · Divisió C');
+  await expect(targeta.locator('.mode-estat')).toHaveText('Jornada 1/7');
 });

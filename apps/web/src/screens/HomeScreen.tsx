@@ -75,8 +75,14 @@ export function HomeScreen({
   /* Lliga: on ets i com vas. */
   const season = league.season;
   const nextTier = upcomingTier(league.career, placementRating(profile));
-  const leagueStatus = season && !isFinished(season)
-    ? `${season.name} · jornada ${season.played + 1}/${season.config.rounds}${season.played > 0 ? ` · ${ordinal(rankOf(season))}` : ''}`
+  const running = season !== null && !isFinished(season);
+  /*
+   * Amb la lliga començada, la targeta porta el nom de la lliga i la divisió
+   * («Lliga Catalana · Divisió B») i, a sota, la jornada i la posició.
+   */
+  const leagueName = running && season ? season.name : null;
+  const leagueStatus = running && season
+    ? `Jornada ${season.played + 1}/${season.config.rounds}${season.played > 0 ? ` · ${ordinal(rankOf(season))}` : ''}`
     : `${tierName(nextTier, league.career.home)} · rivals ${DIFFICULTIES[difficultyForRating(tierRating(nextTier))].label}`;
 
   return (
@@ -130,10 +136,14 @@ export function HomeScreen({
             <LeagueIcon />
           </span>
           <strong className="mode-titol">Lliga</strong>
-          <span className="mode-sub">Del poble al món, com a El Tauler</span>
+          {leagueName ? (
+            <span className="mode-sub mode-lliga-nom">{leagueName}</span>
+          ) : (
+            <span className="mode-sub">Del poble al món, com a El Tauler</span>
+          )}
           <span className="mode-estat">{leagueStatus}</span>
           <span className="mode-cta" aria-hidden="true">
-            {season && !isFinished(season) ? (savedLliga ? 'Continua' : 'Segueix') : 'Obre'}
+            {running ? (savedLliga ? 'Continua' : 'Segueix') : 'Obre'}
           </span>
         </button>
       </div>

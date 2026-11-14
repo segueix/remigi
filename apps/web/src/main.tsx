@@ -6,6 +6,7 @@ import './styles.css';
 import './appSwitch/appSwitch.css';
 import { initAppSwitch } from './appSwitch/appSwitch';
 import { registerUpdates } from './pwa/updates';
+import { initTheme } from './state/theme';
 
 // Abans de res: si hi ha dades desades amb el nom antic del joc, es migren.
 try {
@@ -29,6 +30,9 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
     // Si l'historial no es deixa tocar, el joc funciona igual.
   }
 }
+
+// El mode clar o fosc triat (o el del sistema, en automàtic).
+initTheme();
 
 const container = document.getElementById('root');
 if (!container) throw new Error('No s’ha trobat l’element arrel de l’aplicació');

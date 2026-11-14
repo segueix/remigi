@@ -51,7 +51,7 @@ export function LocationDialog({ initial, fromElTauler, onSave, onSkip }: Props)
         <p className="muted small">
           {fromElTauler
             ? 'És el lloc que tens a la lliga d’escacs d’El Tauler. Les lligues de Remigi porten els mateixos noms.'
-            : 'Les lligues porten el nom del teu lloc, com les d’escacs d’El Tauler. Comences, com a mínim, a la del teu territori.'}
+            : 'Les lligues porten el nom del teu lloc, com les d’escacs d’El Tauler. Comences a la del teu nivell; com a molt, a la del teu territori.'}
         </p>
         <label>
           Territori

@@ -1,11 +1,11 @@
-import { createRng } from '@remigi/core';
+import { createProfile, createRng, suggestOpponentRatings } from '@remigi/core';
 import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_CONFIG,
   MAX_RATING,
   MIN_RATING,
   PLACEMENT_MAX_TIER,
-  START_TIER,
+  TERRITORIAL_TIER,
   TOP_TIER,
   YOU,
   catalanDe,
@@ -23,6 +23,7 @@ import {
   placementRating,
   placementTier,
   rankOf,
+  renameDivision,
   recordRound,
   serializeLeagueState,
   simulateTable,
@@ -65,14 +66,14 @@ describe("l'escala de lligues", () => {
   });
 
   it('fa servir els noms de les lligues d’escacs, amb la localitat', () => {
-    expect(tierName(0, VIC)).toBe('Lliga de Vic · Grup C');
-    expect(tierName(3, VIC)).toBe("Lliga Comarcal d'Osona · Grup C");
-    expect(tierName(8, VIC)).toBe('Lliga Provincial de Barcelona · Grup A');
-    expect(tierName(9, VIC)).toBe('Lliga Catalana · Grup C');
-    expect(tierName(12, VIC)).toBe('Lliga dels Països Catalans · Grup C');
-    expect(tierName(15, VIC)).toBe('Lliga Europea · Grup C');
-    expect(tierName(20, VIC)).toBe('Lliga Mundial · Grup A');
-    expect(tierName(0, null)).toBe('Lliga Local · Grup C');
+    expect(tierName(0, VIC)).toBe('Lliga de Vic · Divisió C');
+    expect(tierName(3, VIC)).toBe("Lliga Comarcal d'Osona · Divisió C");
+    expect(tierName(8, VIC)).toBe('Lliga Provincial de Barcelona · Divisió A');
+    expect(tierName(9, VIC)).toBe('Lliga Catalana · Divisió C');
+    expect(tierName(12, VIC)).toBe('Lliga dels Països Catalans · Divisió C');
+    expect(tierName(15, VIC)).toBe('Lliga Europea · Divisió C');
+    expect(tierName(20, VIC)).toBe('Lliga Mundial · Divisió A');
+    expect(tierName(0, null)).toBe('Lliga Local · Divisió C');
     expect(catalanDe('el Bages')).toBe('del Bages');
     expect(catalanDe("l'Anoia")).toBe("de l'Anoia");
     expect(catalanDe('Igualada')).toBe("d'Igualada");
@@ -82,12 +83,12 @@ describe("l'escala de lligues", () => {
     expect(tierGroup(nextTier(0, 1, 8))).toBe('B'); // Municipal C → Municipal B
     expect(tierGroup(nextTier(1, 1, 8))).toBe('A'); // Municipal B → Municipal A
     expect(tierLevel(nextTier(1, 1, 8))).toBe(0);
-    expect(movementText(0, 1, 'up', VIC)).toBe('Puges al Grup B de la Lliga de Vic');
-    expect(movementText(1, 2, 'up', VIC)).toBe('Puges al Grup A de la Lliga de Vic');
-    expect(movementText(2, 3, 'up', VIC)).toBe("Puges a la Lliga Comarcal d'Osona · Grup C: nivell nou!");
-    expect(movementText(4, 3, 'down', VIC)).toBe("Baixes al Grup C de la Lliga Comarcal d'Osona");
-    expect(movementText(3, 2, 'down', VIC)).toBe('Baixes a la Lliga de Vic · Grup A');
-    expect(movementText(5, 5, 'stay', VIC)).toBe("Continues al Grup A de la Lliga Comarcal d'Osona");
+    expect(movementText(0, 1, 'up', VIC)).toBe('Puges a la Divisió B de la Lliga de Vic');
+    expect(movementText(1, 2, 'up', VIC)).toBe('Puges a la Divisió A de la Lliga de Vic');
+    expect(movementText(2, 3, 'up', VIC)).toBe("Puges a la Divisió C de la Lliga Comarcal d'Osona: nivell nou!");
+    expect(movementText(4, 3, 'down', VIC)).toBe("Baixes a la Divisió C de la Lliga Comarcal d'Osona");
+    expect(movementText(3, 2, 'down', VIC)).toBe('Baixes a la Divisió A de la Lliga de Vic');
+    expect(movementText(5, 5, 'stay', VIC)).toBe("Continues a la Divisió A de la Lliga Comarcal d'Osona");
     expect(movementText(20, 20, 'champion', VIC)).toBe('Campió del món!');
     // De pujada, tots els graons un per un: C, B, A, C, B, A…
     const groups = Array.from({ length: 21 }, (_, t) => tierGroup(t)).join('');
@@ -178,7 +179,7 @@ describe('els rivals', () => {
     for (const rival of season.rivals) expect(rival.name).toMatch(/\S+ \S+/);
     // A la comarcal, els rivals són de pobles de la comarca.
     expect(season.rivals.every((r) => r.origin && r.origin !== 'Vic')).toBe(true);
-    expect(season.name).toBe("Lliga Comarcal d'Osona · Grup C");
+    expect(season.name).toBe("Lliga Comarcal d'Osona · Divisió C");
   });
 
   it('la mateixa llavor dona la mateixa temporada', () => {
@@ -325,11 +326,11 @@ describe('fora de Catalunya, cap nivell no repeteix l’àrea del de sota', () =
     expect(names(home('and', 'Encamp', 'Andorra', 'Andorra'))).toEqual([
       "Lliga d'Encamp", 'Tercera Divisió Andorrana', 'Segona Divisió Andorrana', 'Lliga Andorrana',
     ]);
-    expect(tierName(4, home('and', 'Encamp', 'Andorra', 'Andorra'))).toBe('Tercera Divisió Andorrana · Grup B');
+    expect(tierName(4, home('and', 'Encamp', 'Andorra', 'Andorra'))).toBe('Tercera Divisió Andorrana · Divisió B');
     expect(names(home('alguer', "l'Alguer", "l'Alguer", 'Sàsser'))).toEqual([
       "Lliga de l'Alguer", 'Lliga de la Nurra', 'Lliga Provincial de Sàsser', 'Lliga de Sardenya',
     ]);
-    expect(tierName(START_TIER, home('alguer', "l'Alguer", "l'Alguer", 'Sàsser'))).toBe('Lliga de Sardenya · Grup C');
+    expect(tierName(TERRITORIAL_TIER, home('alguer', "l'Alguer", "l'Alguer", 'Sàsser'))).toBe('Lliga de Sardenya · Divisió C');
   });
 
   it('els rivals tenen origen a tots els nivells de casa, també a l’Alguer i a Andorra', () => {
@@ -342,7 +343,7 @@ describe('fora de Catalunya, cap nivell no repeteix l’àrea del de sota', () =
       home('alguer', "l'Alguer", "l'Alguer", 'Sàsser'),
     ];
     for (const h of homes) {
-      for (const tier of [3, 6, START_TIER]) {
+      for (const tier of [3, 6, TERRITORIAL_TIER]) {
         const season = createSeason({ tier, config: DEFAULT_CONFIG, home: h, seed: 5 });
         expect(season.name).toBe(tierName(tier, h));
         for (const rival of season.rivals) expect(rival.origin).toBeTruthy();
@@ -354,57 +355,67 @@ describe('fora de Catalunya, cap nivell no repeteix l’àrea del de sota', () =
 describe('on es comença', () => {
   const VAL: LeagueHome = { territory: 'val', municipi: 'Gandia', comarca: 'la Safor', provincia: 'València', pais: '' };
 
-  it('com a mínim a la lliga del territori, Grup C', () => {
-    expect(START_TIER).toBe(9);
-    expect(newCareer(VIC)).toMatchObject({ tier: START_TIER, bestTier: START_TIER });
-    expect(tierName(START_TIER, VIC)).toBe('Lliga Catalana · Grup C');
-    expect(tierName(START_TIER, VAL)).toBe('Lliga Valenciana · Grup C');
-    expect(tierName(PLACEMENT_MAX_TIER, VIC)).toBe('Lliga Catalana · Grup A');
+  it('la lliga del territori és el graó 9; la col·locació arriba com a molt a la seva Divisió A', () => {
+    expect(TERRITORIAL_TIER).toBe(9);
+    expect(PLACEMENT_MAX_TIER).toBe(11);
+    expect(newCareer(VIC)).toMatchObject({ tier: 0, bestTier: 0 });
+    expect(tierName(TERRITORIAL_TIER, VIC)).toBe('Lliga Catalana · Divisió C');
+    expect(tierName(TERRITORIAL_TIER, VAL)).toBe('Lliga Valenciana · Divisió C');
+    expect(tierName(PLACEMENT_MAX_TIER, VIC)).toBe('Lliga Catalana · Divisió A');
   });
 
-  it('la primera temporada es col·loca pel nivell, uns 80 punts per sota, fins a la A', () => {
-    expect(placementTier(null)).toBe(START_TIER);
-    expect(placementTier(MIN_RATING)).toBe(START_TIER);
-    expect(placementTier(1240)).toBe(START_TIER);
-    expect(placementTier(1280)).toBe(START_TIER + 1);
-    expect(placementTier(1300)).toBe(START_TIER + 1);
-    expect(placementTier(1320)).toBe(PLACEMENT_MAX_TIER);
+  it('la primera temporada comença al teu nivell, com a molt a la Divisió A del territori', () => {
+    expect(placementTier(null)).toBe(0);
+    expect(placementTier(MIN_RATING)).toBe(0);
+    expect(placementTier(1000)).toBe(5);
+    expect(placementTier(1100)).toBe(7);
+    expect(placementTier(1160)).toBe(TERRITORIAL_TIER);
+    expect(placementTier(1240)).toBe(PLACEMENT_MAX_TIER);
+    expect(placementTier(1400)).toBe(PLACEMENT_MAX_TIER);
     expect(placementTier(MAX_RATING)).toBe(PLACEMENT_MAX_TIER);
     for (let r = MIN_RATING; r <= MAX_RATING; r += 10) {
       const tier = placementTier(r);
-      if (tier > START_TIER) expect(tierRating(tier)).toBeLessThanOrEqual(r - 80);
+      // Rivals a la teva força o just per sota (menys d'un graó), mai per sobre.
+      expect(tierRating(tier)).toBeLessThanOrEqual(r);
+      if (tier < PLACEMENT_MAX_TIER) expect(tierRating(tier + 1)).toBeGreaterThan(r);
     }
   });
 
-  it('qui calibra encara no té habilitat per col·locar-lo', () => {
+  it('el teu nivell és el del joc lliure automàtic, també mentre es calibra', () => {
     expect(placementRating(null)).toBeNull();
-    expect(placementRating({ rating: 1400, adaptiveCalibrating: true })).toBeNull();
-    expect(placementRating({ rating: 1400, adaptiveCalibrating: false })).toBe(1400);
+    const calibrated = { ...createProfile('p', 'Jo'), rating: 1300, adaptiveCalibrating: false };
+    expect(placementRating(calibrated)).toBe(1300);
+    const calibrating = { ...createProfile('p', 'Jo'), adaptiveCalibrating: true, adaptiveStep: 0 };
+    expect(placementRating(calibrating)).toBe(suggestOpponentRatings(calibrating, 1)[0]);
+    expect(placementTier(placementRating(calibrating))).toBe(placementTier(suggestOpponentRatings(calibrating, 1)[0]));
   });
 
   it('després de la primera temporada només mana l’escala, i es pot baixar', () => {
-    expect(upcomingTier(newCareer(VIC), 1300)).toBe(START_TIER + 1);
-    expect(upcomingTier(newCareer(VIC), null)).toBe(START_TIER);
-    const season = createSeason({ tier: START_TIER, config: DEFAULT_CONFIG, home: VIC, seed: 4 });
+    expect(upcomingTier(newCareer(VIC), 1300)).toBe(PLACEMENT_MAX_TIER);
+    expect(upcomingTier(newCareer(VIC), 1100)).toBe(7);
+    expect(upcomingTier({ ...newCareer(VIC), tier: TERRITORIAL_TIER }, 900)).toBe(2);
+    const season = createSeason({ tier: TERRITORIAL_TIER, config: DEFAULT_CONFIG, home: VIC, seed: 4 });
     const done = playSeason(season, () => [-200, 120, 50, 30]);
     const career = closeSeason(newCareer(VIC), done);
-    expect(career.tier).toBe(START_TIER - 1);
-    expect(upcomingTier(career, 1600)).toBe(START_TIER - 1);
-    expect(tierName(career.tier, VIC)).toBe('Lliga Provincial de Barcelona · Grup A');
-    // I en tornar a obrir l'app no se la torna a pujar.
-    expect(parseLeagueState(serializeLeagueState({ career, season: null })).career.tier).toBe(START_TIER - 1);
+    expect(career.tier).toBe(TERRITORIAL_TIER - 1);
+    expect(upcomingTier(career, 1600)).toBe(TERRITORIAL_TIER - 1);
+    expect(tierName(career.tier, VIC)).toBe('Lliga Provincial de Barcelona · Divisió A');
+    expect(parseLeagueState(serializeLeagueState({ career, season: null })).career.tier).toBe(TERRITORIAL_TIER - 1);
   });
 
-  it('les trajectòries d’abans que no havien arribat a la Catalana hi pugen un sol cop', () => {
+  it('els noms d’abans («Grup», «Lliga») passen a «Divisió»', () => {
+    expect(renameDivision('Lliga de Vic · Divisió B')).toBe('Lliga de Vic · Divisió B');
+    expect(renameDivision('Lliga Catalana · Lliga A')).toBe('Lliga Catalana · Divisió A');
     const old = createSeason({ tier: 2, config: DEFAULT_CONFIG, home: VIC, seed: 5 });
     const raw = JSON.stringify({
-      career: { ...newCareer(VIC), tier: 2, bestTier: 2 },
-      season: recordRound(old, [10, -2, -3, -5]),
+      career: { ...newCareer(VIC), tier: 2, bestTier: 2, seasons: [{ tier: 1, name: 'Lliga de Vic · Divisió B', rank: 1, players: 8, points: 9, diff: 30, wins: 5, nextTier: 2, movement: 'up', finishedAt: '2026-11-01T00:00:00.000Z' }] },
+      season: { ...recordRound(old, [10, -2, -3, -5]), name: 'Lliga de Vic · Divisió A' },
     });
     const parsed = parseLeagueState(raw);
-    expect(parsed.career).toMatchObject({ tier: START_TIER, bestTier: START_TIER });
-    // La temporada que tenia a mig fer per sota es descarta per tornar-la a començar.
-    expect(parsed.season).toBeNull();
+    // Ja no hi ha mínim: la trajectòria i la temporada es queden on eren.
+    expect(parsed.career.tier).toBe(2);
+    expect(parsed.season?.name).toBe('Lliga de Vic · Divisió A');
+    expect(parsed.career.seasons[0].name).toBe('Lliga de Vic · Divisió B');
   });
 });
 

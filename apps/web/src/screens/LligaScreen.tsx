@@ -9,7 +9,6 @@ import {
   MIN_ROUNDS,
   PLAYER_OPTIONS,
   RIVAL_SPREAD,
-  START_TIER,
   TOP_TIER,
   YOU,
   difficultyForRating,
@@ -46,14 +45,18 @@ interface Props {
   hasSavedGame: boolean;
   /** La localitat que el jugador té a la lliga d'escacs d'El Tauler, si n'hi ha. */
   elTaulerHome: LeagueHome | null;
-  /** La teva habilitat per col·locar-te la primera temporada (`null`: encara es calibra). */
+  /** El teu nivell, per col·locar-te la primera temporada (el del joc lliure automàtic). */
   playerRating: number | null;
+  /** Encara es calibra el teu nivell. */
+  calibrating: boolean;
   onStartSeason(config: LeagueConfig): void;
   onPlayRound(): void;
   onAbandonSeason(): void;
   /** Desa on jugues (`null`: «Ara no»). */
   onSetHome(home: LeagueHome | null): void;
   onHome(): void;
+  /** El perfil, amb la configuració (mode clar o fosc, temps per torn, fitxes). */
+  onProfile(): void;
 }
 
 /** Rival (força) en paraules: «Fàcil · 1010». */
@@ -67,11 +70,13 @@ export function LligaScreen({
   hasSavedGame,
   elTaulerHome,
   playerRating,
+  calibrating,
   onStartSeason,
   onPlayRound,
   onAbandonSeason,
   onSetHome,
   onHome,
+  onProfile,
 }: Props) {
   const { career, season } = state;
   const [config, setConfig] = useState<LeagueConfig>(career.config);
@@ -88,16 +93,26 @@ export function LligaScreen({
       <div className="franja-fitxes" aria-hidden="true" />
       <div className="row mode-cap">
         <h2>{title}</h2>
-        <button type="button" className="secondary" onClick={onHome}>
-          ← Inici
-        </button>
+        <div className="row mode-cap-accions">
+          <button type="button" className="secondary" onClick={onProfile} aria-label="El teu perfil i la configuració">
+            ⚙️ Perfil
+          </button>
+          <button type="button" className="secondary" onClick={onHome}>
+            ← Inici
+          </button>
+        </div>
       </div>
 
-      <Ladder tier={tier} best={career.bestTier} home={career.home} />
+      <Ladder
+        tier={tier}
+        best={career.bestTier}
+        start={Math.min(tier, ...career.seasons.map((record) => record.tier))}
+        home={career.home}
+      />
       <p className="muted small escala-nota">
-        Es puja d’un en un: de la <strong>C</strong> a la <strong>B</strong>, de la B a la{' '}
-        <strong>A</strong>, i de la A a la C de la lliga següent. Pugen els primers i baixen els
-        últims (una quarta part de la lliga).
+        Cada lliga té tres divisions. Es puja d’una en una: de la <strong>Divisió C</strong> a la{' '}
+        <strong>B</strong>, de la B a la <strong>A</strong>, i de la A a la C de la lliga següent.
+        Pugen els primers i baixen els últims (una quarta part de la lliga).
       </p>
 
       <div className="row lliga-lloc">
@@ -145,7 +160,7 @@ export function LligaScreen({
           onChange={setConfig}
           nextName={tierName(next, career.home)}
           first={career.seasons.length === 0}
-          calibrating={playerRating === null}
+          calibrating={calibrating}
           onStart={() => onStartSeason(config)}
           finished={finished}
         />
@@ -191,14 +206,13 @@ export function LligaScreen({
 
 /**
  * L'escalada, en vertical i com una escala de debò: la mundial a dalt de tot i
- * la local a baix. Cada fila porta el nom sencer de la lliga
- * i els seus tres grups en l'ordre en què es juguen, C → B → A, cadascun amb
- * la força dels rivals. Els graons fets en verd, l'actual en el color de la
- * lliga i el millor que s'ha arribat amb vora daurada. Es comença a la lliga
- * del territori: les de sota no es pinten mai com a fetes (no s'hi ha pujat;
- * hi estàs si has baixat).
+ * la local a baix. Cada fila porta el nom sencer de la lliga i les seves tres
+ * divisions en l'ordre en què es juguen, C → B → A, cadascuna amb la força dels
+ * rivals. Els graons fets en verd, l'actual en el color de la lliga i el millor
+ * que s'ha arribat amb vora daurada. Es comença al graó del teu nivell
+ * (`start`, el més baix on has jugat): els de sota no es pinten com a fets.
  */
-function Ladder({ tier, best, home }: { tier: number; best: number; home: LeagueHome | null }) {
+function Ladder({ tier, best, start, home }: { tier: number; best: number; start: number; home: LeagueHome | null }) {
   return (
     <ol
       className="escala"
@@ -216,7 +230,7 @@ function Ladder({ tier, best, home }: { tier: number; best: number; home: League
             {GROUPS.map((group, g) => {
               const step = index * 3 + g;
               const classes = ['escala-grao'];
-              if (step < tier && step >= START_TIER) classes.push('fet');
+              if (step < tier && step >= start) classes.push('fet');
               if (step === tier) classes.push('actual');
               if (step === best && best > tier) classes.push('millor');
               return (
@@ -224,7 +238,7 @@ function Ladder({ tier, best, home }: { tier: number; best: number; home: League
                   key={group}
                   className={classes.join(' ')}
                   aria-current={step === tier ? 'step' : undefined}
-                  title={`Grup ${group}: rivals de ${tierRating(step)}`}
+                  title={`Divisió ${group}: rivals de ${tierRating(step)}`}
                 >
                   <strong>{group}</strong>
                   <small>{tierRating(step)}</small>
@@ -268,10 +282,10 @@ function SeasonSetup({
       {first && (
         <p className="muted small lliga-colocacio">
           {calibrating
-            ? 'L’escalada comença com a mínim a la lliga del teu territori, al Grup C. '
-            : 'L’escalada comença com a mínim a la lliga del teu territori: pel teu nivell, et col·loquem entre el Grup C i el A, amb rivals una mica per sota teu. '}
-          Les lligues de sota (provincial, comarcal i local) hi són per si baixes; els Països Catalans,
-          l’Europea i la Mundial, te les has de guanyar.
+            ? 'Comences a la lliga i la divisió del teu nivell d’ara (encara el calibrem). '
+            : 'Comences a la lliga i la divisió del teu nivell, amb rivals de la teva força. '}
+          Com a molt, a la Divisió A de la lliga del teu territori (la Catalana, la Valenciana…): els
+          Països Catalans, l’Europea i la Mundial, te les has de guanyar.
         </p>
       )}
       <fieldset className="tria">
