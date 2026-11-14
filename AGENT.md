@@ -2550,3 +2550,26 @@ el tauler; posa l'usuari a dalt a l'esquerra.»
 **Criteris d'acceptació (verificats)**: test nou dels cognoms del lloc a la
 lliga local (Palma, Maó, Eivissa, Perpinyà, l'Alguer, Gandia); captures de
 l'inici a 390 i 1280 px, en clar i en fosc, amb la lliga començada.
+
+### D'on és cada jugador, amb totes les parts de la lliga representades ✅ Feta (2026-11-14)
+
+Demanat pel jugador: «A les lligues fora de la local, indica la població de
+cada jugador, fent que hi hagi representació geogràfica de les diverses parts
+representades a la lliga.»
+
+- [x] `localitats.js` i `nomsLliga.js` tornats a copiar d'El Tauler:
+      `rivalOrigins` dona sempre una població, repartides entre les parts de
+      la lliga (`spreadPick`); a Europa i al món, una ciutat de cada país
+      (`COUNTRY_CITIES`, `cityCountry`); `originArea` diu la part de cada
+      jugador (comarca, illa, territori o país).
+- [x] `placeOf` (`league.ts`) i la població sota el nom a la classificació,
+      als rivals de la jornada i entre jornades (també la teva).
+- [x] Del que va quedar pendent de les revisions: a les Illes, l'illa triada
+      mana per a un poble que no és a la llista; els noms canviats d'una
+      temporada començada no es repeteixen (`catalanRivalNames`); i una
+      jornada desada es reprèn amb els noms d'ara (`withOpponentNames`).
+
+**Criteris d'acceptació (verificats)**: tests de repartiment (comarques de la
+província, les quatre províncies, els set territoris, ciutat · país) i de
+`withOpponentNames`; captures de la classificació a la lliga provincial i a
+la dels Països Catalans a 390 px.

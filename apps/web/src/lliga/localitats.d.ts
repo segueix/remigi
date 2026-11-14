@@ -51,3 +51,14 @@ export function ppccCityTerritory(city: string): TerritoryId | null;
 export function islandGroup(island: string): { name: string; islands: string[] } | null;
 /** Territori d'on és un rival: ciutat dels Països Catalans, o municipi de la Catalunya Nord o de Catalunya. */
 export function originTerritory(place: string): TerritoryId | null;
+/** Ciutats de cada país d'Europa i del món, per als orígens de les lligues europea i mundial. */
+export const COUNTRY_CITIES: Readonly<Record<string, readonly string[]>>;
+/** País d'una ciutat de les lligues europea i mundial (o null). */
+export function cityCountry(city: string): string | null;
+/**
+ * La part de la lliga que representa un jugador, per veure'n el repartiment
+ * geogràfic: la comarca (o l'illa) a la provincial i a la del territori, el
+ * territori als Països Catalans i el país a Europa i al món. Buit a la local i
+ * a la comarcal.
+ */
+export function originArea(level: number, home: LeagueHome | null, place: string): string;

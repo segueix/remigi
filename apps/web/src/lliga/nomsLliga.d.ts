@@ -18,7 +18,11 @@ export function cultureFor(
   level: number,
   home: LeagueHome | null,
   origin: string,
-  options?: { random?: () => number; territoryOf?: (city: string) => TerritoryId | null },
+  options?: {
+    random?: () => number;
+    territoryOf?: (city: string) => TerritoryId | null;
+    countryOf?: (city: string) => string | null;
+  },
 ): string;
 /**
  * Noms dels rivals d'una lliga nova (nivell 0 municipal … 6 mundial): tots
@@ -33,6 +37,8 @@ export function rivalNames(
     count?: number;
     exclude?: readonly string[];
     territoryOf?: (city: string) => TerritoryId | null;
+    /** A Europa i al món, el país de la ciutat de cada rival. */
+    countryOf?: (city: string) => string | null;
   },
 ): string[];
 /** Un nom fet amb un nom i un cognom castellans (García, Martínez...). */
@@ -68,3 +74,18 @@ export const CULTURES: Readonly<Record<string, { f: string[]; m: string[]; s?: s
  * (`bal` és Mallorca, `menorca`, `pitiuses`).
  */
 export function placeCulture(territory: string, origin?: string | null, home?: LeagueHome | null): string;
+/**
+ * Els noms dels rivals d'una temporada ja començada amb `catalanRivalName`,
+ * sense que cap no en repeteixi un altre: primer les formes castellanes
+ * d'abans i després els noms castellans.
+ */
+export function catalanRivalNames(
+  rivals: readonly { name: string; origin?: string | null }[],
+  level: number,
+  home: LeagueHome | null,
+  options?: {
+    random?: () => number;
+    taken?: Set<string>;
+    territoryOf?: (city: string) => TerritoryId | null;
+  },
+): string[];

@@ -6,6 +6,7 @@ import {
   YOU,
   difficultyForRating,
   leagueInsights,
+  placeOf,
   standings,
   tablePoints,
   yourTable,
@@ -13,6 +14,7 @@ import {
   zoneOf,
   type LeagueSeason,
 } from '../lliga/league';
+import type { LeagueHome } from '../lliga/localitats';
 import { leaguePoints, ordinal, signed } from '../ui/format';
 import {
   InterludeBox,
@@ -26,6 +28,8 @@ interface Props {
   /** La temporada, amb la jornada que s'acaba de jugar ja apuntada. */
   season: LeagueSeason;
   playerName: string;
+  /** On jugues: per dir d'on és cada jugador. */
+  home: LeagueHome | null;
   /** Comença la jornada següent (a zero, o amb «Juga ara»). */
   onPlayNow(): void;
   onStandings(): void;
@@ -44,7 +48,7 @@ interface Props {
  * es queda quiet (i la música també), perquè cap partida no comenci sense
  * ningú davant.
  */
-export function LeagueInterlude({ season, playerName, onPlayNow, onStandings, onHome }: Props) {
+export function LeagueInterlude({ season, playerName, home, onPlayNow, onStandings, onHome }: Props) {
   const countdown = useInterludeCountdown(onPlayNow);
   const music = useInterludeMusic(countdown.elapsed);
 
@@ -129,6 +133,9 @@ export function LeagueInterlude({ season, playerName, onPlayNow, onStandings, on
                       </span>
                       <span className="interludi-rival-text">
                         <strong>{rival.name}</strong>
+                        {placeOf(season, rival.id, home) && (
+                          <span className="interludi-lloc">{placeOf(season, rival.id, home)}</span>
+                        )}
                         <span className="muted small">
                           {ordinal(rankOf(rival.id))} · {leaguePoints(row?.points ?? 0)} pts ·{' '}
                           {DIFFICULTIES[difficultyForRating(rival.rating)].label} {rival.rating}

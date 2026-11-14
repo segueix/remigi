@@ -14,6 +14,7 @@ import {
   levelName,
   movementText,
   normalizeConfig,
+  placeOf,
   rivalById,
   standings,
   tablePoints,
@@ -129,8 +130,8 @@ export function LligaScreen({
 
       {running && season && (
         <>
-          <RoundCard season={season} hasSavedGame={hasSavedGame} onPlay={onPlayRound} />
-          <StandingsTable season={season} playerName={playerName} />
+          <RoundCard season={season} home={career.home} hasSavedGame={hasSavedGame} onPlay={onPlayRound} />
+          <StandingsTable season={season} home={career.home} playerName={playerName} />
           <YourRounds season={season} />
           <div className="row">
             {confirmAbandon ? (
@@ -354,7 +355,17 @@ function Avatar({ name, you }: { name: string; you?: boolean }) {
   );
 }
 
-function RoundCard({ season, hasSavedGame, onPlay }: { season: LeagueSeason; hasSavedGame: boolean; onPlay(): void }) {
+function RoundCard({
+  season,
+  home,
+  hasSavedGame,
+  onPlay,
+}: {
+  season: LeagueSeason;
+  home: LeagueHome | null;
+  hasSavedGame: boolean;
+  onPlay(): void;
+}) {
   const rivals = yourTable(season);
   const round = season.played + 1;
   return (
@@ -373,7 +384,7 @@ function RoundCard({ season, hasSavedGame, onPlay }: { season: LeagueSeason; has
             <span>
               <strong>{rival.name}</strong>
               <span className="muted small">
-                {rival.origin ? `${rival.origin} · ` : ''}
+                {placeOf(season, rival.id, home) ? `${placeOf(season, rival.id, home)} · ` : ''}
                 {strengthLabel(rival.rating)}
               </span>
             </span>
@@ -387,7 +398,15 @@ function RoundCard({ season, hasSavedGame, onPlay }: { season: LeagueSeason; has
   );
 }
 
-function StandingsTable({ season, playerName }: { season: LeagueSeason; playerName: string }) {
+function StandingsTable({
+  season,
+  home,
+  playerName,
+}: {
+  season: LeagueSeason;
+  home: LeagueHome | null;
+  playerName: string;
+}) {
   const rows = standings(season, playerName);
   const players = season.config.players;
   return (
@@ -419,6 +438,8 @@ function StandingsTable({ season, playerName }: { season: LeagueSeason; playerNa
               .filter(Boolean)
               .join(' ');
             const rival = rivalById(season, row.id);
+            // D'on és cadascú: la població i la part de la lliga que hi representa.
+            const place = placeOf(season, row.id, home);
             return (
               <tr key={row.id} className={classes || undefined}>
                 <td className="pos">{index + 1}</td>
@@ -427,6 +448,7 @@ function StandingsTable({ season, playerName }: { season: LeagueSeason; playerNa
                   <span>
                     {row.name}
                     {rival && <span className="muted small"> · {rival.rating}</span>}
+                    {place && <span className="lliga-lloc">{place}</span>}
                   </span>
                 </td>
                 <td className="col-pj">{row.played}</td>
@@ -505,7 +527,7 @@ function SeasonReview({ season, state, playerName }: { season: LeagueSeason; sta
           <strong>{movementText(season.tier, next, movement, state.career.home)}</strong>
         </p>
       </div>
-      <StandingsTable season={season} playerName={playerName} />
+      <StandingsTable season={season} home={state.career.home} playerName={playerName} />
     </div>
   );
 }

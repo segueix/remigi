@@ -198,6 +198,15 @@ una temporada començada conserva les jornades i el calendari amb què es va cre
   començades abans els canvien en carregar-les (`catalanRivals`, amb la llavor
   de la temporada: sempre els mateixos). A Europa, al món i per a qui juga des
   de fora dels Països Catalans, els noms són del país, castellans inclosos.
+- **D'on és cadascú** (`rivalOrigins` i `originArea` de `localitats.js`): a
+  les lligues de més d'una part, cada rival és d'una població i les parts de
+  la lliga hi són totes representades (`spreadPick`: un lloc de cada comarca,
+  província, illa, territori o país abans de repetir-ne, i la resta en
+  proporció a la mida). A la classificació, als rivals de la jornada i entre
+  jornades, sota el nom, la població i la part que hi representa
+  (`placeOf`: «Manlleu · Osona», «Gandia · País Valencià», «Lió · França»), i
+  també la teva. A Europa i al món, una ciutat de cada país (`cityCountry`, i
+  el nom de persona, del país).
 - **Els cognoms catalans de cada lloc**, també a les lligues locals: al País
   Valencià, els més estesos (Ferrer, Martí, Sanchis, Soler, Llopis…); a les
   Illes, els de cada illa (`placeCulture`: Mallorca, Menorca o les Pitiüses,
