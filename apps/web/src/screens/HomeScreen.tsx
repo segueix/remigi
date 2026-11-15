@@ -1,6 +1,7 @@
 import { DIFFICULTIES, adaptiveLevelLabel, type PlayerProfile, type Tile } from '@remigi/core';
 import { TARGET_NAME, TARGET_URL } from '../appSwitch/appSwitch';
 import { ComEsJuga } from '../components/ComEsJuga';
+import { PlayerAvatar } from '../components/PlayerAvatar';
 import { TileView } from '../components/TileView';
 import { ChallengeIcon, FreePlayIcon, LeagueIcon } from '../components/icons';
 import {
@@ -104,9 +105,7 @@ export function HomeScreen({
       {/* El jugador, a dalt a l'esquerra; El Tauler, l'app d'escacs germana, a la dreta. */}
       <header className="inici-cap">
         <button type="button" className="secondary inici-jugador" onClick={onHistory} aria-label="El teu historial">
-          <span className="player-color" aria-hidden="true">
-            {profile.name.trim().charAt(0).toUpperCase() || '?'}
-          </span>
+          <PlayerAvatar name={profile.name} />
           <span className="inici-jugador-text">
             <strong>{profile.name}</strong>
             <span className="muted small">
@@ -179,7 +178,7 @@ export function HomeScreen({
         </span>
         <div className="inici-nom">
           <h1>Remigi</h1>
-          <p className="inici-inspirat">Inspirat en el Rummikub</p>
+          <p className="inici-inspirat">El precursor del Rummikub®</p>
           <p>Tria com vols jugar</p>
         </div>
       </div>

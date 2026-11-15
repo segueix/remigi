@@ -2,7 +2,9 @@ import { useLayoutEffect, type RefObject } from 'react';
 import { fitBoardTiles } from './boardDensity';
 
 /**
- * Manté les fitxes de la taula a la mida més gran que hi càpiga.
+ * Manté les fitxes de la taula a una mida estable: la més gran que hi cap,
+ * sense tornar a créixer per no res ni dependre dels avisos que van i venen
+ * (vegeu `boardDensity.ts`).
  *
  * Es mesura després de cada canvi de la taula (`shape` diu quantes jugades hi
  * ha i de quina mida, que és el que en canvia la col·locació) i quan el feltre

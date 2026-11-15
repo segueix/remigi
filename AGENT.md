@@ -2617,3 +2617,60 @@ Rummikub».»
 **Criteris d'acceptació (verificats)**: la prova de navegador del tema
 comença en fosc i recorda clar, fosc i automàtic; captures de l'inici en
 fosc (per defecte) i en clar, a 390 i 1280 px.
+
+### Fitxes de la taula d'una mida estable ✅ Feta (2026-11-15)
+
+Demanat pel jugador: «Fes que el tamany de les fitxes del tauler sigui
+harmoniós: que no es facin molt petites segons el moviment i després tornin a
+una mida mitjana o més gran. Que sempre es vegin a una mida, evitant passar a
+una mida petita.»
+
+Mesurat en una partida real al mòbil: amb les mateixes 20 fitxes a la taula,
+la mida era 1 quan jugaven els rivals i 0,73 quan et tocava (i arribava a
+0,52). Causes: el lloc del botó «+ Jugada nova» només es reservava al teu
+torn; les pistes i els errors de sota la taula li prenien alçada; i la mida
+tornava a créixer al mínim lloc lliure.
+
+- [x] `game/boardDensity.ts`: `stableScale` (només s'encongeix si no hi cap,
+      i només torna a créixer amb lloc de sobres, `GROW_MARGIN` 9 %); mínim a
+      dos terços de la natural (`MIN_SCALE` 0,67, abans 0,5); en mesurar, la
+      partida porta `.mesurant-taula` i les pistes, els errors i el botó de
+      tornar la fitxa al faristol surten del flux (la mida no en depèn).
+- [x] `BoardView`: el lloc de «+ Jugada nova» es reserva sempre (també quan
+      juguen els rivals), i el botó fa l'alçada d'una jugada a la mida d'ara.
+- [x] CSS: la separació entre jugades s'encongeix amb les fitxes, i una
+      jugada més llarga que la taula es parteix en dues fileres dins la seva
+      caixa (abans encongia tota la taula).
+
+**Criteris d'acceptació (verificats)**: tests de `stableScale` (no rebota en
+una seqüència de torns, creix quan es buida, mai per sota del mínim); la
+prova de la taula plena comprova que, sense la pista, tot hi cap i que tornar
+una fitxa al faristol no fa créixer les fitxes; partida real mesurada al
+mòbil: 1 → 0,82 → 0,79 → 0,76 → 0,70 → 0,67, sempre baixant a poc a poc.
+
+### El precursor del Rummikub®, la roda de configuració a tot arreu i canviar de mode des de la configuració ✅ Feta (2026-11-15)
+
+Demanat pel jugador: «A la pàgina principal, "el precursor del Rummikub®" en
+lloc d'"inspirat en". A la icona del jugador posa sempre el senyal de
+configuració, del mateix estil a tota l'app. Fes que la finestra de
+configuració sigui més intuitiva de tancar, amb un tancament ben integrat. A
+la configuració posa sempre els dos modes que no s'estan jugant.»
+
+- [x] Inici: «El precursor del Rummikub®» sota «Remigi».
+- [x] `components/PlayerAvatar.tsx`: l'avatar del jugador sempre amb la roda
+      de configuració (`.amb-config`), a l'inici, la partida, el menú del
+      jugador, el perfil, el repte i la lliga (aquests dos, amb el xip del
+      jugador en comptes de «⚙️ Perfil»). La icona de la secció
+      «Configuració» és la mateixa roda (`.icona-config`).
+- [x] `components/CloseButton.tsx`: «✕ Tanca» a dalt a la dreta, sempre a la
+      vista (barra enganxada al menú del jugador i capçalera enganxada al
+      perfil), i Esc tanca (`useEscapeToClose`). Al perfil, també al final.
+      L'avís «està jugant» ja no tapa el menú obert.
+- [x] `components/ModeSwitch.tsx`: a la configuració (menú de la partida i
+      perfil), els altres dos modes amb el seu color i icona; des de l'inici,
+      tots tres. La partida que es deixa es queda desada (`switchMode` a App).
+
+**Criteris d'acceptació (verificats)**: prova de navegador nova (la roda a
+l'inici i a la partida, «Tanca» i Esc tanquen, des del joc lliure surten
+repte i lliga i hi porten, des del repte surten joc lliure i lliga); captures
+a 390 px.

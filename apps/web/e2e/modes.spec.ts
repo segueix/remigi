@@ -415,13 +415,13 @@ test('a totes les modalitats el perfil té la configuració, amb el mode clar o 
   await page.getByRole('button', { name: 'Repte', exact: true }).click();
   await page.getByRole('button', { name: 'El teu perfil i la configuració' }).click();
   await expect(page.getByRole('region', { name: 'Configuració' })).toBeVisible();
-  await page.getByRole('button', { name: /Torna/ }).click();
+  await page.getByRole('button', { name: 'Tanca el perfil' }).click();
   await page.getByRole('button', { name: '← Inici' }).click();
   await page.getByRole('button', { name: 'Lliga', exact: true }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Ara no' }).click();
   await page.getByRole('button', { name: 'El teu perfil i la configuració' }).click();
   await expect(page.getByRole('region', { name: 'Configuració' })).toBeVisible();
-  await page.getByRole('button', { name: /Torna/ }).click();
+  await page.getByRole('button', { name: 'Tanca el perfil' }).click();
   await page.getByRole('button', { name: '← Inici' }).click();
 
   // I a la partida, al menú del jugador (aquí, el joc lliure).
@@ -451,4 +451,37 @@ test('amb la lliga començada, l’inici en diu el nom i la divisió', async ({ 
   await page.getByRole('button', { name: '← Inici' }).click();
   await expect(targeta.locator('.mode-lliga-nom')).toHaveText('Lliga de Vic · Divisió C');
   await expect(targeta.locator('.mode-estat')).toHaveText('Jornada 1/3');
+});
+
+test('la configuració es tanca a la vista (Tanca, Esc) i porta als altres dos modes', async ({ page }) => {
+  await obreNet(page);
+  // L'avatar del jugador porta la roda de configuració a l'inici, com a la partida.
+  await expect(page.locator('.inici-jugador .player-color.amb-config')).toHaveCount(1);
+
+  // Al joc lliure, el menú del jugador: «Tanca» a dalt, i Esc també el tanca.
+  await entraAlJocLliure(page);
+  await expect(page.locator('.player-obre .player-color.amb-config')).toHaveCount(1);
+  await obreMenu(page);
+  const menu = page.locator('.menu-usuari');
+  await expect(menu.getByRole('button', { name: 'Tanca el menú' })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(menu).toHaveCount(0);
+  await obreMenu(page);
+  await menu.getByRole('button', { name: 'Tanca el menú' }).click();
+  await expect(menu).toHaveCount(0);
+
+  // Des del joc lliure, els altres dos modes; i un toc hi porta.
+  await obreMenu(page);
+  const modes = menu.getByRole('region', { name: 'Canvia de mode' });
+  await expect(modes.getByRole('button')).toHaveText(['Repte', 'Lliga']);
+  await modes.getByRole('button', { name: 'Repte' }).click();
+  await expect(page.locator('.pantalla-mode.repte')).toBeVisible();
+
+  // Des del repte (el perfil): el joc lliure i la lliga.
+  await page.getByRole('button', { name: 'El teu perfil i la configuració' }).click();
+  const perfil = page.getByRole('region', { name: 'Canvia de mode' });
+  await expect(perfil.getByRole('button')).toHaveText(['Joc lliure', 'Lliga']);
+  await perfil.getByRole('button', { name: 'Lliga' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Ara no' }).click();
+  await expect(page.locator('.pantalla-mode.lliga')).toBeVisible();
 });
