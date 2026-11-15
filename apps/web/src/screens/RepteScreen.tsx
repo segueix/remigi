@@ -13,6 +13,7 @@ import {
 } from '../repte/challenge';
 import { signed } from '../ui/format';
 import { RepteStandings } from './RepteStandings';
+import { PlayerAvatar } from '../components/PlayerAvatar';
 
 interface Props {
   state: ChallengeState;
@@ -48,8 +49,9 @@ export function RepteScreen({ state, hasSavedGame, onStart, onPlay, onAbandon, o
       <div className="row mode-cap">
         <h2>Repte</h2>
         <div className="row mode-cap-accions">
-          <button type="button" className="secondary" onClick={onProfile} aria-label="El teu perfil i la configuració">
-            ⚙️ Perfil
+          <button type="button" className="secondary mode-perfil" onClick={onProfile} aria-label="El teu perfil i la configuració">
+            <PlayerAvatar name={playerName} />
+            <span>Perfil</span>
           </button>
           <button type="button" className="secondary" onClick={onHome}>
             ← Inici

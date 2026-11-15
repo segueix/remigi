@@ -125,7 +125,7 @@ test('cada partida mou l’habilitat i queda a l’historial', async ({ page }) 
   await expect(page.locator('.history li')).toHaveCount(1);
 
   // I d'allà es torna a la taula.
-  await page.getByRole('button', { name: 'Torna a la partida' }).click();
+  await page.getByRole('button', { name: 'Tanca i torna a la partida' }).click();
   await expect(page.getByRole('button', { name: 'Una altra partida' })).toBeVisible();
 });
 

@@ -17,7 +17,10 @@ import {
 import type { ProfileHandle } from '../state/useProfile';
 import { MIN_JEROGLIFICS } from '../state/useJeroglifics';
 import type { TileStyle } from '../state/useTileStyle';
+import { CloseButton, useEscapeToClose } from './CloseButton';
 import { ComEsJuga } from './ComEsJuga';
+import { ModeSwitch } from './ModeSwitch';
+import { PlayerAvatar } from './PlayerAvatar';
 import { SettingsPanel } from './SettingsPanel';
 
 interface Props {
@@ -36,6 +39,8 @@ interface Props {
   mode?: GameMode;
   /** Torna a la pantalla d'inici. */
   onHome(): void;
+  /** Passa a un altre mode (la partida d'ara es queda desada). */
+  onSwitchMode?(mode: GameMode): void;
 }
 
 type OpponentCount = 1 | 2 | 3;
@@ -58,8 +63,10 @@ export function PlayerMenu({
   onClose,
   mode = 'lliure',
   onHome,
+  onSwitchMode,
 }: Props) {
   const free = mode === 'lliure';
+  useEscapeToClose(onClose);
   const [name, setName] = useState(profile.profile?.name ?? '');
   const [count, setCount] = useState<OpponentCount>(
     Math.min(3, Math.max(1, current.opponents.length)) as OpponentCount,
@@ -179,13 +186,16 @@ export function PlayerMenu({
       {/* Un toc fora del menú el tanca. */}
       <div className="menu-fons" onClick={onClose} />
       <div className="menu-usuari" role="dialog" aria-label="El teu jugador">
+        {/* A dalt, sempre a la vista: què és i com es tanca (també amb Esc o tocant fora). */}
+        <div className="menu-barra">
+          <strong>El teu jugador i configuració</strong>
+          <CloseButton onClose={onClose} label="Tanca el menú" />
+        </div>
         {/* La firma de la casa: els quatre colors de les fitxes. */}
         <div className="franja-fitxes" aria-hidden="true" />
 
         <div className="menu-cap">
-          <span className="player-color menu-avatar" aria-hidden="true">
-            {(name.trim() || 'J').charAt(0).toUpperCase()}
-          </span>
+          <PlayerAvatar name={name.trim() || 'J'} className="menu-avatar" />
           <form
             className="row menu-nom"
             onSubmit={(event) => {
@@ -413,6 +423,8 @@ export function PlayerMenu({
         )}
 
         <SettingsPanel tileStyle={tileStyle} onTileStyle={onTileStyle} />
+
+        {onSwitchMode && <ModeSwitch current={mode} onSwitch={onSwitchMode} />}
 
         <div className="row menu-accions">
           {free && <button onClick={() => void startNewGame()}>Partida nova</button>}

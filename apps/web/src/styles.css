@@ -2557,32 +2557,54 @@ button.link.danger {
 
 
 /*
- * La roda dentada queda enganxada al perímetre de l'avatar del jugador humà:
- * fa visible que tocar el perfil també obre la configuració.
+ * La roda dentada queda enganxada al perímetre de l'avatar del jugador, a
+ * tota l'app (`components/PlayerAvatar.tsx`): fa visible que tocar el jugador
+ * obre el perfil i la configuració. La icona de la secció «Configuració» és
+ * la mateixa roda, amb el mateix cercle.
  */
-.player-obre .player-color {
+.player-color.amb-config {
   position: relative;
   overflow: visible;
 }
 
-.player-obre .player-color::after {
-  content: '⚙';
-  position: absolute;
-  right: -0.42rem;
-  bottom: -0.32rem;
-  width: 1.05rem;
-  height: 1.05rem;
+.player-color.amb-config::after,
+.icona-config {
   display: grid;
   place-items: center;
   border: 1.5px solid #fff;
   border-radius: 50%;
   background: #334155;
   color: #fff;
-  font-size: 0.72rem;
   line-height: 1;
   font-family: system-ui, sans-serif;
+  font-style: normal;
   box-shadow: 0 1px 3px rgb(0 0 0 / 0.35);
+}
+
+.player-color.amb-config::after {
+  content: '⚙';
+  position: absolute;
+  right: -0.42rem;
+  bottom: -0.32rem;
+  width: 1.05rem;
+  height: 1.05rem;
+  font-size: 0.72rem;
   pointer-events: none;
+}
+
+/* A l'avatar gran del menú del jugador, la roda creix amb ell. */
+.player-color.amb-config.menu-avatar::after {
+  right: -0.3rem;
+  bottom: -0.2rem;
+  width: 1.35rem;
+  height: 1.35rem;
+  font-size: 0.9rem;
+}
+
+.icona-config {
+  width: 1.9rem;
+  height: 1.9rem;
+  font-size: 1.15rem;
 }
 
 
@@ -2734,6 +2756,169 @@ button.link.danger {
   border-radius: 0.65rem;
   background: color-mix(in srgb, var(--bot-3) 18%, var(--superficie));
   font-size: 1.25rem;
+}
+
+/* La de «Configuració»: la mateixa roda que porta l'avatar del jugador. */
+.menu-seccio-icona.icona-config {
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 50%;
+  background: #334155;
+  color: #fff;
+  font-size: 1.2rem;
+}
+
+/*
+ * El botó de tancar de les finestres de configuració i del perfil
+ * (`components/CloseButton.tsx`): una creu dins d'un cercle i la paraula
+ * «Tanca», a dalt a la dreta, sempre a la vista.
+ */
+.tanca {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.5rem;
+  padding: 0.25rem 0.85rem 0.25rem 0.3rem;
+  border: 1px solid var(--vora);
+  border-radius: 999px;
+  background: var(--superficie);
+  color: var(--text);
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
+}
+
+.tanca-creu {
+  display: grid;
+  place-items: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 50%;
+  background: var(--text);
+  color: var(--superficie);
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.tanca:hover:not(:disabled) {
+  filter: none;
+  border-color: var(--text-suau);
+}
+
+.tanca:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/*
+ * La barra de dalt del menú del jugador: el títol i el botó de tancar. Es
+ * queda enganxada a dalt mentre es desplaça el menú, que és llarg.
+ */
+.menu-usuari > .menu-barra {
+  /* Ocupa tot l'ample del menú, de vora a vora (`.menu-usuari > *` el limitaria). */
+  max-width: none;
+}
+
+.menu-barra {
+  position: sticky;
+  top: -1rem;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin: -1rem -1rem 0.6rem;
+  padding: 0.7rem 0.75rem 0.6rem 1rem;
+  border-bottom: 1px solid var(--vora);
+  border-radius: 0.9rem 0.9rem 0 0;
+  background: var(--superficie);
+}
+
+.menu-barra strong {
+  min-width: 0;
+  font-size: 1rem;
+  line-height: 1.25;
+}
+
+/*
+ * El perfil (pantalla sencera): el títol a l'esquerra i el botó de tancar a la
+ * dreta, a la mateixa línia, i es queda a la vista en desplaçar-se.
+ */
+.stats-header {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  flex-wrap: nowrap;
+  align-items: center;
+  margin: -0.25rem -0.25rem 0.75rem;
+  padding: 0.5rem 0.25rem;
+  background: var(--superficie);
+}
+
+.stats-tanca-final {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.25rem;
+}
+
+/*
+ * Canvia de mode, a la configuració: els altres dos modes (o tots tres des de
+ * l'inici), cadascun amb el seu color i la seva icona, com a l'inici.
+ */
+.canvia-mode-botons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+}
+
+.canvia-mode-boto {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding-inline: 0.6rem;
+  white-space: nowrap;
+  border: 1px solid color-mix(in srgb, var(--identitat) 45%, var(--vora));
+  background: color-mix(in srgb, var(--identitat) 14%, var(--superficie));
+  color: var(--text);
+  font-weight: 700;
+}
+
+.canvia-mode-boto:hover:not(:disabled) {
+  filter: none;
+  border-color: var(--identitat);
+}
+
+.canvia-mode-icona {
+  display: grid;
+  place-items: center;
+  width: 1.8rem;
+  height: 1.8rem;
+  border-radius: 50%;
+  background: var(--identitat);
+  color: var(--identitat-text);
+}
+
+.canvia-mode-icona .icona {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+/* Al repte i a la lliga, el perfil és el teu jugador, com a la resta de l'app. */
+.mode-perfil {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.85rem 0.25rem 0.3rem;
+  border-radius: 999px;
+}
+
+.mode-perfil .player-color {
+  width: 1.9rem;
+  height: 1.9rem;
+  font-size: 0.95rem;
 }
 
 .menu-seccio-cap > div {

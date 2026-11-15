@@ -74,6 +74,8 @@ interface Props {
   mode?: GameMode;
   /** Torna a la pantalla d'inici (les tres maneres de jugar). */
   onHome(): void;
+  /** Passa a un altre mode des del menú del jugador (la partida es queda desada). */
+  onSwitchMode?(mode: GameMode): void;
   /**
    * La partida s'ha acabat. Es crida una sola vegada per partida, amb la
    * configuració que s'ha jugat: el repte i la lliga hi apunten el resultat.
@@ -126,6 +128,7 @@ export function GameScreen({
   onTileStyle,
   mode = 'lliure',
   onHome,
+  onSwitchMode,
   onFinished,
   finish,
   modeLabel,
@@ -549,7 +552,13 @@ export function GameScreen({
                 <span className="player-name">
                   {/* L'avatar: el del bot amb els seus colors, o la teva inicial. */}
                   <span
-                    className={persona && isPersonName(player.name) ? 'player-color inicials' : 'player-color'}
+                    className={
+                      persona
+                        ? isPersonName(player.name)
+                          ? 'player-color inicials'
+                          : 'player-color'
+                        : 'player-color amb-config'
+                    }
                     aria-hidden="true"
                     style={
                       persona
@@ -615,6 +624,7 @@ export function GameScreen({
             onClose={() => setMenuOpen(false)}
             mode={mode}
             onHome={onHome}
+            onSwitchMode={onSwitchMode}
           />
         )}
 
@@ -839,7 +849,8 @@ export function GameScreen({
         * de ser nou. Si React reaprofités el del primer, només en canviarien
         * el nom i els colors, i la barra ja hauria acabat d'omplir-se.
         */}
-      {game.status === 'playing' && !isHumanTurn && (
+      {/* Amb el menú del jugador obert, l'avís no el tapa: el menú mana. */}
+      {game.status === 'playing' && !isHumanTurn && !menuOpen && (
         <TurnNotice key={game.turn} player={game.players[game.currentPlayer]} slot={game.currentPlayer} />
       )}
 

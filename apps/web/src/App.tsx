@@ -209,6 +209,18 @@ export function App() {
     launch('lliure', setup, saved);
   }, [profile.profile, savedGames, freePrefs, saveFreeSetup, launch]);
 
+  /*
+   * Canviar de mode des de la configuració (el menú del jugador o el perfil):
+   * la partida que es deixa es queda desada, com en tornar a l'inici.
+   */
+  const switchMode = useCallback(
+    (mode: GameMode) => {
+      if (mode === 'lliure') void startFree();
+      else goTo(mode);
+    },
+    [startFree, goTo],
+  );
+
   /* ---------- Repte ---------- */
 
   const playChallenge = useCallback(async () => {
@@ -544,6 +556,7 @@ export function App() {
             onTileStyle={setTileStyle}
             mode={play.mode}
             onHome={() => goTo('home')}
+            onSwitchMode={switchMode}
             onFinished={onFinished}
             finish={finish}
             modeLabel={play.label}
@@ -613,7 +626,9 @@ export function App() {
         <StatsScreen
           handle={profile}
           onBack={() => setStatsOpen(false)}
-          backLabel={inGame ? 'Torna a la partida' : 'Torna'}
+          backLabel={inGame ? 'Tanca i torna a la partida' : 'Tanca el perfil'}
+          currentMode={inGame && play ? play.mode : view === 'repte' || view === 'lliga' ? view : null}
+          onSwitchMode={switchMode}
           tileStyle={tileStyle}
           onTileStyle={setTileStyle}
         />

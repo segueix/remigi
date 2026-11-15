@@ -1,5 +1,9 @@
 import { DIFFICULTIES, STARTING_RATING, adaptiveLevelLabel, difficultyByRating, type GameRecord } from '@remigi/core';
 import { useState } from 'react';
+import { CloseButton, useEscapeToClose } from '../components/CloseButton';
+import { ModeSwitch } from '../components/ModeSwitch';
+import type { GameMode } from '../game/useGame';
+import { PlayerAvatar } from '../components/PlayerAvatar';
 import { SettingsPanel } from '../components/SettingsPanel';
 import type { ProfileHandle } from '../state/useProfile';
 import type { TileStyle } from '../state/useTileStyle';
@@ -8,14 +12,27 @@ interface Props {
   handle: ProfileHandle;
   /** Tornar on s'era (la partida o la pantalla d'inici). */
   onBack(): void;
-  /** Text del botó de tornar. */
+  /** Nom del botó de tancar (on es torna). */
   backLabel?: string;
+  /** El mode d'on vens (la partida, el repte o la lliga); a l'inici, cap. */
+  currentMode?: GameMode | null;
+  /** Passa a un altre mode. */
+  onSwitchMode?(mode: GameMode): void;
   /** L'aspecte de les fitxes (per a la configuració, com al menú de la partida). */
   tileStyle: TileStyle;
   onTileStyle(style: TileStyle): void;
 }
 
-export function StatsScreen({ handle, onBack, backLabel = 'Torna a la partida', tileStyle, onTileStyle }: Props) {
+export function StatsScreen({
+  handle,
+  onBack,
+  backLabel = 'Tanca i torna a la partida',
+  tileStyle,
+  onTileStyle,
+  currentMode = null,
+  onSwitchMode,
+}: Props) {
+  useEscapeToClose(onBack);
   const profile = handle.profile;
   if (!profile) return <p className="muted">Encara no hi ha cap perfil.</p>;
 
@@ -29,14 +46,10 @@ export function StatsScreen({ handle, onBack, backLabel = 'Torna a la partida', 
       <div className="franja-fitxes" aria-hidden="true" />
       <div className="row stats-header">
         <div className="stats-titol">
-          <span className="player-color" aria-hidden="true">
-            {profile.name.trim().charAt(0).toUpperCase() || '?'}
-          </span>
+          <PlayerAvatar name={profile.name} />
           <h2>Historial de {profile.name}</h2>
         </div>
-        <button className="secondary" onClick={onBack}>
-          ← {backLabel}
-        </button>
+        <CloseButton onClose={onBack} label={backLabel} />
       </div>
       {/*
         * Cada rajola porta un color d'identitat a la vora i al fons; el número
@@ -75,6 +88,8 @@ export function StatsScreen({ handle, onBack, backLabel = 'Torna a la partida', 
       {/* La configuració, també des de l'inici, el repte i la lliga (no només a la partida). */}
       <SettingsPanel tileStyle={tileStyle} onTileStyle={onTileStyle} />
 
+      {onSwitchMode && <ModeSwitch current={currentMode} onSwitch={onSwitchMode} />}
+
       {profile.history.length === 0 ? (
         <p className="notice">
           Encara no has acabat cap partida. Quan en juguis, aquí veuràs com evoluciona
@@ -94,6 +109,9 @@ export function StatsScreen({ handle, onBack, backLabel = 'Torna a la partida', 
       )}
 
       <ResetProfile handle={handle} />
+      <div className="stats-tanca-final">
+        <CloseButton onClose={onBack} label="Tanca" />
+      </div>
     </section>
   );
 }

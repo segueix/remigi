@@ -22,8 +22,8 @@ export function SettingsPanel({ tileStyle, onTileStyle }: Props) {
   return (
     <section className="menu-seccio configuracio" aria-label="Configuració">
       <div className="menu-seccio-cap">
-        <span className="menu-seccio-icona" aria-hidden="true">
-          ⚙️
+        <span className="menu-seccio-icona icona-config" aria-hidden="true">
+          ⚙
         </span>
         <div>
           <strong>Configuració</strong>

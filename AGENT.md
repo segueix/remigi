@@ -2647,3 +2647,30 @@ una seqüència de torns, creix quan es buida, mai per sota del mínim); la
 prova de la taula plena comprova que, sense la pista, tot hi cap i que tornar
 una fitxa al faristol no fa créixer les fitxes; partida real mesurada al
 mòbil: 1 → 0,82 → 0,79 → 0,76 → 0,70 → 0,67, sempre baixant a poc a poc.
+
+### El precursor del Rummikub®, la roda de configuració a tot arreu i canviar de mode des de la configuració ✅ Feta (2026-11-15)
+
+Demanat pel jugador: «A la pàgina principal, "el precursor del Rummikub®" en
+lloc d'"inspirat en". A la icona del jugador posa sempre el senyal de
+configuració, del mateix estil a tota l'app. Fes que la finestra de
+configuració sigui més intuitiva de tancar, amb un tancament ben integrat. A
+la configuració posa sempre els dos modes que no s'estan jugant.»
+
+- [x] Inici: «El precursor del Rummikub®» sota «Remigi».
+- [x] `components/PlayerAvatar.tsx`: l'avatar del jugador sempre amb la roda
+      de configuració (`.amb-config`), a l'inici, la partida, el menú del
+      jugador, el perfil, el repte i la lliga (aquests dos, amb el xip del
+      jugador en comptes de «⚙️ Perfil»). La icona de la secció
+      «Configuració» és la mateixa roda (`.icona-config`).
+- [x] `components/CloseButton.tsx`: «✕ Tanca» a dalt a la dreta, sempre a la
+      vista (barra enganxada al menú del jugador i capçalera enganxada al
+      perfil), i Esc tanca (`useEscapeToClose`). Al perfil, també al final.
+      L'avís «està jugant» ja no tapa el menú obert.
+- [x] `components/ModeSwitch.tsx`: a la configuració (menú de la partida i
+      perfil), els altres dos modes amb el seu color i icona; des de l'inici,
+      tots tres. La partida que es deixa es queda desada (`switchMode` a App).
+
+**Criteris d'acceptació (verificats)**: prova de navegador nova (la roda a
+l'inici i a la partida, «Tanca» i Esc tanquen, des del joc lliure surten
+repte i lliga i hi porten, des del repte surten joc lliure i lliga); captures
+a 390 px.

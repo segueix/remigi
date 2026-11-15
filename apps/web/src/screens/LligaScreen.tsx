@@ -36,6 +36,7 @@ import {
 import { LocationDialog } from '../lliga/LocationDialog';
 import type { LeagueHome } from '../lliga/localitats';
 import { leaguePoints, ordinal, signed } from '../ui/format';
+import { PlayerAvatar } from '../components/PlayerAvatar';
 
 interface Props {
   state: LeagueState;
@@ -93,8 +94,9 @@ export function LligaScreen({
       <div className="row mode-cap">
         <h2>{title}</h2>
         <div className="row mode-cap-accions">
-          <button type="button" className="secondary" onClick={onProfile} aria-label="El teu perfil i la configuració">
-            ⚙️ Perfil
+          <button type="button" className="secondary mode-perfil" onClick={onProfile} aria-label="El teu perfil i la configuració">
+            <PlayerAvatar name={playerName} />
+            <span>Perfil</span>
           </button>
           <button type="button" className="secondary" onClick={onHome}>
             ← Inici
