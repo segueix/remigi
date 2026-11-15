@@ -108,8 +108,11 @@ export function shouldShowHint(count: unknown): boolean {
   return !Number.isFinite(n) || n < HINT_TIMES;
 }
 
-/** Les icones es pinten des d'aquí: el panell viu fora de React, al `body`. */
-const ICON = '<span class="app-switch__mark" aria-hidden="true">♔</span>';
+/**
+ * Les icones es pinten des d'aquí: el panell viu fora de React, al `body`.
+ * La d'El Tauler és la de l'app mateixa (`public/eltauler-192.png`).
+ */
+const ICON = `<img class="app-switch__mark" src="${import.meta.env.BASE_URL}eltauler-192.png" alt="" aria-hidden="true">`;
 
 /** Una mà amb el dit índex estirat (traç blanc; forma de la icona «pointer» de Lucide, ISC). */
 const HAND =

@@ -41,10 +41,15 @@
 }
 
 .app-switch__mark {
+  display: block;
+  width: 4.5rem;
+  height: 4.5rem;
   margin-bottom: 2px;
-  color: var(--app-switch-tauler);
-  font-size: 4.5rem;
-  line-height: 1;
+  border-radius: 50%;
+  object-fit: cover;
+  /* La icona d'El Tauler és transparent: sobre blanc es veu sempre. */
+  background: #fff;
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.3);
 }
 
 .app-switch__card strong {
