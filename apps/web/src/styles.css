@@ -3052,30 +3052,76 @@ button.secondary.reset-nivell {
   box-shadow: 0 10px 24px rgb(0 0 0 / 0.38);
 }
 
-/* El faristol de l'inici, amb el nom del joc en blanc en comptes de fitxes. */
+/*
+ * El faristol de l'inici: tres fitxes en ventall i, al costat, el nom del joc
+ * en blanc.
+ */
 .inici-faristol {
-  flex-direction: column;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: center;
-  gap: 0.1rem;
+  gap: 1.2rem;
   max-height: none;
   margin-bottom: 1.25rem;
+  padding: 0.85rem 1rem 0.9rem;
   overflow: hidden;
   color: #fff;
-  text-align: center;
   text-shadow: 0 1px 2px rgb(0 0 0 / 0.45);
+}
+
+/* Les fitxes, obertes en ventall des de baix, com a la mà. */
+.inici-ventall {
+  position: relative;
+  flex: none;
+  width: 6.8rem;
+  height: 4.3rem;
+}
+
+.inici-faristol .inici-ventall .tile {
+  position: absolute;
+  bottom: 0;
+  left: calc(50% - 1.25rem);
+  width: 2.5rem;
+  height: 3.25rem;
+  font-size: 1.35rem;
+  transform-origin: 50% 100%;
+  animation: none;
+  pointer-events: none;
+}
+
+.inici-faristol .inici-ventall .tile:nth-child(1) {
+  transform: translateX(-1.65rem) rotate(-16deg);
+}
+
+.inici-faristol .inici-ventall .tile:nth-child(2) {
+  transform: translateY(-0.3rem);
+}
+
+.inici-faristol .inici-ventall .tile:nth-child(3) {
+  transform: translateX(1.65rem) rotate(16deg);
+}
+
+.inici-nom {
+  min-width: 0;
 }
 
 .inici-faristol h1 {
   margin: 0;
   font-size: 2.2rem;
-  line-height: 1.1;
+  line-height: 1.05;
   letter-spacing: 0.01em;
 }
 
 .inici-faristol p {
   margin: 0;
-  color: rgb(255 255 255 / 0.9);
+  color: rgb(255 255 255 / 0.92);
+}
+
+.inici-faristol .inici-inspirat {
+  margin-bottom: 0.15rem;
+  color: rgb(255 255 255 / 0.78);
+  font-size: 0.85rem;
+  font-style: italic;
 }
 
 /* Cada mode és un botó gran sencer: es toca on sigui. */

@@ -2,8 +2,9 @@ import { useSyncExternalStore } from 'react';
 
 /**
  * Mode clar o fosc. «Automàtic» segueix el sistema (i canvia quan canvia el
- * sistema); «clar» i «fosc» el fixen. És una preferència del dispositiu, com
- * l'aspecte de les fitxes: viu a localStorage. El CSS llegeix
+ * sistema); «clar» i «fosc» el fixen. Per defecte, fosc (si no s'ha triat
+ * res). És una preferència del dispositiu, com l'aspecte de les fitxes: viu a
+ * localStorage (totes tres opcions s'hi desen). El CSS llegeix
  * `<html data-theme="light|dark">`, que ja posa un petit script a index.html
  * abans de pintar res (sense parpelleig en obrir l'app).
  */
@@ -12,9 +13,11 @@ export type ResolvedTheme = 'light' | 'dark';
 
 export const THEME_KEY = 'remigi:tema';
 export const THEME_OPTIONS: readonly ThemeChoice[] = ['auto', 'light', 'dark'];
+/** Sense cap tria desada, Remigi és fosc. */
+export const DEFAULT_THEME: ThemeChoice = 'dark';
 
 export function readTheme(raw: string | null): ThemeChoice {
-  return raw === 'light' || raw === 'dark' ? raw : 'auto';
+  return raw === 'light' || raw === 'dark' || raw === 'auto' ? raw : DEFAULT_THEME;
 }
 
 export function resolveTheme(choice: ThemeChoice, prefersDark: boolean): ResolvedTheme {
@@ -34,11 +37,11 @@ function load(): ThemeChoice {
   try {
     return readTheme(localStorage.getItem(THEME_KEY));
   } catch {
-    return 'auto';
+    return DEFAULT_THEME;
   }
 }
 
-let current: ThemeChoice = typeof window === 'undefined' ? 'auto' : load();
+let current: ThemeChoice = typeof window === 'undefined' ? DEFAULT_THEME : load();
 const listeners = new Set<() => void>();
 
 /** Posa el tema a `<html>` (i el color de la barra del navegador). */
@@ -59,8 +62,8 @@ export function getTheme(): ThemeChoice {
 export function setTheme(choice: ThemeChoice): void {
   current = readTheme(choice);
   try {
-    if (current === 'auto') localStorage.removeItem(THEME_KEY);
-    else localStorage.setItem(THEME_KEY, current);
+    // També «automàtic»: sense res desat, l'app torna a ser fosca.
+    localStorage.setItem(THEME_KEY, current);
   } catch {
     // Sense emmagatzematge, la tria dura mentre duri la pestanya.
   }

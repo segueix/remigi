@@ -390,24 +390,26 @@ test('en tornar a una partida deixada a mitges, és exactament com era', async (
   await expect(page.locator('.board .meld .tile')).toHaveCount(fitxesTaula);
 });
 
-test('a totes les modalitats el perfil té la configuració, amb el mode clar o fosc', async ({ page }) => {
+test('a totes les modalitats el perfil té la configuració, amb el mode clar o fosc (per defecte, fosc)', async ({ page }) => {
   await obreNet(page);
   const html = page.locator('html');
-  await expect(html).toHaveAttribute('data-theme', 'light');
+  // Sense cap tria, fosc (encara que el sistema sigui clar).
+  await expect(html).toHaveAttribute('data-theme', 'dark');
   const fons = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-  const clar = await fons();
+  const fosc = await fons();
 
   // Des de l'inici: el perfil.
   await page.getByRole('button', { name: 'El teu historial' }).click();
   const config = page.getByRole('region', { name: 'Configuració' });
   await expect(config.getByRole('group', { name: 'Temps per torn' })).toBeVisible();
   await expect(config.getByRole('group', { name: 'Aspecte de les fitxes' })).toBeVisible();
-  await config.getByRole('button', { name: 'Fosc' }).click();
-  await expect(html).toHaveAttribute('data-theme', 'dark');
-  expect(await fons()).not.toBe(clar);
+  await expect(config.getByRole('button', { name: 'Fosc' })).toHaveAttribute('aria-pressed', 'true');
+  await config.getByRole('button', { name: 'Clar' }).click();
+  await expect(html).toHaveAttribute('data-theme', 'light');
+  expect(await fons()).not.toBe(fosc);
   // Es recorda en tornar a obrir l'app.
   await page.reload();
-  await expect(html).toHaveAttribute('data-theme', 'dark');
+  await expect(html).toHaveAttribute('data-theme', 'light');
 
   // El repte i la lliga hi porten amb «Perfil».
   await page.getByRole('button', { name: 'Repte', exact: true }).click();
@@ -426,14 +428,17 @@ test('a totes les modalitats el perfil té la configuració, amb el mode clar o 
   await entraAlJocLliure(page);
   await obreMenu(page);
   const menu = page.locator('.menu-usuari').getByRole('region', { name: 'Configuració' });
-  await expect(menu.getByRole('button', { name: 'Fosc' })).toHaveAttribute('aria-pressed', 'true');
-  await menu.getByRole('button', { name: 'Clar' }).click();
-  await expect(html).toHaveAttribute('data-theme', 'light');
+  await expect(menu.getByRole('button', { name: 'Clar' })).toHaveAttribute('aria-pressed', 'true');
+  await menu.getByRole('button', { name: 'Fosc' }).click();
+  await expect(html).toHaveAttribute('data-theme', 'dark');
   await menu.getByRole('button', { name: 'Automàtic' }).click();
-  // En automàtic segueix el sistema (el navegador de la prova és clar).
+  // En automàtic segueix el sistema (el navegador de la prova és clar), i es recorda.
   await expect(html).toHaveAttribute('data-theme', 'light');
   await page.emulateMedia({ colorScheme: 'dark' });
   await expect(html).toHaveAttribute('data-theme', 'dark');
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.reload();
+  await expect(html).toHaveAttribute('data-theme', 'light');
 });
 
 test('amb la lliga començada, l’inici en diu el nom i la divisió', async ({ page }) => {

@@ -2596,3 +2596,24 @@ opcions davant.»
 
 **Criteris d'acceptació (verificats)**: captures a 390 i 1280 px, en clar i
 en fosc; e2e sencer.
+
+### La icona d'El Tauler a tot Remigi, fosc per defecte i el ventall de l'inici ✅ Feta (2026-11-15)
+
+Demanat pel jugador: «A tot Remigi canvia la icona d'escacs per la d'El
+Tauler. Fes que Remigi per defecte estigui en mode fosc. Al faristol de la
+pàgina principal, al costat de Remigi, posa dues o tres fitxes en ventall
+perquè quedi clar que és com el Rummikub; i sota Remigi, «Inspirat en el
+Rummikub».»
+
+- [x] El rei d'escacs (♔) del panell de lliscar cap a El Tauler
+      (`appSwitch.ts`) és ara la icona d'El Tauler (`public/eltauler-192.png`,
+      sobre blanc), com la de l'inici.
+- [x] Tema fosc per defecte (`DEFAULT_THEME` a `state/theme.ts` i l'script
+      d'`index.html`): sense res desat, fosc; «Automàtic» també es desa (abans
+      era no desar res). `theme-color` i el fons del manifest, foscos.
+- [x] Al faristol de l'inici, tres 13 (vermell, blau i groc) en ventall al
+      costat del nom, i «Inspirat en el Rummikub» sota «Remigi».
+
+**Criteris d'acceptació (verificats)**: la prova de navegador del tema
+comença en fosc i recorda clar, fosc i automàtic; captures de l'inici en
+fosc (per defecte) i en clar, a 390 i 1280 px.

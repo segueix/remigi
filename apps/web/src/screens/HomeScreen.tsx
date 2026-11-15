@@ -1,6 +1,7 @@
-import { DIFFICULTIES, adaptiveLevelLabel, type PlayerProfile } from '@remigi/core';
+import { DIFFICULTIES, adaptiveLevelLabel, type PlayerProfile, type Tile } from '@remigi/core';
 import { TARGET_NAME, TARGET_URL } from '../appSwitch/appSwitch';
 import { ComEsJuga } from '../components/ComEsJuga';
+import { TileView } from '../components/TileView';
 import { ChallengeIcon, FreePlayIcon, LeagueIcon } from '../components/icons';
 import {
   difficultyForRating,
@@ -33,6 +34,14 @@ interface Props {
   /** La música infinita (composta per l'app, la que sona entre partides del repte i jornades de la lliga). */
   onMusic(): void;
 }
+
+/** Les fitxes en ventall del faristol de l'inici: un grup de tres 13, com al Rummikub. */
+const VENTALL: Tile[] = (['red', 'blue', 'orange'] as const).map((color) => ({
+  id: `inici-ventall-${color}`,
+  kind: 'number',
+  color,
+  value: 13,
+}));
 
 /**
  * La pantalla d'inici, com quan comença una partida lliure: el jugador a dalt
@@ -158,10 +167,21 @@ export function HomeScreen({
         </span>
       </div>
 
-      {/* El faristol de fusta, amb el nom del joc en blanc en comptes de fitxes. */}
+      {/*
+       * El faristol de fusta, amb tres fitxes en ventall i el nom del joc en
+       * blanc: que es vegi d'entrada que és un joc de fitxes com el Rummikub.
+       */}
       <div className="rack inici-faristol">
-        <h1>Remigi</h1>
-        <p>Tria com vols jugar</p>
+        <span className="inici-ventall" aria-hidden="true">
+          {VENTALL.map((tile) => (
+            <TileView key={tile.id} tile={tile} />
+          ))}
+        </span>
+        <div className="inici-nom">
+          <h1>Remigi</h1>
+          <p className="inici-inspirat">Inspirat en el Rummikub</p>
+          <p>Tria com vols jugar</p>
+        </div>
       </div>
 
       <div className="row inici-extres">
