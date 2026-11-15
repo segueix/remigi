@@ -52,10 +52,10 @@ export function BoardView({
   const choosing = Boolean(selectedTileId) || Boolean(draggingTileId);
 
   /*
-   * Les fitxes s'empetiteixen soles quan la taula no dona més de si, i just el
-   * que calgui (vegeu `boardDensity.ts`). La signatura diu quantes jugades hi
-   * ha i de quina mida: és el que canvia com s'escampen per la taula, i per
-   * tant quan cal tornar a mesurar.
+   * Les fitxes s'empetiteixen soles quan la taula no dona més de si, just el
+   * que calgui i sense tornar a créixer per no res (vegeu `boardDensity.ts`).
+   * La signatura diu quantes jugades hi ha i de quina mida: és el que canvia
+   * com s'escampen per la taula, i per tant quan cal tornar a mesurar.
    */
   const boardRef = useRef<HTMLDivElement>(null);
   useBoardFit(boardRef, board.map((meld) => meld.length).join(','));
@@ -106,24 +106,26 @@ export function BoardView({
       ))}
 
       {/*
-       * L'espai del botó de jugada nova es reserva durant tot el torn humà.
-       * Fer-lo aparèixer només després del primer toc canviava l'alçada del
-       * tauler i desplaçava el faristol uns píxels, cosa que podia trencar el
-       * segon toc del doble toc.
+       * L'espai del botó de jugada nova es reserva sempre, també quan juguen
+       * els rivals. Fer-lo aparèixer només després del primer toc canviava
+       * l'alçada del tauler i podia trencar el segon toc del doble toc; i
+       * reservar-lo només al teu torn feia que les fitxes de la taula
+       * s'empetitissin quan et tocava i tornessin a créixer després.
        */}
-      {interactive && (
+      {onNewMeldClick && (
         <button
           type="button"
           className={[
             over?.kind === 'new' ? 'new-meld over' : 'new-meld',
-            choosing ? '' : 'new-meld-reservat',
+            interactive && choosing ? '' : 'new-meld-reservat',
           ]
             .filter(Boolean)
             .join(' ')}
-          data-drop={choosing ? 'new' : undefined}
-          onClick={choosing ? onNewMeldClick : undefined}
-          tabIndex={choosing ? 0 : -1}
-          aria-hidden={!choosing}
+          data-drop={interactive && choosing ? 'new' : undefined}
+          onClick={interactive && choosing ? onNewMeldClick : undefined}
+          tabIndex={interactive && choosing ? 0 : -1}
+          aria-hidden={!(interactive && choosing)}
+          disabled={!interactive}
         >
           + Jugada nova
         </button>

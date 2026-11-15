@@ -2617,3 +2617,33 @@ Rummikub».»
 **Criteris d'acceptació (verificats)**: la prova de navegador del tema
 comença en fosc i recorda clar, fosc i automàtic; captures de l'inici en
 fosc (per defecte) i en clar, a 390 i 1280 px.
+
+### Fitxes de la taula d'una mida estable ✅ Feta (2026-11-15)
+
+Demanat pel jugador: «Fes que el tamany de les fitxes del tauler sigui
+harmoniós: que no es facin molt petites segons el moviment i després tornin a
+una mida mitjana o més gran. Que sempre es vegin a una mida, evitant passar a
+una mida petita.»
+
+Mesurat en una partida real al mòbil: amb les mateixes 20 fitxes a la taula,
+la mida era 1 quan jugaven els rivals i 0,73 quan et tocava (i arribava a
+0,52). Causes: el lloc del botó «+ Jugada nova» només es reservava al teu
+torn; les pistes i els errors de sota la taula li prenien alçada; i la mida
+tornava a créixer al mínim lloc lliure.
+
+- [x] `game/boardDensity.ts`: `stableScale` (només s'encongeix si no hi cap,
+      i només torna a créixer amb lloc de sobres, `GROW_MARGIN` 9 %); mínim a
+      dos terços de la natural (`MIN_SCALE` 0,67, abans 0,5); en mesurar, la
+      partida porta `.mesurant-taula` i les pistes, els errors i el botó de
+      tornar la fitxa al faristol surten del flux (la mida no en depèn).
+- [x] `BoardView`: el lloc de «+ Jugada nova» es reserva sempre (també quan
+      juguen els rivals), i el botó fa l'alçada d'una jugada a la mida d'ara.
+- [x] CSS: la separació entre jugades s'encongeix amb les fitxes, i una
+      jugada més llarga que la taula es parteix en dues fileres dins la seva
+      caixa (abans encongia tota la taula).
+
+**Criteris d'acceptació (verificats)**: tests de `stableScale` (no rebota en
+una seqüència de torns, creix quan es buida, mai per sota del mínim); la
+prova de la taula plena comprova que, sense la pista, tot hi cap i que tornar
+una fitxa al faristol no fa créixer les fitxes; partida real mesurada al
+mòbil: 1 → 0,82 → 0,79 → 0,76 → 0,70 → 0,67, sempre baixant a poc a poc.

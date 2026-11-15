@@ -390,8 +390,32 @@ test.describe('la taula plena', () => {
 
     const petita = await midaFitxa();
     expect(petita).toBeLessThan(gran);
-    // Encongides just el que calia: tot es veu i continuen essent fitxes.
-    expect(await desborda()).toBe(false);
-    expect(petita).toBeGreaterThan(gran * 0.6);
+    // Encongides just el que calia, i continuen essent fitxes que es llegeixen:
+    // mai per sota de dos terços de la mida natural.
+    expect(petita).toBeGreaterThan(gran * 0.66);
+    /*
+     * Les quatre fitxes soles no són jugades vàlides i surt la pista a sota de
+     * la taula. La mida no la compta (és un avís que va i ve, i abans feia
+     * ballar les fitxes): sense la pista, tot hi cap; amb la pista, la taula
+     * es desplaça.
+     */
+    await expect(page.locator('.hint')).toContainText('no són vàlides');
+    const desbordaSenseAvisos = () =>
+      page.evaluate(() => {
+        const game = document.querySelector('.game')!;
+        game.classList.add('mesurant-taula');
+        const el = document.querySelector('.board')!;
+        const over = el.scrollHeight > el.clientHeight + 1 || el.scrollWidth > el.clientWidth + 1;
+        game.classList.remove('mesurant-taula');
+        return over;
+      });
+    expect(await desbordaSenseAvisos()).toBe(false);
+
+    // Tornar una fitxa al faristol no torna a fer créixer les fitxes de seguida:
+    // la mida es queda quieta mentre es juga.
+    await page.locator('.board .tile[aria-label="4 groc"]').click();
+    await page.getByRole('button', { name: 'Torna la fitxa al faristol' }).click();
+    await expect(taula.locator('.tile')).toHaveCount(30);
+    expect(await midaFitxa()).toBe(petita);
   });
 });

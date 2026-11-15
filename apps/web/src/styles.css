@@ -672,7 +672,8 @@ input {
   display: flex;
   flex-wrap: wrap;
   align-content: flex-start;
-  gap: 0.45rem 0.5rem;
+  /* La separació s'encongeix amb les fitxes: a mida compacta hi cap més taula. */
+  gap: calc(0.45rem * var(--escala-fitxa)) calc(0.5rem * var(--escala-fitxa));
   margin-top: 0.5rem;
   padding: 0.8rem;
   border: 1px solid var(--feltre-vora);
@@ -746,8 +747,16 @@ input {
   outline-offset: 1px;
 }
 
+/*
+ * Una jugada més llarga que la taula (una escala de deu fitxes en un mòbil) es
+ * parteix en dues fileres dins de la seva caixa. Abans era tota la taula la
+ * que s'encongia fins que l'escala hi cabia de costat, i les fitxes es feien
+ * diminutes per una sola jugada.
+ */
 .meld {
   display: flex;
+  flex-wrap: wrap;
+  max-width: 100%;
   gap: calc(0.18rem * var(--escala-fitxa, 1));
   padding: calc(0.3rem * var(--escala-fitxa, 1));
   border: 1px solid rgb(255 255 255 / 0.08);
@@ -780,15 +789,21 @@ input {
 }
 
 /* No porta la classe .meld a posta: no és una jugada, és el botó per crear-ne. */
+/*
+ * Fa l'alçada d'una jugada i s'encongeix amb les fitxes: ocupa el lloc d'una
+ * jugada més, ni més ni menys, sigui quina sigui la mida de la taula.
+ */
 .new-meld {
   font: inherit;
   font-weight: 500;
+  font-size: max(0.75rem, calc(1rem * var(--escala-fitxa, 1)));
   align-self: flex-start;
+  min-height: calc((var(--fitxa-alta, 3.25rem) + 0.6rem) * var(--escala-fitxa, 1) + 2px);
   background: rgb(0 0 0 / 0.12);
   color: rgb(255 255 255 / 0.75);
   border: 1px dashed rgb(255 255 255 / 0.4);
   border-radius: 0.55rem;
-  padding: 1rem;
+  padding: 0 calc(0.9rem * var(--escala-fitxa, 1));
   box-shadow: none;
 }
 
@@ -801,6 +816,19 @@ input {
 .new-meld-reservat {
   visibility: hidden;
   pointer-events: none;
+}
+
+/*
+ * Mentre es mesura quina mida de fitxa hi cap (`game/boardDensity.ts`), els
+ * avisos que van i venen surten del flux: el feltre agafa l'alçada que té
+ * quan no n'hi ha cap, i la mida de les fitxes no depèn de si ara es veu una
+ * pista o un error. No s'arriba a pintar mai.
+ */
+.mesurant-taula .hint,
+.mesurant-taula .error-slot > *,
+.mesurant-taula .return-tile,
+.mesurant-taula [data-efimer] {
+  position: absolute !important;
 }
 
 /* ---------- Fitxes ---------- */
