@@ -2573,3 +2573,26 @@ representades a la lliga.»
 província, les quatre províncies, els set territoris, ciutat · país) i de
 `withOpponentNames`; captures de la classificació a la lliga provincial i a
 la dels Països Catalans a 390 px.
+
+### L'inici, com en començar una partida lliure ✅ Feta (2026-11-14)
+
+Demanat pel jugador: «Quan he dit que volia que el tauler fos el fons de les
+tres caselles, em referia al fons de la pantalla, no de cada casella: fes que
+el fons inicial sigui com començar una partida lliure, però amb les tres
+opcions davant.»
+
+- [x] Les targetes tornen a ser clares (el color de cada mode), i van al
+      damunt d'una taula de feltre buida (`.inici-taula`, el mateix feltre de
+      `.board`, amb la marca de la casa), com la de la partida.
+- [x] A sota, el faristol de fusta amb catorze fitxes d'exemple (una escala,
+      un grup, un joker i de soltes; `.inici-faristol`, només decora), i els
+      botons de sempre a sota, al lloc dels de jugar.
+- [x] Al mòbil, la taula ocupa gran part de la pantalla, com a la partida.
+- [x] Després, demanat: «Treu les fitxes del faristol i posa-hi en blanc
+      Remigi, tria com vols jugar; treu aquest text de dalt a la dreta i posa-hi
+      la icona d'El Tauler.» El faristol porta el nom del joc en blanc (sense
+      fitxes) i a dalt a la dreta hi ha la icona d'El Tauler
+      (`public/eltauler-192.png`, sobre blanc), que obre eltauler.cat.
+
+**Criteris d'acceptació (verificats)**: captures a 390 i 1280 px, en clar i
+en fosc; e2e sencer.

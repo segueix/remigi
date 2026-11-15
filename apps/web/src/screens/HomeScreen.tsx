@@ -1,4 +1,5 @@
 import { DIFFICULTIES, adaptiveLevelLabel, type PlayerProfile } from '@remigi/core';
+import { TARGET_NAME, TARGET_URL } from '../appSwitch/appSwitch';
 import { ComEsJuga } from '../components/ComEsJuga';
 import { ChallengeIcon, FreePlayIcon, LeagueIcon } from '../components/icons';
 import {
@@ -34,8 +35,10 @@ interface Props {
 }
 
 /**
- * La pantalla d'inici: tres maneres de jugar, l'una al costat de l'altra,
- * sobre el feltre de la taula de joc, i el jugador a dalt a l'esquerra.
+ * La pantalla d'inici, com quan comença una partida lliure: el jugador a dalt
+ * a l'esquerra (i a la dreta, El Tauler, l'app germana d'escacs), la taula de
+ * feltre buida amb les tres maneres de jugar al damunt, l'una al costat de
+ * l'altra, i a sota el faristol de fusta amb el nom del joc.
  * A l'esquerra el joc lliure (la partida de sempre), al mig el repte (unes
  * quantes partides a un nivell fix i se sumen els punts) i a la dreta la
  * lliga (del poble al món, com a les lligues d'escacs d'El Tauler).
@@ -89,7 +92,7 @@ export function HomeScreen({
   return (
     <section className="inici">
       <div className="franja-fitxes" aria-hidden="true" />
-      {/* El jugador, a dalt a l'esquerra; el nom del joc, a la dreta. */}
+      {/* El jugador, a dalt a l'esquerra; El Tauler, l'app d'escacs germana, a la dreta. */}
       <header className="inici-cap">
         <button type="button" className="secondary inici-jugador" onClick={onHistory} aria-label="El teu historial">
           <span className="player-color" aria-hidden="true">
@@ -102,52 +105,63 @@ export function HomeScreen({
             </span>
           </span>
         </button>
-        <div className="inici-titol">
-          <h1>Remigi</h1>
-          <p className="muted">Tria com vols jugar</p>
-        </div>
+        <a className="inici-tauler" href={TARGET_URL} aria-label={`Obre ${TARGET_NAME}, els escacs`} title={`${TARGET_NAME} · escacs`}>
+          <img src={`${import.meta.env.BASE_URL}eltauler-192.png`} alt="" width="44" height="44" />
+        </a>
       </header>
 
-      <div className="inici-modes">
-        <button type="button" className="mode-card mode-lliure" onClick={onFree} aria-label="Joc lliure">
-          <span className="mode-icona" aria-hidden="true">
-            <FreePlayIcon />
-          </span>
-          <strong className="mode-titol">Joc lliure</strong>
-          <span className="mode-sub">Partida normal</span>
-          <span className="mode-estat">{freeStatus}</span>
-          <span className="mode-cta" aria-hidden="true">
-            {savedFree ? 'Continua' : 'Juga'}
-          </span>
-        </button>
+      {/* La taula de joc, buida, amb les tres maneres de jugar al damunt. */}
+      <div className="inici-taula">
+        <div className="inici-modes">
+          <button type="button" className="mode-card mode-lliure" onClick={onFree} aria-label="Joc lliure">
+            <span className="mode-icona" aria-hidden="true">
+              <FreePlayIcon />
+            </span>
+            <strong className="mode-titol">Joc lliure</strong>
+            <span className="mode-sub">Partida normal</span>
+            <span className="mode-estat">{freeStatus}</span>
+            <span className="mode-cta" aria-hidden="true">
+              {savedFree ? 'Continua' : 'Juga'}
+            </span>
+          </button>
 
-        <button type="button" className="mode-card mode-repte" onClick={onChallenge} aria-label="Repte">
-          <span className="mode-icona" aria-hidden="true">
-            <ChallengeIcon />
-          </span>
-          <strong className="mode-titol">Repte</strong>
-          <span className="mode-sub">Unes quantes partides i sumes els punts</span>
-          <span className="mode-estat">{challengeStatus}</span>
-          <span className="mode-cta" aria-hidden="true">
-            {current && !isDone(current) ? (savedRepte ? 'Continua' : 'Segueix') : 'Comença'}
-          </span>
-        </button>
+          <button type="button" className="mode-card mode-repte" onClick={onChallenge} aria-label="Repte">
+            <span className="mode-icona" aria-hidden="true">
+              <ChallengeIcon />
+            </span>
+            <strong className="mode-titol">Repte</strong>
+            <span className="mode-sub">Unes quantes partides i sumes els punts</span>
+            <span className="mode-estat">{challengeStatus}</span>
+            <span className="mode-cta" aria-hidden="true">
+              {current && !isDone(current) ? (savedRepte ? 'Continua' : 'Segueix') : 'Comença'}
+            </span>
+          </button>
 
-        <button type="button" className="mode-card mode-lliga" onClick={onLeague} aria-label="Lliga">
-          <span className="mode-icona" aria-hidden="true">
-            <LeagueIcon />
-          </span>
-          <strong className="mode-titol">Lliga</strong>
-          {leagueName ? (
-            <span className="mode-sub mode-lliga-nom">{leagueName}</span>
-          ) : (
-            <span className="mode-sub">Del poble al món, com a El Tauler</span>
-          )}
-          <span className="mode-estat">{leagueStatus}</span>
-          <span className="mode-cta" aria-hidden="true">
-            {running ? (savedLliga ? 'Continua' : 'Segueix') : 'Obre'}
-          </span>
-        </button>
+          <button type="button" className="mode-card mode-lliga" onClick={onLeague} aria-label="Lliga">
+            <span className="mode-icona" aria-hidden="true">
+              <LeagueIcon />
+            </span>
+            <strong className="mode-titol">Lliga</strong>
+            {leagueName ? (
+              <span className="mode-sub mode-lliga-nom">{leagueName}</span>
+            ) : (
+              <span className="mode-sub">Del poble al món, com a El Tauler</span>
+            )}
+            <span className="mode-estat">{leagueStatus}</span>
+            <span className="mode-cta" aria-hidden="true">
+              {running ? (savedLliga ? 'Continua' : 'Segueix') : 'Obre'}
+            </span>
+          </button>
+        </div>
+        <span className="marca-taula" aria-hidden="true">
+          Remigi
+        </span>
+      </div>
+
+      {/* El faristol de fusta, amb el nom del joc en blanc en comptes de fitxes. */}
+      <div className="rack inici-faristol">
+        <h1>Remigi</h1>
+        <p>Tria com vols jugar</p>
       </div>
 
       <div className="row inici-extres">
