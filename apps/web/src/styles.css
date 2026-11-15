@@ -2964,21 +2964,35 @@ button.secondary.reset-nivell {
   margin-bottom: 1.25rem;
 }
 
-.inici-cap h1 {
-  margin: 0;
-  font-size: 2.2rem;
-  line-height: 1.1;
-  letter-spacing: 0.01em;
-}
-
-.inici-cap p {
-  margin: 0.2rem 0 0;
-}
-
-/* El nom del joc a la dreta: el jugador ocupa el lloc de dalt a l'esquerra. */
-.inici-titol {
+/* A la dreta, El Tauler: la icona de l'app d'escacs germana, que hi porta. */
+.inici-tauler {
+  display: grid;
+  place-items: center;
+  flex: none;
   margin-left: auto;
-  text-align: right;
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.18);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.inici-tauler img {
+  display: block;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  object-fit: cover;
+  /* La icona és transparent: sobre blanc es veu igual en clar i en fosc. */
+  background: #fff;
+}
+
+.inici-tauler:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgb(0 0 0 / 0.24);
+}
+
+.inici-tauler:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .inici-jugador {
@@ -3038,14 +3052,30 @@ button.secondary.reset-nivell {
   box-shadow: 0 10px 24px rgb(0 0 0 / 0.38);
 }
 
-/* El faristol de l'inici només decora: no es toca ni es desplaça. */
+/* El faristol de l'inici, amb el nom del joc en blanc en comptes de fitxes. */
 .inici-faristol {
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
+  gap: 0.1rem;
   max-height: none;
   margin-bottom: 1.25rem;
   overflow: hidden;
-  pointer-events: none;
-  user-select: none;
+  color: #fff;
+  text-align: center;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.45);
+}
+
+.inici-faristol h1 {
+  margin: 0;
+  font-size: 2.2rem;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+}
+
+.inici-faristol p {
+  margin: 0;
+  color: rgb(255 255 255 / 0.9);
 }
 
 /* Cada mode és un botó gran sencer: es toca on sigui. */
@@ -3129,10 +3159,6 @@ button.secondary.reset-nivell {
 }
 
 @media (max-width: 560px) {
-  .inici-cap h1 {
-    font-size: 1.8rem;
-  }
-
   .inici-modes {
     gap: 0.45rem;
   }
@@ -3143,10 +3169,8 @@ button.secondary.reset-nivell {
     padding: 1rem 0.5rem 2.1rem;
   }
 
-  /* Set fitxes per filera, com al faristol de la partida. */
-  .inici-faristol {
-    gap: 0.3rem;
-    padding: 0.55rem 0.45rem 0.65rem;
+  .inici-faristol h1 {
+    font-size: 1.8rem;
   }
 
   .mode-card {

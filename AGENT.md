@@ -2587,8 +2587,12 @@ opcions davant.»
 - [x] A sota, el faristol de fusta amb catorze fitxes d'exemple (una escala,
       un grup, un joker i de soltes; `.inici-faristol`, només decora), i els
       botons de sempre a sota, al lloc dels de jugar.
-- [x] Al mòbil, la taula ocupa gran part de la pantalla i el faristol fa dues
-      fileres de set fitxes, com a la partida.
+- [x] Al mòbil, la taula ocupa gran part de la pantalla, com a la partida.
+- [x] Després, demanat: «Treu les fitxes del faristol i posa-hi en blanc
+      Remigi, tria com vols jugar; treu aquest text de dalt a la dreta i posa-hi
+      la icona d'El Tauler.» El faristol porta el nom del joc en blanc (sense
+      fitxes) i a dalt a la dreta hi ha la icona d'El Tauler
+      (`public/eltauler-192.png`, sobre blanc), que obre eltauler.cat.
 
 **Criteris d'acceptació (verificats)**: captures a 390 i 1280 px, en clar i
 en fosc; e2e sencer.

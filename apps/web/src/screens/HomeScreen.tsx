@@ -1,6 +1,6 @@
-import { DIFFICULTIES, adaptiveLevelLabel, type PlayerProfile, type Tile, type TileColor } from '@remigi/core';
+import { DIFFICULTIES, adaptiveLevelLabel, type PlayerProfile } from '@remigi/core';
+import { TARGET_NAME, TARGET_URL } from '../appSwitch/appSwitch';
 import { ComEsJuga } from '../components/ComEsJuga';
-import { TileView } from '../components/TileView';
 import { ChallengeIcon, FreePlayIcon, LeagueIcon } from '../components/icons';
 import {
   difficultyForRating,
@@ -34,30 +34,11 @@ interface Props {
   onMusic(): void;
 }
 
-/** Les fitxes d'exemple del faristol de l'inici: una escala, un grup, un joker i de solts. */
-const fitxa = (color: TileColor, value: number): Tile => ({ id: `inici-${color}-${value}`, kind: 'number', color, value });
-const FARISTOL: Tile[] = [
-  fitxa('blue', 7),
-  fitxa('blue', 8),
-  fitxa('blue', 9),
-  fitxa('red', 12),
-  fitxa('black', 12),
-  fitxa('orange', 12),
-  { id: 'inici-joker', kind: 'joker' },
-  fitxa('red', 3),
-  fitxa('orange', 5),
-  fitxa('black', 1),
-  fitxa('blue', 13),
-  fitxa('red', 6),
-  fitxa('orange', 11),
-  fitxa('black', 4),
-];
-
 /**
  * La pantalla d'inici, com quan comença una partida lliure: el jugador a dalt
- * a l'esquerra, la taula de feltre buida i el faristol de fusta amb les
- * fitxes; i, al damunt de la taula, les tres maneres de jugar, l'una al costat
- * de l'altra.
+ * a l'esquerra (i a la dreta, El Tauler, l'app germana d'escacs), la taula de
+ * feltre buida amb les tres maneres de jugar al damunt, l'una al costat de
+ * l'altra, i a sota el faristol de fusta amb el nom del joc.
  * A l'esquerra el joc lliure (la partida de sempre), al mig el repte (unes
  * quantes partides a un nivell fix i se sumen els punts) i a la dreta la
  * lliga (del poble al món, com a les lligues d'escacs d'El Tauler).
@@ -111,7 +92,7 @@ export function HomeScreen({
   return (
     <section className="inici">
       <div className="franja-fitxes" aria-hidden="true" />
-      {/* El jugador, a dalt a l'esquerra; el nom del joc, a la dreta. */}
+      {/* El jugador, a dalt a l'esquerra; El Tauler, l'app d'escacs germana, a la dreta. */}
       <header className="inici-cap">
         <button type="button" className="secondary inici-jugador" onClick={onHistory} aria-label="El teu historial">
           <span className="player-color" aria-hidden="true">
@@ -124,10 +105,9 @@ export function HomeScreen({
             </span>
           </span>
         </button>
-        <div className="inici-titol">
-          <h1>Remigi</h1>
-          <p className="muted">Tria com vols jugar</p>
-        </div>
+        <a className="inici-tauler" href={TARGET_URL} aria-label={`Obre ${TARGET_NAME}, els escacs`} title={`${TARGET_NAME} · escacs`}>
+          <img src={`${import.meta.env.BASE_URL}eltauler-192.png`} alt="" width="44" height="44" />
+        </a>
       </header>
 
       {/* La taula de joc, buida, amb les tres maneres de jugar al damunt. */}
@@ -178,11 +158,10 @@ export function HomeScreen({
         </span>
       </div>
 
-      {/* El faristol, amb fitxes d'exemple: només decora. */}
-      <div className="rack inici-faristol" aria-hidden="true">
-        {FARISTOL.map((tile) => (
-          <TileView key={tile.id} tile={tile} />
-        ))}
+      {/* El faristol de fusta, amb el nom del joc en blanc en comptes de fitxes. */}
+      <div className="rack inici-faristol">
+        <h1>Remigi</h1>
+        <p>Tria com vols jugar</p>
       </div>
 
       <div className="row inici-extres">
