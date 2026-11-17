@@ -637,9 +637,9 @@ export function tablePoints(scores: readonly number[]): number[] {
 }
 
 /**
- * Classificació amb els desempats de les lligues: 1) punts; 2) enfrontaments
- * directes entre els empatats (només si tots s'hi han trobat); 3) diferència
- * de punts de partida; 4) victòries; 5) força i nom, perquè l'ordre sigui
+ * Classificació per tres valors, en aquest ordre i tots a la vista: 1) punts
+ * de lliga; 2) victòries (primer de la taula); 3) diferència de punts de
+ * partida. Si encara hi ha empat, la força i el nom, perquè l'ordre sigui
  * sempre el mateix.
  */
 export function standings(season: LeagueSeason, playerName = 'Tu'): StandingRow[] {
@@ -648,8 +648,6 @@ export function standings(season: LeagueSeason, playerName = 'Tu'): StandingRow[
   for (const rival of season.rivals) {
     rows.set(rival.id, { id: rival.id, name: rival.name, rating: rival.rating, played: 0, points: 0, diff: 0, wins: 0 });
   }
-  const versus = new Map<string, number>();
-  const vsKey = (a: string, b: string) => `${a}>${b}`;
   for (const result of season.results) {
     const points = tablePoints(result.scores);
     const top = Math.max(...result.scores);
@@ -660,33 +658,13 @@ export function standings(season: LeagueSeason, playerName = 'Tu'): StandingRow[
       row.points += points[i];
       row.diff += result.scores[i];
       if (result.scores[i] === top && top > 0) row.wins += 1;
-      result.ids.forEach((other, j) => {
-        if (i === j) return;
-        const s = result.scores[i] > result.scores[j] ? 1 : result.scores[i] === result.scores[j] ? 0.5 : 0;
-        versus.set(vsKey(id, other), (versus.get(vsKey(id, other)) ?? 0) + s);
-      });
     });
   }
-  const list = [...rows.values()];
-  const h2h = new Map<string, number>();
-  const byPoints = new Map<number, StandingRow[]>();
-  for (const row of list) byPoints.set(row.points, [...(byPoints.get(row.points) ?? []), row]);
-  for (const group of byPoints.values()) {
-    if (group.length < 2) continue;
-    const allMet = group.every((a) =>
-      group.every((b) => a === b || versus.has(vsKey(a.id, b.id))),
-    );
-    if (!allMet) continue;
-    for (const a of group) {
-      h2h.set(a.id, group.reduce((sum, b) => (a === b ? sum : sum + (versus.get(vsKey(a.id, b.id)) ?? 0)), 0));
-    }
-  }
-  return list.sort(
+  return [...rows.values()].sort(
     (a, b) =>
       b.points - a.points ||
-      (h2h.get(b.id) ?? 0) - (h2h.get(a.id) ?? 0) ||
-      b.diff - a.diff ||
       b.wins - a.wins ||
+      b.diff - a.diff ||
       b.rating - a.rating ||
       a.name.localeCompare(b.name, 'ca'),
   );
@@ -779,22 +757,56 @@ function ordinalOf(n: number): string {
   return n === 1 ? '1r' : n === 2 ? '2n' : n === 3 ? '3r' : n === 4 ? '4t' : `${n}è`;
 }
 
-/** La teva taula de la jornada `round` (des de 0): jugadors, punts de la partida i punts de lliga. */
-export function yourTableResult(
-  season: LeagueSeason,
-  round: number,
-  playerName = 'Tu',
-): { id: string; name: string; you: boolean; score: number; leaguePoints: number }[] {
+export interface TableScoreRow {
+  id: string;
+  name: string;
+  you: boolean;
+  /** Punts de la partida. */
+  score: number;
+  /** Lloc a la partida (des d'1; els empatats comparteixen lloc). */
+  place: number;
+  /** Ha guanyat la partida (és qui suma una victòria a la classificació). */
+  winner: boolean;
+  /** Punts de lliga guanyats a la partida. */
+  gained: number;
+  /** Acumulat de la temporada fins a aquesta jornada: suma dels punts de les partides (la Dif). */
+  total: number;
+  /** Acumulat de la temporada fins a aquesta jornada: punts de lliga. */
+  points: number;
+  /** Posició a la classificació després d'aquesta jornada. */
+  rank: number;
+}
+
+/**
+ * El marcador de la teva taula d'una jornada, com el del repte: els punts de
+ * la partida de cadascú (del primer a l'últim, amb qui l'ha guanyada) i
+ * l'acumulat de la temporada fins a aquella jornada (la suma dels punts de
+ * les partides, els punts de lliga i la posició). Buit si no hi jugaves.
+ */
+export function tableScoreboard(season: LeagueSeason, round: number, playerName = 'Tu'): TableScoreRow[] {
   const result = season.results.find((r) => r.round === round && r.ids.includes(YOU));
   if (!result) return [];
   const gained = tablePoints(result.scores);
-  return result.ids.map((id, i) => ({
-    id,
-    name: id === YOU ? playerName : rivalById(season, id)?.name ?? id,
-    you: id === YOU,
-    score: result.scores[i],
-    leaguePoints: gained[i],
-  }));
+  const top = Math.max(...result.scores);
+  // La classificació tal com era en acabar aquella jornada.
+  const table = standings({ ...season, results: season.results.filter((r) => r.round <= round) }, playerName);
+  return result.ids
+    .map((id, i) => {
+      const rank = table.findIndex((row) => row.id === id);
+      return {
+        id,
+        name: id === YOU ? playerName : rivalById(season, id)?.name ?? id,
+        you: id === YOU,
+        score: result.scores[i],
+        place: result.scores.filter((other) => other > result.scores[i]).length + 1,
+        winner: result.scores[i] === top && top > 0,
+        gained: gained[i],
+        total: table[rank]?.diff ?? result.scores[i],
+        points: table[rank]?.points ?? gained[i],
+        rank: rank + 1,
+      };
+    })
+    .sort((a, b) => b.score - a.score || Number(b.you) - Number(a.you));
 }
 
 /** Graó de la temporada següent segons la posició final. */

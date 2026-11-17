@@ -140,6 +140,43 @@ describe('moure fitxes', () => {
     ]);
   });
 
+  it('parteix una escala amb joker si s’hi afegeix un número repetit al mig', () => {
+    const d = draft(
+      [[t('red', 3), t('red', 4), t('red', 5), joker, t('red', 7), t('red', 8)]],
+      [t('red', 5, 'b'), t('red', 4, 'b')],
+    );
+    const after = moveTile(d, 'red-5-b', { kind: 'meld', index: 0 });
+    expect(ids(after.board)).toEqual([
+      ['red-3-a', 'red-4-a', 'red-5-a'],
+      ['red-5-b', 'joker-a', 'red-7-a', 'red-8-a'],
+    ]);
+    expect(invalidMeldIndexes(after).size).toBe(0);
+
+    // El joker a la primera meitat, i a la punta de l'escala.
+    const jokerFirst = draft([[joker, t('red', 4), t('red', 5), t('red', 6)]], [t('red', 4, 'b')]);
+    expect(ids(moveTile(jokerFirst, 'red-4-b', { kind: 'meld', index: 0 }).board)).toEqual([
+      ['joker-a', 'red-4-a'],
+      ['red-4-b', 'red-5-a', 'red-6-a'],
+    ]);
+  });
+
+  it('el número que fa el joker hi entra al seu lloc i el joker passa a la punta', () => {
+    const d = draft([[t('red', 3), t('red', 4), joker, t('red', 6), t('red', 7)]], [t('red', 5)]);
+    const after = moveTile(d, 'red-5-a', { kind: 'meld', index: 0 });
+    expect(ids(after.board)).toEqual([
+      ['red-3-a', 'red-4-a', 'red-5-a', 'red-6-a', 'red-7-a', 'joker-a'],
+    ]);
+  });
+
+  it('el doble toc també parteix una escala amb joker', () => {
+    const d = draft(
+      [[t('red', 3), t('red', 4), t('red', 5), joker, t('red', 7)]],
+      [t('red', 4, 'b')],
+      ['red-3-a', 'red-4-a', 'red-5-a', 'joker-a', 'red-7-a'],
+    );
+    expect(findAutoMeldIndex(d, 'red-4-b')).toBe(0);
+  });
+
   it('també separa 1-2-3 + un altre 2 en 1-2 i 2-3', () => {
     const d = draft([[t('red', 1), t('red', 2), t('red', 3)]], [t('red', 2, 'b')]);
     const after = moveTile(d, 'red-2-b', { kind: 'meld', index: 0 });

@@ -262,13 +262,18 @@ Amb 16 jugadors i 15 jornades (el màxim d'abans) tardava ~0,3 s; ara amb 16 jug
 Cada partida és un enfrontament contra cada rival de la taula, com en una lliga
 d'escacs: **1 punt per cada jugador que acaba per sota teu** (per punts de la
 partida), ½ si empateu. A una taula de quatre, guanyar dona 3 punts; quedar
-segon, 2. Desempats (`standings`):
+segon, 2. La classificació (`standings`) es decideix per **tres valors**, tots a
+la vista a la taula (Pts, V, Dif):
 
 1. punts de lliga;
-2. enfrontaments directes entre els empatats (només si tots s'hi han trobat);
+2. **victòries** (primer de la taula);
 3. **diferència**: la suma dels punts de les partides;
-4. victòries (primer de la taula);
-5. força i nom, perquè l'ordre sigui sempre el mateix.
+4. si encara hi ha empat, la força i el nom, perquè l'ordre sigui sempre el
+   mateix.
+
+Fins al 2026-11-17 hi havia els enfrontaments directes com a segon criteri i la
+diferència abans que les victòries: un jugador amb menys victòries i pitjor
+diferència podia quedar per davant, sense que la taula digués per què.
 
 ### Les partides entre rivals
 
@@ -307,19 +312,24 @@ jornada no surt el resum llarg sinó una pantalla amb poc text
 
 - el resultat en curt («2n de 4 · +2 punts · −31»), verd si guanyes i vermell
   si quedes últim;
+- el **marcador de la teva taula** (`LeagueScoreboard`, `tableScoreboard`), a
+  la vista sense haver de lliscar, com al repte: qui ha guanyat (👑) i els
+  punts de la partida de cadascú, del primer a l'últim; a partir de la segona
+  jornada, també l'**acumulat** de la temporada (el total de punts de partida,
+  la «Dif» de la classificació) i, sempre, els punts de lliga i la posició. Així
+  es pot jugar amb tàctica. L'última jornada el porta al resum de sempre;
 - la **jornada que toca, gran i en un requadre** («JORNADA 3/7»);
 - «comença en» i el **compte enrere de 30 a 0**;
-- un **carrusel de tres pàgines** (`Carousel`, el mateix que el del repte), que
-  es passa fent lliscar el dit o tocant els **tres punts** de sota. La primera
-  és la principal i és la de sempre: la teva posició a la classificació
-  **cara a cara** amb la dels rivals de la jornada següent (posició, punts i
-  força). Les altres hi afegeixen informació: **la teva partida** (qui ha
-  guanyat la taula, en gran, i una barra per jugador amb els punts de la
-  partida i els de lliga, `yourTableResult`) i **la lliga** (la classificació
-  en curt, els de dalt i els del teu voltant, amb les zones d'ascens i de
-  descens, i la tàctica: on ets respecte de les zones i a quants punts,
-  quantes jornades i punts queden en joc i com puntua una taula,
-  `leagueInsights`). El carrusel agafa l'alçada de la pàgina que es veu;
+- un **carrusel de dues pàgines** (`Carousel`, el mateix que el del repte), que
+  es passa fent lliscar el dit o tocant els **punts** de sota. La primera és la
+  principal i és la de sempre: la teva posició a la classificació **cara a
+  cara** amb la dels rivals de la jornada següent (posició, punts i força). La
+  segona és **la lliga** (la classificació en curt, els de dalt i els del teu
+  voltant, amb les zones d'ascens i de descens, i la tàctica: on ets respecte
+  de les zones i a quants punts, quantes jornades i punts queden en joc i com
+  puntua una taula, `leagueInsights`). Fins al 2026-11-17 n'hi havia una
+  tercera amb la teva partida en barres, que ara és el marcador de dalt. El
+  carrusel agafa l'alçada de la pàgina que es veu;
 - la **música composta** en aquell moment (§4), amb el seu nom («Sona: Rumba de
   la classificació · la menor · flauta») i «Silencia».
 

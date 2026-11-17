@@ -312,21 +312,26 @@ function removeFromMeld(meld: Meld, tileId: string): Meld[] {
  * Afegir una còpia repetida al mig d'una escala la parteix en les dues
  * escales que defineixen les dues còpies. Ex.: 1-2-3-4-5 + un altre 3 dona
  * 1-2-3 i 3-4-5; 1-2-3 + un altre 2 dona 1-2 i 2-3.
+ *
+ * Amb jokers també: cada posició val el número que hi toca, i 3-4-J-6-7 + un
+ * altre 4 dona 3-4 i 4-J-6-7 (abans la fitxa anava a parar al final i
+ * l'escala ja no s'endreçava). El número que fa el joker no la parteix: hi
+ * entra al seu lloc i el joker passa a una punta (3-4-J-6-7 + el 5 dona
+ * 3-4-5-6-7-J), per poder-lo endur a una altra jugada.
  */
 function insertIntoMeld(meld: Meld, tile: Tile): Meld[] {
   const info = analyzeMeld(meld);
   if (info.valid && info.kind === 'run' && tile.kind === 'number') {
-    const allNumbersSameColor = meld.every(
-      (candidate) => candidate.kind === 'number' && candidate.color === tile.color,
-    );
-    if (allNumbersSameColor) {
-      const duplicateIndex = meld.findIndex(
-        (candidate) =>
-          candidate.kind === 'number' &&
-          candidate.color === tile.color &&
-          candidate.value === tile.value,
-      );
-      if (duplicateIndex > 0 && duplicateIndex < meld.length - 1) {
+    const anchorIndex = meld.findIndex((candidate) => candidate.kind === 'number');
+    const anchor = meld[anchorIndex];
+    if (anchor.kind === 'number' && anchor.color === tile.color) {
+      // El número de cada posició surt de la primera fitxa numerada.
+      const duplicateIndex = tile.value - (anchor.value - anchorIndex);
+      if (
+        duplicateIndex > 0 &&
+        duplicateIndex < meld.length - 1 &&
+        meld[duplicateIndex].kind === 'number'
+      ) {
         return [
           meld.slice(0, duplicateIndex + 1),
           [tile, ...meld.slice(duplicateIndex + 1)],

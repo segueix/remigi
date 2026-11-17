@@ -85,6 +85,7 @@ src/
     ├── RepteScreen.tsx       # configurar, seguir i acabar un repte
     ├── LligaScreen.tsx       # temporada, classificació, escalada i palmarès
     ├── LeagueInterlude.tsx   # 30 s de relax amb música entre jornades
+    ├── LeagueScoreboard.tsx  # la teva taula de la jornada, amb l'acumulat
     ├── MusicScreen.tsx       # la música composta: escoltar, preferides, MP3
     ├── GameScreen.tsx        # la partida, el menú del jugador i el resultat
     └── StatsScreen.tsx       # historial: habilitat, gràfic i reinici
@@ -178,7 +179,10 @@ Dues maneres, totes dues amb el mateix resultat:
 En deixar-la sobre una jugada, s'insereix a la posició que la fa vàlida si n'hi
 ha cap: un 6 vermell entra sol a l'esquerra de 7-8-9. I les escales a mig fer
 també s'endrecen soles: baixa el 7, el 5 i el 6 en l'ordre que sigui, i
-quedaran 5-6-7, amb els jokers omplint els forats.
+quedaran 5-6-7, amb els jokers omplint els forats. Una còpia repetida al mig
+d'una escala la parteix en dues (1-2-3-4-5 + un altre 3 dona 1-2-3 i 3-4-5),
+també si l'escala porta joker (3-4-5-J-7 + un altre 4 dona 3-4 i 4-5-J-7); el
+número que fa el joker hi entra al seu lloc i el joker passa a la punta.
 
 **El faristol el col·loques tu.** Les fitxes es mouen com les de la taula
 (arrossegant-les, o tocant primer la que mous i després el lloc), i mentre

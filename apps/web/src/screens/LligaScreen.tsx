@@ -116,16 +116,20 @@ export function LligaScreen({
         Pugen els primers i baixen els últims (una quarta part de la lliga).
       </p>
 
-      <div className="row lliga-lloc">
+      {/*
+        * On jugues i, a sota, el nivell dels rivals: en una sola fila el text
+        * del nivell quedava tallat al mòbil («Rivals d’aquesta lliga: Mit…»).
+        */}
+      <div className="lliga-ubicacio">
         <button type="button" className="link" onClick={() => setLocationOpen(true)}>
           <PinIcon />
           {career.home
             ? [career.home.municipi, career.home.comarca].filter(Boolean).join(' · ')
             : 'Tria on jugues'}
         </button>
-        <span className="muted small">
+        <p className="muted small lliga-nivell-rivals">
           Rivals d’aquesta lliga: <strong>{strengthLabel(tierRating(tier))}</strong> (±{RIVAL_SPREAD})
-        </span>
+        </p>
       </div>
 
       {finished && season && <SeasonReview season={season} state={state} playerName={playerName} />}
@@ -425,11 +429,11 @@ function StandingsTable({
             <th scope="col" title="Punts de lliga">
               Pts
             </th>
-            <th scope="col" title="Diferència de punts de partida">
-              Dif
-            </th>
             <th scope="col" title="Victòries">
               V
+            </th>
+            <th scope="col" title="Diferència de punts de partida">
+              Dif
             </th>
           </tr>
         </thead>
@@ -455,8 +459,8 @@ function StandingsTable({
                 </td>
                 <td className="col-pj">{row.played}</td>
                 <td className="pts">{leaguePoints(row.points)}</td>
-                <td className={row.diff >= 0 ? 'points-positive' : 'points-negative'}>{signed(row.diff)}</td>
                 <td>{row.wins}</td>
+                <td className={row.diff >= 0 ? 'points-positive' : 'points-negative'}>{signed(row.diff)}</td>
               </tr>
             );
           })}
@@ -465,7 +469,8 @@ function StandingsTable({
       <p className="muted small lliga-llegenda">
         {season.tier < TOP_TIER && <span className="llegenda-puja">pugen</span>}
         {season.tier > 0 && <span className="llegenda-baixa">baixen</span>}
-        Pts: 1 per cada rival que acaba per sota teu a la taula · Dif: punts de les partides · V: victòries.
+        Pts: 1 per cada rival que acaba per sota teu a la taula · V: victòries · Dif: punts de les partides.
+        L’ordre és per punts; si hi ha empat, per victòries, i després per diferència.
       </p>
     </div>
   );
@@ -522,8 +527,8 @@ function SeasonReview({ season, state, playerName }: { season: LeagueSeason; sta
       <div>
         <h3>{rank === 1 ? 'Campió de la lliga!' : 'Temporada acabada'}</h3>
         <p>
-          {leaguePoints(me?.points ?? 0)} punts · {signed(me?.diff ?? 0)} · {me?.wins ?? 0}{' '}
-          {me?.wins === 1 ? 'victòria' : 'victòries'}
+          {leaguePoints(me?.points ?? 0)} punts · {me?.wins ?? 0} {me?.wins === 1 ? 'victòria' : 'victòries'} ·{' '}
+          {signed(me?.diff ?? 0)}
         </p>
         <p className="lliga-final-moviment">
           <strong>{movementText(season.tier, next, movement, state.career.home)}</strong>
