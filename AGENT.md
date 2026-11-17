@@ -2674,3 +2674,62 @@ la configuració posa sempre els dos modes que no s'estan jugant.»
 l'inici i a la partida, «Tanca» i Esc tanquen, des del joc lliure surten
 repte i lliga i hi porten, des del repte surten joc lliure i lliga); captures
 a 390 px.
+
+### La lliga: marcador de cada jornada, classificació per punts, victòries i diferència, i escales amb joker que es parteixen ✅ Feta (2026-11-17)
+
+Comentaris del Lluís, passats pel jugador: «El repte està bé, però al final de
+cada partida vull saber la puntuació dels altres jugadors, per saber qui ha
+guanyat. I si no és la primera, vull el resultat d'aquella i l'acumulat total.
+Així es pot jugar amb tàctica. / S'ha de determinar la classificació per tres
+valors: punts, victòries i diferència de punts. / [El nivell dels rivals]
+hauria d'anar a sota perquè es vegi bé. / Quan hi ha una escala amb comodí, si
+poses una fitxa al mig per dividir-la, no es divideix i ja no funciona per
+ordenar-la.»
+
+- [x] **Marcador de cada jornada** (`LeagueScoreboard.tsx`, `tableScoreboard`):
+      entre jornades, a la vista sense lliscar (abans era a la segona pàgina
+      del carrusel, en barres), la teva taula del primer a l'últim amb 👑 per
+      a qui l'ha guanyada i els punts de la partida; des de la segona jornada,
+      també el total acumulat de punts de partida; i sempre els punts de lliga
+      i la posició. L'última jornada el porta al resum de sempre. El carrusel
+      passa a dues pàgines (la taula següent i la classificació amb la
+      tàctica); `yourTableResult` se substitueix per `tableScoreboard`.
+- [x] **Classificació per tres valors** (`standings`): punts, victòries i
+      diferència, i després força i nom. Abans hi havia els enfrontaments
+      directes com a segon criteri i la diferència abans que les victòries: a
+      la captura, un jugador amb 10 punts, 1 victòria i −121 quedava per
+      davant d'un altre amb 10 punts, 2 victòries i +13. Les columnes de la
+      taula van en el mateix ordre (Pts, V, Dif) i la llegenda ho explica.
+- [x] **El nivell dels rivals, a sota** de la localitat. La fila feia servir
+      la classe `.lliga-lloc`, la mateixa del lloc de cada jugador a la
+      classificació (una sola línia retallada amb «…»), i al mòbil el text
+      quedava en «Rivals d'aquesta lliga: Mit…». Ara és `.lliga-ubicacio`, en
+      columna.
+- [x] **Escales amb joker que es parteixen** (`insertIntoMeld`): una còpia
+      repetida al mig només partia l'escala si totes les fitxes eren números;
+      amb un joker la fitxa anava al final i, amb un número repetit, l'escala
+      ja no s'endreçava. Ara el número de cada posició surt de la primera fitxa
+      numerada: 3-4-5-J-7-8 + un altre 5 dona 3-4-5 i 5-J-7-8 (també amb el
+      doble toc). El número que fa el joker no la parteix: hi entra al seu lloc
+      i el joker passa a la punta, com abans.
+
+**Criteris d'acceptació (verificats)**: typecheck; 245 tests de la web (nous:
+partir escales amb joker al mig i a la punta, el número del joker, el doble
+toc; l'ordre per punts, victòries i diferència; el marcador amb l'acumulat i
+els empats) i 176 del motor; les 165 proves de navegador (la de la temporada
+sencera comprova el marcador sense acumulat a la jornada 1, amb «Total» a la 2
+i al resum final, i el carrusel de dues pàgines); captures a 393 px de la
+pantalla d'entre jornades (1a i 2a jornada) i de la lliga.
+
+### Problemes trobats
+
+- [2026-11-17] La primera frase («El repte està bé, però al final de cada
+  partida…») és gairebé la mateixa petició del repte del 2026-11-14, que ja hi
+  és. S'ha llegit com a petició per a la lliga, on el resultat de la teva
+  partida era a la segona pàgina del carrusel i, de fet, la vista principal
+  només en deia la teva posició. Cal confirmar-ho amb el Lluís.
+- [2026-11-17] El Tauler té la seva pròpia lliga: el desempat nou només s'ha
+  fet aquí.
+- [2026-11-17] Les proves de navegador fixen una versió de Playwright amb un
+  Chromium que no és a l'entorn; s'han executat amb el Chromium preinstal·lat
+  (`executablePath`) des d'una configuració temporal que no es desa.

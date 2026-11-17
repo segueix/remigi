@@ -3729,21 +3729,34 @@ button.secondary.reset-nivell {
   margin: 0.5rem 0 0;
 }
 
-.lliga-lloc {
-  justify-content: space-between;
+/*
+ * On jugues, i a sota el nivell dels rivals. Abans era una fila amb la classe
+ * `.lliga-lloc`, la mateixa del lloc de cada jugador a la classificació (una
+ * sola línia retallada amb «…»), i el text dels rivals no s'hi veia sencer.
+ */
+.lliga-ubicacio {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   margin-top: 0.6rem;
 }
 
-.lliga-lloc .link {
+.lliga-ubicacio .link {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
   min-height: 2.75rem;
+  text-align: left;
 }
 
-.lliga-lloc .icona {
+.lliga-ubicacio .icona {
   width: 1.1rem;
   height: 1.1rem;
+  flex: none;
+}
+
+.lliga-nivell-rivals {
+  margin: 0;
 }
 
 .lliga-jornada {
@@ -4552,6 +4565,54 @@ button.secondary.reset-nivell {
 
 .repte-info li + li {
   margin-top: 0.3rem;
+}
+
+/* ---------- Lliga: el marcador de la teva taula en acabar una jornada ---------- */
+
+.lliga-marcador {
+  justify-self: stretch;
+  width: 100%;
+  min-width: 0;
+  margin-top: 0.6rem;
+  text-align: left;
+}
+
+.interludi .lliga-marcador {
+  margin-top: 0;
+  padding: 0.55rem 0.6rem 0.35rem;
+  border: 1px solid var(--vora);
+  border-radius: 0.75rem;
+  background: var(--superficie);
+}
+
+.lliga-marcador .repte-taula {
+  table-layout: auto;
+}
+
+.lliga-marcador .repte-taula caption {
+  font-size: 0.85rem;
+}
+
+.lliga-marcador .repte-taula .repte-cel-jugador {
+  max-width: 0;
+  width: 100%;
+}
+
+.lliga-marcador .carrusel-avatar {
+  flex: none;
+}
+
+/* Punts de lliga i, a sota, la posició: la columna estreta deixa lloc al nom. */
+.lliga-marcador-punts {
+  white-space: nowrap;
+  line-height: 1.15;
+}
+
+.lliga-marcador-punts small {
+  display: block;
+  color: var(--text-suau);
+  font-size: 0.72rem;
+  font-weight: 400;
 }
 
 /* ---------- Repte: el final de partida en tres pàgines (carrusel) ---------- */

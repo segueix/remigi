@@ -172,7 +172,7 @@ test('la lliga fa servir la localitat d’El Tauler i els noms de les lligues d�
   // La lliga comença al nivell del jugador: un perfil nou (que comença a
   // calibrar a Novell) juga la lliga local, Divisió C.
   await expect(page.locator('.lliga h2')).toHaveText('Lliga de Vic · Divisió C');
-  await expect(page.locator('.lliga-lloc')).toContainText('Novell · 800');
+  await expect(page.locator('.lliga-nivell-rivals')).toContainText('Novell · 800');
   await expect(page.locator('.lliga-colocacio')).toContainText('Comences a la lliga i la divisió del teu nivell');
 
   // L'escalada és una llista vertical, com una escala: la mundial a dalt i la
@@ -224,17 +224,21 @@ test('una temporada sencera de lliga: jornades, classificació i temporada segü
   await expect(page.locator('.interludi-compte strong')).toHaveText(/^(30|29|28|27)$/);
   rivals = await page.locator('.interludi-rival-text strong').allTextContents();
   expect(rivals).toHaveLength(2);
-  // La part principal és la de sempre; fent lliscar, la teva partida i la lliga.
+  // A la vista, sense lliscar: qui ha guanyat i els punts de cadascú a la
+  // teva taula (a la primera jornada, encara sense acumulat).
+  const marcador = page.locator('.interludi .lliga-marcador');
+  await expect(marcador.locator('caption')).toHaveText('Jornada 1: la teva partida');
+  await expect(marcador.locator('tbody tr')).toHaveCount(3);
+  await expect(marcador.locator('tbody tr.jo')).toContainText('Tu');
+  await expect(marcador.locator('.repte-corona')).toHaveCount(1);
+  await expect(marcador.locator('thead')).not.toContainText('Total');
+  // La part principal és la de sempre; fent lliscar, la classificació.
   const carrusel = page.locator('.interludi .carrusel');
-  await expect(carrusel.locator('.carrusel-punt')).toHaveCount(3);
+  await expect(carrusel.locator('.carrusel-punt')).toHaveCount(2);
   await expect(carrusel.locator('.carrusel-punt').first()).toHaveAttribute('aria-selected', 'true');
   await expect(carrusel.locator('.carrusel-diapo').first().locator('.interludi-cares')).toBeVisible();
-  await carrusel.getByRole('tab', { name: /^Pàgina 2/ }).click();
+  await carrusel.locator('.carrusel-pista').evaluate((el) => el.scrollTo({ left: el.clientWidth }));
   await expect(carrusel.locator('.carrusel-punt').nth(1)).toHaveAttribute('aria-selected', 'true');
-  await expect(carrusel.locator('.carrusel-barres li')).toHaveCount(3);
-  await expect(carrusel.locator('.carrusel-barres li.jo .carrusel-nota')).toContainText('de lliga');
-  await carrusel.locator('.carrusel-pista').evaluate((el) => el.scrollTo({ left: el.clientWidth * 2 }));
-  await expect(carrusel.locator('.carrusel-punt').nth(2)).toHaveAttribute('aria-selected', 'true');
   await expect(carrusel.locator('.carrusel-classificacio li.jo')).toContainText('Tu');
   await expect(carrusel.locator('.carrusel-info li').first()).toBeVisible();
   expect(await carrusel.evaluate((el) => el.getBoundingClientRect().width)).toBeLessThanOrEqual(
@@ -243,9 +247,11 @@ test('una temporada sencera de lliga: jornades, classificació i temporada segü
   await page.getByRole('button', { name: 'Classificació' }).click();
   await expect(page.locator('.lliga-rivals strong')).toHaveText(rivals);
 
-  // Jornada 2: «Juga ara» no espera.
+  // Jornada 2: el marcador ja porta l'acumulat; «Juga ara» no espera.
   await page.getByRole('button', { name: 'Juga la jornada 2' }).click();
   await acabaLaPartida(page, '.interludi');
+  await expect(marcador.locator('caption')).toHaveText('Jornada 2: la teva partida');
+  await expect(marcador.locator('thead')).toContainText('Total');
   rivals = await page.locator('.interludi-rival-text strong').allTextContents();
   await page.getByRole('button', { name: 'Juga ara' }).click();
   await expect(page.locator('.player .player-nom')).toHaveText(['Jugador', ...rivals]);
@@ -254,6 +260,7 @@ test('una temporada sencera de lliga: jornades, classificació i temporada segü
   // L'última jornada acaba amb el resum de sempre.
   await acabaLaPartida(page, '.final-lliga');
   await expect(page.locator('.final-lliga')).toContainText('jornada 3 de 3');
+  await expect(page.locator('.final-lliga .lliga-marcador thead')).toContainText('Total');
   await page.getByRole('button', { name: 'Veure el final de la temporada' }).click();
 
   // Final de temporada: cadascú ha jugat les tres jornades.

@@ -40,7 +40,7 @@ import {
   upcomingTier,
   winChances,
   yourTable,
-  yourTableResult,
+  tableScoreboard,
   zoneOf,
   zoneSize,
   type LeagueSeason,
@@ -384,6 +384,34 @@ describe('la classificació', () => {
     expect(tablePoints([40, -20, -20])).toEqual([2, 0.5, 0.5]);
   });
 
+  it('ordena per punts, després per victòries i després per diferència', () => {
+    const season = createSeason({ tier: 0, config: DEFAULT_CONFIG, home: VIC, seed: 21 });
+    const [a, b, c, d, e, f, g] = season.rivals.map((rival) => rival.id);
+    const table = (round: number, ids: string[], scores: number[]) => ({ round, ids, scores, simulated: true });
+    const played = {
+      ...season,
+      results: [
+        // a: dues vegades segon amb molta diferència (2 punts, 0 victòries, +100).
+        table(0, [c, a, d], [60, 50, -110]),
+        table(1, [c, a, d], [60, 50, -110]),
+        // b: una victòria i una derrota grossa (2 punts, 1 victòria, −145).
+        table(0, [b, e, f], [5, -2, -3]),
+        table(1, [e, f, b], [100, 50, -150]),
+        // g: dues vegades segon amb poca diferència (2 punts, 0 victòries, +20).
+        table(0, [c, g, d], [30, 10, -40]),
+        table(1, [c, g, d], [30, 10, -40]),
+      ],
+    };
+    const rows = standings(played);
+    const tied = rows.filter((row) => [a, b, g].includes(row.id));
+    expect(tied.map((row) => [row.points, row.wins, row.diff])).toEqual([
+      [2, 1, -145],
+      [2, 0, 100],
+      [2, 0, 20],
+    ]);
+    expect(tied.map((row) => row.id)).toEqual([b, a, g]);
+  });
+
   it('registra la jornada un sol cop i simula la resta de taules', () => {
     const season = createSeason({ tier: 0, config: DEFAULT_CONFIG, home: VIC, seed: 21 });
     const after = recordRound(season, [50, -10, -15, -25]);
@@ -564,14 +592,34 @@ describe('el desat', () => {
 describe('entre jornades: la teva partida i la tàctica', () => {
   const config = { opponents: 3 as const, players: 8, legs: 2 as const, rounds: 6 };
 
-  it('la teva taula de la jornada, amb els punts de la partida i els de lliga', () => {
-    const season = recordRound(createSeason({ tier: TERRITORIAL_TIER, config, home: VIC, seed: 3 }), [60, -10, -20, -30]);
-    const rows = yourTableResult(season, 0, 'Anna');
-    expect(rows).toHaveLength(4);
-    expect(rows[0]).toMatchObject({ you: true, name: 'Anna', score: 60, leaguePoints: 3 });
-    expect(rows.slice(1).map((r) => r.leaguePoints)).toEqual([2, 1, 0]);
-    expect(rows.slice(1).every((r) => !r.you && r.name !== r.id)).toBe(true);
-    expect(yourTableResult(season, 5)).toEqual([]);
+  it('el marcador de la teva taula: la partida de cadascú i l’acumulat de la temporada', () => {
+    let season = recordRound(createSeason({ tier: TERRITORIAL_TIER, config, home: VIC, seed: 3 }), [60, -10, -20, -30]);
+    const first = tableScoreboard(season, 0, 'Anna');
+    expect(first).toHaveLength(4);
+    expect(first[0]).toMatchObject({ you: true, name: 'Anna', score: 60, place: 1, winner: true, gained: 3, total: 60, points: 3 });
+    expect(first.slice(1).map((r) => [r.place, r.gained, r.winner])).toEqual([
+      [2, 2, false],
+      [3, 1, false],
+      [4, 0, false],
+    ]);
+    expect(first.slice(1).every((r) => !r.you && r.name !== r.id)).toBe(true);
+    // A la primera jornada l'acumulat és la partida.
+    expect(first.every((r) => r.total === r.score && r.points === r.gained)).toBe(true);
+
+    // Segona jornada: perds, i dos rivals empaten (comparteixen lloc i punts).
+    season = recordRound(season, [-50, 40, 5, 5]);
+    const second = tableScoreboard(season, 1, 'Anna');
+    expect(second.map((r) => r.place)).toEqual([1, 2, 2, 4]);
+    expect(second.map((r) => r.gained)).toEqual([3, 1.5, 1.5, 0]);
+    expect(second[3]).toMatchObject({ you: true, score: -50, winner: false, total: 10, points: 3, rank: rankOf(season) });
+    const table = standings(season);
+    for (const row of second) {
+      expect(row.total).toBe(table.find((t) => t.id === row.id)?.diff);
+      expect(row.points).toBe(table.find((t) => t.id === row.id)?.points);
+    }
+    // El marcador d'una jornada passada no canvia: l'acumulat és el d'aquella jornada.
+    expect(tableScoreboard(season, 0, 'Anna')).toEqual(first);
+    expect(tableScoreboard(season, 5)).toEqual([]);
   });
 
   it('on ets respecte de les zones, què queda en joc i com puntua una taula', () => {

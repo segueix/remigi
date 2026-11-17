@@ -1,6 +1,6 @@
 import { DIFFICULTIES } from '@remigi/core';
 import { Carousel } from '../components/Carousel';
-import { Avatar, ResultBars } from '../components/ResultBars';
+import { Avatar } from '../components/ResultBars';
 import { botPersona } from '../game/bots';
 import {
   YOU,
@@ -8,9 +8,9 @@ import {
   leagueInsights,
   placeOf,
   standings,
+  tableScoreboard,
   tablePoints,
   yourTable,
-  yourTableResult,
   zoneOf,
   type LeagueSeason,
 } from '../lliga/league';
@@ -23,6 +23,7 @@ import {
   useInterludeCountdown,
   useInterludeMusic,
 } from './interlude';
+import { LeagueScoreboard } from './LeagueScoreboard';
 
 interface Props {
   /** La temporada, amb la jornada que s'acaba de jugar ja apuntada. */
@@ -40,9 +41,11 @@ interface Props {
  * Entre jornada i jornada de la lliga: com a les lligues de 30 s, 1 i 2 minuts
  * d'El Tauler, en acabar una partida no surt el resum llarg sinó una pantalla
  * amb poc text i 30 segons de relax amb música composta en aquell moment. El
- * resultat en curt, la jornada que toca (gran), el compte enrere, i la teva
- * posició cara a cara amb la dels rivals de la jornada següent. A zero
- * comença sola; «Juga ara» no espera; «Classificació» i «Inici» l'aturen.
+ * resultat en curt i el marcador de la teva taula (qui ha guanyat, els punts
+ * de cadascú i, des de la segona jornada, l'acumulat), la jornada que toca
+ * (gran), el compte enrere, i la teva posició cara a cara amb la dels rivals
+ * de la jornada següent. A zero comença sola; «Juga ara» no espera;
+ * «Classificació» i «Inici» l'aturen.
  *
  * El compte enrere només corre amb l'app a la vista: amb la pestanya amagada
  * es queda quiet (i la música també), perquè cap partida no comenci sense
@@ -64,12 +67,8 @@ export function LeagueInterlude({ season, playerName, home, onPlayNow, onStandin
   const myRow = table.find((row) => row.id === YOU);
   const next = yourTable(season);
 
-  // La teva partida de la jornada que s'acaba de jugar.
-  const tableRows = yourTableResult(season, round - 1, playerName);
-  const winnerRow = tableRows.reduce<(typeof tableRows)[number] | undefined>(
-    (best, row) => (!best || row.score > best.score ? row : best),
-    undefined,
-  );
+  // La teva partida de la jornada que s'acaba de jugar, amb l'acumulat.
+  const scoreboard = tableScoreboard(season, round - 1, playerName);
 
   // La classificació en curt: els de dalt i els del teu voltant.
   const ranked = table.map((row, i) => ({ ...row, rank: i + 1 }));
@@ -94,17 +93,24 @@ export function LeagueInterlude({ season, playerName, home, onPlayNow, onStandin
         </p>
       )}
 
+      {/*
+        * Qui ha guanyat i els punts de cadascú, a la vista sense haver de
+        * lliscar (com al repte); des de la segona jornada, també l'acumulat.
+        */}
+      <LeagueScoreboard rows={scoreboard} round={round} />
+
       <InterludeBox label="Jornada" value={round + 1} total={season.config.rounds} />
 
       <InterludeCountdown seconds={countdown.seconds} />
 
       {/*
         * La part principal és la de sempre (on ets i contra qui jugues la
-        * jornada següent); fent lliscar el dit cap al costat, o tocant els tres
-        * punts, hi ha la teva partida i la classificació amb la tàctica.
+        * jornada següent); fent lliscar el dit cap al costat, o tocant els
+        * punts, hi ha la classificació amb la tàctica. La teva partida ja és
+        * al marcador de dalt.
         */}
       <Carousel
-        label="Jornada de lliga: la propera taula, la teva partida i la classificació"
+        label="Jornada de lliga: la propera taula i la classificació"
         slides={[
           {
             title: `Jornada ${round + 1}: la teva taula`,
@@ -146,23 +152,6 @@ export function LeagueInterlude({ season, playerName, home, onPlayNow, onStandin
                 })}
               </ul>
             </div>
-            ),
-          },
-          {
-            title: `La teva partida de la jornada ${round}`,
-            body: tableRows.length ? (
-              <ResultBars
-                rows={tableRows.map((row) => ({
-                  key: row.id,
-                  name: row.name,
-                  you: row.you,
-                  points: row.score,
-                  note: `${row.leaguePoints === 0 ? '0' : `+${leaguePoints(row.leaguePoints)}`} ${row.leaguePoints === 1 ? 'pt' : 'pts'} de lliga`,
-                }))}
-                winner={winnerRow ? { key: winnerRow.id, name: winnerRow.name, you: winnerRow.you, points: winnerRow.score } : undefined}
-              />
-            ) : (
-              <p className="muted small">Aquesta jornada no tenies taula.</p>
             ),
           },
           {

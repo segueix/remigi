@@ -14,6 +14,7 @@ import {
   rankOf,
   recordRound,
   tablePoints,
+  tableScoreboard,
   movementText,
   yourTable,
   type LeagueConfig,
@@ -38,6 +39,7 @@ import { pickPersonas } from './game/bots';
 import { GameScreen, type ModeFinish } from './screens/GameScreen';
 import { HomeScreen } from './screens/HomeScreen';
 import { LeagueInterlude } from './screens/LeagueInterlude';
+import { LeagueScoreboard } from './screens/LeagueScoreboard';
 import { RepteInterlude, type LastGame } from './screens/RepteInterlude';
 import { RepteCarousel } from './screens/RepteCarousel';
 import { LligaScreen } from './screens/LligaScreen';
@@ -431,6 +433,11 @@ export function App() {
               Classificació: <strong>{ordinal(rankOf(season))}</strong> de {season.config.players}
               {done ? ' · temporada acabada' : ''}.
             </p>
+            {/* La teva taula amb l'acumulat de la temporada (des de la segona jornada). */}
+            <LeagueScoreboard
+              rows={tableScoreboard(season, season.played - 1, profile.profile?.name ?? 'Tu')}
+              round={season.played}
+            />
             {record && (
               <p className="final-lliga-moviment">
                 {movementText(record.tier, record.nextTier, record.movement, state.career.home)}
