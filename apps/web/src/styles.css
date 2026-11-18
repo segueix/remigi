@@ -867,6 +867,15 @@ input {
 }
 
 /*
+ * El botó d'enviar, tènue: has volgut acabar amb jugades que no valen. Continua
+ * responent (no és `disabled`), però l'atenció ha d'anar a la «i» vermella.
+ */
+.actions button.tenue {
+  opacity: 0.4;
+  filter: saturate(0.4);
+}
+
+/*
  * La línia de la sortida inicial: l'únic avís que queda fix sota el tauler, i
  * d'una sola línia perquè no creixi mai.
  */

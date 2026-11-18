@@ -2852,3 +2852,33 @@ passa per sobre la tapa; el globus cap sencer a la pantalla.
   (`.inici-taula .marca-taula`): a baix a la dreta del feltre, dins el marge de
   baix que ja hi havia, sense encavalcar-se amb les tres targetes. Prova nova a
   `e2e/inici.spec.ts` (escriptori i mòbil).
+
+### La «i» d'error només en voler enviar, i el botó tènue ✅ Feta (2026-11-18)
+
+Demanat pel jugador: «De partida treu la i d'informació d'error i fes que quan
+l'usuari cliqui per enviar, el botó d'enviar es posi tènue i aparegui la i
+informativa.»
+
+- [x] `GameScreen`: estat `sendTried`. Mentre col·loques fitxes, les jugades
+      invàlides es marquen en vermell però no surt la «i» vermella. En prémer
+      «Acabar jugada» amb jugades invàlides, **no s'envia al motor** (la
+      rebutjaria segur): el botó porta `.tenue` (opacitat 0,4, no `disabled`)
+      i surt la «i» vermella amb la norma. S'apaga sol quan ja no queda res
+      invàlid o canvia el torn; si després tornes a deixar fitxes soles, no
+      torna a sortir fins que vulguis enviar.
+- [x] La «i» informativa (no vermella) de la sortida de 30 punts es manté.
+- [x] e2e: `joc.spec.ts` (jugada de menys de tres fitxes, la pista de la
+      sortida, avançar amb jugades a mig fer) i `torn.spec.ts` ara premen
+      «Acabar jugada» abans d'esperar la «i»; comproven que abans no hi és i
+      que el botó es posa tènue.
+
+**Criteris d'acceptació (verificats)**: `typecheck`, `npm test` i tots els e2e
+(169, escriptori i mòbil) en verd; captura al mòbil abans/després d'enviar.
+
+### Problemes trobats
+
+- [2026-11-18] Les jugades invàlides ja no arriben al motor, i per tant el seu
+  missatge concret (p. ex. «com a mínim 3 fitxes») ja no surt a la franja
+  d'error: ho explica el globus de la «i». Els altres rebuigs del motor (sortida
+  de menys de 30 punts amb jugades vàlides, tocar jugades abans d'obrir)
+  continuen a la franja d'error de sempre.

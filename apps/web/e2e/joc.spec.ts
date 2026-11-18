@@ -45,9 +45,22 @@ test.describe('qui mana és el motor', () => {
     await page.locator('.rack .tile').first().click();
     await page.getByRole('button', { name: '+ Jugada nova' }).click();
     await expect(page.locator('.meld.invalid')).toHaveCount(1);
+    // Mentre col·loques no hi ha cap avís vermell: encara hi estàs treballant.
+    const info = page.getByRole('button', { name: /Hi ha jugades que no valen/ });
+    await expect(info).toHaveCount(0);
 
-    await page.getByRole('button', { name: 'Acabar jugada' }).click();
-    await expect(page.locator('.error')).toContainText('com a mínim 3 fitxes');
+    // En voler enviar: no s'envia, el botó es posa tènue i surt la «i» vermella.
+    const envia = page.getByRole('button', { name: 'Acabar jugada' });
+    await envia.click();
+    await expect(envia).toHaveClass(/tenue/);
+    await expect(info).toBeVisible();
+    await info.click();
+    await expect(page.locator('.norma-globus')).toContainText('3 fitxes o més');
+    await expect(page.locator('.turn-line')).toContainText('et toca a tu');
+
+    // Arreglada la jugada (la fitxa torna al faristol), tot s'apaga.
+    await page.getByRole('button', { name: 'Desfer canvis' }).click();
+    await expect(info).toHaveCount(0);
   });
 
   test('rebutja una sortida inicial de menys de 30 punts', async ({ page }) => {
@@ -430,6 +443,7 @@ test.describe('explicar les regles', () => {
     await baixaGrup(page, ['6 vermell', '12 blau', '12 negre']);
 
     await expect(page.locator('.meld.invalid')).toHaveCount(1);
+    await page.getByRole('button', { name: 'Acabar jugada' }).click();
     // Sota la taula només hi ha el compte, d'una línia.
     await expect(page.locator('.hint')).toContainText('en portes 0');
     await expect(page.locator('.hint')).not.toContainText('mateixa caixa');
@@ -536,7 +550,7 @@ test.describe('qui ha jugat què', () => {
     // no es perd ni es guanya cap fitxa.
     await expect(avanca(page)).toHaveAccessibleName('Acabar jugada');
     await avanca(page).click();
-    await expect(page.locator('.error')).toContainText('com a mínim 3 fitxes');
+    await expect(page.getByRole('button', { name: /Hi ha jugades que no valen/ })).toBeVisible();
     await expect(page.locator('.rack .tile')).toHaveCount(3);
     await expect(page.locator('.board .meld .tile')).toHaveCount(1);
     await expect(page.locator('.turn-line')).toContainText('et toca a tu');

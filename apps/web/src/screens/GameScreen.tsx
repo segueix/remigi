@@ -200,6 +200,12 @@ export function GameScreen({
   const [turnSeconds] = useTurnSeconds();
   /* Avís de temps exhaurit; s'apaga sol al cap d'uns segons. */
   const [timedOut, setTimedOut] = useState<string | null>(null);
+  /*
+   * Has intentat acabar la jugada amb jugades invàlides. Mentre col·loques
+   * fitxes, unes quantes de soles són normals (encara hi estàs treballant) i
+   * no cal cap avís; només en voler enviar-les surt la «i» vermella.
+   */
+  const [sendTried, setSendTried] = useState(false);
   /* Els jeroglífics es poden jugar des del final de partida o des del menú. */
   const [quiz, setQuiz] = useState<'partida' | 'col·lecció' | null>(null);
   const jeroglifics = useJeroglifics();
@@ -435,9 +441,34 @@ export function GameScreen({
    * que toca a cada moment, i per això no s'apaga mai mentre et toqui a tu.
    */
   const advance = useCallback(() => {
-    if (handle.canCommit) handle.commit();
-    else handle.draw();
+    if (!handle.canCommit) {
+      handle.draw();
+      return;
+    }
+    /*
+     * Amb jugades invàlides a la taula, el motor la rebutjaria segur: no s'hi
+     * envia. El botó es posa tènue i surt la «i» vermella al feltre, que diu
+     * què falla si la toques (vegeu `norma`).
+     */
+    if (handle.draft && invalidMeldIndexes(handle.draft).size > 0) {
+      setSendTried(true);
+      return;
+    }
+    handle.commit();
   }, [handle]);
+
+  /*
+   * L'avís s'apaga sol quan ja no hi ha res invàlid (has arreglat la jugada o
+   * desfet els canvis) o quan canvia el torn. Si després tornes a deixar
+   * fitxes soles, no surt fins que tornis a voler enviar.
+   */
+  const invalidCount = handle.draft ? invalidMeldIndexes(handle.draft).size : 0;
+  useEffect(() => {
+    if (invalidCount === 0) setSendTried(false);
+  }, [invalidCount]);
+  useEffect(() => {
+    setSendTried(false);
+  }, [handle.game.turn]);
 
   /*
    * El rellotge del torn corre mentre et toca i tens la taula al davant: amb
@@ -545,8 +576,9 @@ export function GameScreen({
    * Dir només «en portes 0» amb fitxes a la taula desconcerta: sembla que el
    * joc no les vegi, quan el que passa és que les jugades invàlides no sumen.
    */
+  const showInvalid = sendTried && invalid.size > 0;
   const norma: { text: ReactNode; urgent?: boolean } | null =
-    invalid.size > 0
+    showInvalid
       ? {
           urgent: true,
           text: needsOpening ? (
@@ -818,6 +850,7 @@ export function GameScreen({
           */}
         <button
           onClick={advance}
+          className={showInvalid ? 'tenue' : undefined}
           disabled={!isHumanTurn}
           aria-label={handle.canCommit ? 'Acabar jugada' : 'Avançar'}
           title={
