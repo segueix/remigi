@@ -394,22 +394,15 @@ test.describe('la taula plena', () => {
     // mai per sota de dos terços de la mida natural.
     expect(petita).toBeGreaterThan(gran * 0.66);
     /*
-     * Les quatre fitxes soles no són jugades vàlides i surt la pista a sota de
-     * la taula. La mida no la compta (és un avís que va i ve, i abans feia
-     * ballar les fitxes): sense la pista, tot hi cap; amb la pista, la taula
-     * es desplaça.
+     * Les quatre fitxes soles no són jugades vàlides. L'avís ja no es pinta sota
+     * la taula (hi prenia lloc, i amb la taula plena tapava fitxes): surt la «i»
+     * vermella al feltre, i el text només s'obre si la toques. Per tant, la
+     * taula no desborda ni amb l'avís ni sense.
      */
-    await expect(page.locator('.hint')).toContainText('no són vàlides');
-    const desbordaSenseAvisos = () =>
-      page.evaluate(() => {
-        const game = document.querySelector('.game')!;
-        game.classList.add('mesurant-taula');
-        const el = document.querySelector('.board')!;
-        const over = el.scrollHeight > el.clientHeight + 1 || el.scrollWidth > el.clientWidth + 1;
-        game.classList.remove('mesurant-taula');
-        return over;
-      });
-    expect(await desbordaSenseAvisos()).toBe(false);
+    await expect(page.getByRole('button', { name: /Hi ha jugades que no valen/ })).toBeVisible();
+    await expect(page.locator('.hint')).toHaveCount(0);
+    await expect(page.locator('.norma-globus')).toHaveCount(0);
+    expect(await desborda()).toBe(false);
 
     // Tornar una fitxa al faristol no torna a fer créixer les fitxes de seguida:
     // la mida es queda quieta mentre es juga.
