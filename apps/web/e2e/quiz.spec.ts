@@ -2,6 +2,16 @@ import { expect, test } from '@playwright/test';
 import { avanca, baixaGrup, entraAmbPartida, f, obreMenu } from './ajudants';
 
 /**
+ * La pista del jeroglífic és a la «i» del feltre: s'obre si no ho està (un toc
+ * a qualsevol altre lloc la tanca).
+ */
+async function pista(page: import('@playwright/test').Page) {
+  const globus = page.locator('.norma-globus');
+  if (!(await globus.isVisible())) await page.getByRole('button', { name: 'Veure la pista' }).click();
+  return globus;
+}
+
+/**
  * El repàs de després de la partida: robar havent-hi jugada queda apuntat, el
  * final ho diu, i el quiz torna a posar aquella taula i aquell faristol perquè
  * la jugada la trobis tu (o te l'ensenyi, sobre el mateix tauler).
@@ -55,21 +65,21 @@ test('robar havent-hi jugada acaba en quiz sobre el mateix tauler', async ({ pag
   await expect(page.locator('.quiz-cap')).toContainText('al torn 5');
   await expect(page.locator('.quiz .rack .tile')).toHaveCount(4);
   await expect(page.locator('.quiz .board .meld')).toHaveCount(0);
-  await expect(page.locator('.hint')).toContainText('baixava 3 fitxes');
-  await expect(page.locator('.hint')).toContainText('queden 3 per col·locar');
+  await expect(await pista(page)).toContainText('baixava 3 fitxes');
+  await expect(page.locator('.quiz-compte')).toContainText('queden 3 per col·locar');
   await expect(page.locator('.quiz .rack .tile.played')).toHaveCount(3);
 
   // El comptador baixa a mesura que es col·loquen les marcades…
   await page.locator('.rack .tile[aria-label^="9 vermell"]').click();
   await page.getByRole('button', { name: '+ Jugada nova' }).click();
-  await expect(page.locator('.hint')).toContainText('queden 2 per col·locar');
+  await expect(page.locator('.quiz-compte')).toContainText('queden 2 per col·locar');
 
   // …desfer torna el pas enrere i refer el recupera.
   await page.getByRole('button', { name: 'Desfés' }).click();
-  await expect(page.locator('.hint')).toContainText('queden 3 per col·locar');
+  await expect(page.locator('.quiz-compte')).toContainText('queden 3 per col·locar');
   await expect(page.locator('.quiz .board .meld')).toHaveCount(0);
   await page.getByRole('button', { name: 'Refés' }).click();
-  await expect(page.locator('.hint')).toContainText('queden 2 per col·locar');
+  await expect(page.locator('.quiz-compte')).toContainText('queden 2 per col·locar');
   await expect(page.locator('.quiz .board .meld .tile')).toHaveCount(1);
 
   // Una jugada a mitges rep l'error del motor, com a la partida.
@@ -84,7 +94,7 @@ test('robar havent-hi jugada acaba en quiz sobre el mateix tauler', async ({ pag
   await page.getByRole('button', { name: 'Comprova la jugada' }).click();
   // El gran símbol verd de correcte, al mig de la pantalla.
   await expect(page.locator('.quiz-encert')).toBeVisible();
-  await expect(page.locator('.hint-be')).toContainText('Perfecte!');
+  await expect(await pista(page)).toContainText('Perfecte!');
   await expect(page.locator('.quiz .board .tile.correct')).toHaveCount(3);
   await expect(page.locator('.quiz .board .tile.wrong')).toHaveCount(0);
 
@@ -95,7 +105,7 @@ test('robar havent-hi jugada acaba en quiz sobre el mateix tauler', async ({ pag
   await expect(page.locator('.quiz-cap')).toContainText('Jeroglífic 2 de 2');
   await expect(page.locator('.quiz-cap')).toContainText('al torn 9');
   await expect(page.locator('.quiz .rack .tile')).toHaveCount(6);
-  await expect(page.locator('.hint')).toContainText('baixava 4 fitxes');
+  await expect(await pista(page)).toContainText('baixava 4 fitxes');
   await expect(page.locator('.quiz .rack .tile.played')).toHaveCount(4);
 
   await page.locator('.rack .tile[aria-label^="9 vermell"]').click();
@@ -105,9 +115,9 @@ test('robar havent-hi jugada acaba en quiz sobre el mateix tauler', async ({ pag
   await page.locator('.rack .tile[aria-label^="9 negre"]').click();
   await page.locator('.board .meld').first().click();
   await page.getByRole('button', { name: 'Comprova la jugada' }).click();
-  await expect(page.locator('.hint-be')).toContainText('Jugada vàlida');
-  await expect(page.locator('.hint-be')).toContainText('3 en un altre lloc');
-  await expect(page.locator('.hint-be')).toContainText('quedaven 1 per baixar');
+  await expect(await pista(page)).toContainText('Jugada vàlida');
+  await expect(await pista(page)).toContainText('3 en un altre lloc');
+  await expect(await pista(page)).toContainText('quedaven 1 per baixar');
   await expect(page.locator('.quiz .board .tile.wrong')).toHaveCount(3);
   await expect(page.locator('.quiz .board .tile.correct')).toHaveCount(0);
 
@@ -115,7 +125,7 @@ test('robar havent-hi jugada acaba en quiz sobre el mateix tauler', async ({ pag
   await page.locator('.rack .tile[aria-label^="9 groc"]').click();
   await page.locator('.board .meld').first().click();
   await page.getByRole('button', { name: 'Comprova la jugada' }).click();
-  await expect(page.locator('.hint-be')).toContainText('Perfecte!');
+  await expect(await pista(page)).toContainText('Perfecte!');
   await expect(page.locator('.quiz .board .tile.correct')).toHaveCount(4);
 
   // El resum: totes dues trobades (corregir no la compta dos cops).
@@ -150,8 +160,8 @@ test('la solució distingeix amb marcs les teves fitxes de les recol·locades', 
   // Mentre proves, només les teves fitxes van marcades: la pista de la
   // recol·locació la diu el text, i les fitxes de la taula queden netes
   // (dins de la partida els marcs de taula volen dir altres coses).
-  await expect(page.locator('.hint')).toContainText('baixava 4 fitxes');
-  await expect(page.locator('.hint')).toContainText('recol·locar');
+  await expect(await pista(page)).toContainText('baixava 4 fitxes');
+  await expect(await pista(page)).toContainText('recol·locar');
   await expect(page.locator('.quiz .rack .tile.played')).toHaveCount(4);
   await expect(page.locator('.quiz .board .tile.moved')).toHaveCount(0);
   await expect(page.locator('.quiz .board .tile.played')).toHaveCount(0);
@@ -161,7 +171,7 @@ test('la solució distingeix amb marcs les teves fitxes de les recol·locades', 
   await expect(page.locator('.quiz .board .meld')).toHaveCount(2);
   await expect(page.locator('.quiz .board .tile.played')).toHaveCount(4);
   await expect(page.locator('.quiz .board .tile.moved')).toHaveCount(3);
-  await expect(page.locator('.hint-be')).toContainText(
+  await expect(await pista(page)).toContainText(
     'recol·locant les 3 de marc daurat que ja eren a la taula',
   );
 });
@@ -234,7 +244,7 @@ test('una resposta correcta per un altre camí també és perfecta', async ({ pa
   await passa.click();
 
   await page.getByRole('button', { name: 'Fes els jeroglífics' }).click();
-  await expect(page.locator('.hint')).toContainText('baixava 6 fitxes');
+  await expect(await pista(page)).toContainText('baixava 6 fitxes');
 
   // Dues escales de tres, en comptes de l'escala de sis de la solució.
   for (const [value, dest] of [[5, 'nova'], [6, 0], [7, 0], [8, 'nova'], [9, 1], [10, 1]] as const) {
@@ -245,8 +255,8 @@ test('una resposta correcta per un altre camí també és perfecta', async ({ pa
   await page.getByRole('button', { name: 'Comprova la jugada' }).click();
 
   await expect(page.locator('.quiz-encert')).toBeVisible();
-  await expect(page.locator('.hint-be')).toContainText('Perfecte!');
-  await expect(page.locator('.hint-be')).toContainText('un altre camí igual de bo');
+  await expect(await pista(page)).toContainText('Perfecte!');
+  await expect(await pista(page)).toContainText('un altre camí igual de bo');
   await expect(page.locator('.quiz .board .tile.correct')).toHaveCount(6);
   await expect(page.locator('.quiz .board .tile.wrong')).toHaveCount(0);
   // Resolt de debò: només queda passar al següent (aquí, acabar).
@@ -254,4 +264,47 @@ test('una resposta correcta per un altre camí també és perfecta', async ({ pa
   await expect(page.getByRole('button', { name: 'Mostra la solució' })).toHaveCount(0);
   await page.getByRole('button', { name: 'Acaba els jeroglífics' }).click();
   await expect(page.locator('.quiz-final')).toContainText('N’has resolt 1 de 1');
+});
+
+/**
+ * El doble toc, com a la partida: la fitxa del faristol va sola a la jugada on
+ * encaixa (o n'enceta una de nova), i el comptador baixa.
+ */
+test('als jeroglífics el doble toc col·loca la fitxa sola', async ({ page, isMobile }) => {
+  const jero = {
+    turn: 4,
+    board: [],
+    rack: [f('red', 4), f('blue', 4), f('black', 4)],
+    hasOpened: true,
+    solution: [[f('red', 4), f('blue', 4), f('black', 4)]],
+    tilesUsed: 3,
+  };
+  await entraAmbPartida(page, {
+    rack: [f('orange', 13)],
+    haObert: true,
+    jeroglifics: [jero, { ...jero, turn: 5 }, { ...jero, turn: 6 }],
+  });
+  await obreMenu(page);
+  await page.getByRole('button', { name: 'Jeroglífics (3)' }).click();
+  await expect(page.locator('.quiz-cap')).toContainText('Jeroglífic 1 de 3');
+
+  const dobleToc = async (etiqueta: string) => {
+    const fitxa = page.locator(`.quiz .rack .tile[aria-label^="${etiqueta}"]`);
+    for (let i = 0; i < 2; i++) {
+      if (isMobile) await fitxa.tap();
+      else await fitxa.click();
+      if (i === 0) await page.waitForTimeout(250);
+    }
+  };
+
+  await dobleToc('4 vermell');
+  await expect(page.locator('.quiz .board .meld')).toHaveCount(1);
+  await expect(page.locator('.quiz-compte')).toContainText('queden 2 per col·locar');
+  await dobleToc('4 blau');
+  await dobleToc('4 negre');
+  await expect(page.locator('.quiz .board .meld')).toHaveCount(1);
+  await expect(page.locator('.quiz .board .meld .tile')).toHaveCount(3);
+  await expect(page.locator('.quiz-compte')).toContainText('totes col·locades');
+  // Sota la taula ja no hi ha cap pista: és a la «i» del feltre.
+  await expect(page.locator('.quiz .hint')).toHaveCount(0);
 });

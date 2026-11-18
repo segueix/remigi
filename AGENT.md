@@ -2882,3 +2882,27 @@ informativa.»
   d'error: ho explica el globus de la «i». Els altres rebuigs del motor (sortida
   de menys de 30 punts amb jugades vàlides, tocar jugades abans d'obrir)
   continuen a la franja d'error de sempre.
+
+### Jeroglífics: la pista a la «i» i el doble toc ✅ Feta (2026-11-18)
+
+Demanat pel jugador: «En els jeroglífics no és necessari mostrar el missatge
+inferior, el pots minimitzar d'alguna manera. També fes que el doble toc
+funcioni.»
+
+- [x] `QuizScreen`: les pistes de sota la taula (`.hint`/`.hint-be`) passen a
+      la «i» del feltre (`BoardView` `norma`, rètol «Veure la pista»):
+      informativa mentre proves, **verda** (`be`, nou to de `NormaInfo`) un cop
+      comprovada o ensenyada la jugada. Al capçal queda només el comptador
+      curt («queden N per col·locar» / «totes col·locades», `.quiz-compte`).
+      Els errors del motor en comprovar continuen a la franja d'error.
+- [x] Doble toc als jeroglífics: el Quiz no passava `onTap` a `useDragTile`
+      i, per tant, no hi havia doble toc. Ara fa el mateix que la partida
+      (`findAutoMeldIndex`; del faristol, si no encaixa, jugada nova; la taula
+      només es reordena si en aquell moment ja havies obert).
+- [x] El detector de doble toc surt de `GameScreen` a `game/useDoubleTap.ts`
+      (amb `DOUBLE_TAP_MS`) i el fan servir tots dos.
+- [x] e2e: `quiz.spec.ts` llegeix la pista a la «i» i el comptador al capçal;
+      prova nova de doble toc als jeroglífics (falla sense el canvi).
+
+**Criteris d'acceptació (verificats)**: `typecheck`, `npm test` i e2e (quiz,
+torn, joc, modes, inici) en verd; captura al mòbil del jeroglífic amb la «i».
