@@ -16,6 +16,7 @@ import { CheckIcon, DrawIcon, PassIcon, RotateIcon, UndoIcon } from '../componen
 import { PlayerMenu } from '../components/PlayerMenu';
 import { RackView } from '../components/RackView';
 import { TileView } from '../components/TileView';
+import { useDoubleTap } from '../game/useDoubleTap';
 import { useDragTile } from '../game/useDragTile';
 import { botPersona, isPersonName } from '../game/bots';
 import type { MissedChance } from '../game/missedChances';
@@ -102,15 +103,6 @@ export interface ModeFinish {
 
 /** Estona que es veu l'avís de temps exhaurit abans d'apagar-se sol. */
 const TIMEOUT_NOTICE_MS = 6000;
-/**
- * Dos tocs seguits sobre la mateixa fitxa es consideren doble toc.
- *
- * 360 ms era massa exigent en mòbil: entre el pointerup, el click sintetitzat
- * i el segon gest, un doble toc normal sovint quedava fora. 700 ms continua
- * exigint dos tocs intencionadament seguits, però respecta millor el ritme real
- * de dits i pantalles tàctils.
- */
-const DOUBLE_TAP_MS = 700;
 
 export function GameScreen({
   setup,
@@ -351,22 +343,7 @@ export function GameScreen({
    * El doble toc no substitueix el toc normal: el primer toc continua triant
    * la fitxa. Si el segon arriba prou aviat, s'intenta una col·locació ràpida.
    */
-  const lastTap = useRef<{ tileId: string; zone: 'board' | 'rack'; at: number } | null>(null);
-  const isDoubleTap = useCallback((tileId: string, zone: 'board' | 'rack') => {
-    const now = performance.now();
-    const previous = lastTap.current;
-    lastTap.current = { tileId, zone, at: now };
-    if (
-      previous &&
-      previous.tileId === tileId &&
-      previous.zone === zone &&
-      now - previous.at <= DOUBLE_TAP_MS
-    ) {
-      lastTap.current = null;
-      return true;
-    }
-    return false;
-  }, []);
+  const { isDoubleTap, cancelTap } = useDoubleTap();
 
   const autoPlaceDoubleTap = useCallback(
     (tileId: string, fromRack: boolean) => {
@@ -418,7 +395,6 @@ export function GameScreen({
     [handle, placeOnRack, selectedTileId],
   );
 
-  const cancelTap = useCallback(() => { lastTap.current = null; }, []);
   useEffect(cancelTap, [cancelTap, game, isHumanTurn]);
 
   const handlePointerTap = useCallback((tileId: string) => {

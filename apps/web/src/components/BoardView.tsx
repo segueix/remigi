@@ -28,9 +28,10 @@ interface Props {
   /**
    * Una norma que explicar, si n'hi ha. No es pinta mai sobre la taula: surt
    * una «i» al costat de la marca «Remigi» i el text només s'obre si la toques
-   * (vegeu `NormaInfo`). `urgent` la fa vermella: hi ha jugades que no valen.
+   * (vegeu `NormaInfo`). `urgent` la fa vermella (hi ha jugades que no valen) i
+   * `be`, verda (la resposta d'un jeroglífic). `label` és el nom del botó.
    */
-  norma?: { text: React.ReactNode; urgent?: boolean } | null;
+  norma?: { text: React.ReactNode; urgent?: boolean; be?: boolean; label?: string } | null;
   onTileClick?(tileId: string, meldIndex: number): void;
   onTilePointerDown?(event: React.PointerEvent, tileId: string): void;
   onMeldClick?(index: number): void;
@@ -135,7 +136,7 @@ export function BoardView({
      * dreta del feltre. El nom no rep cap clic ni gest de les fitxes.
      */}
     <div className="marca-zona">
-      {norma && <NormaInfo text={norma.text} urgent={norma.urgent} />}
+      {norma && <NormaInfo {...norma} />}
       <span className="marca-taula" aria-hidden="true">
         Remigi
       </span>
@@ -152,7 +153,18 @@ export function BoardView({
  * una altra vegada, tocant fora o amb Escape. Si la norma deixa d'aplicar-se
  * (la jugada ja és vàlida), la «i» i el globus desapareixen sols.
  */
-function NormaInfo({ text, urgent }: { text: React.ReactNode; urgent?: boolean }) {
+function NormaInfo({
+  text,
+  urgent,
+  be,
+  label,
+}: {
+  text: React.ReactNode;
+  urgent?: boolean;
+  be?: boolean;
+  label?: string;
+}) {
+  const tone = urgent ? ' norma-urgent' : be ? ' norma-be' : '';
   const [open, setOpen] = useState(false);
   const id = useId();
   const root = useRef<HTMLDivElement>(null);
@@ -178,7 +190,7 @@ function NormaInfo({ text, urgent }: { text: React.ReactNode; urgent?: boolean }
       {open && (
         <div
           id={id}
-          className={urgent ? 'norma-globus norma-urgent' : 'norma-globus'}
+          className={`norma-globus${tone}`}
           role="note"
         >
           {text}
@@ -186,8 +198,10 @@ function NormaInfo({ text, urgent }: { text: React.ReactNode; urgent?: boolean }
       )}
       <button
         type="button"
-        className={urgent ? 'norma-boto norma-urgent' : 'norma-boto'}
-        aria-label={urgent ? 'Hi ha jugades que no valen: toca per veure la norma' : 'Veure la norma'}
+        className={`norma-boto${tone}`}
+        aria-label={
+          urgent ? 'Hi ha jugades que no valen: toca per veure la norma' : (label ?? 'Veure la norma')
+        }
         aria-expanded={open}
         aria-controls={open ? id : undefined}
         onClick={() => setOpen((value) => !value)}

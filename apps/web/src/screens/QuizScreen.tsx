@@ -11,6 +11,7 @@ import {
   type MissedChance,
 } from '../game/missedChances';
 import {
+  findAutoMeldIndex,
   hasChanges,
   invalidMeldIndexes,
   moveTile,
@@ -21,6 +22,7 @@ import {
   type Destination,
   type TurnDraft,
 } from '../game/turnDraft';
+import { useDoubleTap } from '../game/useDoubleTap';
 import { useDragTile } from '../game/useDragTile';
 
 interface Props {
@@ -88,8 +90,6 @@ export function QuizScreen({ misses, playerName, closeLabel, onClose }: Props) {
     [cursor],
   );
 
-  const drag = useDragTile(trying, moveTileTo);
-
   const placeSelected = useCallback(
     (destination: Destination) => {
       if (selectedTileId) moveTileTo(selectedTileId, destination);
@@ -98,15 +98,63 @@ export function QuizScreen({ misses, playerName, closeLabel, onClose }: Props) {
   );
 
   /* El mateix gest que al joc: un toc tria la fitxa, el següent diu on va. */
-  const handleTileClick = useCallback(
+  const tapTile = useCallback(
     (tileId: string, meldIndex: number | null) => {
-      if (drag.consumeDragFlag()) return;
       if (!trying) return;
       if (!selectedTileId) return setSelectedTileId(tileId);
       if (selectedTileId === tileId) return setSelectedTileId(null);
       placeSelected(meldIndex === null ? { kind: 'rack' } : { kind: 'meld', index: meldIndex });
     },
-    [drag, trying, selectedTileId, placeSelected],
+    [trying, selectedTileId, placeSelected],
+  );
+
+  /*
+   * El doble toc, com a la partida: la fitxa va sola a la jugada on encaixa i,
+   * si és del faristol i no encaixa enlloc, n'enceta una de nova. Les fitxes
+   * de la taula només es reordenen si en aquell moment ja havies obert.
+   */
+  const { isDoubleTap, cancelTap } = useDoubleTap();
+  const autoPlace = useCallback(
+    (tileId: string, fromRack: boolean) => {
+      const target = findAutoMeldIndex(attempt, tileId, { canRearrangeBoard: miss.hasOpened });
+      if (target !== null) {
+        moveTileTo(tileId, { kind: 'meld', index: target });
+        return true;
+      }
+      if (fromRack) {
+        moveTileTo(tileId, { kind: 'new' });
+        return true;
+      }
+      return false;
+    },
+    [attempt, miss.hasOpened, moveTileTo],
+  );
+
+  const handlePointerTap = useCallback(
+    (tileId: string) => {
+      if (!trying) return;
+      const fromRack = attempt.rack.some((tile) => tile.id === tileId);
+      if (isDoubleTap(tileId, fromRack ? 'rack' : 'board') && autoPlace(tileId, fromRack)) return;
+      if (fromRack) return tapTile(tileId, null);
+      const meldIndex = attempt.board.findIndex((meld) => meld.some((tile) => tile.id === tileId));
+      if (meldIndex >= 0) tapTile(tileId, meldIndex);
+    },
+    [trying, attempt, isDoubleTap, autoPlace, tapTile],
+  );
+
+  const drag = useDragTile(trying, moveTileTo, handlePointerTap, cancelTap);
+  useEffect(cancelTap, [cancelTap, index, phase]);
+
+  /*
+   * Els clics que arriben aquí són els de teclat (els de punter els resol el
+   * toc de dalt): seleccionar i col·locar sense gestos.
+   */
+  const handleTileClick = useCallback(
+    (tileId: string, meldIndex: number | null) => {
+      if (drag.consumeDragFlag()) return;
+      tapTile(tileId, meldIndex);
+    },
+    [drag, tapTile],
   );
 
   const undo = useCallback(() => {
@@ -277,42 +325,15 @@ export function QuizScreen({ misses, playerName, closeLabel, onClose }: Props) {
   }
   const movedIds = revealed ? futureMoved : movedBoardTileIds(miss.board, attempt.board);
 
-  const lastOne = index + 1 >= misses.length;
-  const draggedTile = drag.dragging
-    ? findTile(attempt.board.flat(), attempt.rack, drag.dragging.tileId)
-    : null;
-
-  return (
-    <section className="game quiz">
-      <header className="game-top">
-        <div className="quiz-cap">
-          <span className="quiz-titol">
-            <strong>Jeroglífic</strong> {index + 1} de {misses.length}
-          </span>
-          <span className="muted quiz-torn">al torn {miss.turn} vas robar</span>
-          <button type="button" className="link quiz-surt" onClick={onClose}>
-            Surt dels jeroglífics
-          </button>
-        </div>
-      </header>
-
-      <BoardView
-        board={board}
-        invalidIndexes={invalid}
-        selectedTileId={selectedTileId}
-        draggingTileId={drag.dragging?.tileId ?? null}
-        over={drag.dragging?.over ?? null}
-        highlighted={highlighted}
-        marks={marks}
-        interactive={trying}
-        onTileClick={handleTileClick}
-        onTilePointerDown={drag.start}
-        onMeldClick={(meldIndex) => placeSelected({ kind: 'meld', index: meldIndex })}
-        onNewMeldClick={() => placeSelected({ kind: 'new' })}
-      />
-
-      {phase === 'prova' && (
-        <p className="hint">
+  /*
+   * La pista no es pinta sota la taula (hi treia lloc a les fitxes): va a la
+   * «i» del feltre, que s'obre en tocar-la. Abans de comprovar és informativa;
+   * comprovada o ensenyada la jugada, verda. El compte de fitxes que queden,
+   * que és el que es mira a cada moviment, va al capçal.
+   */
+  const pista = (
+    phase === 'prova' ? (
+        <>
           La jugada d’aquí baixava <strong>{total}</strong>{' '}
           {total === 1 ? 'fitxa: és la' : 'fitxes: són les'} del marc turquesa
           {futureMoved.size > 0 && <> (i caldrà recol·locar fitxes de la taula)</>}.{' '}
@@ -330,11 +351,10 @@ export function QuizScreen({ misses, playerName, closeLabel, onClose }: Props) {
               <strong>{openingPoints(attempt)}</strong>.
             </>
           )}
-        </p>
-      )}
-      {phase === 'trobada' &&
-        (solved ? (
-          <p className="hint hint-be">
+        </>
+      ) : phase === 'trobada' ? (
+        solved ? (
+          <>
             Perfecte!{' '}
             {placedNow > total ? (
               <>
@@ -352,9 +372,9 @@ export function QuizScreen({ misses, playerName, closeLabel, onClose }: Props) {
                 per un altre camí igual de bo.
               </>
             )}
-          </p>
+          </>
         ) : (
-          <p className="hint hint-be">
+          <>
             Jugada vàlida: <strong>{correctCount}</strong>{' '}
             {correctCount === 1 ? 'fitxa ben col·locada' : 'fitxes ben col·locades'} (marc verd)
             {wrongCount > 0 && (
@@ -370,10 +390,10 @@ export function QuizScreen({ misses, playerName, closeLabel, onClose }: Props) {
               </>
             )}
             . Corregeix-la o mira la solució.
-          </p>
-        ))}
-      {revealed && (
-        <p className="hint hint-be">
+          </>
+        )
+      ) : (
+        <>
           La jugada: es podien baixar les <strong>{solutionIds.size}</strong> fitxes de{' '}
           <strong>marc turquesa</strong>, del teu faristol
           {movedIds.size > 0 ? (
@@ -384,8 +404,58 @@ export function QuizScreen({ misses, playerName, closeLabel, onClose }: Props) {
           ) : (
             <>. La resta de la taula es quedava com estava.</>
           )}
-        </p>
-      )}
+        </>
+      )
+  );
+
+  const lastOne = index + 1 >= misses.length;
+  const draggedTile = drag.dragging
+    ? findTile(attempt.board.flat(), attempt.rack, drag.dragging.tileId)
+    : null;
+
+  return (
+    <section className="game quiz">
+      <header className="game-top">
+        <div className="quiz-cap">
+          <span className="quiz-titol">
+            <strong>Jeroglífic</strong> {index + 1} de {misses.length}
+          </span>
+          <span className="muted quiz-torn">
+            al torn {miss.turn} vas robar
+            {phase === 'prova' && (
+              <span className="quiz-compte">
+                {' '}·{' '}
+                {remaining > 0 ? (
+                  <>
+                    queden <strong>{remaining}</strong> per col·locar
+                  </>
+                ) : (
+                  <>totes col·locades</>
+                )}
+              </span>
+            )}
+          </span>
+          <button type="button" className="link quiz-surt" onClick={onClose}>
+            Surt dels jeroglífics
+          </button>
+        </div>
+      </header>
+
+      <BoardView
+        board={board}
+        invalidIndexes={invalid}
+        selectedTileId={selectedTileId}
+        draggingTileId={drag.dragging?.tileId ?? null}
+        over={drag.dragging?.over ?? null}
+        highlighted={highlighted}
+        marks={marks}
+        interactive={trying}
+        norma={{ text: pista, be: phase !== 'prova', label: 'Veure la pista' }}
+        onTileClick={handleTileClick}
+        onTilePointerDown={drag.start}
+        onMeldClick={(meldIndex) => placeSelected({ kind: 'meld', index: meldIndex })}
+        onNewMeldClick={() => placeSelected({ kind: 'new' })}
+      />
 
       <p className="error-slot" role="alert">
         {error && <span className="error">{error}</span>}
