@@ -3414,6 +3414,18 @@ button.secondary.reset-nivell {
     0 8px 20px rgb(0 0 0 / 0.16);
 }
 
+/*
+ * La marca, a baix a la dreta del feltre com a la partida. La taula de l'inici
+ * no es desplaça, així que s'hi pot ancorar directament; el marge de baix del
+ * feltre (`padding-bottom`) li guarda el lloc perquè no toqui les targetes.
+ */
+.inici-taula .marca-taula {
+  position: absolute;
+  right: 0.85rem;
+  bottom: 0.65rem;
+  pointer-events: none;
+}
+
 .inici-modes {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

@@ -2846,3 +2846,9 @@ passa per sobre la tapa; el globus cap sencer a la pantalla.
   tapen fitxes, es poden passar a la «i» igualment.
 - [2026-11-18] El Quiz (`QuizScreen`) continua amb les seves pistes sota la
   taula: són el contingut de l'exercici, no una norma.
+- [2026-11-18] Moure la marca fora de `.board` va treure-li el `position:
+  absolute` genèric, i a l'**inici** (`HomeScreen`, `.inici-taula`) quedava en
+  el flux, al costat de les targetes. Ara té regla pròpia
+  (`.inici-taula .marca-taula`): a baix a la dreta del feltre, dins el marge de
+  baix que ja hi havia, sense encavalcar-se amb les tres targetes. Prova nova a
+  `e2e/inici.spec.ts` (escriptori i mòbil).
