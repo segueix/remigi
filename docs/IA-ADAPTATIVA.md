@@ -138,6 +138,31 @@ l'ajust de la reordenació, el 18%.
 Ve **desactivat** per defecte: canviar el rival a mitja partida ha de ser una
 decisió explícita del jugador, no una sorpresa.
 
+### Excepció a la lliga: protecció de la sortida
+
+A la lliga, els rivals s'ajusten **mentre el jugador humà no ha fet la sortida
+inicial** (els 30 punts), tingui o no la casella activada
+(`game/botAdjustment.ts`, `botsAdaptThisTurn`). En obrir, tornen a la seva força
+de lliga i ja no s'ajusten. Per què: a les lligues altes els rivals són Experts
+(reordenen la taula sempre) i acaben en ~9,5 rondes; a la Mundial A, el 2,7%
+de les partides s'acabaven sense que el jugador hagués pogut ni obrir (la
+meitat de les mans no poden obrir en 3 torns: és sort de la mà, no de la IA).
+
+Mesurat simulant un jugador (Mitjà o Avançat) contra tres Experts, 1.200
+partides per cel·la, taula de 4:
+
+| Rivals afluixats… | Sense obrir | Rondes | Guanya (Avançat) |
+|---|---|---:|---:|
+| mai | 2,6–2,7% | 9,3–9,5 | 7,9% |
+| sempre (l'ajust d'aquest apartat) | 0,2–0,4% | 10,5–11,2 | 11,9% |
+| **només mentre no has obert** | **0,2–0,4%** | 9,4–9,6 | 8,0% |
+
+Redueix el problema com l'ajust permanent, però sense allargar les partides ni
+fer guanyar més al jugador un cop ha obert: la resta de la partida és la de
+sempre. No afecta els resultats simulats entre rivals ni el repte ni el joc
+lliure. La simulació és un motor a un nivell fix fent de «jugador», no una
+persona: mesura la part mecànica (durada de la partida i sort de la mà).
+
 ## Millores previstes
 
 - Perfils múltiples al mateix dispositiu (ja ho suporta `ProfileRepository`,

@@ -7,6 +7,7 @@ import {
   type GameState,
 } from '@remigi/core';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { botsAdaptThisTurn } from './botAdjustment';
 import { pickPersonas } from './bots';
 import { addMiss, detectMissedChances, type MissedChance } from './missedChances';
 import { updateOwners, type TileOwners } from './meldOwners';
@@ -191,7 +192,7 @@ export function useGame(
         const decision = engine.play(current, {
           playerIndex: mover,
           rating: setupRef.current.opponentRatings?.[mover - 1],
-          rubberBanding: setupRef.current.adaptDuringGame,
+          rubberBanding: botsAdaptThisTurn(setupRef.current, current),
         });
         const next = applyMove(current, decision.move);
         setHighlighted(new Set(next.board.flat().map((t) => t.id).filter((id) => !before.has(id))));
