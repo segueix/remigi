@@ -395,10 +395,12 @@ test.describe('la taula plena', () => {
     expect(petita).toBeGreaterThan(gran * 0.66);
     /*
      * Les quatre fitxes soles no són jugades vàlides. L'avís ja no es pinta sota
-     * la taula (hi prenia lloc, i amb la taula plena tapava fitxes): surt la «i»
-     * vermella al feltre, i el text només s'obre si la toques. Per tant, la
+     * la taula (hi prenia lloc, i amb la taula plena tapava fitxes): en voler
+     * enviar surt la «i» vermella al feltre, i el text només s'obre si la toques. Per tant, la
      * taula no desborda ni amb l'avís ni sense.
      */
+    await expect(page.getByRole('button', { name: /Hi ha jugades que no valen/ })).toHaveCount(0);
+    await page.getByRole('button', { name: 'Acabar jugada' }).click();
     await expect(page.getByRole('button', { name: /Hi ha jugades que no valen/ })).toBeVisible();
     await expect(page.locator('.hint')).toHaveCount(0);
     await expect(page.locator('.norma-globus')).toHaveCount(0);
