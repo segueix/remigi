@@ -538,6 +538,42 @@ export function GameScreen({
   const selectedOnBoard =
     selectedTileId !== null && !rackTiles.some((tile) => tile.id === selectedTileId);
   const needsOpening = draft !== null && !game.players[0].hasOpened;
+  /*
+   * La norma que s'explica a la «i» del feltre: en vermell si hi ha jugades
+   * que no valen (unes fitxes soles no són cap jugada, i el vermell tot sol pot
+   * passar per alt) i, si no, la de la sortida inicial mentre no has obert.
+   * Dir només «en portes 0» amb fitxes a la taula desconcerta: sembla que el
+   * joc no les vegi, quan el que passa és que les jugades invàlides no sumen.
+   */
+  const norma: { text: ReactNode; urgent?: boolean } | null =
+    invalid.size > 0
+      ? {
+          urgent: true,
+          text: needsOpening ? (
+            <>
+              Les jugades marcades en vermell no compten per als 30 punts de la sortida: han de
+              ser <strong>grups</strong> (mateix número, colors diferents) o{' '}
+              <strong>escales</strong> (mateix color, números seguits) de 3 fitxes o més, i totes
+              les fitxes d’una jugada han d’anar a la mateixa caixa.
+            </>
+          ) : (
+            <>
+              Les jugades marcades en vermell no són vàlides: agrupa-les en grups o escales de 3
+              fitxes o més, o torna les fitxes al faristol.
+            </>
+          ),
+        }
+      : needsOpening
+        ? {
+            text: (
+              <>
+                La primera jugada ha de sumar <strong>30 punts</strong> amb fitxes teves, en
+                grups o escales de 3 fitxes o més. Fins que no hagis sortit no pots tocar les
+                jugades dels altres.
+              </>
+            ),
+          }
+        : null;
   const draggedTile = drag.dragging ? findTile(draft?.board.flat(), draft?.rack, drag.dragging.tileId) : null;
 
   return (
@@ -700,6 +736,7 @@ export function GameScreen({
         highlighted={highlighted}
         bots={tileOwners}
         interactive={isHumanTurn}
+        norma={norma}
         overlay={
           <div className="taula-avisos">
             {secondsLeft !== null && (
@@ -714,39 +751,19 @@ export function GameScreen({
       />
 
       {/*
-        * Fora de l'obertura també cal dir-ho: unes fitxes deixades soles no
-        * són cap jugada, i el vermell tot sol pot passar per alt.
+        * Les normes no es pinten sota el tauler: com més fitxes hi ha, més lloc
+        * els prenien. La llarga viu a la «i» del feltre (vegeu `norma` a dalt).
+        * Aquí només queda, fixa i d'una sola línia, el compte de la sortida
+        * inicial de 30 punts mentre no has obert.
         */}
-      {!needsOpening && invalid.size > 0 && (
-        <p className="hint">
-          Les jugades marcades en vermell no són vàlides: agrupa-les en grups o
-          escales de 3 fitxes o més, o torna les fitxes al faristol.
-        </p>
-      )}
-
       {needsOpening && (
-        <p className="hint">
+        <p className="hint hint-sortida">
           {missingOpeningPoints(draft) > 0 ? (
             <>
-              Encara no has obert: la primera jugada ha de sumar 30 punts i en portes{' '}
-              <strong>{openingPoints(draft)}</strong>.
-              {/*
-               * Dir només «en portes 0» amb fitxes a la taula desconcerta: sembla
-               * que el joc no les vegi. El que passa és que les jugades que no
-               * són vàlides no sumen, i val més dir-ho aquí mateix.
-               */}
-              {invalid.size > 0 && (
-                <>
-                  {' '}
-                  Les jugades marcades en vermell no compten: han de ser{' '}
-                  <strong>grups</strong> (mateix número, colors diferents) o{' '}
-                  <strong>escales</strong> (mateix color, números seguits), i totes les fitxes
-                  d’una jugada han d’anar a la mateixa caixa.
-                </>
-              )}
+              Sortida: en portes <strong>{openingPoints(draft)}</strong> de 30 punts
             </>
           ) : (
-            <>Ja tens els 30 punts de la sortida inicial: pots acabar la jugada.</>
+            <>Ja tens els 30 punts de la sortida: pots acabar la jugada.</>
           )}
         </p>
       )}

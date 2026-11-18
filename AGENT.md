@@ -2795,3 +2795,54 @@ idèntiques a les de la variant mesurada (3 sense obrir de 1.200).
   mentre que a 1000→1100 en guanya el 20,4%) perquè la reordenació s'interpola linealment.
   Es podria suavitzar amb la corba que ja fan servir els jokers.
 
+
+### La marca «Remigi» fixa i les normes a la «i» del feltre ✅ Feta (2026-11-18)
+
+Demanat pel jugador: «Quan al mòbil el tauler comença a tenir moltes fitxes i
+es va expandint la paraula Remigi no queda fixa a la part inferior dreta i va
+pujant. Fes que quedi fixa. Totes les normes que es posen transitòriament a la
+part inferior del tauler es van fent més extenses i tapen les fitxes quan n'hi
+ha força, canvia per una "i" informativa al costat de Remigi que agafi brillo o
+es posi vermella i pugi i baixi intensitat i que el jugador pugui clicar per
+veure la norma. La de començar amb 30 punts la pots deixar fixa.»
+
+Causes: la marca era un `position: absolute` **dins** `.board`, que és
+l'element que fa scroll: amb la taula plena i desplaçada, la marca es movia amb
+les jugades. I les normes eren `<p class="hint">` sota la taula: amb molta
+taula prenien alçada a les fitxes (el feltre es reduïa o desbordava).
+
+- [x] `BoardView`: la marca surt de `.board` i va a `.marca-zona`, a
+      `.board-zona` (que no es desplaça), a baix a la dreta del feltre. Les
+      fitxes pinten per sobre del nom (`:where(.board .tile)` amb `z-index: 1`,
+      sense pesar més que `.selected`/`.highlighted`).
+- [x] `BoardView`: nova prop `norma`; component `NormaInfo`, una «i» al costat
+      del nom que pulsa (llum que puja i baixa; vermella i més ràpida si hi ha
+      jugades invàlides) i obre un globus només en tocar-la (es tanca tocant la
+      «i», fora o amb Esc). Amb `prefers-reduced-motion` es queda encesa sense
+      pulsar. En apaïsat el nom s'amaga però la «i» es queda, a l'esquerra del
+      rellotge.
+- [x] `GameScreen`: la pista de jugades invàlides i l'explicació llarga de la
+      sortida van a la «i»; sota la taula només queda una línia fixa i curta
+      amb el compte de la sortida inicial («Sortida: en portes X de 30
+      punts»), `.hint-sortida`, que no creix mai (una sola línia).
+- [x] e2e: la prova de la pista (`joc.spec.ts`) llegeix ara la «i»; nova prova
+      que la marca no es mou amb una taula plena i desplaçada (falla amb el codi
+      anterior); la de la taula plena (`torn.spec.ts`) comprova que no desborda
+      i que surt la «i» en comptes de la pista.
+
+**Criteris d'acceptació (verificats)**: `npm run typecheck`, `npm test` (250) i
+tots els e2e (escriptori i mòbil) en verd; captures al mòbil amb 26 jugades:
+la marca és a la mateixa posició a tots els desplaçaments i una fitxa que hi
+passa per sobre la tapa; el globus cap sencer a la pantalla.
+
+### Problemes trobats
+
+- [2026-11-18] El primer globus s'ancorava a la «i» i en pantalles estretes
+  sortia per l'esquerra; ara s'ancora al costat dret de la marca.
+- [2026-11-18] Els errors del motor (`.error`, p. ex. «cal sumar 30 punts») i
+  l'avís de temps exhaurit continuen al lloc de sempre sota la taula: són la
+  resposta a una acció teva, no una norma, i amagar-los darrere la «i» faria
+  que no veiessis què ha passat. Ocupen una sola franja reservada. Si també
+  tapen fitxes, es poden passar a la «i» igualment.
+- [2026-11-18] El Quiz (`QuizScreen`) continua amb les seves pistes sota la
+  taula: són el contingut de l'exercici, no una norma.

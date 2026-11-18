@@ -708,13 +708,31 @@ input {
 
 /*
  * La marca de la casa, integrada al feltre: a baix a la dreta, sense ocupar
- * espai ni interceptar cap gest. En apaïsat no hi és: allà cada píxel és joc.
+ * espai ni interceptar cap gest. Va a la zona de la taula i no dins la taula
+ * (que es desplaça): així no puja mai amb les jugades. Al seu costat hi viu la
+ * «i» de les normes, que és l'únic que sí rep toc.
  */
-.marca-taula {
+.marca-zona {
   position: absolute;
   right: 0.85rem;
   bottom: 0.65rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   pointer-events: none;
+}
+
+/*
+ * Les fitxes de la taula pinten per sobre del nom: és una marca d'aigua, no una
+ * etiqueta, i abans (quan vivia dins la taula) les fitxes ja la tapaven. Amb
+ * `:where` no pesa res, i la fitxa triada o acabada de jugar (3 i 2) continuen
+ * manant-hi.
+ */
+:where(.board .tile) {
+  z-index: 1;
+}
+
+.marca-taula {
   user-select: none;
   color: color-mix(in srgb, var(--feltre-1) 78%, #d8f3e8);
   font-size: 1.15rem;
@@ -723,6 +741,139 @@ input {
   line-height: 1;
   opacity: 0.72;
   text-shadow: 0 1px 1px rgb(0 0 0 / 0.18);
+}
+
+/*
+ * La «i» de les normes. En lloc de pintar el text sota la taula (on, amb la
+ * taula plena, tapava fitxes), hi ha aquest botó que respira —puja i baixa de
+ * llum— mentre hi ha alguna cosa a llegir, i en vermell si hi ha jugades que no
+ * valen. Només el text es desplega, i només si el toques.
+ */
+.norma-info {
+  display: flex;
+  pointer-events: auto;
+}
+
+.norma-boto {
+  position: relative;
+  z-index: 5;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  min-height: 0;
+  padding: 0;
+  border: 1.5px solid rgb(236 253 245 / 0.85);
+  border-radius: 50%;
+  background: rgb(236 253 245 / 0.22);
+  color: #f0fdf4;
+  font: italic 700 1rem/1 Georgia, 'Times New Roman', serif;
+  cursor: pointer;
+  animation: norma-respira 2.2s ease-in-out infinite;
+}
+
+/* Àrea de toc més àmplia que el dibuix, sense que el dibuix creixi. */
+.norma-boto::before {
+  content: '';
+  position: absolute;
+  inset: -0.4rem;
+}
+
+.norma-boto:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
+.norma-boto.norma-urgent {
+  border-color: #fecaca;
+  background: #dc2626;
+  color: #fff;
+  animation-name: norma-respira-urgent;
+  animation-duration: 1.4s;
+}
+
+@keyframes norma-respira {
+  0%,
+  100% {
+    opacity: 0.55;
+    box-shadow: 0 0 0 0 rgb(236 253 245 / 0);
+  }
+  50% {
+    opacity: 1;
+    box-shadow:
+      0 0 0.35rem 0.1rem rgb(236 253 245 / 0.75),
+      0 0 0.9rem 0.25rem rgb(236 253 245 / 0.35);
+  }
+}
+
+@keyframes norma-respira-urgent {
+  0%,
+  100% {
+    opacity: 0.7;
+    box-shadow: 0 0 0 0 rgb(248 113 113 / 0);
+  }
+  50% {
+    opacity: 1;
+    box-shadow:
+      0 0 0.4rem 0.15rem rgb(248 113 113 / 0.9),
+      0 0 1rem 0.3rem rgb(220 38 38 / 0.5);
+  }
+}
+
+/* Sense moviment: la «i» es queda encesa, sense pulsar. */
+@media (prefers-reduced-motion: reduce) {
+  .norma-boto {
+    animation: none;
+    box-shadow: 0 0 0.45rem 0.1rem rgb(236 253 245 / 0.6);
+  }
+
+  .norma-boto.norma-urgent {
+    box-shadow: 0 0 0.5rem 0.15rem rgb(248 113 113 / 0.8);
+  }
+}
+
+/*
+ * El globus de la norma: s'obre sobre la «i» només quan es toca i es tanca
+ * igual. S'ancora al costat dret de la marca (`.marca-zona`), no a la «i», que
+ * queda a l'esquerra del nom i el deixaria sortir de la pantalla. Té el seu
+ * propi desplaçament si la norma és llarga i el feltre, baix.
+ */
+.norma-globus {
+  position: absolute;
+  z-index: 7;
+  right: 0;
+  bottom: calc(100% + 0.55rem);
+  width: min(19rem, calc(100vw - 3rem));
+  max-height: 14rem;
+  overflow: auto;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--vora);
+  border-radius: 0.6rem;
+  background: var(--taula-jugada);
+  color: var(--text);
+  box-shadow: 0 8px 22px rgb(0 0 0 / 0.35);
+  font-size: 0.85rem;
+  font-weight: 400;
+  letter-spacing: normal;
+  line-height: 1.4;
+  text-align: left;
+}
+
+.norma-globus.norma-urgent {
+  border-color: var(--error);
+  background: var(--error-fons);
+  color: var(--error-text);
+}
+
+/*
+ * La línia de la sortida inicial: l'únic avís que queda fix sota el tauler, i
+ * d'una sola línia perquè no creixi mai.
+ */
+.hint-sortida {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Sobre el feltre fosc, els marcs van sempre en versió clara. */
@@ -2275,8 +2426,22 @@ button.link.danger {
     bottom: 0.45rem;
   }
 
+  /*
+   * El nom no hi és: allà cada píxel és joc. La «i» sí, però a l'esquerra del
+   * rellotge, que ocupa la cantonada de baix a la dreta.
+   */
   .marca-taula {
     display: none;
+  }
+
+  .marca-zona {
+    right: 3.4rem;
+    bottom: 0.5rem;
+  }
+
+  .norma-globus {
+    max-height: 9rem;
+    font-size: 0.75rem;
   }
 
   /* El faristol i els botons comparteixen l'última fila. */

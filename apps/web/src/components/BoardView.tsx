@@ -1,7 +1,7 @@
 import type { Destination } from '../game/turnDraft';
 import type { Meld } from '@remigi/core';
 import type { TileMark } from './TileView';
-import { useRef } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { useBoardFit } from '../game/useBoardFit';
 import { MeldView } from './MeldView';
 
@@ -25,6 +25,12 @@ interface Props {
    * encara que la taula estigui desplaçada.
    */
   overlay?: React.ReactNode;
+  /**
+   * Una norma que explicar, si n'hi ha. No es pinta mai sobre la taula: surt
+   * una «i» al costat de la marca «Remigi» i el text només s'obre si la toques
+   * (vegeu `NormaInfo`). `urgent` la fa vermella: hi ha jugades que no valen.
+   */
+  norma?: { text: React.ReactNode; urgent?: boolean } | null;
   onTileClick?(tileId: string, meldIndex: number): void;
   onTilePointerDown?(event: React.PointerEvent, tileId: string): void;
   onMeldClick?(index: number): void;
@@ -42,6 +48,7 @@ export function BoardView({
   bots,
   interactive,
   overlay,
+  norma,
   onTileClick,
   onTilePointerDown,
   onMeldClick,
@@ -68,16 +75,6 @@ export function BoardView({
      * cap amunt, deixar-la sobre una jugada concreta hi té preferència.
      */}
     <div className="board" data-drop="new" ref={boardRef} style={{ position: 'relative' }}>
-      {/*
-       * Marca d'aigua del joc: queda integrada al feltre, a baix a la dreta,
-       * sense ocupar espai ni interceptar cap clic o gest de les fitxes.
-       * Va abans de les jugades perquè, si coincideixen, les fitxes es pintin
-       * per sobre i el nom continuï fent de marca del tauler, no d'etiqueta.
-       */}
-      <span className="marca-taula" aria-hidden="true">
-        Remigi
-      </span>
-
       {board.length === 0 && !choosing && <p className="muted board-empty">La taula és buida.</p>}
 
       {board.map((meld, index) => (
@@ -131,7 +128,72 @@ export function BoardView({
         </button>
       )}
     </div>
+    {/*
+     * La marca d'aigua del joc i, al costat, la «i» de les normes. Viuen aquí i
+     * no dins la taula perquè la taula es desplaça: a dins, el nom pujava amb
+     * les jugades quan n'hi havia moltes. Aquí es queda sempre a baix a la
+     * dreta del feltre. El nom no rep cap clic ni gest de les fitxes.
+     */}
+    <div className="marca-zona">
+      {norma && <NormaInfo text={norma.text} urgent={norma.urgent} />}
+      <span className="marca-taula" aria-hidden="true">
+        Remigi
+      </span>
+    </div>
     {overlay}
+    </div>
+  );
+}
+
+/**
+ * La «i» informativa: respira (puja i baixa de llum) mentre hi ha una norma
+ * que val la pena llegir, i en vermell si hi ha jugades que no valen. El text
+ * no ocupa lloc: surt en un globus només quan es toca, i es tanca tocant la «i»
+ * una altra vegada, tocant fora o amb Escape. Si la norma deixa d'aplicar-se
+ * (la jugada ja és vàlida), la «i» i el globus desapareixen sols.
+ */
+function NormaInfo({ text, urgent }: { text: React.ReactNode; urgent?: boolean }) {
+  const [open, setOpen] = useState(false);
+  const id = useId();
+  const root = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const outside = (event: PointerEvent) => {
+      if (!root.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('pointerdown', outside);
+    document.addEventListener('keydown', escape);
+    return () => {
+      document.removeEventListener('pointerdown', outside);
+      document.removeEventListener('keydown', escape);
+    };
+  }, [open]);
+
+  return (
+    <div className="norma-info" ref={root}>
+      {open && (
+        <div
+          id={id}
+          className={urgent ? 'norma-globus norma-urgent' : 'norma-globus'}
+          role="note"
+        >
+          {text}
+        </div>
+      )}
+      <button
+        type="button"
+        className={urgent ? 'norma-boto norma-urgent' : 'norma-boto'}
+        aria-label={urgent ? 'Hi ha jugades que no valen: toca per veure la norma' : 'Veure la norma'}
+        aria-expanded={open}
+        aria-controls={open ? id : undefined}
+        onClick={() => setOpen((value) => !value)}
+      >
+        i
+      </button>
     </div>
   );
 }

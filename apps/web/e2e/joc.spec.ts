@@ -424,16 +424,62 @@ test.describe('explicar les regles', () => {
     await expect(explicacio).toContainText('resta 30 punts');
   });
 
-  test('durant el torn diu per què una jugada no suma punts', async ({ page }) => {
+  test('durant el torn diu per què una jugada no suma punts, a la «i» i no sota la taula', async ({ page }) => {
     // El cas real: 6 + 12 + 12 suma 30 però no és ni grup ni escala.
     await entraAmbPartida(page, { rack: [f('red', 6), f('blue', 12), f('black', 12)] });
     await baixaGrup(page, ['6 vermell', '12 blau', '12 negre']);
 
     await expect(page.locator('.meld.invalid')).toHaveCount(1);
-    const pista = page.locator('.hint');
-    await expect(pista).toContainText('en portes 0');
-    await expect(pista).toContainText('no compten');
-    await expect(pista).toContainText('mateixa caixa');
+    // Sota la taula només hi ha el compte, d'una línia.
+    await expect(page.locator('.hint')).toContainText('en portes 0');
+    await expect(page.locator('.hint')).not.toContainText('mateixa caixa');
+
+    // La norma és darrere de la «i» vermella, que no tapa res fins que la toques.
+    const info = page.getByRole('button', { name: /Hi ha jugades que no valen/ });
+    await expect(info).toBeVisible();
+    await expect(page.locator('.norma-globus')).toHaveCount(0);
+    await info.click();
+    const globus = page.locator('.norma-globus');
+    await expect(globus).toContainText('no compten');
+    await expect(globus).toContainText('mateixa caixa');
+
+    // Es tanca tocant la «i» una altra vegada.
+    await info.click();
+    await expect(globus).toHaveCount(0);
+  });
+
+  test('la marca «Remigi» es queda fixa a baix a la dreta encara que la taula s’ompli i es desplaci', async ({ page }) => {
+    // 26 jugades de 3 fitxes: més del que hi cap, la taula ha de fer scroll.
+    const colors = ['red', 'blue', 'black'];
+    const board = (['a', 'b'] as const).flatMap((copia) =>
+      Array.from({ length: 13 }, (_, i) => colors.map((color) => f(color, i + 1, copia))),
+    );
+    // Una pantalla justeta, perquè a un escriptori gran hi cabrien totes.
+    await page.setViewportSize({ width: 640, height: 600 });
+    await entraAmbPartida(page, { rack: [f('orange', 5)], board, haObert: true });
+
+    const marca = page.locator('.marca-taula');
+    // La marca viu fora de la taula que es desplaça.
+    await expect(page.locator('.board .marca-taula')).toHaveCount(0);
+
+    const taula = page.locator('.board');
+    expect(await taula.evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(true);
+
+    const distancia = async () => {
+      const m = await marca.boundingBox();
+      const z = await page.locator('.board-zona').boundingBox();
+      return m && z ? Math.round(z.y + z.height - (m.y + m.height)) : null;
+    };
+    const abans = await distancia();
+    expect(abans).not.toBeNull();
+    await taula.evaluate((el) => {
+      el.scrollTop = el.scrollHeight;
+    });
+    expect(await distancia()).toBe(abans);
+    await taula.evaluate((el) => {
+      el.scrollTop = 0;
+    });
+    expect(await distancia()).toBe(abans);
   });
 });
 
