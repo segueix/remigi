@@ -176,6 +176,12 @@ una temporada començada conserva les jornades i el calendari amb què es va cre
 
 ### Els rivals
 
+- **Protecció de la sortida**: mentre no has fet els 30 punts de la sortida
+  inicial, els rivals s'afluixen una mica (més errades, menys reordenacions);
+  en obrir, tornen a la força del graó. Evita les partides que s'acaben sense
+  que hagis pogut ni obrir (a la Mundial A, 1 de cada ~37). Vegeu
+  `docs/IA-ADAPTATIVA.md`, «Excepció a la lliga».
+
 - **Força**: repartida de −80 a +80 al voltant del graó (dos graons per banda),
   amb una mica de soroll, i encabida dins de 800–1600 en proporció, com fa El
   Tauler amb el ROC als extrems. Es fixa en crear la temporada i el motor la

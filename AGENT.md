@@ -2733,3 +2733,65 @@ pantalla d'entre jornades (1a i 2a jornada) i de la lliga.
 - [2026-11-17] Les proves de navegador fixen una versió de Playwright amb un
   Chromium que no és a l'entorn; s'han executat amb el Chromium preinstal·lat
   (`executablePath`) des d'una configuració temporal que no es desa.
+
+### La lliga: protecció de la sortida (els rivals s'afluixen mentre no has obert) ✅ Feta (2026-11-18)
+
+Queixa d'una jugadora de la lliga mundial: «a vegades no puc ni sortir que els
+adversaris ja han guanyat».
+
+**Diagnòstic** (simulació amb el motor: un «jugador» a un nivell fix contra tres
+Experts, taula de 4, qui comença sortejat; 1.200 partides per cel·la): a la
+Mundial A el **2,7%** de les partides (1 de cada ~37) s'acaba sense que el
+jugador hagi obert. No depèn de qui comença (1,6–3,6%, intervals que se
+solapen) ni de l'habilitat (2,6% amb un Avançat). Són dues coses sumades: els
+Experts acaben en ~9,5 rondes i la sort de la mà (el 37% de les mans no poden
+obrir en 3 torns, el 20% en 6, l'11% en 8, amb independència de la IA). Les
+taules de 3 gairebé no ho pateixen (0,1%, 15,8 rondes). La lliga no passava mai
+`adaptDuringGame` al motor (només el joc lliure, apagat per defecte).
+
+**Variants mesurades** (sense obrir · rondes · victòries de l'Avançat · punts):
+
+| Rivals afluixats… | Sense obrir | Rondes | Guanya | Punts |
+|---|---:|---:|---:|---:|
+| mai (abans) | 2,6% | 9,3 | 7,9% | −31,4 |
+| sempre (ajust del motor) | 0,4% | 10,5 | 11,9% | −17,2 |
+| **només mentre no has obert** | **0,4%** | 9,4 | 8,0% | −29,7 |
+| no reordenen mentre no has obert | 0,1% | 9,4 | 8,2% | −29,2 |
+
+Amb el Mitjà: 2,7% → 0,2%, i la resta no es mou. S'ha triat la 3a (la més
+senzilla de les que no canvien la resta de la partida: reusa l'ajust del motor).
+
+- [x] `game/botAdjustment.ts` (`botsAdaptThisTurn`): el torn d'un bot s'ajusta
+      si el jugador té la casella activada **o**, a la lliga, si l'humà encara
+      no ha obert. Només mira `hasOpened` de l'estat: no es desa res, i una
+      partida desada i represa s'ajusta igual. Connectat a `useGame.ts`.
+- [x] 5 tests nous (`botAdjustment.test.ts`): a la lliga amb l'humà sense obrir
+      (encara que els rivals ja hagin obert), un cop obert, la casella manté
+      l'ajust sempre, fora de la lliga i en partides velles sense mode no hi
+      ha ajust, i sense cap humà no hi ha res a ajustar.
+- [x] Docs: `docs/IA-ADAPTATIVA.md` («Excepció a la lliga») i `docs/LLIGA.md`.
+
+**Criteris d'acceptació (verificats)**: typecheck; 250 tests de la web (5 de
+nous) i 176 del motor; proves de navegador de `modes`, `joc` i `torn` (57 OK, 8
+saltades, que ja ho eren; inclouen la temporada sencera de lliga); i el
+**cablejat**: simulant amb el `botsAdaptThisTurn` real, les 1.200 partides són
+idèntiques a les de la variant mesurada (3 sense obrir de 1.200).
+
+### Problemes trobats
+
+- [2026-11-18] `docs/IA-ADAPTATIVA.md` deia que l'ajust «ve desactivat per
+  defecte: canviar el rival a mitja partida ha de ser una decisió explícita del
+  jugador». La protecció de la sortida n'és una excepció acotada a la lliga (i
+  només mentre no has obert); s'ha deixat escrit allà.
+- [2026-11-18] **No s'ha fet al repte** ni al joc lliure: la mesura és de la
+  Mundial A de 4. El repte té el mateix mecanisme (rivals fixos) i s'hi podria
+  afegir amb una línia a `botsAdaptThisTurn`, però caldria mesurar-lo abans.
+- [2026-11-18] La mesura és d'un motor a un nivell fix fent de «jugador», no
+  d'una persona: val per la part mecànica (durada i sort de la mà). Queda 1 de
+  cada ~500 partides sense obrir, i la Mundial A continua sent molt dura per a
+  qui no reordena la taula (el Mitjà hi guanya el 0,7%, l'Avançat el 8%).
+- [2026-11-18] Pendent (no fet): entre 1200 i 1300 de força hi ha un salt
+  brusc de dificultat (un jugador de 1200 contra rivals de 1250 guanya el 9,5%,
+  mentre que a 1000→1100 en guanya el 20,4%) perquè la reordenació s'interpola linealment.
+  Es podria suavitzar amb la corba que ja fan servir els jokers.
+
