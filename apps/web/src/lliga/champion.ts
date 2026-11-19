@@ -111,7 +111,7 @@ export function shareMessage(record: SeasonRecord, url: string): string {
   return [
     '🏆🎉 Sóc el millor jugador del món al Remigi!',
     `He guanyat la Lliga Mundial · Divisió A: ${pointsLabel(record.points)} i ${plural(record.wins, 'victòria', 'victòries')} contra els millors.`,
-    'T’atreveixes a jugar-me? 🎲',
+    'T’atreveixes a succeir-me? 🎲',
     url,
   ].join('\n');
 }

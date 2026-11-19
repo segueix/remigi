@@ -2957,3 +2957,13 @@ escriptori i mòbil de la celebració i del diploma.
 - Pendent (no demanat): una fanfàrria sonora. L'app ja té música d'espera
   entre jornades; afegir-hi un so de victòria demanaria respectar-ne l'opció de
   silenciar.
+
+### Missatge de WhatsApp del campió ✅ Feta (2026-11-19)
+
+Demanat pel jugador: al missatge de WhatsApp, canviar «T’atreveixes a jugar-me?» per
+«T’atreveixes a succeir-me?» (qui rep el missatge ha de destronar el campió).
+
+- [x] `shareMessage` (`apps/web/src/lliga/champion.ts`) diu «T’atreveixes a succeir-me? 🎲».
+- [x] `champion.test.ts` comprova la frase nova.
+
+**Criteris d'acceptació (verificats)**: `typecheck` net i `npm test` en verd.
