@@ -5198,3 +5198,235 @@ button.secondary.reset-nivell {
 .carrusel-diapo .interludi-cares {
   margin: 0 auto;
 }
+
+/* ---------- Campió del món: celebració, confeti i diploma ---------- */
+
+.lliga-final-diploma {
+  margin-top: 0.5rem;
+  border: 0;
+  background: linear-gradient(135deg, #fde68a, #f59e0b);
+  color: #451a03;
+  font-weight: 800;
+  box-shadow: 0 0 1rem rgb(245 158 11 / 0.55);
+}
+
+.lliga-palmares-diploma {
+  min-height: 0;
+  padding: 0.15rem 0.6rem;
+  font-size: 0.8rem;
+}
+
+/* El confeti passa per sobre de tot i no agafa els tocs. */
+.confeti {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  width: 100vw;
+  height: 100dvh;
+  pointer-events: none;
+}
+
+.campio-fons {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background:
+    radial-gradient(90% 60% at 50% 0%, rgb(251 191 36 / 0.35), transparent 70%),
+    linear-gradient(160deg, #1e1b4b, #312e81 55%, #4c1d95);
+  animation: campio-fons-entra 0.5s ease-out;
+}
+
+.campio {
+  position: fixed;
+  inset: 0;
+  z-index: 91;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.75rem 1rem 2rem;
+  overflow-y: auto;
+  color: #fffbeb;
+  text-align: center;
+  outline: none;
+}
+
+.campio > * {
+  /* En una columna que desborda, res no s'encongeix: el diploma tapava els botons. */
+  flex: none;
+}
+
+.campio-cap {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  max-width: 44rem;
+}
+
+.campio-trofeu {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 9rem;
+  height: 9rem;
+  margin-top: -0.5rem;
+}
+
+.campio-raigs {
+  position: absolute;
+  inset: -3rem;
+  border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, rgb(253 224 71 / 0.38) 0 8deg, transparent 8deg 24deg);
+  mask-image: radial-gradient(circle, #000 25%, transparent 68%);
+  -webkit-mask-image: radial-gradient(circle, #000 25%, transparent 68%);
+  animation: campio-raigs 18s linear infinite;
+}
+
+.campio-copa {
+  position: relative;
+  font-size: 6.5rem;
+  line-height: 1;
+  filter: drop-shadow(0 0 1.2rem rgb(253 224 71 / 0.9));
+  animation:
+    campio-copa-entra 0.9s cubic-bezier(0.2, 1.4, 0.4, 1) both,
+    campio-copa-bota 2.4s ease-in-out 1s infinite;
+}
+
+.campio-dalt {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #fde68a;
+}
+
+.campio-titol {
+  margin: 0;
+  max-width: 22ch;
+  font-size: clamp(1.9rem, 6.5vw, 3rem);
+  line-height: 1.1;
+  background: linear-gradient(100deg, #fef3c7 20%, #fbbf24 45%, #fff 55%, #fbbf24 70%, #fef3c7 90%);
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: campio-brillantor 3.5s linear infinite;
+}
+
+.campio-nom {
+  margin: 0.15rem 0 0;
+  font-size: 1.4rem;
+  font-weight: 800;
+}
+
+.campio-stats {
+  margin: 0;
+  color: #e0e7ff;
+}
+
+.campio-diploma {
+  display: grid;
+  place-items: center;
+  width: min(34rem, 100%);
+  min-height: 8rem;
+  margin: 0.8rem 0 0.4rem;
+  border: 4px solid #fbbf24;
+  border-radius: 0.5rem;
+  background: rgb(0 0 0 / 0.25);
+  box-shadow: 0 0.8rem 2.5rem rgb(0 0 0 / 0.5), 0 0 2rem rgb(251 191 36 / 0.4);
+  animation: campio-diploma-entra 0.8s ease-out 0.4s both;
+}
+
+.campio-diploma img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.campio-accions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem;
+  margin-top: 0.4rem;
+}
+
+.campio-accions button {
+  min-height: 2.75rem;
+  font-weight: 800;
+}
+
+.campio-whatsapp {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 0;
+  background: #25d366;
+  color: #052e16;
+}
+
+.campio-accions .secondary {
+  background: rgb(255 255 255 / 0.12);
+  border-color: rgb(255 255 255 / 0.5);
+  color: #fff;
+}
+
+.campio-accions button:disabled {
+  opacity: 0.55;
+}
+
+.campio-nota {
+  min-height: 1.2em;
+  max-width: 32rem;
+  margin: 0.2rem 0 0;
+  color: #e0e7ff;
+}
+
+@keyframes campio-fons-entra {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes campio-raigs {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes campio-copa-entra {
+  from {
+    transform: scale(0) rotate(-40deg);
+    opacity: 0;
+  }
+}
+
+@keyframes campio-copa-bota {
+  50% {
+    transform: translateY(-0.5rem) scale(1.05);
+  }
+}
+
+@keyframes campio-brillantor {
+  to {
+    background-position: -250% 0;
+  }
+}
+
+@keyframes campio-diploma-entra {
+  from {
+    opacity: 0;
+    transform: translateY(2rem) rotate(-3deg) scale(0.9);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .campio-fons,
+  .campio-raigs,
+  .campio-copa,
+  .campio-titol,
+  .campio-diploma {
+    animation: none;
+  }
+}

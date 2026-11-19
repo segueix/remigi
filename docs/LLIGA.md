@@ -356,6 +356,22 @@ la classificació final, amb la configuració per començar-la.
 
 Una temporada es pot **abandonar**: no compta per a res (ni puja ni baixa).
 
+### Campió del món
+
+Guanyar la **Lliga Mundial, Divisió A** (acabar 1r al graó més alt) és el títol
+màxim: el joc el celebra i et fa un diploma.
+
+- **Celebració**: en acabar la temporada s'obre sola, un sol cop per títol, una
+  finestra a pantalla completa amb confeti, el trofeu i el títol «Millor
+  jugador del món». Amb moviment reduït al sistema no hi ha confeti. Es pot
+  tornar a veure des de la revisió de temporada o des del palmarès.
+- **Diploma**: una imatge PNG (A4 apaïsat) amb el nom del jugador, la lliga, els
+  punts i les victòries, la data i un número de sèrie. Es descarrega des de la
+  celebració.
+- **WhatsApp**: «Comparteix per WhatsApp» obre el menú de compartir del mòbil
+  amb el diploma i un missatge, o, a l'ordinador, WhatsApp amb el missatge i el
+  diploma descarregat per adjuntar-lo.
+
 ### Desat
 
 `remigi:lliga` = `{ career, season }`, validat en carregar: una temporada que no
