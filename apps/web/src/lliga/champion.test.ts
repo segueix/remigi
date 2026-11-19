@@ -105,6 +105,7 @@ describe('compartir per WhatsApp', () => {
     const text = shareMessage(record, 'https://segueix.github.io/remigi/');
     expect(text).toContain('millor jugador del món');
     expect(text).toContain('Lliga Mundial · Divisió A');
+    expect(text).toContain('T’atreveixes a succeir-me? 🎲');
     expect(text.endsWith('https://segueix.github.io/remigi/')).toBe(true);
   });
 
