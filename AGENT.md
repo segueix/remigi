@@ -2906,3 +2906,54 @@ funcioni.»
 
 **Criteris d'acceptació (verificats)**: `typecheck`, `npm test` i e2e (quiz,
 torn, joc, modes, inici) en verd; captura al mòbil del jeroglífic amb la «i».
+
+### Campió del món: confeti, trofeu i diploma ✅ Feta (2026-11-19)
+
+Demanat pel jugador: «Fes alguna cosa espectacular com confeti o el que creguis
+si algú guanya la lliga mundial divisió A com a millor jugador del món. Fes que
+pugui compartir el logro per WhatsApp i es generi un diploma que la persona es
+pugui descarregar.» Disseny a **`docs/LLIGA.md`** (apartat «Campió del món»).
+
+- [x] **Qui és campió** (`lliga/champion.ts`, pur): acabar 1r a la Mundial A
+      (`tier === TOP_TIER` i `rank === 1`, el `movement: 'champion'` que ja
+      desava `closeSeason`). Cap canvi al model de lliga ni al desat.
+- [x] **Celebració** (`screens/ChampionCelebration.tsx`): finestra a pantalla
+      completa amb el trofeu amb raigs, el títol «Ets el millor jugador del
+      món!», les xifres de la temporada i el diploma; confeti de llenç
+      (`components/Confetti.tsx`: canons a banda i banda, descàrrega al mig i
+      pluja; sense llibreries; s'atura sol; sense confeti amb
+      `prefers-reduced-motion`). S'obre sola **un sol cop per títol**
+      (`remigi:campio:<finishedAt>` a `localStorage`) en acabar la temporada, i
+      es pot tornar a veure amb «Diploma de Millor jugador del món» a la
+      revisió de temporada i amb «Diploma» a cada títol del palmarès.
+- [x] **Diploma** (`lliga/diplomaCanvas.ts`): PNG d'un A4 apaïsat a 150 ppp
+      (1754×1240) dibuixat al llenç, tot vectorial i sense connexió: marc d'or,
+      fitxes «REMIGI», nom del jugador, «Millor jugador del món», Lliga Mundial
+      · Divisió A, punts i victòries, data en català, segell i número de sèrie
+      estable. Es genera en obrir la celebració perquè sigui a punt en compartir.
+- [x] **WhatsApp**: al mòbil, el menú de compartir del sistema
+      (`navigator.share` amb el PNG i el missatge, on surt WhatsApp); a
+      l'ordinador, `wa.me` amb el missatge a punt i el diploma es descarrega
+      per adjuntar-lo. A banda, «Descarrega el diploma».
+- [x] Proves: `champion.test.ts` (títol, data, sèrie, fitxer, missatge, enllaç,
+      celebrar un sol cop), `Confetti.test.ts` (esclat, pluja, gravetat,
+      independència del refresc) i `e2e/campio.spec.ts` (celebració un sol cop,
+      confeti pintat, diploma de 1754×1240, descàrrega PNG, menú de compartir
+      simulat, WhatsApp a l'ordinador, i que cap altra lliga no el dona).
+
+**Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd (176
+del motor i 266 de la web, 16 de nous); `npm run build` correcte; e2e
+`campio.spec.ts` (10, escriptori i mòbil) i `modes.spec.ts` en verd; captures en
+escriptori i mòbil de la celebració i del diploma.
+
+### Problemes trobats
+
+- [2026-11-19] El diploma tapava els botons de la celebració: en una columna
+  que desborda, el contenidor de la imatge s'encongia i la imatge sortia per
+  fora. Resolt amb `flex: none` als fills de `.campio`; l'e2e de WhatsApp ho
+  detectava («intercepts pointer events»).
+- [2026-11-19] Les cintes del segell xafaven el número de sèrie: cintes més
+  curtes i número a la cantonada de baix a l'esquerra.
+- Pendent (no demanat): una fanfàrria sonora. L'app ja té música d'espera
+  entre jornades; afegir-hi un so de victòria demanaria respectar-ne l'opció de
+  silenciar.

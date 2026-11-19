@@ -1,7 +1,8 @@
 import { DIFFICULTIES } from '@remigi/core';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { PinIcon } from '../components/icons';
 import { botPersona } from '../game/bots';
+import { isWorldChampion, markCelebrated, wasCelebrated } from '../lliga/champion';
 import {
   GROUPS,
   LEAGUE_LEVELS,
@@ -31,12 +32,14 @@ import {
   type LeagueSeason,
   type LeagueState,
   type Movement,
+  type SeasonRecord,
   type TableRivals,
 } from '../lliga/league';
 import { LocationDialog } from '../lliga/LocationDialog';
 import type { LeagueHome } from '../lliga/localitats';
 import { leaguePoints, ordinal, signed } from '../ui/format';
 import { PlayerAvatar } from '../components/PlayerAvatar';
+import { ChampionCelebration } from './ChampionCelebration';
 
 interface Props {
   state: LeagueState;
@@ -82,11 +85,31 @@ export function LligaScreen({
   const [config, setConfig] = useState<LeagueConfig>(career.config);
   const [locationOpen, setLocationOpen] = useState(!career.home && !career.homeAsked);
   const [confirmAbandon, setConfirmAbandon] = useState(false);
+  // La celebració del títol mundial: s'obre sola un cop i es pot tornar a veure.
+  const [celebrating, setCelebrating] = useState<SeasonRecord | null>(null);
   const running = season !== null && !isFinished(season);
   const finished = season !== null && isFinished(season);
   const next = upcomingTier(career, playerRating);
   const tier = running && season ? season.tier : next;
   const title = running && season ? season.name : tierName(next, career.home);
+  const lastRecord = career.seasons[0];
+  const wonWorld = finished && isWorldChampion(lastRecord) ? lastRecord : null;
+
+  // Acabada la temporada amb el títol de la Mundial A: confeti i diploma, un sol cop per títol.
+  const wonAt = wonWorld?.finishedAt;
+  useEffect(() => {
+    if (!wonWorld) return;
+    let storage: Storage | null = null;
+    try {
+      storage = window.localStorage;
+    } catch {
+      storage = null;
+    }
+    if (wasCelebrated(wonWorld, storage)) return;
+    markCelebrated(wonWorld, storage);
+    setCelebrating(wonWorld);
+    // Només canvia quan hi ha un títol nou.
+  }, [wonAt]);
 
   return (
     <section className="card pantalla-mode lliga">
@@ -132,7 +155,14 @@ export function LligaScreen({
         </p>
       </div>
 
-      {finished && season && <SeasonReview season={season} state={state} playerName={playerName} />}
+      {finished && season && (
+        <SeasonReview
+          season={season}
+          state={state}
+          playerName={playerName}
+          onCelebrate={wonWorld ? () => setCelebrating(wonWorld) : undefined}
+        />
+      )}
 
       {running && season && (
         <>
@@ -178,6 +208,11 @@ export function LligaScreen({
             {career.seasons.slice(0, 10).map((record) => (
               <li key={record.finishedAt} className={`moviment-${record.movement}`}>
                 <span>{record.name}</span>
+                {isWorldChampion(record) && (
+                  <button type="button" className="secondary lliga-palmares-diploma" onClick={() => setCelebrating(record)}>
+                    Diploma
+                  </button>
+                )}
                 <span className="lliga-palmares-pos">
                   {ordinal(record.rank)} de {record.players}{' '}
                   <span aria-hidden="true">
@@ -190,6 +225,15 @@ export function LligaScreen({
         </details>
       )}
 
+
+      {celebrating && (
+        <ChampionCelebration
+          record={celebrating}
+          playerName={playerName}
+          home={career.home}
+          onClose={() => setCelebrating(null)}
+        />
+      )}
 
       {locationOpen && (
         <LocationDialog
@@ -510,7 +554,18 @@ function YourRounds({ season }: { season: LeagueSeason }) {
   );
 }
 
-function SeasonReview({ season, state, playerName }: { season: LeagueSeason; state: LeagueState; playerName: string }) {
+function SeasonReview({
+  season,
+  state,
+  playerName,
+  onCelebrate,
+}: {
+  season: LeagueSeason;
+  state: LeagueState;
+  playerName: string;
+  /** Hi ha títol mundial: tornar a veure la celebració i el diploma. */
+  onCelebrate?(): void;
+}) {
   const rows = standings(season, playerName);
   const rank = rows.findIndex((row) => row.id === YOU) + 1;
   const me = rows[rank - 1];
@@ -533,6 +588,11 @@ function SeasonReview({ season, state, playerName }: { season: LeagueSeason; sta
         <p className="lliga-final-moviment">
           <strong>{movementText(season.tier, next, movement, state.career.home)}</strong>
         </p>
+        {onCelebrate && (
+          <button type="button" className="lliga-final-diploma" onClick={onCelebrate}>
+            🏆 Diploma de Millor jugador del món
+          </button>
+        )}
       </div>
       <StandingsTable season={season} home={state.career.home} playerName={playerName} />
     </div>
