@@ -6143,3 +6143,42 @@ button.enllac {
   margin-top: 0.5rem;
   border-top: 2px dotted var(--vora);
 }
+
+/* Sincronitzat amb Google: la «G» sobre l'avatar del jugador (a dalt a l'esquerra; la roda és a baix a la dreta). */
+.inici-avatar {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+}
+
+.avatar-google {
+  position: absolute;
+  top: -0.35rem;
+  left: -0.35rem;
+  display: grid;
+  place-items: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  border: 1.5px solid #fff;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.35);
+}
+
+.avatar-google svg {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+.compte-google-sortir {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0.4rem 0 0.8rem;
+}
+
+.compte-google-sortir svg {
+  width: 1rem;
+  height: 1rem;
+}

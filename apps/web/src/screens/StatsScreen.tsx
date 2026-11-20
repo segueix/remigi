@@ -1,6 +1,7 @@
 import { DIFFICULTIES, STARTING_RATING, adaptiveLevelLabel, difficultyByRating, type GameRecord } from '@remigi/core';
 import { useState } from 'react';
 import { CloseButton, useEscapeToClose } from '../components/CloseButton';
+import { GoogleSignOut } from '../components/GoogleAccount';
 import { ModeSwitch } from '../components/ModeSwitch';
 import type { GameMode } from '../game/useGame';
 import { PlayerAvatar } from '../components/PlayerAvatar';
@@ -84,6 +85,8 @@ export function StatsScreen({
           <dd>{winRate === null ? '—' : `${winRate}%`}</dd>
         </div>
       </dl>
+
+      <GoogleSignOut />
 
       {/* La configuració, també des de l'inici, el repte i la lliga (no només a la partida). */}
       <SettingsPanel tileStyle={tileStyle} onTileStyle={onTileStyle} />

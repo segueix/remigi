@@ -2,7 +2,7 @@ import { DIFFICULTIES, adaptiveLevelLabel, type PlayerProfile, type Tile } from 
 import { TARGET_NAME, TARGET_URL } from '../appSwitch/appSwitch';
 import type { CloudHandle } from '../cloud/useCloud';
 import { ComEsJuga } from '../components/ComEsJuga';
-import { GoogleHeaderButton } from '../components/GoogleAccount';
+import { GoogleHeaderButton, GoogleMark } from '../components/GoogleAccount';
 import { PlayerAvatar } from '../components/PlayerAvatar';
 import { TileView } from '../components/TileView';
 import { ChallengeIcon, DailyIcon, FreePlayIcon, LeagueIcon } from '../components/icons';
@@ -140,13 +140,25 @@ export function HomeScreen({
       <div className="franja-fitxes" aria-hidden="true" />
       {/* El jugador, a dalt a l'esquerra; El Tauler, l'app d'escacs germana, a la dreta. */}
       <header className="inici-cap">
-        <button type="button" className="secondary inici-jugador" onClick={onHistory} aria-label="El teu historial">
-          <PlayerAvatar name={profile.name} />
+        <button
+          type="button"
+          className="secondary inici-jugador"
+          onClick={onHistory}
+          aria-label={cloud.user ? 'El teu historial (sincronitzat amb Google)' : 'El teu historial'}
+        >
+          {/* Amb compte de Google, la «G» sobre l'avatar: sincronitzat (sense ocupar lloc al capçal). */}
+          <span className="inici-avatar">
+            <PlayerAvatar name={profile.name} />
+            {cloud.user && (
+              <span className="avatar-google" title="Sincronitzat amb Google">
+                <GoogleMark />
+              </span>
+            )}
+          </span>
           <span className="inici-jugador-text">
             <strong>{profile.name}</strong>
             <span className="muted small">
               {calibrating ? 'calibrant el nivell' : `habilitat ${profile.rating}`}
-              {cloud.user && ' · desat a Google'}
             </span>
           </span>
         </button>
