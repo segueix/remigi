@@ -37,12 +37,9 @@ import {
 } from './repte/challenge';
 import { pickPersonas } from './game/bots';
 import {
-  DAILY_LEVEL,
-  DAILY_OPPONENTS,
   dayKey,
   dayNumber,
   dayRng,
-  daySeed,
   firstPlayerOf,
   humanMoves,
   isDayKey,
@@ -55,6 +52,7 @@ import {
   type DailyState,
 } from './dia/daily';
 import { DailyResultCard, DiaScreen } from './screens/DiaScreen';
+import { dailyDifficulty, dailyPlan, difficultyKeyOf } from './dia/plan';
 import { clearRankingCache } from './cloud/cache';
 import { CloudContext, useCloud } from './cloud/useCloud';
 import { NameDialog } from './components/NameDialog';
@@ -98,8 +96,8 @@ export const LEAGUE_KEY = 'remigi:lliga';
 export const DAILY_KEY = 'remigi:dia';
 
 /** Els rivals de la partida del dia: els mateixos noms a tots els aparells. */
-function dailyRivals(day: string): string[] {
-  return pickPersonas(DAILY_OPPONENTS, dayRng(day)).map((persona) => persona.name);
+function dailyRivals(day: string, count: number): string[] {
+  return pickPersonas(count, dayRng(day)).map((persona) => persona.name);
 }
 
 /** La partida que es juga ara: es torna a muntar (clau nova) a cada partida que comença. */
@@ -559,23 +557,30 @@ export function App() {
       goTo('dia');
       return;
     }
-    const label = `Partida del dia #${dayNumber(today)}`;
+    const label = `Partida del dia #${dayNumber(today)} · ${dailyDifficulty(today).dayName} · ${dailyDifficulty(today).label}`;
     const saved = await savedGames.load('dia');
     if (saved && saved.setup.session === today) {
       launch('dia', saved.setup, saved, label);
       return;
     }
-    const rivals = dailyRivals(today);
+    /*
+     * La dificultat del dia de la setmana, i la barreja triada perquè sempre
+     * es pugui obrir (vegeu `dia/plan.ts`).
+     */
+    const plan = dailyPlan(today);
+    const { difficulty } = plan;
+    const rivals = dailyRivals(today, difficulty.opponents);
     launch(
       'dia',
       {
         mode: 'dia',
         playerName: player.name,
-        opponents: rivals.map(() => DAILY_LEVEL),
+        opponents: rivals.map(() => difficultyKeyOf(difficulty)),
+        opponentRatings: rivals.map(() => difficulty.rating),
         opponentNames: rivals,
         auto: false,
         session: today,
-        seed: daySeed(today),
+        seed: plan.seed,
       },
       null,
       label,

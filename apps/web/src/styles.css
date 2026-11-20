@@ -6249,3 +6249,20 @@ button.enllac {
 .dia-targeta-rivals strong {
   font-size: 1.05rem;
 }
+
+/* La dificultat del dia al bàner: «Dissabte · Avançat ●●●●●». */
+.inici-taula .dia-boto .dia-boto-nivell {
+  color: rgb(255 255 255 / 0.85);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.dia-boto-punts {
+  color: #f5c518;
+  letter-spacing: 0.08em;
+  font-size: 0.7rem;
+}
+
+.dia-boto-punts .apagats {
+  color: rgb(255 255 255 / 0.25);
+}

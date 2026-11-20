@@ -3271,3 +3271,26 @@ simulades.
 - [2026-11-20] El resultat ja pujat a Firestore (`dia/2026-11-20/resultats/{uid}`)
   no es pot esborrar des de l'app (les regles no ho deixen): s'ha d'esborrar a
   la consola perquè el de la segona partida hi pugui entrar.
+
+### Dificultat de la partida del dia segons el dia de la setmana ✅ Feta (2026-11-20)
+
+Demanat pel jugador: variar la dificultat durant la setmana, tenint en compte
+que «el jugador sempre ha de poder obrir però tampoc necessita ser fàcil».
+
+- [x] `dia/plan.ts`: força dels rivals per dia (de 1000 el dilluns a 1400 el
+      dissabte; el diumenge, 3 rivals a 1350), sense Expert.
+- [x] Sortida garantida: de fins a 12 barreges del dia, la primera amb sortida
+      possible com a molt al 3r torn del jugador (simulant-ho amb el motor,
+      determinista). En 300 dies: sense filtre, 41 % no; amb filtre, 0 %.
+- [x] Bàner amb el dia i la dificultat (●●●●○), targeta i missatge de
+      compartir amb la dificultat, i la ratxa de dies jugats al bàner.
+
+**Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd
+(312, 5 de nous a `plan.test.ts`); e2e sencer en verd (187; els de la partida
+del dia ja admeten 2 o 3 rivals); captura del bàner.
+
+### Problemes trobats
+
+- [2026-11-20] El dia #1 (divendres) canvia de partida a mig dia: passa de
+  Mitjà a Exigent i potser a una altra barreja. Només afecta qui la torni a
+  jugar avui (el reinici del dia #1).
