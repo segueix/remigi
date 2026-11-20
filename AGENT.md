@@ -3149,3 +3149,23 @@ al bàner).
 **Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd
 (301 de la web); e2e `dia`, `inici` i `modes` en verd (34); captures al mòbil.
 El rànquing ja carrega de Firestore amb les regles publicades.
+
+### Targeta del resultat de la partida del dia ✅ Feta (2026-11-20)
+
+Demanat pel jugador: la finestra flotant del final de la partida del dia «molt
+més ben integrada a nivell de colors i disseny», «canvia l'icona de
+comparteix» i «molt més atractiva».
+
+- [x] `DailyResultCard` (final de partida i pantalla del dia): negra com el
+      bàner, franja dels quatre colors de les fitxes, llum groga si guanyes i
+      vermella si no; la xifra que compta dins d'una fitxa del Remigi (blava:
+      jugades; vermella: punts a la mà); posició al rànquing en una píndola.
+- [x] Botó de compartir blanc i gran amb una icona de compartir de debò
+      (`ShareIcon`, la fletxa que surt de la capsa) en lloc del 📣:
+      «Comparteix · Em superes?».
+- [x] Identitat de la partida del dia en blanc i negre (abans lila), també a
+      les pestanyes del rànquing.
+
+**Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd
+(301); e2e sencer en verd (187); captures del final de partida i de la
+pantalla del dia al mòbil.

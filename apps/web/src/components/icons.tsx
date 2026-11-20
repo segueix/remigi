@@ -140,6 +140,15 @@ export const DailyIcon = () => (
   </Icon>
 );
 
+/** Compartir: la fletxa que surt de la capsa, com al menú de compartir del mòbil. */
+export const ShareIcon = () => (
+  <Icon>
+    <path d="M12 3.5v11" />
+    <polyline points="7.5 8 12 3.5 16.5 8" />
+    <path d="M8 11H6.5A1.5 1.5 0 0 0 5 12.5v6A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5v-6a1.5 1.5 0 0 0-1.5-1.5H16" />
+  </Icon>
+);
+
 /** Localitat: el punt del mapa. */
 export const PinIcon = () => (
   <Icon>

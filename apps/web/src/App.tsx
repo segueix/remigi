@@ -53,9 +53,8 @@ import {
   type DailyResult,
   type DailyState,
 } from './dia/daily';
-import { DiaScreen, ShareButton } from './screens/DiaScreen';
+import { DailyResultCard, DiaScreen } from './screens/DiaScreen';
 import { CloudContext, useCloud } from './cloud/useCloud';
-import { DayPlace } from './components/DayPlace';
 import { NameDialog } from './components/NameDialog';
 import { useCloudSync } from './cloud/useCloudSync';
 import { GameScreen, type ModeFinish } from './screens/GameScreen';
@@ -587,12 +586,7 @@ export function App() {
       return {
         body: (
           <div className="final-dia">
-            <p className="final-mode-titol">Partida del dia #{dayNumber(result.day)}</p>
-            <DayPlace day={result.day} />
-            <p className={result.won ? 'dia-resultat guanyada' : 'dia-resultat'}>
-              <span aria-hidden="true">{result.won ? '🏆' : '🧩'}</span> {resultText(result)}
-            </p>
-            <ShareButton state={state} result={result} />
+            <DailyResultCard state={state} result={result} />
           </div>
         ),
         primary: { label: 'Veure el rànquing', run: () => goTo('dia') },

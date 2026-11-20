@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { DayPlace } from '../components/DayPlace';
+import { DailyIcon, ShareIcon } from '../components/icons';
 import { gameUrl } from '../ui/gameUrl';
 import {
   dayNumber,
@@ -40,26 +41,79 @@ export function DiaScreen({ state, today, playerName, rankingVersion, onPlay, on
         </button>
       </div>
 
-      <DayPlace day={today} />
-
       {todayResult ? (
-        <div className="dia-avui">
-          <p className={todayResult.won ? 'dia-resultat guanyada' : 'dia-resultat'}>
-            <span aria-hidden="true">{todayResult.won ? '🏆' : '🧩'}</span> {resultText(todayResult)}
-          </p>
-          <ShareButton state={state} result={todayResult} />
+        <>
+          <DailyResultCard state={state} result={todayResult} header={false} />
           <p className="muted small">Demà, a mitjanit (hora de Barcelona), hi ha una partida nova.</p>
-        </div>
+        </>
       ) : (
-        <div className="row">
-          <button type="button" onClick={onPlay}>
-            Juga la partida del dia
-          </button>
-        </div>
+        <>
+          <DayPlace day={today} />
+          <div className="row">
+            <button type="button" onClick={onPlay}>
+              Juga la partida del dia
+            </button>
+          </div>
+        </>
       )}
 
       <DiaRanking today={today} alias={playerName} version={rankingVersion} />
     </section>
+  );
+}
+
+/** «12 de novembre», per al peu de la targeta. */
+function shortDay(day: string): string {
+  const [, m, d] = day.split('-').map(Number);
+  const months = ['gener', 'febrer', 'març', 'abril', 'maig', 'juny', 'juliol', 'agost', 'setembre', 'octubre', 'novembre', 'desembre'];
+  const month = months[m - 1] ?? '';
+  return `${d} ${/^[aeiou]/.test(month) ? 'd’' : 'de '}${month}`;
+}
+
+/**
+ * El resultat de la partida del dia, amb l'estil del bàner de l'inici: negre,
+ * amb la franja dels quatre colors de les fitxes, la xifra que compta dins
+ * d'una fitxa del Remigi (blava si has guanyat: jugades; vermella si no:
+ * punts a la mà), la teva posició al rànquing i el botó per reptar la gent.
+ */
+export function DailyResultCard({
+  state,
+  result,
+  header = true,
+}: {
+  state: DailyState;
+  result: DailyResult;
+  /** El títol de la targeta (a la pantalla del dia ja hi és a dalt). */
+  header?: boolean;
+}) {
+  return (
+    <div className={result.won ? 'dia-targeta guanyada' : 'dia-targeta'}>
+      {header && (
+      <div className="dia-targeta-cap">
+        <span className="dia-targeta-icona" aria-hidden="true">
+          <DailyIcon />
+        </span>
+        <span>
+          <strong>Partida del dia #{dayNumber(result.day)}</strong>
+          <span className="dia-targeta-data">{shortDay(result.day)}</span>
+        </span>
+      </div>
+      )}
+
+      <div className="dia-targeta-resultat">
+        <span className={result.won ? 'dia-fitxa blava' : 'dia-fitxa vermella'} aria-hidden="true">
+          {result.won ? result.moves : result.points}
+        </span>
+        <span className="dia-targeta-text">
+          <strong className="dia-resultat">{result.won ? '🏆 Has guanyat!' : 'No ha pogut ser'}</strong>
+          <span>{result.won ? `en ${result.moves === 1 ? '1 jugada' : `${result.moves} jugades`}` : `${resultText(result)}`}</span>
+        </span>
+      </div>
+
+      <DayPlace day={result.day} />
+
+      <ShareButton state={state} result={result} />
+    </div>
   );
 }
 
@@ -91,10 +145,13 @@ export function ShareButton({ state, result }: { state: DailyState; result: Dail
   return (
     <div className="dia-compartir">
       <button type="button" className="dia-compartir-boto" onClick={() => void share()}>
-        📣 Comparteix: em superes?
+        <ShareIcon />
+        <span>
+          Comparteix <span className="dia-compartir-repte">· Em superes?</span>
+        </span>
       </button>
       {note && (
-        <p className="muted small" role="status">
+        <p className="small" role="status">
           {note}
         </p>
       )}

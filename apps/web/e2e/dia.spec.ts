@@ -60,21 +60,21 @@ test('la partida del dia es juga un cop: resultat per jugades o punts, i es pot 
   }
   const final = page.locator('.final-dia');
   await expect(final).toBeVisible();
-  await expect(final.locator('.dia-resultat')).toHaveText(/(Guanyada en \d+ jugad(a|es)|\d+ punts? a la mà)/);
-  await expect(final.getByRole('button', { name: '📣 Comparteix: em superes?' })).toBeVisible();
+  await expect(final.locator('.dia-targeta-text')).toHaveText(/(Has guanyat!en \d+ jugad(a|es)|No ha pogut ser\d+ punts? a la mà)/);
+  await expect(final.getByRole('button', { name: 'Comparteix · Em superes?' })).toBeVisible();
   // Sense compte, on s'entra per sortir al rànquing.
   await expect(final.locator('.dia-posicio')).toContainText('Entra amb Google a dalt de l’inici');
 
   // Ja està feta: el rànquing ensenya el resultat i no deixa tornar-hi.
   await page.getByRole('button', { name: 'Veure el rànquing' }).click();
-  await expect(page.locator('.dia .dia-resultat')).toBeVisible();
+  await expect(page.locator('.dia .dia-targeta')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Juga la partida del dia' })).toHaveCount(0);
 
   // I en tornar a obrir l'app, el bàner porta al resultat, no a una altra partida.
   await page.reload();
   await expect(banner).toContainText('Resultat');
   await banner.click();
-  await expect(page.locator('.dia .dia-resultat')).toBeVisible();
+  await expect(page.locator('.dia .dia-targeta')).toBeVisible();
 });
 
 test('l’enllaç compartit obre directament la partida del dia; a dalt de l’inici, entrar amb Google', async ({ page }) => {
