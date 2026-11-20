@@ -2967,3 +2967,45 @@ Demanat pel jugador: al missatge de WhatsApp, canviar «T’atreveixes a jugar-m
 - [x] `champion.test.ts` comprova la frase nova.
 
 **Criteris d'acceptació (verificats)**: `typecheck` net i `npm test` en verd.
+
+### La partida del dia ✅ Feta (2026-11-20)
+
+Demanat pel jugador: una funció nova al nivell de la lliga que enganxi la gent
+a jugar. La partida «on les fitxes a la vista siguin les mateixes i la resta de
+fitxes estiguin en el mateix ordre, s'ha de contar per nombre de jugades i en
+cas de no guanyar els punts restants. Després per ratxa de dies número 1.»
+
+- [x] Una partida al dia igual per a tothom (`apps/web/src/dia/daily.ts`): la
+      llavor surt de la data (`daySeed`), i amb ella la mà, el sac en el mateix
+      ordre i els noms dels rivals (2, nivell Mitjà). Comença sempre el jugador.
+- [x] Els rivals juguen amb una llavor per torn (`turnSeed`, `GameSetup.seed` a
+      `useGame.ts`): davant de la mateixa taula fan la mateixa jugada a tots els
+      aparells, i reprendre la partida no canvia res.
+- [x] Puntuació: si guanyes, les teves jugades (`humanMoves`, robar inclòs); si
+      no, els punts que et queden a la mà. Qualsevol victòria val més que
+      qualsevol derrota (`compareResults`).
+- [x] Un sol cop al dia: el primer resultat del dia és el que compta
+      (`recordResult`), i la partida a mitges es desa a part (`remigi:game:dia`).
+- [x] Ratxa de dies seguits de número 1 (`currentStreak`, viva fins que s'acaba
+      el dia) i millor ratxa (`bestStreak`), amb els quadrets dels últims 7 dies.
+- [x] Bàner a dalt del feltre de l'inici, pantalla pròpia (`DiaScreen.tsx`),
+      final de partida amb el resultat i botó de compartir (menú del mòbil o
+      WhatsApp, i copiar). Accés també des del canvi de mode.
+
+**Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd
+(176 del motor i 284 de la web, 18 de nous a `daily.test.ts`); e2e sencer en
+verd (185), amb `e2e/dia.spec.ts` nou (mateix faristol i rivals en dos
+navegadors nets; la partida es juga un cop i el resultat queda) i
+`modes.spec.ts` actualitzat; captures de l'inici i de la pantalla del dia en
+escriptori i mòbil.
+
+### Problemes trobats
+
+- [2026-11-20] Sense servidor no hi ha classificació entre jugadors: «número
+  1» vol dir guanyar la teva taula del dia. La comparació amb altres es fa
+  compartint el resultat. Pendent si mai hi ha servidor: rànquing del dia.
+- [2026-11-20] El dia és el de l'hora local del jugador: qui jugui des d'una
+  altra zona horària canvia de partida a una altra hora.
+- [2026-11-20] A partir de la primera jugada diferent, la partida de cadascú
+  s'allunya (els rivals reaccionen al que fas tu); el que és comú és la mà, el
+  sac i qui juga cada torn.

@@ -1,10 +1,11 @@
 import type { GameMode } from '../game/useGame';
-import { ChallengeIcon, FreePlayIcon, LeagueIcon } from './icons';
+import { ChallengeIcon, DailyIcon, FreePlayIcon, LeagueIcon } from './icons';
 
 const MODES: { mode: GameMode; label: string; className: string; Icon: () => React.JSX.Element }[] = [
   { mode: 'lliure', label: 'Joc lliure', className: 'mode-lliure', Icon: FreePlayIcon },
   { mode: 'repte', label: 'Repte', className: 'mode-repte', Icon: ChallengeIcon },
   { mode: 'lliga', label: 'Lliga', className: 'mode-lliga', Icon: LeagueIcon },
+  { mode: 'dia', label: 'Partida del dia', className: 'mode-dia', Icon: DailyIcon },
 ];
 
 /**

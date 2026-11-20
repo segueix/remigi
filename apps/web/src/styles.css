@@ -3328,6 +3328,8 @@ button.secondary.reset-nivell {
   --mode-repte-text: #ffffff;
   --mode-lliga: #a16207;
   --mode-lliga-text: #ffffff;
+  --mode-dia: #7e22ce;
+  --mode-dia-text: #ffffff;
   /* Medalles de la classificació. */
   --plata: #6b7280;
   --bronze: #b45309;
@@ -3340,6 +3342,8 @@ button.secondary.reset-nivell {
   --mode-repte-text: #172554;
   --mode-lliga: #fbbf24;
   --mode-lliga-text: #422006;
+  --mode-dia: #d8b4fe;
+  --mode-dia-text: #3b0764;
   --plata: #d1d5db;
   --bronze: #fdba74;
 }
@@ -3360,6 +3364,13 @@ button.secondary.reset-nivell {
 .lliga {
   --identitat: var(--mode-lliga);
   --identitat-text: var(--mode-lliga-text);
+}
+
+.mode-dia,
+.dia,
+.final-dia {
+  --identitat: var(--mode-dia);
+  --identitat-text: var(--mode-dia-text);
 }
 
 /* ---------- Inici ---------- */
@@ -3432,7 +3443,10 @@ button.secondary.reset-nivell {
 .inici-taula {
   position: relative;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
+  gap: 0.9rem;
   min-height: clamp(17rem, 52vh, 30rem);
   margin-bottom: 0.6rem;
   padding: 1.6rem 1.1rem 2.4rem;
@@ -5428,5 +5442,120 @@ button.secondary.reset-nivell {
   .campio-titol,
   .campio-diploma {
     animation: none;
+  }
+}
+
+/* ---------- Partida del dia ---------- */
+
+/* El bàner de l'inici, a dalt del feltre i a tota l'amplada. */
+.dia-boto {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid color-mix(in srgb, var(--identitat) 40%, var(--vora));
+  border-left: 5px solid var(--identitat);
+  border-radius: 0.9rem;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--identitat) 16%, var(--superficie)),
+    var(--superficie) 70%
+  );
+  color: var(--text);
+  font-weight: 400;
+  text-align: left;
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.32);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.dia-boto:hover:not(:disabled) {
+  filter: none;
+  transform: translateY(-2px);
+}
+
+.dia-boto:focus-visible {
+  outline: 3px solid var(--identitat);
+  outline-offset: 2px;
+}
+
+.dia-boto-icona {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 50%;
+  background: var(--identitat);
+  color: var(--identitat-text);
+}
+
+.dia-boto-icona .icona {
+  width: 1.45rem;
+  height: 1.45rem;
+}
+
+.dia-boto-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.3;
+}
+
+.dia-boto-text .small {
+  color: var(--text-suau);
+  overflow-wrap: anywhere;
+}
+
+.dia-boto-ratxa {
+  flex: none;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.dia-boto-cta {
+  flex: none;
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  background: var(--identitat);
+  color: var(--identitat-text);
+  font-weight: 700;
+}
+
+.dia-quadrets {
+  margin: 0.2rem 0 0.6rem;
+  font-size: 1.4rem;
+  letter-spacing: 0.15rem;
+  text-align: center;
+}
+
+.dia-resultat {
+  margin: 0.4rem 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.dia-resultat.guanyada {
+  color: var(--identitat);
+}
+
+.dia-compartir {
+  margin-top: 0.4rem;
+}
+
+@media (max-width: 560px) {
+  .dia-boto {
+    gap: 0.5rem;
+    padding: 0.5rem 0.6rem;
+  }
+
+  .dia-boto-icona {
+    width: 2.2rem;
+    height: 2.2rem;
+  }
+
+  .dia-boto-cta {
+    padding: 0.3rem 0.7rem;
   }
 }

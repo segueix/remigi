@@ -3,7 +3,8 @@ import { TARGET_NAME, TARGET_URL } from '../appSwitch/appSwitch';
 import { ComEsJuga } from '../components/ComEsJuga';
 import { PlayerAvatar } from '../components/PlayerAvatar';
 import { TileView } from '../components/TileView';
-import { ChallengeIcon, FreePlayIcon, LeagueIcon } from '../components/icons';
+import { ChallengeIcon, DailyIcon, FreePlayIcon, LeagueIcon } from '../components/icons';
+import { currentStreak, dayNumber, resultFor, resultText, type DailyState } from '../dia/daily';
 import {
   difficultyForRating,
   isFinished,
@@ -28,6 +29,12 @@ interface Props {
   savedLliga: boolean;
   challenge: ChallengeState;
   league: LeagueState;
+  /** La partida del dia: el que portes fet i el dia d'avui. */
+  daily: DailyState;
+  today: string;
+  /** La partida d'avui és a mitges. */
+  savedDia: boolean;
+  onDaily(): void;
   onFree(): void;
   onChallenge(): void;
   onLeague(): void;
@@ -61,6 +68,10 @@ export function HomeScreen({
   savedLliga,
   challenge,
   league,
+  daily,
+  today,
+  savedDia,
+  onDaily,
   onFree,
   onChallenge,
   onLeague,
@@ -99,6 +110,15 @@ export function HomeScreen({
     ? `Jornada ${season.played + 1}/${season.config.rounds}${season.played > 0 ? ` · ${ordinal(rankOf(season))}` : ''}`
     : `${tierName(nextTier, league.career.home)} · rivals ${DIFFICULTIES[difficultyForRating(tierRating(nextTier))].label}`;
 
+  /* Partida del dia: si ja està feta, com ha anat; si no, la ratxa que t'hi jugues. */
+  const todayResult = resultFor(daily, today);
+  const streak = currentStreak(daily, today);
+  const dailyStatus = todayResult
+    ? `${todayResult.won ? '🏆' : '🧩'} ${resultText(todayResult)}`
+    : savedDia
+      ? 'A mitges: acaba-la avui'
+      : 'Mateixes fitxes per a tothom';
+
   return (
     <section className="inici">
       <div className="franja-fitxes" aria-hidden="true" />
@@ -120,6 +140,24 @@ export function HomeScreen({
 
       {/* La taula de joc, buida, amb les tres maneres de jugar al damunt. */}
       <div className="inici-taula">
+        {/* La partida del dia, a dalt de la taula: una al dia, igual per a tothom. */}
+        <button type="button" className="dia-boto mode-dia" onClick={onDaily} aria-label="Partida del dia">
+          <span className="dia-boto-icona" aria-hidden="true">
+            <DailyIcon />
+          </span>
+          <span className="dia-boto-text">
+            <strong>Partida del dia #{dayNumber(today)}</strong>
+            <span className="small">{dailyStatus}</span>
+          </span>
+          {streak > 0 && (
+            <span className="dia-boto-ratxa" aria-label={`Ratxa de ${streak} dies número 1`}>
+              🔥 {streak}
+            </span>
+          )}
+          <span className="dia-boto-cta" aria-hidden="true">
+            {todayResult ? 'Resultat' : savedDia ? 'Continua' : 'Juga'}
+          </span>
+        </button>
         <div className="inici-modes">
           <button type="button" className="mode-card mode-lliure" onClick={onFree} aria-label="Joc lliure">
             <span className="mode-icona" aria-hidden="true">

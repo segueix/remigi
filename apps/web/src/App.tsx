@@ -1,4 +1,4 @@
-import { finalScores, randomSeed, type GameState } from '@remigi/core';
+import { finalScores, rackPoints, randomSeed, type GameState } from '@remigi/core';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { GameMode, GameSetup } from './game/useGame';
 import { readElTaulerHome } from './lliga/elTaulerHome';
@@ -36,6 +36,26 @@ import {
   type ChallengeState,
 } from './repte/challenge';
 import { pickPersonas } from './game/bots';
+import {
+  DAILY_LEVEL,
+  DAILY_OPPONENTS,
+  currentStreak,
+  dayKey,
+  dayNumber,
+  dayRng,
+  daySeed,
+  firstPlayerOf,
+  humanMoves,
+  isDayKey,
+  parseDailyState,
+  recordResult,
+  resultFor,
+  resultText,
+  streakText,
+  type DailyResult,
+  type DailyState,
+} from './dia/daily';
+import { DiaScreen, ShareButtons } from './screens/DiaScreen';
 import { GameScreen, type ModeFinish } from './screens/GameScreen';
 import { HomeScreen } from './screens/HomeScreen';
 import { LeagueInterlude } from './screens/LeagueInterlude';
@@ -67,11 +87,17 @@ import { useSavedGames } from './state/useSavedGame';
 import { useTileStyle } from './state/useTileStyle';
 import { leaguePoints, ordinal, signed } from './ui/format';
 
-/** Pantalles: l'inici amb les tres maneres de jugar, la partida i les del repte i la lliga. */
-export type View = 'home' | 'game' | 'repte' | 'lliga' | 'musica';
+/** Pantalles: l'inici amb les tres maneres de jugar, la partida i les del repte, la lliga i la partida del dia. */
+export type View = 'home' | 'game' | 'repte' | 'lliga' | 'dia' | 'musica';
 
 export const CHALLENGE_KEY = 'remigi:repte';
 export const LEAGUE_KEY = 'remigi:lliga';
+export const DAILY_KEY = 'remigi:dia';
+
+/** Els rivals de la partida del dia: els mateixos noms a tots els aparells. */
+function dailyRivals(day: string): string[] {
+  return pickPersonas(DAILY_OPPONENTS, dayRng(day)).map((persona) => persona.name);
+}
 
 /** La partida que es juga ara: es torna a muntar (clau nova) a cada partida que comença. */
 interface Play {
@@ -147,6 +173,7 @@ export function App() {
   const freePlay = usePersisted(FREE_PLAY_KEY, parseFreePlayBox);
   const challenge = usePersisted(CHALLENGE_KEY, parseChallengeState);
   const league = usePersisted(LEAGUE_KEY, parseLeagueState);
+  const daily = usePersisted(DAILY_KEY, parseDailyState);
   const elTaulerHome = useMemo(() => (typeof window === 'undefined' ? null : readElTaulerHome(safeLocalStorage())), []);
   const [pendingProgress, setPendingProgress] = useState<ProfileProgress | null>(() =>
     typeof window === 'undefined' ? null : parseProfileTransferUrl(window.location.href),
@@ -469,6 +496,61 @@ export function App() {
     [goTo, playRound, profile.profile],
   );
 
+  /* ---------- Partida del dia ---------- */
+
+  const playDaily = useCallback(async () => {
+    const player = profile.profile;
+    const state = daily.get();
+    if (!player || !state) return;
+    const today = dayKey();
+    // Només es juga un cop al dia: si ja està feta, es veu el resultat.
+    if (resultFor(state, today)) {
+      goTo('dia');
+      return;
+    }
+    const label = `Partida del dia #${dayNumber(today)}`;
+    const saved = await savedGames.load('dia');
+    if (saved && saved.setup.session === today) {
+      launch('dia', saved.setup, saved, label);
+      return;
+    }
+    const rivals = dailyRivals(today);
+    launch(
+      'dia',
+      {
+        mode: 'dia',
+        playerName: player.name,
+        opponents: rivals.map(() => DAILY_LEVEL),
+        opponentNames: rivals,
+        auto: false,
+        session: today,
+        seed: daySeed(today),
+      },
+      null,
+      label,
+    );
+  }, [daily, profile.profile, savedGames, launch, goTo]);
+
+  const dailyFinish = useCallback(
+    (state: DailyState, result: DailyResult): ModeFinish => {
+      const streak = currentStreak(state, result.day);
+      return {
+        body: (
+          <div className="final-dia">
+            <p className="final-mode-titol">Partida del dia #{dayNumber(result.day)}</p>
+            <p className={result.won ? 'dia-resultat guanyada' : 'dia-resultat'}>
+              <span aria-hidden="true">{result.won ? '🏆' : '🧩'}</span> {resultText(result)}
+            </p>
+            <p className="muted small">{streakText(streak)}.</p>
+            <ShareButtons state={state} result={result} />
+          </div>
+        ),
+        primary: { label: 'Veure la partida del dia', run: () => goTo('dia') },
+      };
+    },
+    [goTo],
+  );
+
   /* ---------- Final de partida ---------- */
 
   /*
@@ -501,9 +583,32 @@ export function App() {
         const career = isFinished(played) ? closeSeason(state.career, played) : state.career;
         const next = league.update({ career, season: played });
         if (next) setFinish(leagueFinish(next));
+      } else if (setup.mode === 'dia') {
+        /*
+         * La partida compta per al dia en què es va començar, un sol cop: la
+         * primera que s'acaba. Jugades: els teus torns; punts: els que et
+         * quedaven a la mà.
+         */
+        const day = setup.session;
+        const state = daily.get();
+        if (!state || !isDayKey(day)) return;
+        const existing = resultFor(state, day);
+        if (existing) {
+          setFinish(dailyFinish(state, existing));
+          return;
+        }
+        const players = game.players.length;
+        const result: DailyResult = {
+          day,
+          won: humanWon(game),
+          moves: humanMoves(game.turn, players, firstPlayerOf(game.turn, game.currentPlayer, players)),
+          points: rackPoints(game.players[0]?.rack ?? []),
+        };
+        const next = daily.update((current) => recordResult(current, result));
+        if (next) setFinish(dailyFinish(next, result));
       }
     },
-    [challenge, league, challengeFinish, leagueFinish],
+    [challenge, league, daily, challengeFinish, leagueFinish, dailyFinish],
   );
 
   if (
@@ -512,7 +617,8 @@ export function App() {
     !profile.profile ||
     !freePlay.value ||
     !challenge.value ||
-    !league.value
+    !league.value ||
+    !daily.value
   ) {
     return (
       <main className="app">
@@ -522,6 +628,7 @@ export function App() {
   }
 
   const inGame = view === 'game' && play !== null;
+  const today = dayKey();
   const classes = [inGame && !statsOpen ? 'app app-joc' : 'app'];
   if (tileStyle === 'invers') classes.push('fitxes-inverses');
 
@@ -581,6 +688,10 @@ export function App() {
           savedLliga={savedGames.saved.lliga !== null}
           challenge={challenge.value}
           league={league.value}
+          daily={daily.value}
+          today={today}
+          savedDia={savedGames.saved.dia !== null && savedGames.saved.dia.setup.session === today}
+          onDaily={() => setView('dia')}
           onFree={() => void startFree()}
           onChallenge={() => setView('repte')}
           onLeague={() => setView('lliga')}
@@ -590,6 +701,19 @@ export function App() {
       )}
 
       {!statsOpen && view === 'musica' && <MusicScreen onHome={() => goTo('home')} />}
+
+      {!statsOpen && view === 'dia' && (
+        <DiaScreen
+          state={daily.value}
+          today={today}
+          hasSavedGame={savedGames.saved.dia !== null && savedGames.saved.dia.setup.session === today}
+          rivals={dailyRivals(today)}
+          playerName={profile.profile.name}
+          onPlay={() => void playDaily()}
+          onHome={() => goTo('home')}
+          onProfile={() => setStatsOpen(true)}
+        />
+      )}
 
       {!statsOpen && view === 'repte' && (
         <RepteScreen
@@ -634,7 +758,7 @@ export function App() {
           handle={profile}
           onBack={() => setStatsOpen(false)}
           backLabel={inGame ? 'Tanca i torna a la partida' : 'Tanca el perfil'}
-          currentMode={inGame && play ? play.mode : view === 'repte' || view === 'lliga' ? view : null}
+          currentMode={inGame && play ? play.mode : view === 'repte' || view === 'lliga' || view === 'dia' ? view : null}
           onSwitchMode={switchMode}
           tileStyle={tileStyle}
           onTileStyle={setTileStyle}

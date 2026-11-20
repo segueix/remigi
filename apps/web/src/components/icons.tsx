@@ -129,6 +129,17 @@ export const LeagueIcon = () => (
   </Icon>
 );
 
+/** Partida del dia: el full del calendari. */
+export const DailyIcon = () => (
+  <Icon>
+    <rect x="4" y="5" width="16" height="15.5" rx="2" />
+    <line x1="4" y1="10" x2="20" y2="10" />
+    <line x1="8.5" y1="3" x2="8.5" y2="7" />
+    <line x1="15.5" y1="3" x2="15.5" y2="7" />
+    <polyline points="9 15 11 17 15.5 13" />
+  </Icon>
+);
+
 /** Localitat: el punt del mapa. */
 export const PinIcon = () => (
   <Icon>

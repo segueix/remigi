@@ -328,7 +328,9 @@ export function PlayerMenu({
           <p className="suggestion menu-mode">
             {mode === 'lliga'
               ? 'Jornada de lliga: els rivals i el seu nivell els posa el calendari de la lliga.'
-              : 'Partida de repte: el nivell i el nombre de rivals els vas triar en començar el repte.'}{' '}
+              : mode === 'dia'
+                ? 'Partida del dia: les mateixes fitxes i els mateixos rivals per a tothom. Només compta un cop.'
+                : 'Partida de repte: el nivell i el nombre de rivals els vas triar en començar el repte.'}{' '}
             El teu nivell del joc lliure no es mou amb aquestes partides.
           </p>
         )}
