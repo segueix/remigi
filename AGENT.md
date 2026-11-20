@@ -3248,3 +3248,26 @@ tothom fins que hi hagi dades).
 
 - [2026-11-20] Cal tornar a publicar `firestore.rules` a la consola perquè
   s'acceptin els resultats amb desempat; mentrestant es desen sense.
+
+### Desempat a la vista i reinici del dia #1 ✅ Feta (2026-11-20)
+
+Demanat pel jugador: reiniciar per aquesta vegada la partida del dia per
+tornar-la a jugar, i que es vegin els punts dels rivals (el desempat) en verd,
+al resultat i al rànquing.
+
+- [x] `resetLaunchDay`: un sol cop (`remigi:dia:reinici-1`) i només el
+      2026-11-20, s'esborra el resultat del dia #1 d'abans del desempat (sense
+      `rivals`) i la ratxa portada d'aquell dia.
+- [x] Targeta del resultat: «+245 punts dels rivals» en verd.
+- [x] Rànquing d'avui: columna «Rivals» en verd (+245) al costat de les
+      jugades; buida a les derrotes i «—» als resultats d'abans.
+
+**Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd
+(307, 1 de nou); e2e `dia`, `inici` i `modes` en verd; captura amb dades
+simulades.
+
+### Problemes trobats
+
+- [2026-11-20] El resultat ja pujat a Firestore (`dia/2026-11-20/resultats/{uid}`)
+  no es pot esborrar des de l'app (les regles no ho deixen): s'ha d'esborrar a
+  la consola perquè el de la segona partida hi pugui entrar.

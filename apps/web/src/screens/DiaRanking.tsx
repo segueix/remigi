@@ -105,7 +105,9 @@ export function DiaRanking({ today, alias, mine = null, version }: Props) {
           empty="Encara no hi ha ningú al rànquing d’avui. Sigues el primer!"
           column="Jugades"
           value={(e) => (e.won ? String(e.moves) : `−${e.points}`)}
-          label={(e) => resultText(e)}
+          extraColumn="Rivals"
+          extra={(e) => (e.won ? (e.rivals > 0 ? `+${e.rivals}` : '—') : '')}
+          label={(e) => (e.won && e.rivals > 0 ? `${resultText(e)}; rivals amb ${e.rivals} punts` : resultText(e))}
           good={(e) => e.won}
         />
       ) : (
@@ -128,6 +130,8 @@ function RankList<T extends { alias: string }>({
   empty,
   column,
   value,
+  extraColumn,
+  extra,
   label,
   good,
 }: {
@@ -137,6 +141,12 @@ function RankList<T extends { alias: string }>({
   column: string;
   /** El resultat curt de cada fila: el número de jugades, o «−punts» si ha perdut. */
   value(entry: T): string;
+  /**
+   * Segona columna, si n'hi ha: al rànquing d'avui, el desempat (els punts que
+   * s'han quedat els rivals, en verd: com més, millor).
+   */
+  extraColumn?: string;
+  extra?(entry: T): string;
   /** El resultat sencer, per als lectors de pantalla. */
   label(entry: T): string;
   good(entry: T): boolean;
@@ -145,11 +155,12 @@ function RankList<T extends { alias: string }>({
   if (load.state === 'error') return <p className="muted small">No s’ha pogut carregar el rànquing. Torna-ho a provar més tard.</p>;
   if (load.rows.length === 0) return <p className="muted small">{empty}</p>;
   return (
-    <ol className="dia-ranking-llista">
+    <ol className={extra ? 'dia-ranking-llista amb-extra' : 'dia-ranking-llista'}>
       <li className="dia-ranking-capcalera" aria-hidden="true">
         <span>#</span>
         <span>Jugador</span>
         <span className="dia-ranking-valor">{column}</span>
+        {extraColumn && <span className="dia-ranking-extra">{extraColumn}</span>}
       </li>
       {load.rows.map((row, i) => (
         <li
@@ -170,6 +181,7 @@ function RankList<T extends { alias: string }>({
           >
             {value(row.entry)}
           </span>
+          {extra && <span className="dia-ranking-extra" aria-hidden="true">{extra(row.entry)}</span>}
         </li>
       ))}
     </ol>

@@ -6217,3 +6217,35 @@ button.enllac {
 .dia-ranking-valor.perd {
   color: #ef4444;
 }
+
+/*
+ * El desempat al rànquing d'avui: els punts que s'han quedat els rivals, en
+ * verd (com més, millor), en una columna al costat de les jugades.
+ */
+.dia-ranking-llista.amb-extra li {
+  grid-template-columns: 2.2rem minmax(0, 1fr) auto 3.4rem;
+}
+
+.dia-ranking-extra {
+  color: #22c55e;
+  font-size: 0.9rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.dia-ranking-capcalera .dia-ranking-extra {
+  color: var(--text-suau);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* A la targeta del resultat: «+245 punts dels rivals», en verd. */
+.dia-targeta-rivals {
+  color: #4ade80 !important;
+  font-size: 0.9rem;
+}
+
+.dia-targeta-rivals strong {
+  font-size: 1.05rem;
+}
