@@ -3069,3 +3069,17 @@ repetida.
   modificar).
 - [2026-11-20] La sincronització amb el compte real no es pot provar
   automàticament: cal provar-la a la web publicada amb les regles publicades.
+
+### Inici amb els colors de les fitxes ✅ Feta (2026-11-20)
+
+Demanat pel jugador: els tres calaixos de dalt i el bàner de sota, cadascun
+amb el color d'un grup de fitxes del Remigi, i el text en blanc o negre.
+
+- [x] Joc lliure vermell, Repte blau, Lliga groc i Partida del dia negre (els
+      colors de `.tile-red`, `.tile-blue`, `.tile-orange` i `.tile-black`),
+      igual en mode clar i fosc. Text blanc, i negre sobre el groc.
+- [x] Icona en un disc del color del text i botó a l'inrevés (fons del color
+      del text, lletra del color del calaix). Només a l'inici (`.inici-taula`).
+
+**Criteris d'acceptació (verificats)**: build correcte; e2e `inici`, `dia` i
+`modes` en verd; captures en mode fosc i clar, mòbil i escriptori.

@@ -5638,3 +5638,82 @@ button.enllac {
   text-decoration: underline;
   cursor: pointer;
 }
+
+/* ---------- Inici: cada calaix amb el color d'un grup de fitxes ---------- */
+
+/*
+ * Els tres modes i el bàner de la partida del dia porten els quatre colors de
+ * les fitxes del Remigi (els mateixos de `.tile-red`, `.tile-blue`,
+ * `.tile-orange` i `.tile-black`), igual en mode clar i fosc. El text va en
+ * blanc o en negre segons quin es llegeix millor sobre cada color:
+ * blanc sobre vermell (5.9:1), blau (6.7:1) i negre (17:1); negre sobre groc
+ * (12:1).
+ */
+.inici-taula .mode-lliure {
+  --calaix: #cc0000;
+  --calaix-fosc: #a30000;
+  --calaix-text: #ffffff;
+}
+
+.inici-taula .mode-repte {
+  --calaix: #1d4ed8;
+  --calaix-fosc: #1739a8;
+  --calaix-text: #ffffff;
+}
+
+.inici-taula .mode-lliga {
+  --calaix: #f5c518;
+  --calaix-fosc: #dcae0a;
+  --calaix-text: #1c1917;
+}
+
+.inici-taula .mode-dia {
+  --calaix: #1c1917;
+  --calaix-fosc: #0c0a09;
+  --calaix-text: #ffffff;
+}
+
+.inici-taula .mode-card,
+.inici-taula .dia-boto {
+  border: 1px solid color-mix(in srgb, var(--calaix-text) 22%, var(--calaix));
+  background: linear-gradient(180deg, var(--calaix), var(--calaix-fosc));
+  color: var(--calaix-text);
+}
+
+.inici-taula .mode-card {
+  border-top: 1px solid color-mix(in srgb, var(--calaix-text) 22%, var(--calaix));
+}
+
+.inici-taula .dia-boto {
+  border-left: 1px solid color-mix(in srgb, var(--calaix-text) 22%, var(--calaix));
+}
+
+/* La icona: un disc del color del text amb el dibuix del color del calaix. */
+.inici-taula .mode-card .mode-icona,
+.inici-taula .dia-boto .dia-boto-icona {
+  background: var(--calaix-text);
+  color: var(--calaix);
+  box-shadow: none;
+}
+
+.inici-taula .mode-card .mode-sub,
+.inici-taula .dia-boto .dia-boto-text .small {
+  color: color-mix(in srgb, var(--calaix-text) 82%, var(--calaix));
+}
+
+.inici-taula .mode-card .mode-estat {
+  background: color-mix(in srgb, var(--calaix-text) 14%, var(--calaix));
+  color: var(--calaix-text);
+}
+
+/* El botó, a l'inrevés: fons del color del text i lletra del color del calaix. */
+.inici-taula .mode-card .mode-cta,
+.inici-taula .dia-boto .dia-boto-cta {
+  background: var(--calaix-text);
+  color: var(--calaix);
+}
+
+.inici-taula .mode-card:focus-visible,
+.inici-taula .dia-boto:focus-visible {
+  outline-color: #ffffff;
+}
