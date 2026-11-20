@@ -3083,3 +3083,8 @@ amb el color d'un grup de fitxes del Remigi, i el text en blanc o negre.
 
 **Criteris d'acceptació (verificats)**: build correcte; e2e `inici`, `dia` i
 `modes` en verd; captures en mode fosc i clar, mòbil i escriptori.
+
+- [x] (2026-11-20) Lliga també amb text, icona i botó blancs: el groc es puja
+      cap a or (`#d9a000` → `#b07d00`), amb ombra al text i l'estat sobre fons
+      més fosc; la lletra del botó i el dibuix de la icona, en or fosc
+      `#8a5f00` (5.5:1 sobre blanc).

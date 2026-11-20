@@ -5646,8 +5646,8 @@ button.enllac {
  * les fitxes del Remigi (els mateixos de `.tile-red`, `.tile-blue`,
  * `.tile-orange` i `.tile-black`), igual en mode clar i fosc. El text va en
  * blanc o en negre segons quin es llegeix millor sobre cada color:
- * blanc sobre vermell (5.9:1), blau (6.7:1) i negre (17:1); negre sobre groc
- * (12:1).
+ * blanc sobre vermell (5.9:1), blau (6.7:1) i negre (17:1). A la lliga, el
+ * groc es puja cap a or perquè també hi vagi el text blanc.
  */
 .inici-taula .mode-lliure {
   --calaix: #cc0000;
@@ -5661,10 +5661,28 @@ button.enllac {
   --calaix-text: #ffffff;
 }
 
+/*
+ * La lliga, amb el groc de les fitxes una mica més pujat (cap a or) perquè
+ * hi aguanti el text blanc com als altres calaixos; l'ombra fosca del text i
+ * el fons més fosc de l'estat l'acaben de fer llegible.
+ */
 .inici-taula .mode-lliga {
-  --calaix: #f5c518;
-  --calaix-fosc: #dcae0a;
-  --calaix-text: #1c1917;
+  --calaix: #d9a000;
+  --calaix-fosc: #b07d00;
+  --calaix-text: #ffffff;
+  /* Lletra del botó i dibuix de la icona: un or fosc, que sobre blanc es llegeix (5.5:1). */
+  --calaix-tinta: #8a5f00;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.35);
+}
+
+.inici-taula .mode-card.mode-lliga .mode-estat {
+  background: rgb(0 0 0 / 0.2);
+}
+
+.inici-taula .mode-card.mode-lliga .mode-cta,
+.inici-taula .mode-card.mode-lliga .mode-icona {
+  color: var(--calaix-tinta);
+  text-shadow: none;
 }
 
 .inici-taula .mode-dia {
