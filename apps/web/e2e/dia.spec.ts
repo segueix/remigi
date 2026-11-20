@@ -37,7 +37,8 @@ test('la partida del dia té les mateixes fitxes i els mateixos rivals a tots el
   expect(a.rack.split(',')).toHaveLength(14);
   expect(b.rack).toBe(a.rack);
   expect(b.rivals).toEqual(a.rivals);
-  expect(a.rivals).toHaveLength(2);
+  // 2 rivals entre setmana; 3 el diumenge (taula de quatre).
+  expect([2, 3]).toContain(a.rivals.length);
 });
 
 test('la partida del dia es juga un cop: resultat per jugades o punts, i es pot compartir', async ({ page }) => {
@@ -49,7 +50,8 @@ test('la partida del dia es juga un cop: resultat per jugades o punts, i es pot 
 
   // Directament a la partida, sense cap pantalla entremig.
   await expect(page.locator('.nivell-mode')).toContainText('Partida del dia #');
-  await expect(page.locator('.player')).toHaveCount(3);
+  // 2 rivals entre setmana, 3 el diumenge.
+  expect([3, 4]).toContain(await page.locator('.player').count());
 
   // Roba fins que s'acaba la partida.
   for (let i = 0; i < 500; i++) {

@@ -150,3 +150,33 @@ El resultat porta el camp `rivals` (punts que els quedaven als rivals). Els
 resultats d'abans no en porten: compten com a 0 i l'app els torna a puntuar en
 llegir-los. Si les regles publicades encara són les d'abans, l'app desa el
 format antic (sense `rivals`) perquè el resultat no es perdi.
+
+## Dificultat de la setmana i sortida garantida
+
+`apps/web/src/dia/plan.ts`. Igual per a tothom, segons el dia de la setmana a
+Barcelona (sense Expert, per no trencar la ratxa de tothom cada setmana):
+
+| Dia | Rivals | Força | Etiqueta |
+|---|---|---|---|
+| Dilluns | 2 | 1000 | Fàcil ● |
+| Dimarts | 2 | 1100 | Suau ●● |
+| Dimecres | 2 | 1200 | Mitjà ●●● |
+| Dijous | 2 | 1250 | Mitjà+ ●●● |
+| Divendres | 2 | 1300 | Exigent ●●●● |
+| Dissabte | 2 | 1400 | Avançat ●●●●● |
+| Diumenge | 3 | 1350 | Taula de 4 ●●●● |
+
+**Sempre es pot obrir.** Abans de la sortida inicial només es pot obrir o
+robar, i els rivals juguen sempre igual davant de la mateixa taula: el camí fins
+a la sortida és el mateix per a tothom. L'app prova fins a 12 barreges del dia
+(`candidateSeed`) i es queda amb la primera amb què la sortida de 30 punts és
+possible com a molt al **3r torn** del jugador (`openingTurn`). No ha de ser al
+primer: es pot obrir, però no ve regalat. El càlcul és determinista (cerca
+limitada per passos, no per temps) i dona la mateixa barreja a tots els
+aparells; es desa al mòbil (`remigi:dia:pla`, lligat a la versió del motor).
+
+En 300 dies simulats, sense el filtre 122 (41 %) no permetien obrir fins passat
+el 3r torn; amb el filtre, cap.
+
+El bàner diu el dia i la dificultat («Divendres · Exigent ●●●●○»), i la ratxa
+porta també els dies jugats seguits (`playedStreak`).

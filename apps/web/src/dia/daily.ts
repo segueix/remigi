@@ -1,11 +1,12 @@
-import { createRng, type DifficultyKey } from '@remigi/core';
+import { createRng } from '@remigi/core';
 
 /**
  * La partida del dia: cada dia, una partida igual per a tothom. Les catorze
  * fitxes que tens a la mà són les mateixes, i la resta del sac surt en el
  * mateix ordre (la llavor surt de la data). Els rivals, també: mateixos noms,
- * mateix nivell, i el motor els fa jugar amb una llavor per torn, de manera
- * que davant de la mateixa taula fan la mateixa jugada.
+ * la força del dia de la setmana (`plan.ts`), i el motor els fa jugar amb una
+ * llavor per torn, de manera que davant de la mateixa taula fan la mateixa
+ * jugada.
  *
  * Es juga un sol cop al dia. Si guanyes, compta en **quantes jugades** (els
  * teus torns: menys és millor); si no, **quants punts et queden a la mà**
@@ -15,9 +16,10 @@ import { createRng, type DifficultyKey } from '@remigi/core';
  * Pur i serialitzable, com el repte i la lliga.
  */
 
-/** Rivals de la partida del dia: sempre dos (taula de tres), de nivell Mitjà. */
-export const DAILY_OPPONENTS = 2;
-export const DAILY_LEVEL: DifficultyKey = 'medium';
+/*
+ * Els rivals i la seva força depenen del dia de la setmana, i la barreja es
+ * tria perquè sempre es pugui obrir: vegeu `plan.ts`.
+ */
 
 /** El primer dia de la partida del dia: el número 1. */
 export const FIRST_DAY = '2026-11-20';
@@ -240,6 +242,21 @@ export function withCarried(state: DailyState, carried: CarriedStreak | null): D
   return { ...state, carried };
 }
 
+/**
+ * Dies seguits que has jugat la partida del dia (guanyant o no), fins avui o,
+ * si avui encara no hi has jugat, fins ahir.
+ */
+export function playedStreak(state: DailyState, today: string): number {
+  const days = new Set(state.results.map((r) => r.day));
+  let day = days.has(today) ? today : previousDay(today);
+  let streak = 0;
+  while (days.has(day)) {
+    streak++;
+    day = previousDay(day);
+  }
+  return streak;
+}
+
 /** La millor ratxa de tots els temps (comptant la que ve d'un altre aparell). */
 export function bestStreak(state: DailyState): number {
   const days = [...state.results].sort((a, b) => (a.day < b.day ? -1 : 1));
@@ -293,10 +310,10 @@ export function recentSquares(state: DailyState, today: string, days = 7): strin
 }
 
 /** El missatge per compartir el resultat (WhatsApp o el menú del mòbil). */
-export function shareText(state: DailyState, result: DailyResult, url: string): string {
+export function shareText(state: DailyState, result: DailyResult, url: string, level?: string): string {
   const streak = currentStreak(state, result.day);
   return [
-    `Remigi · Partida del dia #${dayNumber(result.day)}`,
+    `Remigi · Partida del dia #${dayNumber(result.day)}${level ? ` · ${level}` : ''}`,
     `${result.won ? '🏆' : '🧩'} ${resultText(result)}`,
     streak > 0 ? streakText(streak) : null,
     recentSquares(state, result.day),

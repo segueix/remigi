@@ -2,6 +2,7 @@ import { DIFFICULTIES, adaptiveLevelLabel, type PlayerProfile, type Tile } from 
 import { TARGET_NAME, TARGET_URL } from '../appSwitch/appSwitch';
 import type { CloudHandle } from '../cloud/useCloud';
 import { ComEsJuga } from '../components/ComEsJuga';
+import { dailyDifficulty } from '../dia/plan';
 import { GoogleHeaderButton, GoogleMark } from '../components/GoogleAccount';
 import { PlayerAvatar } from '../components/PlayerAvatar';
 import { TileView } from '../components/TileView';
@@ -11,6 +12,7 @@ import {
   countdownText,
   currentStreak,
   dayNumber,
+  playedStreak,
   msUntilNextDay,
   resultFor,
   resultText,
@@ -128,6 +130,8 @@ export function HomeScreen({
   const todayResult = resultFor(daily, today);
   const streak = currentStreak(daily, today);
   const best = bestStreak(daily);
+  const played = playedStreak(daily, today);
+  const difficulty = dailyDifficulty(today);
   const nextIn = countdownText(msUntilNextDay());
   const dailyStatus = todayResult
     ? `${todayResult.won ? '🏆' : '🧩'} ${resultText(todayResult)}`
@@ -223,6 +227,13 @@ export function HomeScreen({
           </span>
           <span className="dia-boto-text">
             <strong className="dia-boto-titol">Partida del dia #{dayNumber(today)}</strong>
+            <span className="dia-boto-nivell" aria-label={`${difficulty.dayName}: ${difficulty.label}, dificultat ${difficulty.stars} de 5`}>
+              {difficulty.dayName} · {difficulty.label}{' '}
+              <span className="dia-boto-punts" aria-hidden="true">
+                {'●'.repeat(difficulty.stars)}
+                <span className="apagats">{'●'.repeat(5 - difficulty.stars)}</span>
+              </span>
+            </span>
             <span className="dia-boto-estat">{dailyStatus}</span>
             <span className="small dia-boto-rellotge">
               {todayResult ? 'Nova partida' : 'Acaba'} en {nextIn} · hora de Barcelona
@@ -237,6 +248,7 @@ export function HomeScreen({
             </span>
             <span className="dia-boto-ratxa-etiqueta">{streak === 1 ? 'dia de ratxa' : 'dies de ratxa'}</span>
             <span className="dia-boto-ratxa-millor">millor: {best}</span>
+            {played > 0 && <span className="dia-boto-ratxa-millor">jugats: {played}</span>}
           </span>
           <span className="dia-boto-cta" aria-hidden="true">
             {todayResult ? 'Resultat' : savedDia ? 'Continua' : 'Juga'}

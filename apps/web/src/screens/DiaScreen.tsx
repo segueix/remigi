@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { DayPlace } from '../components/DayPlace';
+import { dailyDifficulty } from '../dia/plan';
 import { DailyIcon, ShareIcon } from '../components/icons';
 import { gameUrl } from '../ui/gameUrl';
 import {
@@ -94,7 +95,9 @@ export function DailyResultCard({
         </span>
         <span>
           <strong>Partida del dia #{dayNumber(result.day)}</strong>
-          <span className="dia-targeta-data">{shortDay(result.day)}</span>
+          <span className="dia-targeta-data">
+            {shortDay(result.day)} · {dailyDifficulty(result.day).dayName} · {dailyDifficulty(result.day).label}
+          </span>
         </span>
       </div>
       )}
@@ -129,7 +132,8 @@ export function DailyResultCard({
  */
 export function ShareButton({ state, result }: { state: DailyState; result: DailyResult }) {
   const [note, setNote] = useState<string | null>(null);
-  const text = shareText(state, result, gameUrl());
+  const difficulty = dailyDifficulty(result.day);
+  const text = shareText(state, result, gameUrl(), `${difficulty.dayName} (${difficulty.label})`);
 
   const share = async () => {
     if (typeof navigator.share === 'function') {
