@@ -6137,3 +6137,9 @@ button.enllac {
   background: var(--mode-dia);
   color: var(--mode-dia-text);
 }
+
+/* La teva fila, quan no ets al top 10: separada amb una ratlla puntejada. */
+.dia-ranking-llista li.salt {
+  margin-top: 0.5rem;
+  border-top: 2px dotted var(--vora);
+}

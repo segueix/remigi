@@ -3169,3 +3169,27 @@ comparteix» i «molt més atractiva».
 **Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd
 (301); e2e sencer en verd (187); captures del final de partida i de la
 pantalla del dia al mòbil.
+
+### Firestore dins de la quota gratuïta ✅ Feta (2026-11-20)
+
+Demanat pel jugador: que Firebase arribi al màxim de gent sense pagar quotes.
+
+- [x] Rànquing d'avui: top 10 (abans 50), i la teva fila a sota si no hi ets.
+- [x] Rànquing de ratxes: top 10 de les vives filtrat a Firestore
+      (`lastDay in [ahir, avui]`, índex de `firestore.indexes.json`), amb
+      lectura de reserva (30) mentre l'índex no existeixi. Abans, 150.
+- [x] Rànquings desats 10 minuts a l'aparell (`cloud/cache.ts`), esborrats en
+      pujar el teu resultat.
+- [x] Posició: dos recomptes amb la puntuació coneguda (abans, una lectura i
+      fins a 6 reintents). El resultat del dia es puja sense llegir-lo abans.
+- [x] Nivell i lliga: com a molt cada 30 minuts, i en tancar o amagar l'app
+      (`uploadDelay`, `pagehide`/`visibilitychange`).
+
+**Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd
+(304 de la web, 3 de nous); e2e sencer en verd (187).
+
+### Problemes trobats
+
+- [2026-11-20] L'índex compost del rànquing de ratxes s'ha de crear a la
+  consola (Firestore → Índices); l'agent no hi té accés. Sense, el rànquing
+  funciona amb la lectura de reserva.

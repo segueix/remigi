@@ -1,8 +1,17 @@
 import { useEffect, useState } from 'react';
-import { fetchDayRanking, fetchStreakRanking } from '../cloud/firebase';
-import { dayRanking, streakRanking, type DayEntry, type PlayerEntry, type RankRow } from '../cloud/ranking';
+import { fetchDayPlace, fetchDayRanking, fetchStreakRanking } from '../cloud/firebase';
+import {
+  RANKING_SIZE,
+  dayEntry,
+  dayRanking,
+  rankScore,
+  streakRanking,
+  type DayEntry,
+  type PlayerEntry,
+  type RankRow,
+} from '../cloud/ranking';
 import { useCloudContext } from '../cloud/useCloud';
-import { resultText } from '../dia/daily';
+import { previousDay, resultText, type DailyResult } from '../dia/daily';
 
 type Tab = 'avui' | 'ratxes';
 
@@ -12,6 +21,8 @@ interface Props {
   today: string;
   /** L'àlies amb què surts (el teu nom a Remigi). */
   alias: string;
+  /** El teu resultat d'avui: si no ets al top, la teva fila surt a sota. */
+  mine?: DailyResult | null;
   /** Canvia quan hi ha un resultat nou pujat: es torna a carregar. */
   version: number;
 }
@@ -21,7 +32,7 @@ interface Props {
  * i després derrotes per menys punts a la mà) i el de ratxes de dies número 1.
  * Per sortir-hi cal entrar amb Google (a dalt de l'inici); per mirar-los, no.
  */
-export function DiaRanking({ today, version }: Props) {
+export function DiaRanking({ today, alias, mine = null, version }: Props) {
   const cloud = useCloudContext();
   const [tab, setTab] = useState<Tab>('avui');
   const [day, setDay] = useState<Load<DayEntry>>({ state: 'carregant' });
@@ -32,19 +43,35 @@ export function DiaRanking({ today, version }: Props) {
     let cancelled = false;
     if (tab === 'avui') {
       setDay({ state: 'carregant' });
-      fetchDayRanking(today)
-        .then((rows) => !cancelled && setDay({ state: 'fet', rows: dayRanking(rows, uid) }))
-        .catch(() => !cancelled && setDay({ state: 'error' }));
+      void (async () => {
+        try {
+          const rows = dayRanking(await fetchDayRanking(today), uid);
+          /*
+           * Si no ets al top, la teva fila a sota amb la teva posició (dues
+           * consultes de recompte, desades com el rànquing).
+           */
+          if (uid && mine && mine.day === today && !rows.some((row) => row.you)) {
+            const { place } = await fetchDayPlace(today, rankScore(mine));
+            if (place > rows.length) rows.push({ id: uid, place, entry: dayEntry(mine, alias, 0), you: true });
+          }
+          if (!cancelled) setDay({ state: 'fet', rows });
+        } catch {
+          if (!cancelled) setDay({ state: 'error' });
+        }
+      })();
     } else {
       setStreaks({ state: 'carregant' });
-      fetchStreakRanking()
-        .then((rows) => !cancelled && setStreaks({ state: 'fet', rows: streakRanking(rows, today, uid) }))
+      fetchStreakRanking(today, previousDay(today))
+        .then(
+          (rows) =>
+            !cancelled && setStreaks({ state: 'fet', rows: streakRanking(rows, today, uid).slice(0, RANKING_SIZE) }),
+        )
         .catch(() => !cancelled && setStreaks({ state: 'error' }));
     }
     return () => {
       cancelled = true;
     };
-  }, [tab, today, uid, version]);
+  }, [tab, today, uid, version, mine, alias]);
 
   return (
     <section className="dia-ranking" aria-label="Rànquing">
@@ -108,8 +135,14 @@ function RankList<T extends { alias: string }>({
   if (load.rows.length === 0) return <p className="muted small">{empty}</p>;
   return (
     <ol className="dia-ranking-llista">
-      {load.rows.map((row) => (
-        <li key={row.id} className={row.you ? 'jo' : undefined}>
+      {load.rows.map((row, i) => (
+        <li
+          key={row.id}
+          className={
+            [row.you && 'jo', i > 0 && row.place > load.rows[i - 1].place + 1 && 'salt'].filter(Boolean).join(' ') ||
+            undefined
+          }
+        >
           <span className="dia-ranking-pos">{row.place <= 3 ? ['🥇', '🥈', '🥉'][row.place - 1] : row.place}</span>
           <span className="dia-ranking-nom">
             {row.entry.alias}
