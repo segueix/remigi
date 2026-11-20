@@ -60,9 +60,57 @@ export const EMPTY_DAILY: DailyState = { version: 1, results: [] };
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
-/** El dia (hora local del jugador) en format `AAAA-MM-DD`. */
+/**
+ * La partida del dia canvia a mitjanit **de Barcelona**, per a tothom igual:
+ * qui jugui des d'una altra zona horària té la mateixa partida al mateix
+ * moment.
+ */
+export const DAY_TIME_ZONE = 'Europe/Madrid';
+
+/** L'hora de Barcelona d'un instant: data i hora, minut i segon. */
+function barcelonaParts(date: Date): { day: string; seconds: number } | null {
+  try {
+    const parts = new Intl.DateTimeFormat('en-GB', {
+      timeZone: DAY_TIME_ZONE,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hourCycle: 'h23',
+    }).formatToParts(date);
+    const get = (type: string) => parts.find((p) => p.type === type)?.value ?? '';
+    const day = `${get('year')}-${get('month')}-${get('day')}`;
+    if (!isDayKey(day)) return null;
+    return { day, seconds: Number(get('hour')) * 3600 + Number(get('minute')) * 60 + Number(get('second')) };
+  } catch {
+    return null;
+  }
+}
+
+/** El dia de la partida (`AAAA-MM-DD`, hora de Barcelona; si el navegador no ho sap, la local). */
 export function dayKey(date: Date = new Date()): string {
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+  return (
+    barcelonaParts(date)?.day ??
+    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+  );
+}
+
+/** Mil·lisegons que falten per a la partida següent (mitjanit de Barcelona). */
+export function msUntilNextDay(date: Date = new Date()): number {
+  const parts = barcelonaParts(date);
+  const seconds = parts ? parts.seconds : date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds();
+  return Math.max(0, (86_400 - seconds) * 1000 - date.getMilliseconds());
+}
+
+/** «5 h 20 min», «12 min» o «menys d'1 min». */
+export function countdownText(ms: number): string {
+  const minutes = Math.floor(ms / 60_000);
+  if (minutes < 1) return 'menys d’1 min';
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return h > 0 ? `${h} h ${m} min` : `${m} min`;
 }
 
 /** Dies de calendari d'un dia a l'altre (positiu si `to` és després). */

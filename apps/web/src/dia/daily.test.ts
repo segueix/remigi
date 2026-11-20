@@ -4,6 +4,8 @@ import {
   EMPTY_DAILY,
   bestStreak,
   compareResults,
+  countdownText,
+  msUntilNextDay,
   currentStreak,
   dayKey,
   dayNumber,
@@ -27,8 +29,20 @@ const withResults = (...results: DailyResult[]): DailyState =>
   results.reduce((state, r) => recordResult(state, r), EMPTY_DAILY);
 
 describe('dates', () => {
-  it('el dia és el local, en format AAAA-MM-DD', () => {
-    expect(dayKey(new Date(2026, 0, 5, 23, 59))).toBe('2026-01-05');
+  it('el dia és el de Barcelona, en format AAAA-MM-DD', () => {
+    // 23:30 UTC del 5 de gener són les 00:30 del 6 a Barcelona (hivern, UTC+1).
+    expect(dayKey(new Date(Date.UTC(2026, 0, 5, 23, 30)))).toBe('2026-01-06');
+    expect(dayKey(new Date(Date.UTC(2026, 0, 5, 22, 30)))).toBe('2026-01-05');
+    // A l'estiu, UTC+2: les 22:30 UTC ja són l'endemà.
+    expect(dayKey(new Date(Date.UTC(2026, 6, 5, 22, 30)))).toBe('2026-07-06');
+  });
+
+  it('el compte enrere va fins a mitjanit de Barcelona', () => {
+    // 22:00 a Barcelona (21:00 UTC a l'hivern): falten 2 hores.
+    expect(msUntilNextDay(new Date(Date.UTC(2026, 0, 5, 21, 0)))).toBe(2 * 3_600_000);
+    expect(countdownText(2 * 3_600_000 + 5 * 60_000)).toBe('2 h 5 min');
+    expect(countdownText(12 * 60_000)).toBe('12 min');
+    expect(countdownText(20_000)).toBe('menys d’1 min');
   });
 
   it('el dia anterior travessa mesos i anys', () => {

@@ -3004,8 +3004,8 @@ escriptori i mòbil.
 - [2026-11-20] Sense servidor no hi ha classificació entre jugadors: «número
   1» vol dir guanyar la teva taula del dia. La comparació amb altres es fa
   compartint el resultat. Pendent si mai hi ha servidor: rànquing del dia.
-- [2026-11-20] El dia és el de l'hora local del jugador: qui jugui des d'una
-  altra zona horària canvia de partida a una altra hora.
+- [2026-11-20] El dia era el de l'hora local del jugador — resolt el mateix
+  dia: ara és el de Barcelona per a tothom.
 - [2026-11-20] A partir de la primera jugada diferent, la partida de cadascú
   s'allunya (els rivals reaccionen al que fas tu); el que és comú és la mà, el
   sac i qui juga cada torn.
@@ -3088,3 +3088,20 @@ amb el color d'un grup de fitxes del Remigi, i el text en blanc o negre.
       cap a or (`#d9a000` → `#b07d00`), amb ombra al text i l'estat sobre fons
       més fosc; la lletra del botó i el dibuix de la icona, en or fosc
       `#8a5f00` (5.5:1 sobre blanc).
+
+### Partida del dia: hora de Barcelona i bàner amb la ratxa ✅ Feta (2026-11-20)
+
+Demanat pel jugador: «Indica hora de Barcelona, fes el banner negre de partida
+del dia una mica més ampli i visible, podries posar ratxa de la persona».
+
+- [x] El dia de la partida és el de Barcelona (`dayKey` amb `Europe/Madrid`),
+      i el bàner diu quant falta: «Acaba en 5 h 18 min · hora de Barcelona»
+      (o «Nova partida en…» si ja està feta). Es repinta cada 30 s a l'inici.
+- [x] Bàner més gran i amb vora clara; la ratxa sempre a la vista (número gran
+      amb 🔥, apagat si és 0, i la millor a sota). Al mòbil, el botó a tota
+      l'amplada a sota.
+
+**Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd
+(3 de nous: dia de Barcelona a l'hivern i a l'estiu, compte enrere); e2e
+`inici`, `dia` i `modes` en verd; captures en mode fosc i clar, mòbil i
+escriptori.

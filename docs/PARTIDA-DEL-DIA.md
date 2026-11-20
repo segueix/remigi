@@ -6,7 +6,12 @@ Cada dia hi ha **una partida igual per a tothom**, a dalt de la taula de l'inici
 
 ## Igual per a tothom
 
-- La llavor surt de la data local (`daySeed`, FNV-1a de `remigi:dia:AAAA-MM-DD`).
+- El dia és el de **Barcelona** (`Europe/Madrid`, `dayKey`): la partida canvia
+  a mitjanit de Barcelona per a tothom, sigui on sigui. L'inici en mostra el
+  compte enrere (`msUntilNextDay`).
+- La llavor surt d'aquesta data (`daySeed`, FNV-1a de `remigi:dia:AAAA-MM-DD`).
+- No cal cap servidor ni cap acció diària: cada aparell calcula la llavor pel
+  seu compte i el generador amb llavor (mulberry32) barreja el sac igual.
 - Amb la llavor, el motor reparteix: la teva mà de 14 fitxes i **la resta del
   sac en el mateix ordre** són iguals a tots els aparells.
 - Rivals: 2, de nivell Mitjà, amb noms triats amb la mateixa llavor.

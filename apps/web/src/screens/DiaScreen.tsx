@@ -88,7 +88,8 @@ export function DiaScreen({
         Avui tothom juga amb <strong>les mateixes fitxes</strong>: la mateixa mà i el sac en el
         mateix ordre, contra els mateixos {DAILY_OPPONENTS} rivals de nivell Mitjà. Comences tu.
         Si guanyes, compten les <strong>jugades</strong> que has fet (menys, millor); si no, els{' '}
-        <strong>punts que et queden a la mà</strong>. Només compta un cop al dia.
+        <strong>punts que et queden a la mà</strong>. Només compta un cop al dia, i la partida
+        canvia a mitjanit, hora de Barcelona.
       </p>
 
       <dl className="rajoles">

@@ -178,6 +178,17 @@ export function App() {
   const daily = usePersisted(DAILY_KEY, parseDailyState);
   const cloud = useCloud(view === 'dia');
   const [rankingVersion, setRankingVersion] = useState(0);
+  /*
+   * A l'inici i a la pantalla del dia, un repintat cada mig minut: el compte
+   * enrere avança i, a mitjanit de Barcelona, surt sola la partida nova.
+   */
+  const [, setClockTick] = useState(0);
+  const showsDay = view === 'home' || view === 'dia';
+  useEffect(() => {
+    if (!showsDay) return;
+    const timer = setInterval(() => setClockTick((n) => n + 1), 30_000);
+    return () => clearInterval(timer);
+  }, [showsDay]);
   const elTaulerHome = useMemo(() => (typeof window === 'undefined' ? null : readElTaulerHome(safeLocalStorage())), []);
   const [pendingProgress, setPendingProgress] = useState<ProfileProgress | null>(() =>
     typeof window === 'undefined' ? null : parseProfileTransferUrl(window.location.href),

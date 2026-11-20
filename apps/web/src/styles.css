@@ -5735,3 +5735,127 @@ button.enllac {
 .inici-taula .dia-boto:focus-visible {
   outline-color: #ffffff;
 }
+
+/* ---------- Inici: el bàner de la partida del dia, gran i visible ---------- */
+
+.inici-taula .dia-boto {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  grid-template-areas: 'icona text ratxa cta';
+  gap: 0.9rem;
+  padding: 1rem 1.2rem;
+  border: 2px solid rgb(255 255 255 / 0.28);
+  box-shadow:
+    0 8px 22px rgb(0 0 0 / 0.4),
+    0 0 0 3px rgb(245 197 24 / 0.18);
+}
+
+.inici-taula .dia-boto .dia-boto-icona {
+  grid-area: icona;
+  width: 3.3rem;
+  height: 3.3rem;
+}
+
+.inici-taula .dia-boto .dia-boto-icona .icona {
+  width: 1.85rem;
+  height: 1.85rem;
+}
+
+.inici-taula .dia-boto .dia-boto-text {
+  grid-area: text;
+  gap: 0.15rem;
+}
+
+.dia-boto-titol {
+  font-size: 1.25rem;
+  line-height: 1.2;
+}
+
+.inici-taula .dia-boto .dia-boto-estat {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.inici-taula .dia-boto .dia-boto-rellotge {
+  color: rgb(255 255 255 / 0.72);
+}
+
+/* La ratxa, ben a la vista: el número gran amb el foc, i la millor a sota. */
+.inici-taula .dia-boto .dia-boto-ratxa {
+  grid-area: ratxa;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 5.2rem;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid rgb(255 255 255 / 0.2);
+  border-radius: 0.7rem;
+  background: rgb(255 255 255 / 0.08);
+  font-weight: 400;
+  line-height: 1.15;
+}
+
+.dia-boto-ratxa-num {
+  font-size: 1.6rem;
+  font-weight: 800;
+}
+
+.dia-boto-ratxa:not(.encesa) .dia-boto-ratxa-num > span {
+  filter: grayscale(1);
+  opacity: 0.6;
+}
+
+.dia-boto-ratxa.encesa {
+  border-color: rgb(245 197 24 / 0.55);
+  background: rgb(245 197 24 / 0.14);
+}
+
+.dia-boto-ratxa-etiqueta {
+  font-size: 0.72rem;
+}
+
+.dia-boto-ratxa-millor {
+  font-size: 0.7rem;
+  opacity: 0.72;
+}
+
+.inici-taula .dia-boto .dia-boto-cta {
+  grid-area: cta;
+  align-self: center;
+  padding: 0.55rem 1.3rem;
+  font-size: 1.05rem;
+}
+
+/* Al mòbil: icona, text i ratxa a dalt, i el botó a tota l'amplada a sota. */
+@media (max-width: 560px) {
+  .inici-taula .dia-boto {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      'icona text ratxa'
+      'cta cta cta';
+    gap: 0.6rem 0.7rem;
+    padding: 0.85rem 0.8rem;
+  }
+
+  .inici-taula .dia-boto .dia-boto-icona {
+    width: 2.7rem;
+    height: 2.7rem;
+  }
+
+  .dia-boto-titol {
+    font-size: 1.1rem;
+  }
+
+  .inici-taula .dia-boto .dia-boto-ratxa {
+    min-width: 4.4rem;
+    padding: 0.3rem 0.45rem;
+  }
+
+  .dia-boto-ratxa-num {
+    font-size: 1.35rem;
+  }
+
+  .inici-taula .dia-boto .dia-boto-cta {
+    text-align: center;
+  }
+}
