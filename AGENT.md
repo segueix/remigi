@@ -3009,3 +3009,32 @@ escriptori i mòbil.
 - [2026-11-20] A partir de la primera jugada diferent, la partida de cadascú
   s'allunya (els rivals reaccionen al que fas tu); el que és comú és la mà, el
   sac i qui juga cada torn.
+
+### Compte de Google i rànquings de la partida del dia ✅ Feta (2026-11-20)
+
+Demanat pel jugador: «Enllacem l'app amb compte de Google … i després podem fer
+els rankings.» Projecte de Firebase `remigi-c37ac`, creat pel jugador.
+
+- [x] Login amb Google (Firebase Auth, finestra emergent i redirecció si està
+      bloquejada), opcional, des de la pantalla de la partida del dia.
+- [x] Rànquing d'avui i rànquing de ratxes vives (Firestore Lite), amb l'àlies
+      del jugador i mai el nom ni el correu de Google.
+- [x] El resultat i la ratxa pugen sols en acabar la partida o en entrar.
+- [x] Regles de seguretat a `firestore.rules` (un resultat per jugador i dia,
+      no modificable; valors coherents).
+- [x] Firebase es carrega a demanda (fitxers apart del build).
+
+**Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd (176
+del motor i 291 de la web, 7 de nous a `ranking.test.ts`); `npm run build`
+correcte; e2e sencer en verd (185); captura del panell de rànquing al mòbil;
+la consulta arriba a Firestore (respon `permission-denied` fins que es publiquin
+les regles).
+
+### Problemes trobats
+
+- [2026-11-20] Les regles de Firestore s'han de publicar a mà a la consola
+  (`firestore.rules`): l'agent no té accés al projecte de Firebase.
+- [2026-11-20] El login real amb Google no es pot provar des de les proves
+  automàtiques; s'ha de comprovar a la web publicada.
+- Pendent: verificar els resultats al servidor reproduint les jugades (Cloud
+  Functions, pla Blaze).

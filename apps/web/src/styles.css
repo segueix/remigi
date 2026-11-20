@@ -5559,3 +5559,82 @@ button.secondary.reset-nivell {
     padding: 0.3rem 0.7rem;
   }
 }
+
+/* Rànquings de la partida del dia. */
+.dia-ranking {
+  margin-top: 1rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--vora);
+}
+
+.dia-ranking-cap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.dia-ranking-cap h3 {
+  margin: 0;
+}
+
+.dia-ranking-pestanyes {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.dia-ranking-pestanyes button {
+  padding: 0.3rem 0.9rem;
+}
+
+.dia-ranking-llista {
+  margin: 0.6rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dia-ranking-llista li {
+  display: grid;
+  grid-template-columns: 2.2rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.4rem;
+  border-bottom: 1px solid var(--vora);
+}
+
+.dia-ranking-llista li.jo {
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--identitat) 16%, var(--superficie));
+}
+
+.dia-ranking-pos {
+  font-weight: 700;
+  text-align: center;
+}
+
+.dia-ranking-nom {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dia-compte {
+  margin-top: 0.6rem;
+}
+
+.dia-google {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+button.enllac {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--identitat);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}

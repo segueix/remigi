@@ -38,3 +38,39 @@ dia en què es va començar.
   el resultat, la ratxa, els quadrets i l'enllaç.
 
 No mou l'habilitat del joc lliure. Es desa a `remigi:dia` (els últims 400 dies).
+
+## Rànquings amb el compte de Google
+
+Projecte de Firebase `remigi-c37ac` (pla Spark, gratuït). Codi:
+`apps/web/src/cloud/` (`firebase.ts` connexió, `ranking.ts` lògica pura,
+`useCloud.ts` sessió) i `apps/web/src/screens/DiaRanking.tsx`.
+
+- **Entrar amb Google** és opcional i es fa des de la pantalla de la partida
+  del dia. Sense compte tot funciona igual; els rànquings es poden mirar.
+- Al rànquing només surt l'**àlies** (el nom del jugador a Remigi), mai el nom
+  ni el correu de Google.
+- El SDK de Firebase es baixa a demanda: només si s'obre la partida del dia o
+  si en aquest aparell ja s'havia entrat amb Google.
+- **Rànquing d'avui** (`dia/{dia}/resultats/{uid}`): ordenat per `score`
+  (victòria: jugades; derrota: 1000 + punts a la mà). Es crea un sol cop.
+- **Rànquing de ratxes** (`jugadors/{uid}`): àlies, ratxa, millor ratxa i
+  últim dia jugat. Una ratxa només compta si s'ha jugat avui o ahir.
+- En acabar la partida del dia (o en entrar amb Google després), el resultat
+  d'avui o d'ahir i la ratxa pugen sols.
+
+### Configuració de Firebase (es fa a la consola)
+
+1. Authentication → Método de acceso → **Google** habilitat.
+2. Authentication → Configuración → **Dominios autorizados**:
+   `segueix.github.io` i `eltauler.cat` (i `localhost`).
+3. Firestore Database creada (modo producción, `eur3`).
+4. Firestore Database → **Reglas**: enganxar [`firestore.rules`](../firestore.rules)
+   i **Publicar**. Sense aquestes regles, els rànquings no carreguen
+   (`permission-denied`).
+
+### Límits
+
+La partida es juga al navegador: qui en sàpiga pot enviar un resultat fals.
+Les regles només deixen escriure el propi resultat, un cop per dia i amb
+valors coherents. Com que la partida del dia és determinista, es podria
+verificar reproduint les jugades amb Cloud Functions (pla Blaze).

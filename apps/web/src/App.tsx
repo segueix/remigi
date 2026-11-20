@@ -39,6 +39,7 @@ import { pickPersonas } from './game/bots';
 import {
   DAILY_LEVEL,
   DAILY_OPPONENTS,
+  bestStreak,
   currentStreak,
   dayKey,
   dayNumber,
@@ -48,6 +49,7 @@ import {
   humanMoves,
   isDayKey,
   parseDailyState,
+  previousDay,
   recordResult,
   resultFor,
   resultText,
@@ -56,6 +58,9 @@ import {
   type DailyState,
 } from './dia/daily';
 import { DiaScreen, ShareButtons } from './screens/DiaScreen';
+import { submitDayResult, submitPlayer } from './cloud/firebase';
+import { cleanAlias, dayEntry } from './cloud/ranking';
+import { useCloud } from './cloud/useCloud';
 import { GameScreen, type ModeFinish } from './screens/GameScreen';
 import { HomeScreen } from './screens/HomeScreen';
 import { LeagueInterlude } from './screens/LeagueInterlude';
@@ -174,6 +179,8 @@ export function App() {
   const challenge = usePersisted(CHALLENGE_KEY, parseChallengeState);
   const league = usePersisted(LEAGUE_KEY, parseLeagueState);
   const daily = usePersisted(DAILY_KEY, parseDailyState);
+  const cloud = useCloud(view === 'dia');
+  const [rankingVersion, setRankingVersion] = useState(0);
   const elTaulerHome = useMemo(() => (typeof window === 'undefined' ? null : readElTaulerHome(safeLocalStorage())), []);
   const [pendingProgress, setPendingProgress] = useState<ProfileProgress | null>(() =>
     typeof window === 'undefined' ? null : parseProfileTransferUrl(window.location.href),
@@ -551,6 +558,38 @@ export function App() {
     [goTo],
   );
 
+  /*
+   * Amb sessió de Google, el resultat del dia (d'avui o d'ahir, el més nou) i
+   * la ratxa pugen als rànquings. Un cop per combinació: si no canvia res, no
+   * es torna a enviar.
+   */
+  const synced = useRef('');
+  const playerName = profile.profile?.name;
+  const dailyValue = daily.value;
+  const uid = cloud.user?.uid ?? null;
+  useEffect(() => {
+    if (!uid || !dailyValue || !playerName) return;
+    const latest = dailyValue.results[0];
+    if (!latest) return;
+    const today = dayKey();
+    const alias = cleanAlias(playerName);
+    const streak = currentStreak(dailyValue, today);
+    const key = `${uid}|${latest.day}|${alias}|${streak}`;
+    if (synced.current === key) return;
+    synced.current = key;
+    const recent = latest.day === today || latest.day === previousDay(today);
+    void (async () => {
+      try {
+        if (recent) await submitDayResult(uid, latest.day, dayEntry(latest, alias, currentStreak(dailyValue, latest.day)));
+        await submitPlayer(uid, { alias, streak, bestStreak: bestStreak(dailyValue), lastDay: latest.day });
+        setRankingVersion((v) => v + 1);
+      } catch {
+        // Sense connexió o regles que no ho deixen: es tornarà a provar en canviar alguna cosa.
+        synced.current = '';
+      }
+    })();
+  }, [uid, dailyValue, playerName]);
+
   /* ---------- Final de partida ---------- */
 
   /*
@@ -709,6 +748,8 @@ export function App() {
           hasSavedGame={savedGames.saved.dia !== null && savedGames.saved.dia.setup.session === today}
           rivals={dailyRivals(today)}
           playerName={profile.profile.name}
+          cloud={cloud}
+          rankingVersion={rankingVersion}
           onPlay={() => void playDaily()}
           onHome={() => goTo('home')}
           onProfile={() => setStatsOpen(true)}

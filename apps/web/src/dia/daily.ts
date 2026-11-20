@@ -190,7 +190,7 @@ export function dailyWins(state: DailyState): number {
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
 /** «Guanyada en 12 jugades» o «23 punts a la mà». */
-export function resultText(result: DailyResult): string {
+export function resultText(result: Pick<DailyResult, 'won' | 'moves' | 'points'>): string {
   return result.won
     ? `Guanyada en ${plural(result.moves, 'jugada', 'jugades')}`
     : `${plural(result.points, 'punt', 'punts')} a la mà`;

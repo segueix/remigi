@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { CloudHandle } from '../cloud/useCloud';
 import { PlayerAvatar } from '../components/PlayerAvatar';
 import {
   DAILY_OPPONENTS,
@@ -16,6 +17,7 @@ import {
   type DailyState,
 } from '../dia/daily';
 import { whatsappUrl } from '../lliga/champion';
+import { DiaRanking } from './DiaRanking';
 
 interface Props {
   state: DailyState;
@@ -25,6 +27,10 @@ interface Props {
   /** Els rivals d'avui, els mateixos per a tothom. */
   rivals: string[];
   playerName: string;
+  /** La sessió amb Google, per als rànquings. */
+  cloud: CloudHandle;
+  /** Canvia quan s'ha pujat un resultat: els rànquings es tornen a carregar. */
+  rankingVersion: number;
   onPlay(): void;
   onHome(): void;
   onProfile(): void;
@@ -46,7 +52,18 @@ const shortDate = (day: string) => day.split('-').reverse().join('/');
  * si ja l'has jugada (i com t'ha anat), la ratxa de dies número 1 i els últims
  * resultats; i es comparteix el resultat.
  */
-export function DiaScreen({ state, today, hasSavedGame, rivals, playerName, onPlay, onHome, onProfile }: Props) {
+export function DiaScreen({
+  state,
+  today,
+  hasSavedGame,
+  rivals,
+  playerName,
+  cloud,
+  rankingVersion,
+  onPlay,
+  onHome,
+  onProfile,
+}: Props) {
   const todayResult = resultFor(state, today);
   const streak = currentStreak(state, today);
   const best = bestResult(state);
@@ -129,6 +146,8 @@ export function DiaScreen({ state, today, hasSavedGame, rivals, playerName, onPl
           </div>
         </div>
       )}
+
+      <DiaRanking cloud={cloud} today={today} alias={playerName} version={rankingVersion} />
 
       {state.results.length > 0 && (
         <details className="repte-historial">
