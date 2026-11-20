@@ -3294,3 +3294,19 @@ del dia ja admeten 2 o 3 rivals); captura del bàner.
 - [2026-11-20] El dia #1 (divendres) canvia de partida a mig dia: passa de
   Mitjà a Exigent i potser a una altra barreja. Només afecta qui la torni a
   jugar avui (el reinici del dia #1).
+
+### La posició al rànquing, la de la llista ✅ Feta (2026-11-20)
+
+Informat pel jugador: la targeta deia «Ets el 4t de 4» i a la llista era 2n.
+La targeta comptava amb el resultat de l'aparell (la partida tornada a jugar
+després del reinici del dia #1), mentre que la llista mostra el resultat desat a
+Firestore (el primer, que no s'havia esborrat); i comparava puntuacions d'abans
+i de després del desempat.
+
+- [x] `fetchMyDayPlace`: si ets al top, la posició de la llista (sense cap
+      lectura més); si no, el teu resultat desat i quants n'hi ha de millors.
+      La targeta i la teva fila de sota el top fan servir el mateix.
+- [x] Sense «de N»: només «Ets el 2n al rànquing d'avui».
+
+**Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd;
+e2e `dia` i `inici` en verd.
