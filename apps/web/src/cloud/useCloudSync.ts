@@ -1,5 +1,5 @@
 import type { PlayerProfile } from '@remigi/core';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { bestStreak, currentStreak, dayKey, previousDay, withCarried, type DailyState } from '../dia/daily';
 import type { LeagueState } from '../lliga/league';
 import type { ProfileProgress } from '../state/profileTransfer';
@@ -23,6 +23,34 @@ interface Options {
 
 /** Espera abans de pujar un canvi, per ajuntar-ne uns quants en una sola escriptura. */
 const UPLOAD_DELAY_MS = 2000;
+
+/** Com a molt, una escriptura del nivell i la lliga cada tant (a més de la de tancar l'app). */
+export const UPLOAD_EVERY_MS = 30 * 60_000;
+
+/** Quant cal esperar per pujar el canvi següent, havent-ne pujat un a `lastAt`. */
+export function uploadDelay(lastAt: number | null, now: number): number {
+  if (lastAt === null || now < lastAt) return UPLOAD_DELAY_MS;
+  return Math.max(UPLOAD_DELAY_MS, lastAt + UPLOAD_EVERY_MS - now);
+}
+
+const UPLOAD_KEY = 'remigi:nuvol:pujat:';
+
+function lastUpload(uid: string): number | null {
+  try {
+    const value = Number(localStorage.getItem(UPLOAD_KEY + uid));
+    return Number.isFinite(value) && value > 0 ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function rememberUpload(uid: string, at: number): void {
+  try {
+    localStorage.setItem(UPLOAD_KEY + uid, String(at));
+  } catch {
+    // Sense emmagatzematge, la pròxima sessió pujarà de seguida.
+  }
+}
 /** Si recuperar el compte falla (sense connexió), es torna a provar al cap d'aquest temps. */
 const RETRY_MS = 60_000;
 
@@ -95,20 +123,45 @@ export function useCloudSync({
 
   const ready = uid !== null && readyFor === uid;
 
-  /* 2a. Pujar el nivell i la lliga quan canvien. */
+  /*
+   * 2a. Pujar el nivell i la lliga: com a molt un cop cada 30 minuts (cada
+   * escriptura compta per a la quota gratuïta), i sempre en tancar o amagar
+   * l'app, perquè el que s'ha jugat no es perdi.
+   */
   const uploaded = useRef('');
+  const pending = useRef<{ uid: string; payload: string } | null>(null);
   const leagueValue = league.value;
   const payload = ready && profile && leagueValue ? JSON.stringify(toFirestore(buildCloudSave(profile, leagueValue))) : null;
+
+  const flush = useCallback(() => {
+    const next = pending.current;
+    if (!next || uploaded.current === `${next.uid}|${next.payload}`) return;
+    uploaded.current = `${next.uid}|${next.payload}`;
+    rememberUpload(next.uid, Date.now());
+    submitCloudSave(next.uid, JSON.parse(next.payload) as Record<string, unknown>).catch(() => {
+      uploaded.current = '';
+    });
+  }, []);
+
   useEffect(() => {
-    if (!ready || !uid || !payload || uploaded.current === `${uid}|${payload}`) return;
-    const timer = setTimeout(() => {
-      uploaded.current = `${uid}|${payload}`;
-      submitCloudSave(uid, JSON.parse(payload) as Record<string, unknown>).catch(() => {
-        uploaded.current = '';
-      });
-    }, UPLOAD_DELAY_MS);
+    if (!ready || !uid || !payload) return;
+    pending.current = { uid, payload };
+    if (uploaded.current === `${uid}|${payload}`) return;
+    const timer = setTimeout(flush, uploadDelay(lastUpload(uid), Date.now()));
     return () => clearTimeout(timer);
-  }, [ready, uid, payload]);
+  }, [ready, uid, payload, flush]);
+
+  useEffect(() => {
+    const onHide = () => {
+      if (document.visibilityState === 'hidden') flush();
+    };
+    document.addEventListener('visibilitychange', onHide);
+    window.addEventListener('pagehide', flush);
+    return () => {
+      document.removeEventListener('visibilitychange', onHide);
+      window.removeEventListener('pagehide', flush);
+    };
+  }, [flush]);
 
   /* 2b. El resultat del dia (d'avui o d'ahir, el més nou) i la ratxa, als rànquings. */
   const synced = useRef('');

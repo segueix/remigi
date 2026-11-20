@@ -113,3 +113,25 @@ verificar reproduint les jugades amb Cloud Functions (pla Blaze).
 - **Entrar amb Google** només es fa a dalt de l'inici. En entrar amb el nom de
   casa («Jugador»), es demana un sol cop amb quin nom vols jugar, i es proposa
   el nom de pila del compte.
+
+## Quota gratuïta de Firestore (pla Spark)
+
+Límits diaris: 50.000 lectures i 20.000 escriptures. Per arribar al màxim de
+gent sense pagar:
+
+| Què | Cost per jugador |
+|---|---|
+| Obrir l'app amb sessió (llegir el compte i la ratxa) | 2 lectures |
+| Rànquing d'avui: top 10 (`RANKING_SIZE`), desat 10 min a l'aparell (`cloud/cache.ts`) | ≤ 10 lectures |
+| Rànquing de ratxes: top 10 de les vives, filtrat a Firestore | ≤ 10 lectures |
+| Posició al rànquing: dos recomptes amb la puntuació que l'app ja sap | 2 lectures |
+| Pujar el resultat del dia (sense llegir-lo abans) i la ratxa | 2 escriptures |
+| Nivell i lliga: com a molt cada 30 min, i en tancar o amagar l'app | ~1–3 escriptures |
+
+Uns 25 lectures i 4 escriptures al dia per jugador: uns 2.000–3.000
+jugadors diaris dins de la quota gratuïta. Els rànquings desats s'esborren
+quan puges el teu resultat, perquè et vegis de seguida.
+
+El rànquing de ratxes demana l'índex compost de `firestore.indexes.json`
+(`jugadors`: `lastDay` ↑, `streak` ↓). Mentre no hi sigui, funciona igual però
+llegeix més files (30) i les filtra a l'aparell.

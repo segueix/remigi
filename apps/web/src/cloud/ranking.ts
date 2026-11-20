@@ -17,8 +17,11 @@ import { isDayKey, previousDay, type DailyResult } from '../dia/daily';
 /** Màxim de caràcters de l'àlies (el mateix límit hi ha a les regles). */
 export const MAX_ALIAS = 24;
 
-/** Quantes files porta cada rànquing. */
-export const RANKING_SIZE = 50;
+/**
+ * Quantes files porta cada rànquing: el top 10 (i, a sota, la teva posició si
+ * no hi ets). Cada fila és una lectura de Firestore.
+ */
+export const RANKING_SIZE = 10;
 
 /**
  * Un sol número per ordenar el rànquing del dia (menys, millor): les

@@ -48,7 +48,6 @@ export function DiaScreen({ state, today, playerName, rankingVersion, onPlay, on
         </>
       ) : (
         <>
-          <DayPlace day={today} />
           <div className="row">
             <button type="button" onClick={onPlay}>
               Juga la partida del dia
@@ -57,7 +56,7 @@ export function DiaScreen({ state, today, playerName, rankingVersion, onPlay, on
         </>
       )}
 
-      <DiaRanking today={today} alias={playerName} version={rankingVersion} />
+      <DiaRanking today={today} alias={playerName} mine={todayResult} version={rankingVersion} />
     </section>
   );
 }
@@ -110,7 +109,7 @@ export function DailyResultCard({
         </span>
       </div>
 
-      <DayPlace day={result.day} />
+      <DayPlace result={result} />
 
       <ShareButton state={state} result={result} />
     </div>

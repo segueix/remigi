@@ -1,43 +1,32 @@
 import { useEffect, useState } from 'react';
 import { fetchDayPlace } from '../cloud/firebase';
+import { rankScore } from '../cloud/ranking';
 import { useCloudContext } from '../cloud/useCloud';
+import type { DailyResult } from '../dia/daily';
 import { ordinal } from '../ui/format';
 
-/** Cops que es torna a mirar (el resultat tarda uns segons a pujar en acabar). */
-const TRIES = 6;
-const WAIT_MS = 2500;
-
 /**
- * La teva posició al rànquing d'avui: «Ets el 3r de 25». Sense compte de
- * Google, on s'entra (a dalt de l'inici).
+ * La teva posició al rànquing d'avui: «Ets el 3r de 25». Es calcula un sol
+ * cop amb la teva puntuació (que ja se sap), sense esperar que el resultat
+ * hagi pujat. Sense compte de Google, on s'entra (a dalt de l'inici).
  */
-export function DayPlace({ day }: { day: string }) {
+export function DayPlace({ result }: { result: DailyResult }) {
   const cloud = useCloudContext();
   const uid = cloud?.user?.uid ?? null;
+  const score = rankScore(result);
   const [place, setPlace] = useState<{ place: number; total: number } | null>(null);
 
   useEffect(() => {
     setPlace(null);
     if (!uid) return;
     let cancelled = false;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const attempt = (n: number) => {
-      fetchDayPlace(day, uid)
-        .then((found) => {
-          if (cancelled) return;
-          if (found) setPlace(found);
-          else if (n + 1 < TRIES) timer = setTimeout(() => attempt(n + 1), WAIT_MS);
-        })
-        .catch(() => {
-          if (!cancelled && n + 1 < TRIES) timer = setTimeout(() => attempt(n + 1), WAIT_MS);
-        });
-    };
-    attempt(0);
+    fetchDayPlace(result.day, score)
+      .then((found) => !cancelled && setPlace(found))
+      .catch(() => {});
     return () => {
       cancelled = true;
-      if (timer) clearTimeout(timer);
     };
-  }, [day, uid]);
+  }, [result.day, score, uid]);
 
   if (!cloud || cloud.checking) return null;
   if (!uid) {

@@ -1,6 +1,7 @@
 import type { FirebaseApp } from 'firebase/app';
 import type { Auth, User } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore/lite';
+import { cached, clearRankingCache } from './cache';
 import { RANKING_SIZE, type DayEntry, type PlayerEntry } from './ranking';
 
 /**
@@ -102,15 +103,19 @@ export async function signOutCloud(): Promise<void> {
 }
 
 /**
- * Desa el resultat del dia. Només es pot crear un cop (les regles no deixen
- * canviar-lo): si ja hi era, no passa res.
+ * Desa el resultat del dia. Només es pot crear un cop: si ja hi era, les
+ * regles no deixen sobreescriure'l (`permission-denied`), i això vol dir que
+ * ja està fet. Així no cal llegir-lo abans (una lectura menys).
  */
 export async function submitDayResult(uid: string, day: string, entry: DayEntry): Promise<void> {
   const { db } = await load();
-  const { doc, getDoc, setDoc, serverTimestamp } = await import('firebase/firestore/lite');
-  const ref = doc(db, 'dia', day, 'resultats', uid);
-  if ((await getDoc(ref)).exists()) return;
-  await setDoc(ref, { ...entry, at: serverTimestamp() });
+  const { doc, setDoc, serverTimestamp } = await import('firebase/firestore/lite');
+  try {
+    await setDoc(doc(db, 'dia', day, 'resultats', uid), { ...entry, at: serverTimestamp() });
+  } catch (error) {
+    if ((error as { code?: string }).code !== 'permission-denied') throw error;
+  }
+  clearRankingCache();
 }
 
 /** Desa l'àlies i la ratxa del jugador (per al rànquing de ratxes). */
@@ -118,6 +123,7 @@ export async function submitPlayer(uid: string, entry: PlayerEntry): Promise<voi
   const { db } = await load();
   const { doc, setDoc, serverTimestamp } = await import('firebase/firestore/lite');
   await setDoc(doc(db, 'jugadors', uid), { ...entry, at: serverTimestamp() });
+  clearRankingCache();
 }
 
 export interface RawRow {
@@ -125,41 +131,61 @@ export interface RawRow {
   data: unknown;
 }
 
-/** Els millors resultats d'un dia (per `score`, de menys a més). */
-export async function fetchDayRanking(day: string): Promise<RawRow[]> {
-  const { db } = await load();
-  const { collection, getDocs, limit, orderBy, query } = await import('firebase/firestore/lite');
-  const snap = await getDocs(query(collection(db, 'dia', day, 'resultats'), orderBy('score'), limit(RANKING_SIZE)));
-  return snap.docs.map((d) => ({ id: d.id, data: d.data() }));
+/** El top del rànquing d'un dia (per `score`, de menys a més): `RANKING_SIZE` lectures, i 10 minuts desat. */
+export function fetchDayRanking(day: string): Promise<RawRow[]> {
+  return cached(`dia:${day}`, async () => {
+    const { db } = await load();
+    const { collection, getDocs, limit, orderBy, query } = await import('firebase/firestore/lite');
+    const snap = await getDocs(query(collection(db, 'dia', day, 'resultats'), orderBy('score'), limit(RANKING_SIZE)));
+    return snap.docs.map((d) => ({ id: d.id, data: d.data() }));
+  });
 }
 
 /**
- * Les ratxes més llargues. N'hi pot haver de mortes (qui fa dies que no juga):
- * se'n demanen més i `streakRanking` les treu.
+ * El top de ratxes vives: només els que han jugat avui o ahir (les altres ja
+ * s'han trencat), filtrat a Firestore perquè només es llegeixin les que es
+ * veuen. Demana l'índex compost `jugadors` (lastDay ↑, streak ↓), vegeu
+ * `firestore.indexes.json`; mentre no hi sigui, es llegeixen més files i es
+ * filtren aquí.
  */
-export async function fetchStreakRanking(): Promise<RawRow[]> {
-  const { db } = await load();
-  const { collection, getDocs, limit, orderBy, query } = await import('firebase/firestore/lite');
-  const snap = await getDocs(query(collection(db, 'jugadors'), orderBy('streak', 'desc'), limit(RANKING_SIZE * 3)));
-  return snap.docs.map((d) => ({ id: d.id, data: d.data() }));
+export function fetchStreakRanking(today: string, yesterday: string): Promise<RawRow[]> {
+  return cached(`ratxes:${today}`, async () => {
+    const { db } = await load();
+    const { collection, getDocs, limit, orderBy, query, where } = await import('firebase/firestore/lite');
+    const players = collection(db, 'jugadors');
+    try {
+      const snap = await getDocs(
+        query(players, where('lastDay', 'in', [yesterday, today]), orderBy('streak', 'desc'), limit(RANKING_SIZE)),
+      );
+      return snap.docs.map((d) => ({ id: d.id, data: d.data() }));
+    } catch (error) {
+      if ((error as { code?: string }).code !== 'failed-precondition') throw error;
+      // Sense l'índex encara: les ratxes més llargues, i `streakRanking` treu les mortes.
+      const snap = await getDocs(query(players, orderBy('streak', 'desc'), limit(RANKING_SIZE * 3)));
+      return snap.docs.map((d) => ({ id: d.id, data: d.data() }));
+    }
+  });
 }
 
 /**
- * La teva posició al rànquing d'un dia: quants han fet millor que tu (+1) i
- * quants hi ha en total. Null si encara no hi has pujat el resultat.
+ * La teva posició al rànquing d'un dia amb la teva puntuació (que l'app ja
+ * sap): quants han fet millor que tu (+1) i quants hi ha en total. Dues
+ * consultes de recompte (una lectura cadascuna fins a 1.000 resultats), i
+ * 10 minuts desat.
  */
-export async function fetchDayPlace(day: string, uid: string): Promise<{ place: number; total: number } | null> {
-  const { db } = await load();
-  const { collection, doc, getCount, getDoc, query, where } = await import('firebase/firestore/lite');
-  const mine = await getDoc(doc(db, 'dia', day, 'resultats', uid));
-  const score = mine.exists() ? (mine.data() as { score?: unknown }).score : undefined;
-  if (typeof score !== 'number') return null;
-  const results = collection(db, 'dia', day, 'resultats');
-  const [better, total] = await Promise.all([
-    getCount(query(results, where('score', '<', score))),
-    getCount(results),
-  ]);
-  return { place: better.data().count + 1, total: total.data().count };
+export function fetchDayPlace(day: string, score: number): Promise<{ place: number; total: number }> {
+  return cached(`posicio:${day}:${score}`, async () => {
+    const { db } = await load();
+    const { collection, getCount, query, where } = await import('firebase/firestore/lite');
+    const results = collection(db, 'dia', day, 'resultats');
+    const [better, total] = await Promise.all([
+      getCount(query(results, where('score', '<', score))),
+      getCount(results),
+    ]);
+    const place = better.data().count + 1;
+    // Si el teu resultat encara està pujant, no surt al total: hi compta igualment.
+    return { place, total: Math.max(total.data().count, place) };
+  });
 }
 
 /** El desat privat del jugador (`perfils/{uid}`): nivell i lliga en curs. */

@@ -1,0 +1,13 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "jugadors",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "lastDay", "order": "ASCENDING" },
+        { "fieldPath": "streak", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
