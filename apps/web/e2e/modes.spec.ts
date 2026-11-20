@@ -460,7 +460,7 @@ test('amb la lliga començada, l’inici en diu el nom i la divisió', async ({ 
   await expect(targeta.locator('.mode-estat')).toHaveText('Jornada 1/3');
 });
 
-test('la configuració es tanca a la vista (Tanca, Esc) i porta als altres dos modes', async ({ page }) => {
+test('la configuració es tanca a la vista (Tanca, Esc) i porta als altres modes', async ({ page }) => {
   await obreNet(page);
   // L'avatar del jugador porta la roda de configuració a l'inici, com a la partida.
   await expect(page.locator('.inici-jugador .player-color.amb-config')).toHaveCount(1);
@@ -477,17 +477,17 @@ test('la configuració es tanca a la vista (Tanca, Esc) i porta als altres dos m
   await menu.getByRole('button', { name: 'Tanca el menú' }).click();
   await expect(menu).toHaveCount(0);
 
-  // Des del joc lliure, els altres dos modes; i un toc hi porta.
+  // Des del joc lliure, els altres modes (i la partida del dia); i un toc hi porta.
   await obreMenu(page);
   const modes = menu.getByRole('region', { name: 'Canvia de mode' });
-  await expect(modes.getByRole('button')).toHaveText(['Repte', 'Lliga']);
+  await expect(modes.getByRole('button')).toHaveText(['Repte', 'Lliga', 'Partida del dia']);
   await modes.getByRole('button', { name: 'Repte' }).click();
   await expect(page.locator('.pantalla-mode.repte')).toBeVisible();
 
-  // Des del repte (el perfil): el joc lliure i la lliga.
+  // Des del repte (el perfil): el joc lliure, la lliga i la partida del dia.
   await page.getByRole('button', { name: 'El teu perfil i la configuració' }).click();
   const perfil = page.getByRole('region', { name: 'Canvia de mode' });
-  await expect(perfil.getByRole('button')).toHaveText(['Joc lliure', 'Lliga']);
+  await expect(perfil.getByRole('button')).toHaveText(['Joc lliure', 'Lliga', 'Partida del dia']);
   await perfil.getByRole('button', { name: 'Lliga' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Ara no' }).click();
   await expect(page.locator('.pantalla-mode.lliga')).toBeVisible();

@@ -10,7 +10,10 @@ test('a l’inici, la marca «Remigi» és a baix a la dreta del feltre i no toc
   // I cap targeta de mode no se li encavalca.
   const cards = await page.locator('.mode-card').all();
   expect(cards).toHaveLength(3);
-  for (const card of cards) {
+  // Ni el bàner de la partida del dia, que va sota les tres targetes.
+  const bàner = (await page.locator('.dia-boto').boundingBox())!;
+  for (const card of cards) expect((await card.boundingBox())!.y).toBeLessThan(bàner.y);
+  for (const card of [...cards, page.locator('.dia-boto')]) {
     const b = (await card.boundingBox())!;
     expect(b.y + b.height <= marca.y || b.x + b.width <= marca.x).toBe(true);
   }

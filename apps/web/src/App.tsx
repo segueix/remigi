@@ -1,4 +1,4 @@
-import { finalScores, randomSeed, type GameState } from '@remigi/core';
+import { finalScores, rackPoints, randomSeed, type GameState } from '@remigi/core';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { GameMode, GameSetup } from './game/useGame';
 import { readElTaulerHome } from './lliga/elTaulerHome';
@@ -36,6 +36,27 @@ import {
   type ChallengeState,
 } from './repte/challenge';
 import { pickPersonas } from './game/bots';
+import {
+  DAILY_LEVEL,
+  DAILY_OPPONENTS,
+  dayKey,
+  dayNumber,
+  dayRng,
+  daySeed,
+  firstPlayerOf,
+  humanMoves,
+  isDayKey,
+  parseDailyState,
+  recordResult,
+  resultFor,
+  resultText,
+  type DailyResult,
+  type DailyState,
+} from './dia/daily';
+import { DailyResultCard, DiaScreen } from './screens/DiaScreen';
+import { CloudContext, useCloud } from './cloud/useCloud';
+import { NameDialog } from './components/NameDialog';
+import { useCloudSync } from './cloud/useCloudSync';
 import { GameScreen, type ModeFinish } from './screens/GameScreen';
 import { HomeScreen } from './screens/HomeScreen';
 import { LeagueInterlude } from './screens/LeagueInterlude';
@@ -67,11 +88,17 @@ import { useSavedGames } from './state/useSavedGame';
 import { useTileStyle } from './state/useTileStyle';
 import { leaguePoints, ordinal, signed } from './ui/format';
 
-/** Pantalles: l'inici amb les tres maneres de jugar, la partida i les del repte i la lliga. */
-export type View = 'home' | 'game' | 'repte' | 'lliga' | 'musica';
+/** Pantalles: l'inici amb les tres maneres de jugar, la partida i les del repte, la lliga i la partida del dia. */
+export type View = 'home' | 'game' | 'repte' | 'lliga' | 'dia' | 'musica';
 
 export const CHALLENGE_KEY = 'remigi:repte';
 export const LEAGUE_KEY = 'remigi:lliga';
+export const DAILY_KEY = 'remigi:dia';
+
+/** Els rivals de la partida del dia: els mateixos noms a tots els aparells. */
+function dailyRivals(day: string): string[] {
+  return pickPersonas(DAILY_OPPONENTS, dayRng(day)).map((persona) => persona.name);
+}
 
 /** La partida que es juga ara: es torna a muntar (clau nova) a cada partida que comença. */
 interface Play {
@@ -100,6 +127,15 @@ const parseFreePlayBox = (raw: string | null): { prefs: FreePlayPrefs | null } =
 
 const challengeSession = (challenge: Challenge) => `${challenge.startedAt}#${challenge.games.length}`;
 const leagueSession = (season: LeagueSeason) => `${season.seed}#${season.played}`;
+
+/** Ja s'ha preguntat el nom a aquest compte de Google en aquest aparell. */
+function wasNameAsked(uid: string): boolean {
+  try {
+    return localStorage.getItem(`remigi:nom-google:${uid}`) === '1';
+  } catch {
+    return false;
+  }
+}
 
 function safeLocalStorage(): Storage | null {
   try {
@@ -137,6 +173,23 @@ function lastGameOf(game: GameState): LastGame {
  */
 export function App() {
   const [view, setView] = useState<View>('home');
+  /*
+   * L'enllaç compartit de la partida del dia (`?partida=dia`) l'obre
+   * directament en acabar de carregar; després es treu de l'adreça perquè
+   * recarregar no hi torni.
+   */
+  const [openDaily, setOpenDaily] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      const url = new URL(window.location.href);
+      if (url.searchParams.get('partida') !== 'dia') return false;
+      url.searchParams.delete('partida');
+      window.history.replaceState(null, '', url.toString());
+      return true;
+    } catch {
+      return false;
+    }
+  });
   const [statsOpen, setStatsOpen] = useState(false);
   const [play, setPlay] = useState<Play | null>(null);
   const [finish, setFinish] = useState<ModeFinish | null>(null);
@@ -147,6 +200,20 @@ export function App() {
   const freePlay = usePersisted(FREE_PLAY_KEY, parseFreePlayBox);
   const challenge = usePersisted(CHALLENGE_KEY, parseChallengeState);
   const league = usePersisted(LEAGUE_KEY, parseLeagueState);
+  const daily = usePersisted(DAILY_KEY, parseDailyState);
+  const cloud = useCloud(view === 'dia' || play?.mode === 'dia');
+  const [rankingVersion, setRankingVersion] = useState(0);
+  /*
+   * A l'inici i a la pantalla del dia, un repintat cada mig minut: el compte
+   * enrere avança i, a mitjanit de Barcelona, surt sola la partida nova.
+   */
+  const [, setClockTick] = useState(0);
+  const showsDay = view === 'home' || view === 'dia';
+  useEffect(() => {
+    if (!showsDay) return;
+    const timer = setInterval(() => setClockTick((n) => n + 1), 30_000);
+    return () => clearInterval(timer);
+  }, [showsDay]);
   const elTaulerHome = useMemo(() => (typeof window === 'undefined' ? null : readElTaulerHome(safeLocalStorage())), []);
   const [pendingProgress, setPendingProgress] = useState<ProfileProgress | null>(() =>
     typeof window === 'undefined' ? null : parseProfileTransferUrl(window.location.href),
@@ -211,17 +278,6 @@ export function App() {
     launch('lliure', setup, saved);
   }, [profile.profile, savedGames, freePrefs, saveFreeSetup, launch]);
 
-  /*
-   * Canviar de mode des de la configuració (el menú del jugador o el perfil):
-   * la partida que es deixa es queda desada, com en tornar a l'inici.
-   */
-  const switchMode = useCallback(
-    (mode: GameMode) => {
-      if (mode === 'lliure') void startFree();
-      else goTo(mode);
-    },
-    [startFree, goTo],
-  );
 
   /* ---------- Repte ---------- */
 
@@ -469,6 +525,102 @@ export function App() {
     [goTo, playRound, profile.profile],
   );
 
+  /* ---------- Partida del dia ---------- */
+
+  const playDaily = useCallback(async () => {
+    const player = profile.profile;
+    const state = daily.get();
+    if (!player || !state) return;
+    const today = dayKey();
+    // Només es juga un cop al dia: si ja està feta, es veu el resultat.
+    if (resultFor(state, today)) {
+      goTo('dia');
+      return;
+    }
+    const label = `Partida del dia #${dayNumber(today)}`;
+    const saved = await savedGames.load('dia');
+    if (saved && saved.setup.session === today) {
+      launch('dia', saved.setup, saved, label);
+      return;
+    }
+    const rivals = dailyRivals(today);
+    launch(
+      'dia',
+      {
+        mode: 'dia',
+        playerName: player.name,
+        opponents: rivals.map(() => DAILY_LEVEL),
+        opponentNames: rivals,
+        auto: false,
+        session: today,
+        seed: daySeed(today),
+      },
+      null,
+      label,
+    );
+  }, [daily, profile.profile, savedGames, launch, goTo]);
+
+  /*
+   * Canviar de mode des de la configuració (el menú del jugador o el perfil):
+   * la partida que es deixa es queda desada, com en tornar a l'inici.
+   */
+  const switchMode = useCallback(
+    (mode: GameMode) => {
+      if (mode === 'lliure') void startFree();
+      else if (mode === 'dia') void playDaily();
+      else goTo(mode);
+    },
+    [startFree, goTo, playDaily],
+  );
+
+  /* L'enllaç compartit de la partida del dia: en acabar de carregar, a jugar. */
+  const dailyLoaded = daily.value !== null && profile.profile !== null && !savedGames.loading;
+  useEffect(() => {
+    if (!openDaily || !dailyLoaded) return;
+    setOpenDaily(false);
+    void playDaily();
+  }, [openDaily, dailyLoaded, playDaily]);
+
+  const dailyFinish = useCallback(
+    (state: DailyState, result: DailyResult): ModeFinish => {
+      return {
+        body: (
+          <div className="final-dia">
+            <DailyResultCard state={state} result={result} />
+          </div>
+        ),
+        primary: { label: 'Veure el rànquing', run: () => goTo('dia') },
+      };
+    },
+    [goTo],
+  );
+
+  /*
+   * Amb sessió de Google: el nivell i la lliga en curs es desen al compte (i
+   * es recuperen en un altre aparell), i el resultat del dia i la ratxa van
+   * als rànquings. Res més: cap historial (vegeu `cloud/cloudSave.ts`).
+   */
+  const clearSaved = savedGames.clear;
+  const [nameAskedFor, setNameAskedFor] = useState<string | null>(null);
+  const markNameAsked = useCallback((uid: string) => {
+    setNameAskedFor(uid);
+    try {
+      localStorage.setItem(`remigi:nom-google:${uid}`, '1');
+    } catch {
+      // Sense emmagatzematge, es tornarà a preguntar la propera vegada.
+    }
+  }, []);
+  const cloudReady = useCloudSync({
+    uid: cloud.user?.uid ?? null,
+    profile: profile.profile,
+    setProgress: profile.setProgress,
+    setName: profile.setName,
+    league,
+    daily,
+    onLeagueReplaced: useCallback(() => clearSaved('lliga'), [clearSaved]),
+    onRankingChange: useCallback(() => setRankingVersion((v) => v + 1), []),
+  });
+
   /* ---------- Final de partida ---------- */
 
   /*
@@ -501,9 +653,32 @@ export function App() {
         const career = isFinished(played) ? closeSeason(state.career, played) : state.career;
         const next = league.update({ career, season: played });
         if (next) setFinish(leagueFinish(next));
+      } else if (setup.mode === 'dia') {
+        /*
+         * La partida compta per al dia en què es va començar, un sol cop: la
+         * primera que s'acaba. Jugades: els teus torns; punts: els que et
+         * quedaven a la mà.
+         */
+        const day = setup.session;
+        const state = daily.get();
+        if (!state || !isDayKey(day)) return;
+        const existing = resultFor(state, day);
+        if (existing) {
+          setFinish(dailyFinish(state, existing));
+          return;
+        }
+        const players = game.players.length;
+        const result: DailyResult = {
+          day,
+          won: humanWon(game),
+          moves: humanMoves(game.turn, players, firstPlayerOf(game.turn, game.currentPlayer, players)),
+          points: rackPoints(game.players[0]?.rack ?? []),
+        };
+        const next = daily.update((current) => recordResult(current, result));
+        if (next) setFinish(dailyFinish(next, result));
       }
     },
-    [challenge, league, challengeFinish, leagueFinish],
+    [challenge, league, daily, challengeFinish, leagueFinish, dailyFinish],
   );
 
   if (
@@ -512,7 +687,8 @@ export function App() {
     !profile.profile ||
     !freePlay.value ||
     !challenge.value ||
-    !league.value
+    !league.value ||
+    !daily.value
   ) {
     return (
       <main className="app">
@@ -521,7 +697,19 @@ export function App() {
     );
   }
 
+  /*
+   * En entrar amb Google amb el nom de casa («Jugador»), es demana un cop amb
+   * quin nom vol jugar, i es proposa el nom de pila del compte.
+   */
+  const showNameDialog =
+    cloudReady &&
+    cloud.user !== null &&
+    profile.profile.name === 'Jugador' &&
+    nameAskedFor !== cloud.user.uid &&
+    !wasNameAsked(cloud.user.uid);
+
   const inGame = view === 'game' && play !== null;
+  const today = dayKey();
   const classes = [inGame && !statsOpen ? 'app app-joc' : 'app'];
   if (tileStyle === 'invers') classes.push('fitxes-inverses');
 
@@ -539,6 +727,7 @@ export function App() {
   }
 
   return (
+    <CloudContext.Provider value={cloud}>
     <main className={classes.join(' ')}>
       {/*
        * La partida no es desmunta en anar a l'historial: es continua veient
@@ -581,6 +770,11 @@ export function App() {
           savedLliga={savedGames.saved.lliga !== null}
           challenge={challenge.value}
           league={league.value}
+          daily={daily.value}
+          today={today}
+          savedDia={savedGames.saved.dia !== null && savedGames.saved.dia.setup.session === today}
+          onDaily={() => void playDaily()}
+          cloud={cloud}
           onFree={() => void startFree()}
           onChallenge={() => setView('repte')}
           onLeague={() => setView('lliga')}
@@ -590,6 +784,17 @@ export function App() {
       )}
 
       {!statsOpen && view === 'musica' && <MusicScreen onHome={() => goTo('home')} />}
+
+      {!statsOpen && view === 'dia' && (
+        <DiaScreen
+          state={daily.value}
+          today={today}
+          playerName={profile.profile.name}
+          rankingVersion={rankingVersion}
+          onPlay={() => void playDaily()}
+          onHome={() => goTo('home')}
+        />
+      )}
 
       {!statsOpen && view === 'repte' && (
         <RepteScreen
@@ -634,7 +839,7 @@ export function App() {
           handle={profile}
           onBack={() => setStatsOpen(false)}
           backLabel={inGame ? 'Tanca i torna a la partida' : 'Tanca el perfil'}
-          currentMode={inGame && play ? play.mode : view === 'repte' || view === 'lliga' ? view : null}
+          currentMode={inGame && play ? play.mode : view === 'repte' || view === 'lliga' || view === 'dia' ? view : null}
           onSwitchMode={switchMode}
           tileStyle={tileStyle}
           onTileStyle={setTileStyle}
@@ -679,6 +884,18 @@ export function App() {
           </section>
         </>
       )}
+
+      {showNameDialog && cloud.user && (
+        <NameDialog
+          suggestion={cloud.user.firstName}
+          onSave={(name) => {
+            void profile.setName(name);
+            markNameAsked(cloud.user!.uid);
+          }}
+          onSkip={() => markNameAsked(cloud.user!.uid)}
+        />
+      )}
     </main>
+    </CloudContext.Provider>
   );
 }

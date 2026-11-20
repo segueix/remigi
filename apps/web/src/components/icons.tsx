@@ -129,6 +129,26 @@ export const LeagueIcon = () => (
   </Icon>
 );
 
+/** Partida del dia: el full del calendari. */
+export const DailyIcon = () => (
+  <Icon>
+    <rect x="4" y="5" width="16" height="15.5" rx="2" />
+    <line x1="4" y1="10" x2="20" y2="10" />
+    <line x1="8.5" y1="3" x2="8.5" y2="7" />
+    <line x1="15.5" y1="3" x2="15.5" y2="7" />
+    <polyline points="9 15 11 17 15.5 13" />
+  </Icon>
+);
+
+/** Compartir: la fletxa que surt de la capsa, com al menú de compartir del mòbil. */
+export const ShareIcon = () => (
+  <Icon>
+    <path d="M12 3.5v11" />
+    <polyline points="7.5 8 12 3.5 16.5 8" />
+    <path d="M8 11H6.5A1.5 1.5 0 0 0 5 12.5v6A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5v-6a1.5 1.5 0 0 0-1.5-1.5H16" />
+  </Icon>
+);
+
 /** Localitat: el punt del mapa. */
 export const PinIcon = () => (
   <Icon>

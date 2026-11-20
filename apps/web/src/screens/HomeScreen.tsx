@@ -1,9 +1,21 @@
 import { DIFFICULTIES, adaptiveLevelLabel, type PlayerProfile, type Tile } from '@remigi/core';
 import { TARGET_NAME, TARGET_URL } from '../appSwitch/appSwitch';
+import type { CloudHandle } from '../cloud/useCloud';
 import { ComEsJuga } from '../components/ComEsJuga';
+import { GoogleHeaderButton } from '../components/GoogleAccount';
 import { PlayerAvatar } from '../components/PlayerAvatar';
 import { TileView } from '../components/TileView';
-import { ChallengeIcon, FreePlayIcon, LeagueIcon } from '../components/icons';
+import { ChallengeIcon, DailyIcon, FreePlayIcon, LeagueIcon } from '../components/icons';
+import {
+  bestStreak,
+  countdownText,
+  currentStreak,
+  dayNumber,
+  msUntilNextDay,
+  resultFor,
+  resultText,
+  type DailyState,
+} from '../dia/daily';
 import {
   difficultyForRating,
   isFinished,
@@ -28,6 +40,14 @@ interface Props {
   savedLliga: boolean;
   challenge: ChallengeState;
   league: LeagueState;
+  /** La partida del dia: el que portes fet i el dia d'avui. */
+  daily: DailyState;
+  today: string;
+  /** La partida d'avui és a mitges. */
+  savedDia: boolean;
+  onDaily(): void;
+  /** El compte de Google: el botó d'entrar va al costat del jugador. */
+  cloud: CloudHandle;
   onFree(): void;
   onChallenge(): void;
   onLeague(): void;
@@ -61,6 +81,11 @@ export function HomeScreen({
   savedLliga,
   challenge,
   league,
+  daily,
+  today,
+  savedDia,
+  onDaily,
+  cloud,
   onFree,
   onChallenge,
   onLeague,
@@ -99,6 +124,17 @@ export function HomeScreen({
     ? `Jornada ${season.played + 1}/${season.config.rounds}${season.played > 0 ? ` · ${ordinal(rankOf(season))}` : ''}`
     : `${tierName(nextTier, league.career.home)} · rivals ${DIFFICULTIES[difficultyForRating(tierRating(nextTier))].label}`;
 
+  /* Partida del dia: si ja està feta, com ha anat; si no, la ratxa que t'hi jugues. */
+  const todayResult = resultFor(daily, today);
+  const streak = currentStreak(daily, today);
+  const best = bestStreak(daily);
+  const nextIn = countdownText(msUntilNextDay());
+  const dailyStatus = todayResult
+    ? `${todayResult.won ? '🏆' : '🧩'} ${resultText(todayResult)}`
+    : savedDia
+      ? 'A mitges: acaba-la avui'
+      : 'Mateixes fitxes per a tothom';
+
   return (
     <section className="inici">
       <div className="franja-fitxes" aria-hidden="true" />
@@ -110,13 +146,20 @@ export function HomeScreen({
             <strong>{profile.name}</strong>
             <span className="muted small">
               {calibrating ? 'calibrant el nivell' : `habilitat ${profile.rating}`}
+              {cloud.user && ' · desat a Google'}
             </span>
           </span>
         </button>
+        <GoogleHeaderButton cloud={cloud} />
         <a className="inici-tauler" href={TARGET_URL} aria-label={`Obre ${TARGET_NAME}, els escacs`} title={`${TARGET_NAME} · escacs`}>
           <img src={`${import.meta.env.BASE_URL}eltauler-192.png`} alt="" width="44" height="44" />
         </a>
       </header>
+      {cloud.error && (
+        <p className="small points-negative inici-google-error" role="alert">
+          {cloud.error}
+        </p>
+      )}
 
       {/* La taula de joc, buida, amb les tres maneres de jugar al damunt. */}
       <div className="inici-taula">
@@ -161,6 +204,32 @@ export function HomeScreen({
             </span>
           </button>
         </div>
+        {/* La partida del dia, en un bàner sota els tres modes: una al dia, igual per a tothom. */}
+        <button type="button" className="dia-boto mode-dia" onClick={onDaily} aria-label="Partida del dia">
+          <span className="dia-boto-icona" aria-hidden="true">
+            <DailyIcon />
+          </span>
+          <span className="dia-boto-text">
+            <strong className="dia-boto-titol">Partida del dia #{dayNumber(today)}</strong>
+            <span className="dia-boto-estat">{dailyStatus}</span>
+            <span className="small dia-boto-rellotge">
+              {todayResult ? 'Nova partida' : 'Acaba'} en {nextIn} · hora de Barcelona
+            </span>
+          </span>
+          <span
+            className={streak > 0 ? 'dia-boto-ratxa encesa' : 'dia-boto-ratxa'}
+            aria-label={`La teva ratxa: ${streak} ${streak === 1 ? 'dia' : 'dies'} número 1; la millor, ${best}`}
+          >
+            <span className="dia-boto-ratxa-num">
+              <span aria-hidden="true">🔥</span> {streak}
+            </span>
+            <span className="dia-boto-ratxa-etiqueta">{streak === 1 ? 'dia de ratxa' : 'dies de ratxa'}</span>
+            <span className="dia-boto-ratxa-millor">millor: {best}</span>
+          </span>
+          <span className="dia-boto-cta" aria-hidden="true">
+            {todayResult ? 'Resultat' : savedDia ? 'Continua' : 'Juga'}
+          </span>
+        </button>
         <span className="marca-taula" aria-hidden="true">
           Remigi
         </span>

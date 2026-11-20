@@ -19,7 +19,7 @@ export interface SavedGameHandle {
 
 export interface SavedGamesHandle {
   loading: boolean;
-  /** La partida a mitges de cada mode (el joc lliure, el repte i la lliga). */
+  /** La partida a mitges de cada mode (el joc lliure, el repte, la lliga i la del dia). */
   saved: Record<GameMode, SavedGame | null>;
   persist(mode: GameMode, saved: SavedGame): void;
   clear(mode: GameMode): void;
@@ -31,8 +31,8 @@ export interface SavedGamesHandle {
   refresh(): void;
 }
 
-const MODES: GameMode[] = ['lliure', 'repte', 'lliga'];
-const EMPTY: Record<GameMode, SavedGame | null> = { lliure: null, repte: null, lliga: null };
+const MODES: GameMode[] = ['lliure', 'repte', 'lliga', 'dia'];
+const EMPTY: Record<GameMode, SavedGame | null> = { lliure: null, repte: null, lliga: null, dia: null };
 
 export function useSavedGames(): SavedGamesHandle {
   const store: KeyValueStore = useMemo(() => createWebStore(), []);
@@ -41,10 +41,11 @@ export function useSavedGames(): SavedGamesHandle {
 
   const loadAll = useCallback(
     () =>
-      Promise.all(MODES.map((mode) => loadGame(store, mode))).then(([lliure, repte, lliga]) => ({
+      Promise.all(MODES.map((mode) => loadGame(store, mode))).then(([lliure, repte, lliga, dia]) => ({
         lliure,
         repte,
         lliga,
+        dia,
       })),
     [store],
   );

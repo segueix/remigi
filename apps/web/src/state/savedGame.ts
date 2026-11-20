@@ -14,6 +14,7 @@ export const SAVED_GAME_KEYS: Record<GameMode, string> = {
   lliure: 'remigi:game',
   repte: 'remigi:game:repte',
   lliga: 'remigi:game:lliga',
+  dia: 'remigi:game:dia',
 };
 
 export interface SavedGame {
@@ -123,6 +124,7 @@ function isResumable(value: unknown): boolean {
        !setup.opponentRatings.every((rating) => Number.isFinite(rating) && rating >= 800 && rating <= 1600))) {
     return false;
   }
+  if (setup.seed !== undefined && !Number.isInteger(setup.seed)) return false;
   if (!game || typeof game !== 'object') return false;
   // Només es reprenen partides a mig jugar: una d'acabada ja no té continuació.
   if (game.status !== 'playing') return false;

@@ -2967,3 +2967,205 @@ Demanat pel jugador: al missatge de WhatsApp, canviar «T’atreveixes a jugar-m
 - [x] `champion.test.ts` comprova la frase nova.
 
 **Criteris d'acceptació (verificats)**: `typecheck` net i `npm test` en verd.
+
+### La partida del dia ✅ Feta (2026-11-20)
+
+Demanat pel jugador: una funció nova al nivell de la lliga que enganxi la gent
+a jugar. La partida «on les fitxes a la vista siguin les mateixes i la resta de
+fitxes estiguin en el mateix ordre, s'ha de contar per nombre de jugades i en
+cas de no guanyar els punts restants. Després per ratxa de dies número 1.»
+
+- [x] Una partida al dia igual per a tothom (`apps/web/src/dia/daily.ts`): la
+      llavor surt de la data (`daySeed`), i amb ella la mà, el sac en el mateix
+      ordre i els noms dels rivals (2, nivell Mitjà). Comença sempre el jugador.
+- [x] Els rivals juguen amb una llavor per torn (`turnSeed`, `GameSetup.seed` a
+      `useGame.ts`): davant de la mateixa taula fan la mateixa jugada a tots els
+      aparells, i reprendre la partida no canvia res.
+- [x] Puntuació: si guanyes, les teves jugades (`humanMoves`, robar inclòs); si
+      no, els punts que et queden a la mà. Qualsevol victòria val més que
+      qualsevol derrota (`compareResults`).
+- [x] Un sol cop al dia: el primer resultat del dia és el que compta
+      (`recordResult`), i la partida a mitges es desa a part (`remigi:game:dia`).
+- [x] Ratxa de dies seguits de número 1 (`currentStreak`, viva fins que s'acaba
+      el dia) i millor ratxa (`bestStreak`), amb els quadrets dels últims 7 dies.
+- [x] Bàner horitzontal sota els tres modes de l'inici, pantalla pròpia (`DiaScreen.tsx`),
+      final de partida amb el resultat i botó de compartir (menú del mòbil o
+      WhatsApp, i copiar). Accés també des del canvi de mode.
+
+**Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd
+(176 del motor i 284 de la web, 18 de nous a `daily.test.ts`); e2e sencer en
+verd (185), amb `e2e/dia.spec.ts` nou (mateix faristol i rivals en dos
+navegadors nets; la partida es juga un cop i el resultat queda) i
+`modes.spec.ts` actualitzat; captures de l'inici i de la pantalla del dia en
+escriptori i mòbil.
+
+### Problemes trobats
+
+- [2026-11-20] Sense servidor no hi ha classificació entre jugadors: «número
+  1» vol dir guanyar la teva taula del dia. La comparació amb altres es fa
+  compartint el resultat. Pendent si mai hi ha servidor: rànquing del dia.
+- [2026-11-20] El dia era el de l'hora local del jugador — resolt el mateix
+  dia: ara és el de Barcelona per a tothom.
+- [2026-11-20] A partir de la primera jugada diferent, la partida de cadascú
+  s'allunya (els rivals reaccionen al que fas tu); el que és comú és la mà, el
+  sac i qui juga cada torn.
+
+### Compte de Google i rànquings de la partida del dia ✅ Feta (2026-11-20)
+
+Demanat pel jugador: «Enllacem l'app amb compte de Google … i després podem fer
+els rankings.» Projecte de Firebase `remigi-c37ac`, creat pel jugador.
+
+- [x] Login amb Google (Firebase Auth, finestra emergent i redirecció si està
+      bloquejada), opcional, des de la pantalla de la partida del dia.
+- [x] Rànquing d'avui i rànquing de ratxes vives (Firestore Lite), amb l'àlies
+      del jugador i mai el nom ni el correu de Google.
+- [x] El resultat i la ratxa pugen sols en acabar la partida o en entrar.
+- [x] Regles de seguretat a `firestore.rules` (un resultat per jugador i dia,
+      no modificable; valors coherents).
+- [x] Firebase es carrega a demanda (fitxers apart del build).
+
+**Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd (176
+del motor i 291 de la web, 7 de nous a `ranking.test.ts`); `npm run build`
+correcte; e2e sencer en verd (185); captura del panell de rànquing al mòbil;
+la consulta arriba a Firestore (respon `permission-denied` fins que es publiquin
+les regles).
+
+### Problemes trobats
+
+- [2026-11-20] Les regles de Firestore s'han de publicar a mà a la consola
+  (`firestore.rules`): l'agent no té accés al projecte de Firebase.
+- [2026-11-20] El login real amb Google no es pot provar des de les proves
+  automàtiques; s'ha de comprovar a la web publicada.
+- Pendent: verificar els resultats al servidor reproduint les jugades (Cloud
+  Functions, pla Blaze).
+
+### Compte de Google: només nivell, lliga en curs i rànquings ✅ Feta (2026-11-20)
+
+Demanat pel jugador: «fes que google només guardi nivell del jugador i lliga a
+la qual està jugant amb el nom dels jugadors, així com el rankings de la prova
+diària. No facis que guardi l'historial de partides ni res més».
+
+- [x] Desat privat `perfils/{uid}` (`cloud/cloudSave.ts`): nom, nivell i lliga
+      en curs amb els rivals, el calendari i la classificació. Sense historial,
+      temporades acabades (només quantes) ni noms recents.
+- [x] En entrar, de cada part es queda la més avançada; després es puja cada
+      canvi (`cloud/useCloudSync.ts`). Res no es puja abans de llegir el compte.
+- [x] La ratxa de la partida del dia es recupera en un altre aparell
+      (`DailyState.carried`, `withCarried`).
+- [x] Entrar amb Google també des del perfil (`components/GoogleAccount.tsx`).
+- [x] Regles de `perfils/{uid}` a `firestore.rules` (només el propi jugador).
+
+**Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd (176
+del motor i 298 de la web, 7 de nous); e2e sencer: 184 de 185 a la primera, i la
+que va fallar (`modes.spec.ts:283`, compte enrere entre jornades) passa 6 de 6
+repetida.
+
+### Problemes trobats
+
+- [2026-11-20] Firestore no accepta llistes dins de llistes: el calendari de la
+  lliga es codifica com un text per jornada (`encodeSchedule`).
+- [2026-11-20] Si s'ha jugat la partida del dia en un altre aparell, en aquest
+  es pot tornar a jugar; el rànquing es queda amb el primer resultat (no es pot
+  modificar).
+- [2026-11-20] La sincronització amb el compte real no es pot provar
+  automàticament: cal provar-la a la web publicada amb les regles publicades.
+
+### Inici amb els colors de les fitxes ✅ Feta (2026-11-20)
+
+Demanat pel jugador: els tres calaixos de dalt i el bàner de sota, cadascun
+amb el color d'un grup de fitxes del Remigi, i el text en blanc o negre.
+
+- [x] Joc lliure vermell, Repte blau, Lliga groc i Partida del dia negre (els
+      colors de `.tile-red`, `.tile-blue`, `.tile-orange` i `.tile-black`),
+      igual en mode clar i fosc. Text blanc, i negre sobre el groc.
+- [x] Icona en un disc del color del text i botó a l'inrevés (fons del color
+      del text, lletra del color del calaix). Només a l'inici (`.inici-taula`).
+
+**Criteris d'acceptació (verificats)**: build correcte; e2e `inici`, `dia` i
+`modes` en verd; captures en mode fosc i clar, mòbil i escriptori.
+
+- [x] (2026-11-20) Lliga també amb text, icona i botó blancs: el groc es puja
+      cap a or (`#d9a000` → `#b07d00`), amb ombra al text i l'estat sobre fons
+      més fosc; la lletra del botó i el dibuix de la icona, en or fosc
+      `#8a5f00` (5.5:1 sobre blanc).
+
+### Partida del dia: hora de Barcelona i bàner amb la ratxa ✅ Feta (2026-11-20)
+
+Demanat pel jugador: «Indica hora de Barcelona, fes el banner negre de partida
+del dia una mica més ampli i visible, podries posar ratxa de la persona».
+
+- [x] El dia de la partida és el de Barcelona (`dayKey` amb `Europe/Madrid`),
+      i el bàner diu quant falta: «Acaba en 5 h 18 min · hora de Barcelona»
+      (o «Nova partida en…» si ja està feta). Es repinta cada 30 s a l'inici.
+- [x] Bàner més gran i amb vora clara; la ratxa sempre a la vista (número gran
+      amb 🔥, apagat si és 0, i la millor a sota). Al mòbil, el botó a tota
+      l'amplada a sota.
+
+**Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd
+(3 de nous: dia de Barcelona a l'hivern i a l'estiu, compte enrere); e2e
+`inici`, `dia` i `modes` en verd; captures en mode fosc i clar, mòbil i
+escriptori.
+
+### Entrar amb Google amb el nom, i convidar a la partida del dia ✅ Feta (2026-11-20)
+
+Demanat pel jugador: el login de Google «el més natural» i que «integri el nom
+d'usuari», i «una opció de compartir el repte diari per fer que la gent s'hi
+sumi».
+
+- [x] «Entra» amb Google al capçal de l'inici, al costat del jugador; amb
+      sessió, sota el nom hi diu «desat a Google». També al perfil, al
+      rànquing del dia i al final de la partida del dia (`CloudContext`).
+- [x] En entrar amb el nom de casa («Jugador»), un diàleg demana un cop amb
+      quin nom vols jugar i proposa el nom de pila del compte
+      (`NameDialog`). El nom complet i el correu no surten mai.
+- [x] «📣 Convida amics» (menú de compartir del mòbil o WhatsApp, i copiar
+      l'enllaç) a l'inici, a la pantalla del dia i al final de la partida.
+      L'enllaç (`?partida=dia`) obre directament la partida del dia, i la
+      invitació porta el número del dia i la teva ratxa.
+
+**Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd
+(301 de la web); e2e sencer en verd (187, amb una de nova: l'enllaç
+d'invitació); captures al mòbil.
+
+### Partida del dia més simple ✅ Feta (2026-11-20)
+
+Demanat pel jugador: «Fes molt més simple»: entrar amb Google només a dalt de
+l'inici; el bàner porta directament a la partida; un sol botó per compartir
+el resultat amb «Em superes?»; a dalt, la posició al rànquing (la ratxa ja és
+al bàner).
+
+- [x] Google, només al capçal de l'inici («Entra amb Google», al mòbil
+      «Entra»; amb sessió, la «G» amb ✓ i tocar-la deixa sortir). Fora del
+      perfil, del rànquing i del final de partida. El diàleg del nom es queda.
+- [x] El bàner (i el canvi de mode i l'enllaç `?partida=dia`) obre
+      directament la partida; si ja s'ha jugat avui, el resultat i el rànquing.
+- [x] Fora «Convida amics»: un sol botó «📣 Comparteix: em superes?» amb el
+      resultat, els quadrets i l'enllaç que obre la partida del dia.
+- [x] A dalt del final de partida i de la pantalla del dia, «Ets el 3r de 25
+      al rànquing d'avui» (`fetchDayPlace`, comptatge de Firestore); sense
+      compte, on s'entra.
+- [x] Pantalla del dia reduïda a posició, resultat, compartir i rànquing.
+
+**Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd
+(301 de la web); e2e `dia`, `inici` i `modes` en verd (34); captures al mòbil.
+El rànquing ja carrega de Firestore amb les regles publicades.
+
+### Targeta del resultat de la partida del dia ✅ Feta (2026-11-20)
+
+Demanat pel jugador: la finestra flotant del final de la partida del dia «molt
+més ben integrada a nivell de colors i disseny», «canvia l'icona de
+comparteix» i «molt més atractiva».
+
+- [x] `DailyResultCard` (final de partida i pantalla del dia): negra com el
+      bàner, franja dels quatre colors de les fitxes, llum groga si guanyes i
+      vermella si no; la xifra que compta dins d'una fitxa del Remigi (blava:
+      jugades; vermella: punts a la mà); posició al rànquing en una píndola.
+- [x] Botó de compartir blanc i gran amb una icona de compartir de debò
+      (`ShareIcon`, la fletxa que surt de la capsa) en lloc del 📣:
+      «Comparteix · Em superes?».
+- [x] Identitat de la partida del dia en blanc i negre (abans lila), també a
+      les pestanyes del rànquing.
+
+**Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd
+(301); e2e sencer en verd (187); captures del final de partida i de la
+pantalla del dia al mòbil.

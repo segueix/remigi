@@ -7,6 +7,7 @@ import {
   type GameState,
 } from '@remigi/core';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { turnSeed } from '../dia/daily';
 import { botsAdaptThisTurn } from './botAdjustment';
 import { pickPersonas } from './bots';
 import { addMiss, detectMissedChances, type MissedChance } from './missedChances';
@@ -36,8 +37,8 @@ export const BOT_DELAY_MS = Number(import.meta.env.VITE_BOT_DELAY ?? 3000);
  */
 const engine = createEngine();
 
-/** Les tres maneres de jugar que s'ofereixen a l'inici. */
-export type GameMode = 'lliure' | 'repte' | 'lliga';
+/** Les maneres de jugar que s'ofereixen a l'inici (i la partida del dia). */
+export type GameMode = 'lliure' | 'repte' | 'lliga' | 'dia';
 
 export interface GameSetup {
   /** Mode de joc; absent (partides desades velles) val com a joc lliure. */
@@ -64,6 +65,13 @@ export interface GameSetup {
   auto?: boolean;
   /** Ajusta la dificultat dels bots durant la partida segons com et va. */
   adaptDuringGame?: boolean;
+  /**
+   * Llavor fixa de la partida (la partida del dia): el mateix repartiment i el
+   * mateix ordre del sac a tots els aparells, comença sempre el jugador i els
+   * bots juguen amb una llavor per torn (davant de la mateixa taula, la
+   * mateixa jugada).
+   */
+  seed?: number;
 }
 
 export interface GameHandle {
@@ -104,10 +112,12 @@ export function newGameState(setup: GameSetup): GameState {
   const personas = setup.opponentNames
     ? setup.opponentNames.map((name) => ({ name }))
     : pickPersonas(setup.opponents.length);
-  // Qui fa el primer torn es sorteja: de vegades comença un rival.
+  // Qui fa el primer torn es sorteja: de vegades comença un rival. Amb
+  // llavor fixa (la partida del dia), comença sempre el jugador.
   const playerCount = setup.opponents.length + 1;
   return createGame({
-    firstPlayer: Math.floor(Math.random() * playerCount),
+    seed: setup.seed,
+    firstPlayer: setup.seed !== undefined ? 0 : Math.floor(Math.random() * playerCount),
     players: [
       { name: setup.playerName, kind: 'human' },
       ...setup.opponents.map((level, i) => ({
@@ -189,7 +199,9 @@ export function useGame(
         if (current.status !== 'playing' || isHumanTurn(current)) return current;
         const before = new Set(current.board.flat().map((tile) => tile.id));
         const mover = current.currentPlayer;
-        const decision = engine.play(current, {
+        const seed = setupRef.current.seed;
+        const turnEngine = seed !== undefined ? createEngine({ seed: turnSeed(seed, current.turn) }) : engine;
+        const decision = turnEngine.play(current, {
           playerIndex: mover,
           rating: setupRef.current.opponentRatings?.[mover - 1],
           rubberBanding: botsAdaptThisTurn(setupRef.current, current),

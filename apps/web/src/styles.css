@@ -3328,6 +3328,8 @@ button.secondary.reset-nivell {
   --mode-repte-text: #ffffff;
   --mode-lliga: #a16207;
   --mode-lliga-text: #ffffff;
+  --mode-dia: #1c1917;
+  --mode-dia-text: #ffffff;
   /* Medalles de la classificació. */
   --plata: #6b7280;
   --bronze: #b45309;
@@ -3340,6 +3342,8 @@ button.secondary.reset-nivell {
   --mode-repte-text: #172554;
   --mode-lliga: #fbbf24;
   --mode-lliga-text: #422006;
+  --mode-dia: #f5f5f4;
+  --mode-dia-text: #1c1917;
   --plata: #d1d5db;
   --bronze: #fdba74;
 }
@@ -3360,6 +3364,13 @@ button.secondary.reset-nivell {
 .lliga {
   --identitat: var(--mode-lliga);
   --identitat-text: var(--mode-lliga-text);
+}
+
+.mode-dia,
+.dia,
+.final-dia {
+  --identitat: var(--mode-dia);
+  --identitat-text: var(--mode-dia-text);
 }
 
 /* ---------- Inici ---------- */
@@ -3432,7 +3443,10 @@ button.secondary.reset-nivell {
 .inici-taula {
   position: relative;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
+  gap: 0.9rem;
   min-height: clamp(17rem, 52vh, 30rem);
   margin-bottom: 0.6rem;
   padding: 1.6rem 1.1rem 2.4rem;
@@ -5429,4 +5443,697 @@ button.secondary.reset-nivell {
   .campio-diploma {
     animation: none;
   }
+}
+
+/* ---------- Partida del dia ---------- */
+
+/* El bàner de l'inici, sota els tres modes i a tota l'amplada. */
+.dia-boto {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid color-mix(in srgb, var(--identitat) 40%, var(--vora));
+  border-left: 5px solid var(--identitat);
+  border-radius: 0.9rem;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--identitat) 16%, var(--superficie)),
+    var(--superficie) 70%
+  );
+  color: var(--text);
+  font-weight: 400;
+  text-align: left;
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.32);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.dia-boto:hover:not(:disabled) {
+  filter: none;
+  transform: translateY(-2px);
+}
+
+.dia-boto:focus-visible {
+  outline: 3px solid var(--identitat);
+  outline-offset: 2px;
+}
+
+.dia-boto-icona {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 50%;
+  background: var(--identitat);
+  color: var(--identitat-text);
+}
+
+.dia-boto-icona .icona {
+  width: 1.45rem;
+  height: 1.45rem;
+}
+
+.dia-boto-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.3;
+}
+
+.dia-boto-text .small {
+  color: var(--text-suau);
+  overflow-wrap: anywhere;
+}
+
+.dia-boto-ratxa {
+  flex: none;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.dia-boto-cta {
+  flex: none;
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  background: var(--identitat);
+  color: var(--identitat-text);
+  font-weight: 700;
+}
+
+.dia-quadrets {
+  margin: 0.2rem 0 0.6rem;
+  font-size: 1.4rem;
+  letter-spacing: 0.15rem;
+  text-align: center;
+}
+
+.dia-resultat {
+  margin: 0.4rem 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.dia-resultat.guanyada {
+  color: var(--identitat);
+}
+
+.dia-compartir {
+  margin-top: 0.4rem;
+}
+
+@media (max-width: 560px) {
+  .dia-boto {
+    gap: 0.5rem;
+    padding: 0.5rem 0.6rem;
+  }
+
+  .dia-boto-icona {
+    width: 2.2rem;
+    height: 2.2rem;
+  }
+
+  .dia-boto-cta {
+    padding: 0.3rem 0.7rem;
+  }
+}
+
+/* Rànquings de la partida del dia. */
+.dia-ranking {
+  margin-top: 1rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--vora);
+}
+
+.dia-ranking-cap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.dia-ranking-cap h3 {
+  margin: 0;
+}
+
+.dia-ranking-pestanyes {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.dia-ranking-pestanyes button {
+  padding: 0.3rem 0.9rem;
+}
+
+.dia-ranking-llista {
+  margin: 0.6rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dia-ranking-llista li {
+  display: grid;
+  grid-template-columns: 2.2rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.4rem;
+  border-bottom: 1px solid var(--vora);
+}
+
+.dia-ranking-llista li.jo {
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--identitat) 16%, var(--superficie));
+}
+
+.dia-ranking-pos {
+  font-weight: 700;
+  text-align: center;
+}
+
+.dia-ranking-nom {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dia-compte {
+  margin-top: 0.6rem;
+}
+
+.dia-google {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+button.enllac {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--identitat);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* ---------- Inici: cada calaix amb el color d'un grup de fitxes ---------- */
+
+/*
+ * Els tres modes i el bàner de la partida del dia porten els quatre colors de
+ * les fitxes del Remigi (els mateixos de `.tile-red`, `.tile-blue`,
+ * `.tile-orange` i `.tile-black`), igual en mode clar i fosc. El text va en
+ * blanc o en negre segons quin es llegeix millor sobre cada color:
+ * blanc sobre vermell (5.9:1), blau (6.7:1) i negre (17:1). A la lliga, el
+ * groc es puja cap a or perquè també hi vagi el text blanc.
+ */
+.inici-taula .mode-lliure {
+  --calaix: #cc0000;
+  --calaix-fosc: #a30000;
+  --calaix-text: #ffffff;
+}
+
+.inici-taula .mode-repte {
+  --calaix: #1d4ed8;
+  --calaix-fosc: #1739a8;
+  --calaix-text: #ffffff;
+}
+
+/*
+ * La lliga, amb el groc de les fitxes una mica més pujat (cap a or) perquè
+ * hi aguanti el text blanc com als altres calaixos; l'ombra fosca del text i
+ * el fons més fosc de l'estat l'acaben de fer llegible.
+ */
+.inici-taula .mode-lliga {
+  --calaix: #d9a000;
+  --calaix-fosc: #b07d00;
+  --calaix-text: #ffffff;
+  /* Lletra del botó i dibuix de la icona: un or fosc, que sobre blanc es llegeix (5.5:1). */
+  --calaix-tinta: #8a5f00;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.35);
+}
+
+.inici-taula .mode-card.mode-lliga .mode-estat {
+  background: rgb(0 0 0 / 0.2);
+}
+
+.inici-taula .mode-card.mode-lliga .mode-cta,
+.inici-taula .mode-card.mode-lliga .mode-icona {
+  color: var(--calaix-tinta);
+  text-shadow: none;
+}
+
+.inici-taula .mode-dia {
+  --calaix: #1c1917;
+  --calaix-fosc: #0c0a09;
+  --calaix-text: #ffffff;
+}
+
+.inici-taula .mode-card,
+.inici-taula .dia-boto {
+  border: 1px solid color-mix(in srgb, var(--calaix-text) 22%, var(--calaix));
+  background: linear-gradient(180deg, var(--calaix), var(--calaix-fosc));
+  color: var(--calaix-text);
+}
+
+.inici-taula .mode-card {
+  border-top: 1px solid color-mix(in srgb, var(--calaix-text) 22%, var(--calaix));
+}
+
+.inici-taula .dia-boto {
+  border-left: 1px solid color-mix(in srgb, var(--calaix-text) 22%, var(--calaix));
+}
+
+/* La icona: un disc del color del text amb el dibuix del color del calaix. */
+.inici-taula .mode-card .mode-icona,
+.inici-taula .dia-boto .dia-boto-icona {
+  background: var(--calaix-text);
+  color: var(--calaix);
+  box-shadow: none;
+}
+
+.inici-taula .mode-card .mode-sub,
+.inici-taula .dia-boto .dia-boto-text .small {
+  color: color-mix(in srgb, var(--calaix-text) 82%, var(--calaix));
+}
+
+.inici-taula .mode-card .mode-estat {
+  background: color-mix(in srgb, var(--calaix-text) 14%, var(--calaix));
+  color: var(--calaix-text);
+}
+
+/* El botó, a l'inrevés: fons del color del text i lletra del color del calaix. */
+.inici-taula .mode-card .mode-cta,
+.inici-taula .dia-boto .dia-boto-cta {
+  background: var(--calaix-text);
+  color: var(--calaix);
+}
+
+.inici-taula .mode-card:focus-visible,
+.inici-taula .dia-boto:focus-visible {
+  outline-color: #ffffff;
+}
+
+/* ---------- Inici: el bàner de la partida del dia, gran i visible ---------- */
+
+.inici-taula .dia-boto {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  grid-template-areas: 'icona text ratxa cta';
+  gap: 0.9rem;
+  padding: 1rem 1.2rem;
+  border: 2px solid rgb(255 255 255 / 0.28);
+  box-shadow:
+    0 8px 22px rgb(0 0 0 / 0.4),
+    0 0 0 3px rgb(245 197 24 / 0.18);
+}
+
+.inici-taula .dia-boto .dia-boto-icona {
+  grid-area: icona;
+  width: 3.3rem;
+  height: 3.3rem;
+}
+
+.inici-taula .dia-boto .dia-boto-icona .icona {
+  width: 1.85rem;
+  height: 1.85rem;
+}
+
+.inici-taula .dia-boto .dia-boto-text {
+  grid-area: text;
+  gap: 0.15rem;
+}
+
+.dia-boto-titol {
+  font-size: 1.25rem;
+  line-height: 1.2;
+}
+
+.inici-taula .dia-boto .dia-boto-estat {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.inici-taula .dia-boto .dia-boto-rellotge {
+  color: rgb(255 255 255 / 0.72);
+}
+
+/* La ratxa, ben a la vista: el número gran amb el foc, i la millor a sota. */
+.inici-taula .dia-boto .dia-boto-ratxa {
+  grid-area: ratxa;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 5.2rem;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid rgb(255 255 255 / 0.2);
+  border-radius: 0.7rem;
+  background: rgb(255 255 255 / 0.08);
+  font-weight: 400;
+  line-height: 1.15;
+}
+
+.dia-boto-ratxa-num {
+  font-size: 1.6rem;
+  font-weight: 800;
+}
+
+.dia-boto-ratxa:not(.encesa) .dia-boto-ratxa-num > span {
+  filter: grayscale(1);
+  opacity: 0.6;
+}
+
+.dia-boto-ratxa.encesa {
+  border-color: rgb(245 197 24 / 0.55);
+  background: rgb(245 197 24 / 0.14);
+}
+
+.dia-boto-ratxa-etiqueta {
+  font-size: 0.72rem;
+}
+
+.dia-boto-ratxa-millor {
+  font-size: 0.7rem;
+  opacity: 0.72;
+}
+
+.inici-taula .dia-boto .dia-boto-cta {
+  grid-area: cta;
+  align-self: center;
+  padding: 0.55rem 1.3rem;
+  font-size: 1.05rem;
+}
+
+/* Al mòbil: icona, text i ratxa a dalt, i el botó a tota l'amplada a sota. */
+@media (max-width: 560px) {
+  .inici-taula .dia-boto {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      'icona text ratxa'
+      'cta cta cta';
+    gap: 0.6rem 0.7rem;
+    padding: 0.85rem 0.8rem;
+  }
+
+  .inici-taula .dia-boto .dia-boto-icona {
+    width: 2.7rem;
+    height: 2.7rem;
+  }
+
+  .dia-boto-titol {
+    font-size: 1.1rem;
+  }
+
+  .inici-taula .dia-boto .dia-boto-ratxa {
+    min-width: 4.4rem;
+    padding: 0.3rem 0.45rem;
+  }
+
+  .dia-boto-ratxa-num {
+    font-size: 1.35rem;
+  }
+
+  .inici-taula .dia-boto .dia-boto-cta {
+    text-align: center;
+  }
+}
+
+/* ---------- Compte de Google a l'inici i invitacions ---------- */
+
+/* «Entra» amb Google, al costat del jugador (El Tauler continua a la dreta). */
+.inici-google {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+}
+
+.convida {
+  margin: 0.6rem 0;
+}
+
+.inici-extres .convida {
+  margin: 0;
+}
+
+.nom-google-camp {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: 0.6rem 0 0.3rem;
+}
+
+.nom-google-camp input {
+  font-size: 1.1rem;
+  padding: 0.55rem 0.7rem;
+}
+
+.convida .row {
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* ---------- Partida del dia, simple ---------- */
+
+/* La teva posició al rànquing d'avui, a dalt de tot. */
+.dia-posicio {
+  margin: 0.3rem 0 0.6rem;
+  font-size: 1.15rem;
+}
+
+.dia-posicio.muted {
+  font-size: 0.9rem;
+}
+
+.dia-compartir-boto {
+  width: 100%;
+  max-width: 22rem;
+  padding: 0.75rem 1rem;
+  font-size: 1.05rem;
+}
+
+/* Amb sessió: la «G» amb un ✓, discreta. */
+.inici-google.connectat {
+  padding: 0.45rem 0.7rem;
+  color: #16a34a;
+  font-weight: 800;
+}
+
+.inici-google-error {
+  margin: -0.6rem 0 0.8rem;
+}
+
+/* Al mòbil, «Entra» a seques: el jugador, Google i El Tauler caben en una línia. */
+@media (max-width: 560px) {
+  .inici-google-llarg {
+    display: none;
+  }
+}
+
+/* ---------- La targeta del resultat de la partida del dia ---------- */
+
+/* Al final de partida, la targeta ocupa el lloc del requadre genèric del mode. */
+.final-mode:has(.final-dia) {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+/*
+ * Negra com el bàner de l'inici, amb la franja dels quatre colors de les
+ * fitxes a dalt i una llum suau de color al fons: groga si has guanyat,
+ * vermella si no. Tot el text, blanc.
+ */
+.dia-targeta {
+  --llum: rgb(245 197 24 / 0.22);
+  position: relative;
+  overflow: hidden;
+  margin: 0.4rem 0 0.8rem;
+  padding: 1.35rem 1.1rem 1.1rem;
+  border: 1px solid rgb(255 255 255 / 0.14);
+  border-radius: 1rem;
+  background:
+    radial-gradient(120% 80% at 100% 0%, var(--llum), transparent 60%),
+    linear-gradient(165deg, #292524, #1c1917 45%, #0c0a09);
+  color: #ffffff;
+  box-shadow: 0 10px 28px rgb(0 0 0 / 0.38);
+  text-align: left;
+}
+
+.dia-targeta:not(.guanyada) {
+  --llum: rgb(204 0 0 / 0.22);
+}
+
+.dia-targeta::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 0.35rem;
+  background: linear-gradient(90deg, #cc0000 0 25%, #1d4ed8 25% 50%, #f5c518 50% 75%, #f5f5f4 75% 100%);
+}
+
+.dia-targeta p {
+  margin: 0;
+}
+
+.dia-targeta-cap {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+
+.dia-targeta-cap > span:last-child {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.dia-targeta-data {
+  color: rgb(255 255 255 / 0.65);
+  font-size: 0.8rem;
+}
+
+.dia-targeta-icona {
+  display: grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #1c1917;
+}
+
+.dia-targeta-icona .icona {
+  width: 1.35rem;
+  height: 1.35rem;
+}
+
+.dia-targeta-resultat {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* La xifra que compta, dins d'una fitxa del Remigi (com les de la partida). */
+.dia-fitxa {
+  display: grid;
+  place-items: center;
+  flex: none;
+  min-width: 4.2rem;
+  height: 5.2rem;
+  padding: 0 0.6rem;
+  border: 1px solid #e7e5e4;
+  border-radius: 0.55rem;
+  background: linear-gradient(180deg, #fffdf6, #fffbeb 45%, #f2e8cf);
+  box-shadow:
+    0 4px 10px rgb(0 0 0 / 0.45),
+    inset 0 1px 0 rgb(255 255 255 / 0.8),
+    inset 0 -3px 4px rgb(0 0 0 / 0.08);
+  font-size: 2.3rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 0 rgb(255 255 255 / 0.55);
+  transform: rotate(-4deg);
+}
+
+.dia-fitxa.blava {
+  color: #1d4ed8;
+}
+
+.dia-fitxa.vermella {
+  color: #cc0000;
+}
+
+.dia-targeta-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+  font-size: 1rem;
+}
+
+.dia-targeta .dia-resultat {
+  margin: 0;
+  color: #ffffff;
+  font-size: 1.4rem;
+  line-height: 1.15;
+}
+
+.dia-targeta .dia-targeta-text > span {
+  color: rgb(255 255 255 / 0.78);
+}
+
+/* La posició al rànquing: una píndola daurada. */
+.dia-targeta .dia-posicio {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 1rem 0 0;
+  padding: 0.35rem 0.8rem;
+  border: 1px solid rgb(245 197 24 / 0.5);
+  border-radius: 999px;
+  background: rgb(245 197 24 / 0.14);
+  color: #ffffff;
+  font-size: 0.95rem;
+}
+
+.dia-targeta .dia-posicio.muted {
+  border-color: rgb(255 255 255 / 0.18);
+  background: rgb(255 255 255 / 0.06);
+  color: rgb(255 255 255 / 0.75);
+  font-size: 0.82rem;
+}
+
+/* Compartir: un botó blanc i gran, amb la icona de compartir. */
+.dia-targeta .dia-compartir {
+  margin-top: 1rem;
+}
+
+.dia-targeta .dia-compartir-boto {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  width: 100%;
+  max-width: none;
+  padding: 0.8rem 1rem;
+  border: 0;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #1c1917;
+  font-size: 1.05rem;
+  font-weight: 800;
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.35);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.dia-targeta .dia-compartir-boto:hover {
+  filter: none;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.42);
+}
+
+.dia-targeta .dia-compartir-boto .icona {
+  width: 1.3rem;
+  height: 1.3rem;
+}
+
+.dia-compartir-repte {
+  color: #cc0000;
+}
+
+.dia-targeta .dia-compartir p {
+  margin-top: 0.4rem;
+  color: rgb(255 255 255 / 0.75);
+}
+
+/* Les pestanyes del rànquing, en blanc i negre com la targeta. */
+.dia .dia-ranking-pestanyes button[aria-selected='true'] {
+  border-color: var(--mode-dia);
+  background: var(--mode-dia);
+  color: var(--mode-dia-text);
 }
