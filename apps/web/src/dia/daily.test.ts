@@ -19,7 +19,6 @@ import {
   resultText,
   shareText,
   withCarried,
-  resetLaunchDay,
   inviteText,
   dailyInviteUrl,
   type DailyResult,
@@ -212,14 +211,3 @@ describe('convidar a la partida del dia', () => {
   });
 });
 
-describe('reinici del dia de llançament', () => {
-  it('esborra només el resultat del dia #1 sense desempat, i només aquell dia', () => {
-    const state = withResults(win('2026-11-20'), { ...win('2026-11-19'), rivals: 50 });
-    const reset = resetLaunchDay({ ...state, carried: { streak: 1, bestStreak: 1, lastDay: '2026-11-20' } }, '2026-11-20');
-    expect(reset.results.map((r) => r.day)).toEqual(['2026-11-19']);
-    expect(reset.carried).toBeUndefined();
-    expect(resetLaunchDay(state, '2026-11-21')).toBe(state);
-    const ambDesempat = withResults({ ...win('2026-11-20'), rivals: 80 });
-    expect(resetLaunchDay(ambDesempat, '2026-11-20')).toBe(ambDesempat);
-  });
-});

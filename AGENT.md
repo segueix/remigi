@@ -3310,3 +3310,18 @@ i de després del desempat.
 
 **Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd;
 e2e `dia` i `inici` en verd.
+
+### Reinici de la competició diària per a tothom ✅ Feta (2026-11-20)
+
+Demanat pel jugador: «fes un reset per tots per començar de 0 amb els darrers
+canvis».
+
+- [x] `DAILY_RESET` (`remigi:dia:reinici` = '2'): un cop a cada aparell,
+      s'esborren els resultats i les ratxes de la partida del dia, la partida
+      del dia a mitges, el pla del dia, el rellotge i els rànquings desats. El
+      nivell i la lliga no es toquen. Substitueix el reinici del dia #1.
+- [x] A Firestore, el jugador esborra les col·leccions `dia` i `jugadors`
+      (l'app no pot esborrar resultats d'altres).
+
+**Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd
+(311); e2e `dia`, `inici`, `modes` i `perfil` en verd.

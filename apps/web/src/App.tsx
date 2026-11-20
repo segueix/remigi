@@ -44,7 +44,7 @@ import {
   humanMoves,
   isDayKey,
   parseDailyState,
-  resetLaunchDay,
+  EMPTY_DAILY,
   recordResult,
   resultFor,
   resultText,
@@ -94,6 +94,14 @@ export type View = 'home' | 'game' | 'repte' | 'lliga' | 'dia' | 'musica';
 export const CHALLENGE_KEY = 'remigi:repte';
 export const LEAGUE_KEY = 'remigi:lliga';
 export const DAILY_KEY = 'remigi:dia';
+
+/**
+ * Versió de la competició diària: canviar-la reinicia, un cop a cada aparell,
+ * els resultats i les ratxes de la partida del dia (vegeu l'efecte de l'App).
+ * '2': 2026-11-20, començar de zero amb el desempat i la dificultat setmanal.
+ */
+const DAILY_RESET_KEY = 'remigi:dia:reinici';
+const DAILY_RESET = '2';
 
 /** Els rivals de la partida del dia: els mateixos noms a tots els aparells. */
 function dailyRivals(day: string, count: number): string[] {
@@ -205,24 +213,28 @@ export function App() {
   const [rankingVersion, setRankingVersion] = useState(0);
 
   /*
-   * Un sol cop: el resultat del dia #1 d'abans del desempat s'esborra perquè
-   * es pugui tornar a jugar (vegeu `resetLaunchDay`).
+   * Reinici de la competició diària per a tothom (un sol cop per aparell,
+   * `DAILY_RESET`): fora els resultats, les ratxes, la partida del dia a
+   * mitges, el pla del dia i els rànquings desats. El nivell i la lliga no es
+   * toquen. Va de la mà d'esborrar `dia` i `jugadors` a Firestore.
    */
-  const dailyLoadedOnce = daily.value !== null;
+  const dailyLoadedOnce = daily.value !== null && !savedGames.loading;
+  const clearSavedGame = savedGames.clear;
   useEffect(() => {
     if (!dailyLoadedOnce) return;
-    const FLAG = 'remigi:dia:reinici-1';
     try {
-      if (localStorage.getItem(FLAG)) return;
-      localStorage.setItem(FLAG, '1');
+      if (localStorage.getItem(DAILY_RESET_KEY) === DAILY_RESET) return;
+      localStorage.setItem(DAILY_RESET_KEY, DAILY_RESET);
+      localStorage.removeItem('remigi:dia:pla');
+      localStorage.removeItem('remigi:rellotge:dia');
     } catch {
       return;
     }
-    const today = dayKey();
-    const before = daily.get();
-    const after = daily.update((state) => resetLaunchDay(state, today));
-    if (before !== after) clearRankingCache();
-  }, [dailyLoadedOnce, daily]);
+    daily.update(() => EMPTY_DAILY);
+    clearSavedGame('dia');
+    clearRankingCache();
+  }, [dailyLoadedOnce, daily, clearSavedGame]);
+
   /*
    * A l'inici i a la pantalla del dia, un repintat cada mig minut: el compte
    * enrere avança i, a mitjanit de Barcelona, surt sola la partida nova.
