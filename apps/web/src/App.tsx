@@ -47,6 +47,7 @@ import {
   humanMoves,
   isDayKey,
   parseDailyState,
+  resetLaunchDay,
   recordResult,
   resultFor,
   resultText,
@@ -54,6 +55,7 @@ import {
   type DailyState,
 } from './dia/daily';
 import { DailyResultCard, DiaScreen } from './screens/DiaScreen';
+import { clearRankingCache } from './cloud/cache';
 import { CloudContext, useCloud } from './cloud/useCloud';
 import { NameDialog } from './components/NameDialog';
 import { useCloudSync } from './cloud/useCloudSync';
@@ -203,6 +205,26 @@ export function App() {
   const daily = usePersisted(DAILY_KEY, parseDailyState);
   const cloud = useCloud(view === 'dia' || play?.mode === 'dia');
   const [rankingVersion, setRankingVersion] = useState(0);
+
+  /*
+   * Un sol cop: el resultat del dia #1 d'abans del desempat s'esborra perquè
+   * es pugui tornar a jugar (vegeu `resetLaunchDay`).
+   */
+  const dailyLoadedOnce = daily.value !== null;
+  useEffect(() => {
+    if (!dailyLoadedOnce) return;
+    const FLAG = 'remigi:dia:reinici-1';
+    try {
+      if (localStorage.getItem(FLAG)) return;
+      localStorage.setItem(FLAG, '1');
+    } catch {
+      return;
+    }
+    const today = dayKey();
+    const before = daily.get();
+    const after = daily.update((state) => resetLaunchDay(state, today));
+    if (before !== after) clearRankingCache();
+  }, [dailyLoadedOnce, daily]);
   /*
    * A l'inici i a la pantalla del dia, un repintat cada mig minut: el compte
    * enrere avança i, a mitjanit de Barcelona, surt sola la partida nova.

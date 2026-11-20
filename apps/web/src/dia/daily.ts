@@ -328,6 +328,25 @@ export function inviteText(day: string, url: string, streak = 0): string {
   ].join('\n');
 }
 
+/* ---------- Reinici del dia de llançament ---------- */
+
+/**
+ * El dia #1 es va jugar abans que hi hagués el desempat. Per aquesta vegada,
+ * el resultat d'aquell dia sense desempat (sense `rivals`) s'esborra un sol
+ * cop, perquè es pugui tornar a jugar i comptar amb el desempat. Només el
+ * mateix dia: l'endemà ja no es toca res.
+ */
+export const LAUNCH_RESET_DAY = FIRST_DAY;
+
+export function resetLaunchDay(state: DailyState, today: string): DailyState {
+  if (today !== LAUNCH_RESET_DAY) return state;
+  const results = state.results.filter((r) => !(r.day === LAUNCH_RESET_DAY && r.rivals === undefined));
+  const carried = state.carried?.lastDay === LAUNCH_RESET_DAY ? undefined : state.carried;
+  if (results.length === state.results.length && carried === state.carried) return state;
+  const { carried: _old, ...rest } = state;
+  return carried ? { ...rest, results, carried } : { ...rest, results };
+}
+
 /* ---------- Desat ---------- */
 
 function validResult(value: unknown): DailyResult | null {
