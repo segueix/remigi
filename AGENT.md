@@ -3213,3 +3213,17 @@ Tauler, i el símbol de sincronitzat sobre la icona del jugador.
 **Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd;
 e2e `dia`, `inici`, `perfil` i `modes` en verd; captura del capçal amb i
 sense sessió (la sessió, simulada).
+
+### Rànquing més net ✅ Feta (2026-11-20)
+
+Demanat pel jugador: el número de jugades a dalt (dins del rànquing) i, al
+costat del nom, només el número; si ha perdut, el signe menys i els punts en
+vermell.
+
+- [x] Capçalera de columnes (`#`, `Jugador`, `Jugades` / `Dies`): la paraula
+      surt un sol cop. Cada fila: posició, nom sencer i el número (victòria:
+      jugades; derrota: «−punts» en vermell; ratxes: «🔥 N»). El resultat
+      sencer queda per als lectors de pantalla (`aria-label`).
+
+**Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd;
+e2e `dia` i `inici` en verd; captura amb dades de Firestore simulades.

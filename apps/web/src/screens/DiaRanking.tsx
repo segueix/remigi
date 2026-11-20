@@ -103,14 +103,18 @@ export function DiaRanking({ today, alias, mine = null, version }: Props) {
         <RankList
           load={day}
           empty="Encara no hi ha ningú al rànquing d’avui. Sigues el primer!"
-          value={(e) => resultText(e)}
+          column="Jugades"
+          value={(e) => (e.won ? String(e.moves) : `−${e.points}`)}
+          label={(e) => resultText(e)}
           good={(e) => e.won}
         />
       ) : (
         <RankList
           load={streaks}
           empty="Encara no hi ha cap ratxa en marxa."
-          value={(e) => `🔥 ${e.streak} ${e.streak === 1 ? 'dia' : 'dies'}`}
+          column="Dies"
+          value={(e) => `🔥 ${e.streak}`}
+          label={(e) => `${e.streak} ${e.streak === 1 ? 'dia' : 'dies'} de ratxa`}
           good={() => true}
         />
       )}
@@ -122,12 +126,19 @@ export function DiaRanking({ today, alias, mine = null, version }: Props) {
 function RankList<T extends { alias: string }>({
   load,
   empty,
+  column,
   value,
+  label,
   good,
 }: {
   load: Load<T>;
   empty: string;
+  /** Capçalera de la columna del resultat («Jugades», «Dies»): la paraula surt un sol cop. */
+  column: string;
+  /** El resultat curt de cada fila: el número de jugades, o «−punts» si ha perdut. */
   value(entry: T): string;
+  /** El resultat sencer, per als lectors de pantalla. */
+  label(entry: T): string;
   good(entry: T): boolean;
 }) {
   if (load.state === 'carregant') return <p className="muted small">Carregant el rànquing…</p>;
@@ -135,6 +146,11 @@ function RankList<T extends { alias: string }>({
   if (load.rows.length === 0) return <p className="muted small">{empty}</p>;
   return (
     <ol className="dia-ranking-llista">
+      <li className="dia-ranking-capcalera" aria-hidden="true">
+        <span>#</span>
+        <span>Jugador</span>
+        <span className="dia-ranking-valor">{column}</span>
+      </li>
       {load.rows.map((row, i) => (
         <li
           key={row.id}
@@ -148,7 +164,12 @@ function RankList<T extends { alias: string }>({
             {row.entry.alias}
             {row.you && <span className="muted"> (tu)</span>}
           </span>
-          <span className={good(row.entry) ? 'punts points-positive' : 'punts points-negative'}>{value(row.entry)}</span>
+          <span
+            className={good(row.entry) ? 'dia-ranking-valor' : 'dia-ranking-valor perd'}
+            aria-label={label(row.entry)}
+          >
+            {value(row.entry)}
+          </span>
         </li>
       ))}
     </ol>
