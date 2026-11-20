@@ -79,6 +79,9 @@ test('des de la partida es torna a l’inici, i la partida es reprèn on era', a
 });
 
 test('el repte suma els punts de totes les partides i no mou el nivell del joc lliure', async ({ page }) => {
+  // Tres partides senceres amb fitxes a l'atzar: segons com surten, a la CI
+  // passen dels 30 s per defecte. El triple de temps (no se salta res).
+  test.slow();
   await obreNet(page);
   await page.getByRole('button', { name: 'Repte', exact: true }).click();
   await page.getByRole('button', { name: '3', exact: true }).first().click();
@@ -192,6 +195,8 @@ test('la lliga fa servir la localitat d’El Tauler i els noms de les lligues d�
 });
 
 test('una temporada sencera de lliga: jornades, classificació i temporada següent', async ({ page }) => {
+  // Moltes jornades seguides: el triple de temps, com el repte.
+  test.slow();
   await obreNet(page);
   await page.getByRole('button', { name: 'Lliga', exact: true }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Ara no' }).click();

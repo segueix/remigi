@@ -3193,3 +3193,8 @@ Demanat pel jugador: que Firebase arribi al màxim de gent sense pagar quotes.
 - [2026-11-20] L'índex compost del rànquing de ratxes s'ha de crear a la
   consola (Firestore → Índices); l'agent no hi té accés. Sense, el rànquing
   funciona amb la lectura de reserva.
+- [2026-11-20] La CI de `main` va fallar en fusionar (#64) pel temps: el test
+  del repte (3 partides senceres amb fitxes a l'atzar) va passar dels 30 s a
+  l'escriptori (30 i 36 s), amb el mateix codi que havia passat dues vegades a
+  la branca. Resolt amb `test.slow()` al repte i a la temporada de lliga (el
+  triple de temps), sense saltar cap test.
