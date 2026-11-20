@@ -58,6 +58,28 @@ Projecte de Firebase `remigi-c37ac` (pla Spark, gratuït). Codi:
 - En acabar la partida del dia (o en entrar amb Google després), el resultat
   d'avui o d'ahir i la ratxa pugen sols.
 
+### Què es desa al compte de Google
+
+Només això, i res més (cap historial de partides, temporades acabades ni
+reptes):
+
+| On | Què | Qui ho llegeix |
+|---|---|---|
+| `perfils/{uid}` | Nom; nivell (habilitat, partides, victòries, calibratge); lliga en curs: escala, localitat, configuració i la temporada d'ara amb els rivals (nom, població, força), el calendari i la classificació; quantes temporades acabades | Només el jugador |
+| `jugadors/{uid}` | Àlies i ratxa (rànquing de ratxes) | Tothom |
+| `dia/{dia}/resultats/{uid}` | Resultat de la partida del dia | Tothom |
+
+- **En entrar** en un aparell: de cada part es queda la més avançada (nivell:
+  més partides; lliga: més temporades i jornades). L'historial de l'aparell es
+  conserva. La ratxa de la partida del dia es recupera de `jugadors/{uid}`.
+- **Després**, cada canvi del nivell o la lliga es puja (ajuntant els canvis
+  en 2 s). No es puja res fins que s'ha llegit el compte, perquè un aparell
+  nou no esborri el que hi havia.
+- Firestore no accepta llistes dins de llistes: el calendari es desa com un
+  text per jornada (`a,b,c|d,e,f`).
+- Codi: `cloud/cloudSave.ts` (pur) i `cloud/useCloudSync.ts`. Es pot entrar
+  amb Google des de la pantalla del dia o des del perfil.
+
 ### Configuració de Firebase (es fa a la consola)
 
 1. Authentication → Método de acceso → **Google** habilitat.

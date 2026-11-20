@@ -16,6 +16,7 @@ import {
   recordResult,
   resultText,
   shareText,
+  withCarried,
   type DailyResult,
   type DailyState,
 } from './daily';
@@ -155,5 +156,26 @@ describe('desat', () => {
     expect(parseDailyState(JSON.stringify(dirty)).results).toEqual([win('2026-11-20')]);
     expect(parseDailyState('no és json')).toEqual(EMPTY_DAILY);
     expect(parseDailyState(null)).toEqual(EMPTY_DAILY);
+  });
+});
+
+describe('la ratxa que ve del compte', () => {
+  it('continua amb les victòries d’aquí i compta per a la millor', () => {
+    const carried = { streak: 4, bestStreak: 6, lastDay: '2026-11-19' };
+    let state = withCarried(EMPTY_DAILY, carried);
+    expect(currentStreak(state, '2026-11-20')).toBe(4);
+    state = recordResult(state, win('2026-11-20'));
+    expect(currentStreak(state, '2026-11-20')).toBe(5);
+    expect(bestStreak(state)).toBe(6);
+    state = recordResult(state, win('2026-11-21'));
+    state = recordResult(state, win('2026-11-22'));
+    expect(bestStreak(state)).toBe(7);
+  });
+
+  it('no compta si aquí ja hi ha dies més nous, i es desa', () => {
+    const state = withResults(loss('2026-11-20'));
+    expect(withCarried(state, { streak: 4, bestStreak: 4, lastDay: '2026-11-19' })).toBe(state);
+    const kept = withCarried(EMPTY_DAILY, { streak: 2, bestStreak: 3, lastDay: '2026-11-19' });
+    expect(parseDailyState(JSON.stringify(kept)).carried).toEqual({ streak: 2, bestStreak: 3, lastDay: '2026-11-19' });
   });
 });

@@ -1,6 +1,7 @@
 rules_version = '2';
 
-// Regles de Firestore del projecte remigi-c37ac (rànquings de la partida del dia).
+// Regles de Firestore del projecte remigi-c37ac: rànquings de la partida del dia
+// i desat privat del nivell i la lliga en curs.
 // S'enganxen a la consola: Firestore Database → Reglas → Publicar.
 // Explicació a docs/PARTIDA-DEL-DIA.md.
 service cloud.firestore {
@@ -55,6 +56,23 @@ service cloud.firestore {
         && isDay(request.resource.data.lastDay)
         && request.resource.data.at == request.time;
       allow delete: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // El desat privat de cada jugador: nom, nivell i lliga en curs (cap
+    // historial). Només el propi jugador el pot llegir, escriure o esborrar.
+    match /perfils/{uid} {
+      allow read, delete: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['version', 'name', 'level', 'league', 'at'])
+        && request.resource.data.version == 1
+        && request.resource.data.name is string
+        && request.resource.data.name.size() <= 40
+        && request.resource.data.level is map
+        && request.resource.data.level.keys().hasOnly(['rating', 'gamesPlayed', 'wins', 'ratedGames', 'adaptiveStep', 'adaptiveCalibrating'])
+        && request.resource.data.league is map
+        && request.resource.data.league.keys().hasOnly(['career', 'season', 'seasonsPlayed'])
+        && request.resource.data.at == request.time;
     }
 
     // Tota la resta, tancat.

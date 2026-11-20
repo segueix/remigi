@@ -3038,3 +3038,34 @@ les regles).
   automàtiques; s'ha de comprovar a la web publicada.
 - Pendent: verificar els resultats al servidor reproduint les jugades (Cloud
   Functions, pla Blaze).
+
+### Compte de Google: només nivell, lliga en curs i rànquings ✅ Feta (2026-11-20)
+
+Demanat pel jugador: «fes que google només guardi nivell del jugador i lliga a
+la qual està jugant amb el nom dels jugadors, així com el rankings de la prova
+diària. No facis que guardi l'historial de partides ni res més».
+
+- [x] Desat privat `perfils/{uid}` (`cloud/cloudSave.ts`): nom, nivell i lliga
+      en curs amb els rivals, el calendari i la classificació. Sense historial,
+      temporades acabades (només quantes) ni noms recents.
+- [x] En entrar, de cada part es queda la més avançada; després es puja cada
+      canvi (`cloud/useCloudSync.ts`). Res no es puja abans de llegir el compte.
+- [x] La ratxa de la partida del dia es recupera en un altre aparell
+      (`DailyState.carried`, `withCarried`).
+- [x] Entrar amb Google també des del perfil (`components/GoogleAccount.tsx`).
+- [x] Regles de `perfils/{uid}` a `firestore.rules` (només el propi jugador).
+
+**Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd (176
+del motor i 298 de la web, 7 de nous); e2e sencer: 184 de 185 a la primera, i la
+que va fallar (`modes.spec.ts:283`, compte enrere entre jornades) passa 6 de 6
+repetida.
+
+### Problemes trobats
+
+- [2026-11-20] Firestore no accepta llistes dins de llistes: el calendari de la
+  lliga es codifica com un text per jornada (`encodeSchedule`).
+- [2026-11-20] Si s'ha jugat la partida del dia en un altre aparell, en aquest
+  es pot tornar a jugar; el rànquing es queda amb el primer resultat (no es pot
+  modificar).
+- [2026-11-20] La sincronització amb el compte real no es pot provar
+  automàticament: cal provar-la a la web publicada amb les regles publicades.

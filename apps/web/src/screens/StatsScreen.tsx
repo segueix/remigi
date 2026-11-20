@@ -1,6 +1,8 @@
 import { DIFFICULTIES, STARTING_RATING, adaptiveLevelLabel, difficultyByRating, type GameRecord } from '@remigi/core';
 import { useState } from 'react';
+import type { CloudHandle } from '../cloud/useCloud';
 import { CloseButton, useEscapeToClose } from '../components/CloseButton';
+import { GoogleAccount } from '../components/GoogleAccount';
 import { ModeSwitch } from '../components/ModeSwitch';
 import type { GameMode } from '../game/useGame';
 import { PlayerAvatar } from '../components/PlayerAvatar';
@@ -21,6 +23,8 @@ interface Props {
   /** L'aspecte de les fitxes (per a la configuració, com al menú de la partida). */
   tileStyle: TileStyle;
   onTileStyle(style: TileStyle): void;
+  /** El compte de Google (nivell i lliga desats al compte, rànquings). */
+  cloud?: CloudHandle;
 }
 
 export function StatsScreen({
@@ -31,6 +35,7 @@ export function StatsScreen({
   onTileStyle,
   currentMode = null,
   onSwitchMode,
+  cloud,
 }: Props) {
   useEscapeToClose(onBack);
   const profile = handle.profile;
@@ -84,6 +89,13 @@ export function StatsScreen({
           <dd>{winRate === null ? '—' : `${winRate}%`}</dd>
         </div>
       </dl>
+
+      {cloud && (
+        <section className="menu-seccio compte-google" aria-label="Compte de Google">
+          <strong>Compte de Google</strong>
+          <GoogleAccount cloud={cloud} alias={profile.name} />
+        </section>
+      )}
 
       {/* La configuració, també des de l'inici, el repte i la lliga (no només a la partida). */}
       <SettingsPanel tileStyle={tileStyle} onTileStyle={onTileStyle} />

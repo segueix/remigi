@@ -138,6 +138,28 @@ export async function fetchStreakRanking(): Promise<RawRow[]> {
   return snap.docs.map((d) => ({ id: d.id, data: d.data() }));
 }
 
+/** El desat privat del jugador (`perfils/{uid}`): nivell i lliga en curs. */
+export async function fetchCloudSave(uid: string): Promise<unknown> {
+  const { db } = await load();
+  const { doc, getDoc } = await import('firebase/firestore/lite');
+  const snap = await getDoc(doc(db, 'perfils', uid));
+  return snap.exists() ? snap.data() : null;
+}
+
+export async function submitCloudSave(uid: string, data: Record<string, unknown>): Promise<void> {
+  const { db } = await load();
+  const { doc, setDoc, serverTimestamp } = await import('firebase/firestore/lite');
+  await setDoc(doc(db, 'perfils', uid), { ...data, at: serverTimestamp() });
+}
+
+/** La fitxa pública del jugador (àlies i ratxa del rànquing). */
+export async function fetchPlayer(uid: string): Promise<unknown> {
+  const { db } = await load();
+  const { doc, getDoc } = await import('firebase/firestore/lite');
+  const snap = await getDoc(doc(db, 'jugadors', uid));
+  return snap.exists() ? snap.data() : null;
+}
+
 /** Si hi havia hagut sessió amb Google en aquest aparell (per carregar Firebase d'entrada). */
 const SIGNED_KEY = 'remigi:google';
 

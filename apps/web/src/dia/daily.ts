@@ -36,10 +36,22 @@ export interface DailyResult {
   points: number;
 }
 
+/**
+ * La ratxa que ve del compte de Google (d'un altre aparell): no hi ha
+ * l'historial dia a dia, només la ratxa que hi havia l'últim dia jugat.
+ */
+export interface CarriedStreak {
+  streak: number;
+  bestStreak: number;
+  /** L'últim dia jugat que la ratxa ja compta. */
+  lastDay: string;
+}
+
 export interface DailyState {
   version: 1;
   /** Partides del dia jugades, la més recent primer. */
   results: DailyResult[];
+  carried?: CarriedStreak;
 }
 
 export const EMPTY_DAILY: DailyState = { version: 1, results: [] };
@@ -159,21 +171,34 @@ export function currentStreak(state: DailyState, today: string): number {
     streak++;
     day = previousDay(day);
   }
+  // La ratxa d'un altre aparell continua on s'atura la d'aquí.
+  const carried = state.carried;
+  if (carried && carried.lastDay === day && !byDay.has(day)) streak += carried.streak;
   return streak;
 }
 
-/** La millor ratxa de tots els temps. */
+/**
+ * Afegeix la ratxa del compte, si és d'un dia que aquí no consta (si ja hi
+ * consta, la d'aquí és la bona).
+ */
+export function withCarried(state: DailyState, carried: CarriedStreak | null): DailyState {
+  if (!carried || !isDayKey(carried.lastDay) || state.results.some((r) => r.day >= carried.lastDay)) return state;
+  return { ...state, carried };
+}
+
+/** La millor ratxa de tots els temps (comptant la que ve d'un altre aparell). */
 export function bestStreak(state: DailyState): number {
   const days = [...state.results].sort((a, b) => (a.day < b.day ? -1 : 1));
-  let best = 0;
-  let run = 0;
-  let prev: string | null = null;
+  const carried = state.carried;
+  let best = carried?.bestStreak ?? 0;
+  let run = carried?.streak ?? 0;
+  let prev: string | null = carried?.lastDay ?? null;
   for (const r of days) {
     run = r.won ? (prev !== null && run > 0 && daysBetween(prev, r.day) === 1 ? run + 1 : 1) : 0;
     prev = r.day;
     best = Math.max(best, run);
   }
-  return best;
+  return Math.max(best, run);
 }
 
 /** La millor partida del dia que has fet mai. */
@@ -240,6 +265,14 @@ function validResult(value: unknown): DailyResult | null {
   return { day: r.day, won: r.won, moves, points };
 }
 
+export function validCarried(value: unknown): CarriedStreak | null {
+  if (typeof value !== 'object' || value === null) return null;
+  const c = value as Partial<CarriedStreak>;
+  const ok = (n: unknown) => typeof n === 'number' && Number.isInteger(n) && n >= 0 && n <= 100_000;
+  if (!isDayKey(c.lastDay) || !ok(c.streak) || !ok(c.bestStreak)) return null;
+  return { streak: c.streak as number, bestStreak: c.bestStreak as number, lastDay: c.lastDay };
+}
+
 /** Llegeix l'estat desat; si ve malmès, es queda amb el que es pot aprofitar. */
 export function parseDailyState(raw: string | null): DailyState {
   try {
@@ -248,7 +281,8 @@ export function parseDailyState(raw: string | null): DailyState {
     const list = (value as { results?: unknown }).results;
     if (!Array.isArray(list)) return EMPTY_DAILY;
     const results = list.map(validResult).filter((r): r is DailyResult => r !== null);
-    return results.reduce<DailyState>((state, r) => recordResult(state, r), EMPTY_DAILY);
+    const state = results.reduce<DailyState>((acc, r) => recordResult(acc, r), EMPTY_DAILY);
+    return withCarried(state, validCarried((value as { carried?: unknown }).carried));
   } catch {
     return EMPTY_DAILY;
   }
