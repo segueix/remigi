@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { fetchDayPlace, fetchDayRanking, fetchStreakRanking } from '../cloud/firebase';
+import { fetchDayRanking, fetchMyDayPlace, fetchStreakRanking } from '../cloud/firebase';
 import {
   RANKING_SIZE,
   dayEntry,
@@ -51,8 +51,8 @@ export function DiaRanking({ today, alias, mine = null, version }: Props) {
            * consultes de recompte, desades com el rànquing).
            */
           if (uid && mine && mine.day === today && !rows.some((row) => row.you)) {
-            const { place } = await fetchDayPlace(today, rankScore(mine));
-            if (place > rows.length) rows.push({ id: uid, place, entry: dayEntry(mine, alias, 0), you: true });
+            const found = await fetchMyDayPlace(today, uid, dayEntry(mine, alias, 0));
+            if (found) rows.push({ id: uid, place: found.place, entry: found.entry, you: true });
           }
           if (!cancelled) setDay({ state: 'fet', rows });
         } catch {

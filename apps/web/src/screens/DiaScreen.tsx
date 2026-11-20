@@ -109,8 +109,11 @@ export function DailyResultCard({
         <span className="dia-targeta-text">
           <strong className="dia-resultat">{result.won ? '🏆 Has guanyat!' : 'No ha pogut ser'}</strong>
           <span>{result.won ? `en ${result.moves === 1 ? '1 jugada' : `${result.moves} jugades`}` : `${resultText(result)}`}</span>
-          {/* El desempat: els punts que s'han quedat els rivals (com més, millor). */}
-          {result.won && result.rivals !== undefined && (
+          {/*
+            * Els punts que s'han quedat els rivals: si guanyes, el desempat (com
+            * més, millor); si perds, també es diuen, per saber com ha anat.
+            */}
+          {result.rivals !== undefined && (
             <span className="dia-targeta-rivals">
               <strong>+{result.rivals}</strong> punts dels rivals
             </span>

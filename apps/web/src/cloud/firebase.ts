@@ -2,7 +2,7 @@ import type { FirebaseApp } from 'firebase/app';
 import type { Auth, User } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore/lite';
 import { cached, clearRankingCache } from './cache';
-import { RANKING_SIZE, legacyDayEntry, type DayEntry, type PlayerEntry } from './ranking';
+import { RANKING_SIZE, dayRanking, legacyDayEntry, parseDayEntry, type DayEntry, type PlayerEntry } from './ranking';
 
 /**
  * La connexió amb Firebase (projecte `remigi-c37ac`): el compte de Google i
@@ -179,23 +179,35 @@ export function fetchStreakRanking(today: string, yesterday: string): Promise<Ra
 }
 
 /**
- * La teva posició al rànquing d'un dia amb la teva puntuació (que l'app ja
- * sap): quants han fet millor que tu (+1) i quants hi ha en total. Dues
- * consultes de recompte (una lectura cadascuna fins a 1.000 resultats), i
- * 10 minuts desat.
+ * La teva posició al rànquing d'un dia, la mateixa que surt a la llista: el
+ * que compta és el resultat que hi ha a Firestore (el primer que vas pujar),
+ * no el de l'aparell.
+ *
+ * - Si ets al top (que ja s'ha llegit i està desat), la posició de la llista:
+ *   cap lectura més.
+ * - Si no, el teu resultat desat (1 lectura; si encara no ha pujat, el de
+ *   l'aparell) i quants n'hi ha de millors (1 recompte). Desat 10 minuts.
  */
-export function fetchDayPlace(day: string, score: number): Promise<{ place: number; total: number }> {
-  return cached(`posicio:${day}:${score}`, async () => {
+export async function fetchMyDayPlace(
+  day: string,
+  uid: string,
+  fallback: DayEntry | null,
+): Promise<{ place: number; entry: DayEntry } | null> {
+  const top = dayRanking(await fetchDayRanking(day), uid);
+  const mine = top.find((row) => row.you);
+  if (mine) return { place: mine.place, entry: mine.entry };
+  return cached(`posicio:${day}:${uid}`, async () => {
     const { db } = await load();
-    const { collection, getCount, query, where } = await import('firebase/firestore/lite');
-    const results = collection(db, 'dia', day, 'resultats');
-    const [better, total] = await Promise.all([
-      getCount(query(results, where('score', '<', score))),
-      getCount(results),
-    ]);
-    const place = better.data().count + 1;
-    // Si el teu resultat encara està pujant, no surt al total: hi compta igualment.
-    return { place, total: Math.max(total.data().count, place) };
+    const { collection, doc, getCount, getDoc, query, where } = await import('firebase/firestore/lite');
+    const snap = await getDoc(doc(db, 'dia', day, 'resultats', uid));
+    const stored = snap.exists() ? snap.data() : null;
+    const entry = parseDayEntry(stored) ?? fallback;
+    if (!entry) return null;
+    // Firestore compara les puntuacions tal com estan desades.
+    const raw = (stored as { score?: unknown } | null)?.score;
+    const score = typeof raw === 'number' ? raw : entry.score;
+    const better = await getCount(query(collection(db, 'dia', day, 'resultats'), where('score', '<', score)));
+    return { place: Math.max(better.data().count + 1, top.length + 1), entry };
   });
 }
 
