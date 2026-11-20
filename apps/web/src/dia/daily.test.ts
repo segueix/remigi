@@ -160,7 +160,8 @@ describe('la ratxa de dies número 1', () => {
     expect(text).toContain('Partida del dia #2');
     expect(text).toContain('Guanyada en 9 jugades');
     expect(text).toContain('2 dies seguits número 1');
-    expect(text.endsWith('https://exemple.cat/remigi/')).toBe(true);
+    expect(text).toContain('Em superes?');
+    expect(text.endsWith('https://exemple.cat/remigi/?partida=dia')).toBe(true);
   });
 });
 

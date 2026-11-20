@@ -102,16 +102,14 @@ Les regles només deixen escriure el propi resultat, un cop per dia i amb
 valors coherents. Com que la partida del dia és determinista, es podria
 verificar reproduint les jugades amb Cloud Functions (pla Blaze).
 
-## Convidar
+## Com es juga i es comparteix
 
-«📣 Convida amics» (a l'inici, a la pantalla del dia i al final de la partida)
-comparteix una invitació amb el número del dia i la teva ratxa, i un enllaç
-`…/remigi/?partida=dia` que obre directament la partida del dia
-(`inviteText`, `dailyInviteUrl`).
-
-## Entrar amb Google
-
-El botó «Entra» és al capçal de l'inici, al costat del jugador, i també al
-perfil, al rànquing i al final de la partida del dia. En entrar amb el nom de
-casa («Jugador»), es demana un sol cop amb quin nom vols jugar, i es proposa el
-nom de pila del compte.
+- El bàner de l'inici porta **directament a la partida**. Si ja s'ha jugat
+  avui, porta al resultat i al rànquing.
+- En acabar, a dalt hi ha la **posició al rànquing d'avui** («Ets el 3r de
+  25», `fetchDayPlace`) i un sol botó: **«📣 Comparteix: em superes?»**, amb el
+  resultat, els quadrets i un enllaç `…/remigi/?partida=dia` que obre
+  directament la partida del dia.
+- **Entrar amb Google** només es fa a dalt de l'inici. En entrar amb el nom de
+  casa («Jugador»), es demana un sol cop amb quin nom vols jugar, i es proposa
+  el nom de pila del compte.

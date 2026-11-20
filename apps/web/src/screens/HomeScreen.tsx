@@ -3,7 +3,6 @@ import { TARGET_NAME, TARGET_URL } from '../appSwitch/appSwitch';
 import type { CloudHandle } from '../cloud/useCloud';
 import { ComEsJuga } from '../components/ComEsJuga';
 import { GoogleHeaderButton } from '../components/GoogleAccount';
-import { InviteButton } from '../components/InviteButton';
 import { PlayerAvatar } from '../components/PlayerAvatar';
 import { TileView } from '../components/TileView';
 import { ChallengeIcon, DailyIcon, FreePlayIcon, LeagueIcon } from '../components/icons';
@@ -156,6 +155,11 @@ export function HomeScreen({
           <img src={`${import.meta.env.BASE_URL}eltauler-192.png`} alt="" width="44" height="44" />
         </a>
       </header>
+      {cloud.error && (
+        <p className="small points-negative inici-google-error" role="alert">
+          {cloud.error}
+        </p>
+      )}
 
       {/* La taula de joc, buida, amb les tres maneres de jugar al damunt. */}
       <div className="inici-taula">
@@ -249,7 +253,6 @@ export function HomeScreen({
       </div>
 
       <div className="row inici-extres">
-        <InviteButton day={today} streak={streak} compact />
         <button type="button" className="secondary" onClick={onMusic}>
           🎵 Música infinita
         </button>

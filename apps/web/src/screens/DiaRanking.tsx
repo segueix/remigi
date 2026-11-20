@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { fetchDayRanking, fetchStreakRanking } from '../cloud/firebase';
 import { dayRanking, streakRanking, type DayEntry, type PlayerEntry, type RankRow } from '../cloud/ranking';
-import type { CloudHandle } from '../cloud/useCloud';
-import { GoogleAccount } from '../components/GoogleAccount';
+import { useCloudContext } from '../cloud/useCloud';
 import { resultText } from '../dia/daily';
 
 type Tab = 'avui' | 'ratxes';
@@ -10,7 +9,6 @@ type Tab = 'avui' | 'ratxes';
 type Load<T> = { state: 'carregant' } | { state: 'error' } | { state: 'fet'; rows: RankRow<T>[] };
 
 interface Props {
-  cloud: CloudHandle;
   today: string;
   /** L'àlies amb què surts (el teu nom a Remigi). */
   alias: string;
@@ -21,13 +19,14 @@ interface Props {
 /**
  * Els rànquings de la partida del dia: el d'avui (victòries per menys jugades
  * i després derrotes per menys punts a la mà) i el de ratxes de dies número 1.
- * Per sortir-hi cal entrar amb Google; per mirar-los, no.
+ * Per sortir-hi cal entrar amb Google (a dalt de l'inici); per mirar-los, no.
  */
-export function DiaRanking({ cloud, today, alias, version }: Props) {
+export function DiaRanking({ today, version }: Props) {
+  const cloud = useCloudContext();
   const [tab, setTab] = useState<Tab>('avui');
   const [day, setDay] = useState<Load<DayEntry>>({ state: 'carregant' });
   const [streaks, setStreaks] = useState<Load<PlayerEntry>>({ state: 'carregant' });
-  const uid = cloud.user?.uid ?? null;
+  const uid = cloud?.user?.uid ?? null;
 
   useEffect(() => {
     let cancelled = false;
@@ -89,7 +88,6 @@ export function DiaRanking({ cloud, today, alias, version }: Props) {
         />
       )}
 
-      <GoogleAccount cloud={cloud} alias={alias} />
     </section>
   );
 }

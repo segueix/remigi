@@ -5895,3 +5895,40 @@ button.enllac {
   flex-wrap: wrap;
   gap: 0.5rem;
 }
+
+/* ---------- Partida del dia, simple ---------- */
+
+/* La teva posició al rànquing d'avui, a dalt de tot. */
+.dia-posicio {
+  margin: 0.3rem 0 0.6rem;
+  font-size: 1.15rem;
+}
+
+.dia-posicio.muted {
+  font-size: 0.9rem;
+}
+
+.dia-compartir-boto {
+  width: 100%;
+  max-width: 22rem;
+  padding: 0.75rem 1rem;
+  font-size: 1.05rem;
+}
+
+/* Amb sessió: la «G» amb un ✓, discreta. */
+.inici-google.connectat {
+  padding: 0.45rem 0.7rem;
+  color: #16a34a;
+  font-weight: 800;
+}
+
+.inici-google-error {
+  margin: -0.6rem 0 0.8rem;
+}
+
+/* Al mòbil, «Entra» a seques: el jugador, Google i El Tauler caben en una línia. */
+@media (max-width: 560px) {
+  .inici-google-llarg {
+    display: none;
+  }
+}

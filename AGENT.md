@@ -3126,3 +3126,26 @@ sumi».
 **Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd
 (301 de la web); e2e sencer en verd (187, amb una de nova: l'enllaç
 d'invitació); captures al mòbil.
+
+### Partida del dia més simple ✅ Feta (2026-11-20)
+
+Demanat pel jugador: «Fes molt més simple»: entrar amb Google només a dalt de
+l'inici; el bàner porta directament a la partida; un sol botó per compartir
+el resultat amb «Em superes?»; a dalt, la posició al rànquing (la ratxa ja és
+al bàner).
+
+- [x] Google, només al capçal de l'inici («Entra amb Google», al mòbil
+      «Entra»; amb sessió, la «G» amb ✓ i tocar-la deixa sortir). Fora del
+      perfil, del rànquing i del final de partida. El diàleg del nom es queda.
+- [x] El bàner (i el canvi de mode i l'enllaç `?partida=dia`) obre
+      directament la partida; si ja s'ha jugat avui, el resultat i el rànquing.
+- [x] Fora «Convida amics»: un sol botó «📣 Comparteix: em superes?» amb el
+      resultat, els quadrets i l'enllaç que obre la partida del dia.
+- [x] A dalt del final de partida i de la pantalla del dia, «Ets el 3r de 25
+      al rànquing d'avui» (`fetchDayPlace`, comptatge de Firestore); sense
+      compte, on s'entra.
+- [x] Pantalla del dia reduïda a posició, resultat, compartir i rànquing.
+
+**Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd
+(301 de la web); e2e `dia`, `inici` i `modes` en verd (34); captures al mòbil.
+El rànquing ja carrega de Firestore amb les regles publicades.

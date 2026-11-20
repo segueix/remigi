@@ -294,8 +294,8 @@ export function shareText(state: DailyState, result: DailyResult, url: string): 
     `${result.won ? '🏆' : '🧩'} ${resultText(result)}`,
     streak > 0 ? streakText(streak) : null,
     recentSquares(state, result.day),
-    'Mateixes fitxes per a tothom. Ho fas millor? 🎲',
-    url,
+    'Mateixes fitxes per a tothom. Em superes? 🎲',
+    dailyInviteUrl(url),
   ]
     .filter((line): line is string => line !== null)
     .join('\n');

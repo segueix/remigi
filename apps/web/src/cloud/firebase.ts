@@ -144,6 +144,24 @@ export async function fetchStreakRanking(): Promise<RawRow[]> {
   return snap.docs.map((d) => ({ id: d.id, data: d.data() }));
 }
 
+/**
+ * La teva posició al rànquing d'un dia: quants han fet millor que tu (+1) i
+ * quants hi ha en total. Null si encara no hi has pujat el resultat.
+ */
+export async function fetchDayPlace(day: string, uid: string): Promise<{ place: number; total: number } | null> {
+  const { db } = await load();
+  const { collection, doc, getCount, getDoc, query, where } = await import('firebase/firestore/lite');
+  const mine = await getDoc(doc(db, 'dia', day, 'resultats', uid));
+  const score = mine.exists() ? (mine.data() as { score?: unknown }).score : undefined;
+  if (typeof score !== 'number') return null;
+  const results = collection(db, 'dia', day, 'resultats');
+  const [better, total] = await Promise.all([
+    getCount(query(results, where('score', '<', score))),
+    getCount(results),
+  ]);
+  return { place: better.data().count + 1, total: total.data().count };
+}
+
 /** El desat privat del jugador (`perfils/{uid}`): nivell i lliga en curs. */
 export async function fetchCloudSave(uid: string): Promise<unknown> {
   const { db } = await load();

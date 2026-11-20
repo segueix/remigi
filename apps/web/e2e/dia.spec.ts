@@ -22,8 +22,8 @@ async function faristolDelDia(browser: Browser): Promise<{ rack: string; rivals:
   const context = await browser.newContext();
   const page = await context.newPage();
   await obreNet(page);
+  // El bàner porta directament a la partida.
   await page.getByRole('button', { name: 'Partida del dia', exact: true }).click();
-  await page.getByRole('button', { name: 'Juga la partida del dia' }).click();
   await expect(page.locator('.rack .tile').first()).toBeVisible();
   const rack = (await page.locator('.rack .tile').allTextContents()).sort().join(',');
   const rivals = (await page.locator('.player .player-nom').allTextContents()).slice(1).map((n) => n.trim());
@@ -47,8 +47,7 @@ test('la partida del dia es juga un cop: resultat per jugades o punts, i es pot 
   await expect(banner).toContainText('Juga');
   await banner.click();
 
-  await expect(page.locator('.dia h2')).toContainText('Partida del dia #');
-  await page.getByRole('button', { name: 'Juga la partida del dia' }).click();
+  // Directament a la partida, sense cap pantalla entremig.
   await expect(page.locator('.nivell-mode')).toContainText('Partida del dia #');
   await expect(page.locator('.player')).toHaveCount(3);
 
@@ -62,32 +61,32 @@ test('la partida del dia es juga un cop: resultat per jugades o punts, i es pot 
   const final = page.locator('.final-dia');
   await expect(final).toBeVisible();
   await expect(final.locator('.dia-resultat')).toHaveText(/(Guanyada en \d+ jugad(a|es)|\d+ punts? a la mà)/);
-  await expect(final.getByRole('button', { name: 'Comparteix el resultat' })).toBeVisible();
+  await expect(final.getByRole('button', { name: '📣 Comparteix: em superes?' })).toBeVisible();
+  // Sense compte, on s'entra per sortir al rànquing.
+  await expect(final.locator('.dia-posicio')).toContainText('Entra amb Google a dalt de l’inici');
 
-  // Ja està feta: la pantalla del dia ensenya el resultat i no deixa tornar-hi.
-  await page.getByRole('button', { name: 'Veure la partida del dia' }).click();
+  // Ja està feta: el rànquing ensenya el resultat i no deixa tornar-hi.
+  await page.getByRole('button', { name: 'Veure el rànquing' }).click();
   await expect(page.locator('.dia .dia-resultat')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Juga la partida del dia' })).toHaveCount(0);
-  await expect(page.locator('.dia .rajola-c dd')).toContainText('/1');
 
-  // I en tornar a obrir l'app, també.
+  // I en tornar a obrir l'app, el bàner porta al resultat, no a una altra partida.
   await page.reload();
   await expect(banner).toContainText('Resultat');
+  await banner.click();
+  await expect(page.locator('.dia .dia-resultat')).toBeVisible();
 });
 
-test('l’enllaç d’invitació obre la partida del dia, i s’hi pot convidar', async ({ page }) => {
+test('l’enllaç compartit obre directament la partida del dia; a dalt de l’inici, entrar amb Google', async ({ page }) => {
   await page.addInitScript(() => {
     if (localStorage.getItem('e2e:net')) return;
     localStorage.clear();
     localStorage.setItem('e2e:net', '1');
   });
   await page.goto('./?partida=dia');
-  await expect(page.locator('.dia h2')).toContainText('Partida del dia #');
+  await expect(page.locator('.nivell-mode')).toContainText('Partida del dia #');
   // L'adreça queda neta: recarregar no hi torna.
   expect(page.url()).not.toContain('partida=dia');
-  await expect(page.locator('.dia').getByRole('button', { name: '📣 Convida amics' })).toBeVisible();
-  await page.getByRole('button', { name: '← Inici' }).click();
-  // A l'inici, convidar i entrar amb Google, a la vista.
-  await expect(page.getByRole('button', { name: '📣 Convida amics' })).toBeVisible();
-  await expect(page.locator('.inici-cap .inici-google')).toBeVisible();
+  await page.goto('./');
+  await expect(page.locator('.inici-cap .inici-google')).toHaveText('Entra amb Google');
 });

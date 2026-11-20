@@ -1,60 +1,33 @@
-import { useCloudContext, type CloudHandle } from '../cloud/useCloud';
+import type { CloudHandle } from '../cloud/useCloud';
 
 /**
- * Entrar i sortir del compte de Google. Al compte només es desa el nivell, la
- * lliga en curs i els rànquings de la partida del dia (vegeu
- * `cloud/cloudSave.ts`); al rànquing només surt el nom de Remigi.
- */
-export function GoogleAccount({ cloud: given, alias }: { cloud?: CloudHandle; alias: string }) {
-  const fromContext = useCloudContext();
-  const cloud = given ?? fromContext;
-  if (!cloud) return null;
-  return (
-    <div className="dia-compte">
-      {cloud.checking ? (
-        <p className="muted small">Mirant si has entrat amb Google…</p>
-      ) : cloud.user ? (
-        <p className="muted small">
-          Compte de Google connectat: el nivell i la lliga en curs es desen al compte, i als rànquings surts com a{' '}
-          <strong>{alias}</strong> (el teu nom a Remigi).{' '}
-          <button type="button" className="enllac" onClick={cloud.signOut}>
-            Surt del compte
-          </button>
-        </p>
-      ) : (
-        <>
-          <p className="muted small">
-            Entra amb Google per sortir als rànquings i continuar el nivell i la lliga en un altre aparell. Als
-            rànquings només surt el teu nom de Remigi.
-          </p>
-          <button type="button" className="secondary dia-google" onClick={cloud.signIn}>
-            <GoogleMark /> Entra amb Google
-          </button>
-        </>
-      )}
-      {cloud.error && (
-        <p className="small points-negative" role="alert">
-          {cloud.error}
-        </p>
-      )}
-    </div>
-  );
-}
-
-/**
- * A l'inici, al costat del jugador: «Entra amb Google» si no s'hi ha entrat;
- * si s'hi ha entrat, res (el jugador ja porta la marca de compte desat).
+ * El compte de Google, a dalt de tot de l'inici (l'únic lloc on s'entra):
+ * «Entra amb Google» si no s'hi ha entrat, i si s'hi ha entrat, la «G» amb un
+ * ✓ (tocar-la permet sortir del compte).
  */
 export function GoogleHeaderButton({ cloud }: { cloud: CloudHandle }) {
-  if (cloud.user || cloud.checking) return null;
+  if (cloud.checking) return null;
+  if (cloud.user) {
+    return (
+      <button
+        type="button"
+        className="secondary inici-google connectat"
+        aria-label="Compte de Google connectat. Toca per sortir."
+        title="Compte de Google connectat · toca per sortir"
+        onClick={() => {
+          if (window.confirm('Vols sortir del compte de Google? El que tens en aquest aparell es queda.')) cloud.signOut();
+        }}
+      >
+        <GoogleMark /> <span aria-hidden="true">✓</span>
+      </button>
+    );
+  }
   return (
-    <button
-      type="button"
-      className="secondary inici-google"
-      onClick={cloud.signIn}
-      title="Entra amb Google per sortir als rànquings i desar el nivell i la lliga"
-    >
-      <GoogleMark /> <span>Entra</span>
+    <button type="button" className="secondary inici-google" onClick={cloud.signIn} aria-label="Entra amb Google">
+      <GoogleMark />
+      <span>
+        Entra<span className="inici-google-llarg"> amb Google</span>
+      </span>
     </button>
   );
 }

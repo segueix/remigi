@@ -39,7 +39,6 @@ import { pickPersonas } from './game/bots';
 import {
   DAILY_LEVEL,
   DAILY_OPPONENTS,
-  currentStreak,
   dayKey,
   dayNumber,
   dayRng,
@@ -51,14 +50,12 @@ import {
   recordResult,
   resultFor,
   resultText,
-  streakText,
   type DailyResult,
   type DailyState,
 } from './dia/daily';
-import { DiaScreen, ShareButtons } from './screens/DiaScreen';
+import { DiaScreen, ShareButton } from './screens/DiaScreen';
 import { CloudContext, useCloud } from './cloud/useCloud';
-import { GoogleAccount } from './components/GoogleAccount';
-import { InviteButton } from './components/InviteButton';
+import { DayPlace } from './components/DayPlace';
 import { NameDialog } from './components/NameDialog';
 import { useCloudSync } from './cloud/useCloudSync';
 import { GameScreen, type ModeFinish } from './screens/GameScreen';
@@ -176,20 +173,22 @@ function lastGameOf(game: GameState): LastGame {
  * la seva partida a mitges, i es reprèn en tornar-hi.
  */
 export function App() {
+  const [view, setView] = useState<View>('home');
   /*
-   * L'enllaç d'invitació a la partida del dia (`?partida=dia`) l'obre
-   * directament; després es treu de l'adreça perquè recarregar no hi torni.
+   * L'enllaç compartit de la partida del dia (`?partida=dia`) l'obre
+   * directament en acabar de carregar; després es treu de l'adreça perquè
+   * recarregar no hi torni.
    */
-  const [view, setView] = useState<View>(() => {
-    if (typeof window === 'undefined') return 'home';
+  const [openDaily, setOpenDaily] = useState(() => {
+    if (typeof window === 'undefined') return false;
     try {
       const url = new URL(window.location.href);
-      if (url.searchParams.get('partida') !== 'dia') return 'home';
+      if (url.searchParams.get('partida') !== 'dia') return false;
       url.searchParams.delete('partida');
       window.history.replaceState(null, '', url.toString());
-      return 'dia';
+      return true;
     } catch {
-      return 'home';
+      return false;
     }
   });
   const [statsOpen, setStatsOpen] = useState(false);
@@ -203,7 +202,7 @@ export function App() {
   const challenge = usePersisted(CHALLENGE_KEY, parseChallengeState);
   const league = usePersisted(LEAGUE_KEY, parseLeagueState);
   const daily = usePersisted(DAILY_KEY, parseDailyState);
-  const cloud = useCloud(view === 'dia');
+  const cloud = useCloud(view === 'dia' || play?.mode === 'dia');
   const [rankingVersion, setRankingVersion] = useState(0);
   /*
    * A l'inici i a la pantalla del dia, un repintat cada mig minut: el compte
@@ -280,17 +279,6 @@ export function App() {
     launch('lliure', setup, saved);
   }, [profile.profile, savedGames, freePrefs, saveFreeSetup, launch]);
 
-  /*
-   * Canviar de mode des de la configuració (el menú del jugador o el perfil):
-   * la partida que es deixa es queda desada, com en tornar a l'inici.
-   */
-  const switchMode = useCallback(
-    (mode: GameMode) => {
-      if (mode === 'lliure') void startFree();
-      else goTo(mode);
-    },
-    [startFree, goTo],
-  );
 
   /* ---------- Repte ---------- */
 
@@ -573,26 +561,44 @@ export function App() {
     );
   }, [daily, profile.profile, savedGames, launch, goTo]);
 
+  /*
+   * Canviar de mode des de la configuració (el menú del jugador o el perfil):
+   * la partida que es deixa es queda desada, com en tornar a l'inici.
+   */
+  const switchMode = useCallback(
+    (mode: GameMode) => {
+      if (mode === 'lliure') void startFree();
+      else if (mode === 'dia') void playDaily();
+      else goTo(mode);
+    },
+    [startFree, goTo, playDaily],
+  );
+
+  /* L'enllaç compartit de la partida del dia: en acabar de carregar, a jugar. */
+  const dailyLoaded = daily.value !== null && profile.profile !== null && !savedGames.loading;
+  useEffect(() => {
+    if (!openDaily || !dailyLoaded) return;
+    setOpenDaily(false);
+    void playDaily();
+  }, [openDaily, dailyLoaded, playDaily]);
+
   const dailyFinish = useCallback(
     (state: DailyState, result: DailyResult): ModeFinish => {
-      const streak = currentStreak(state, result.day);
       return {
         body: (
           <div className="final-dia">
             <p className="final-mode-titol">Partida del dia #{dayNumber(result.day)}</p>
+            <DayPlace day={result.day} />
             <p className={result.won ? 'dia-resultat guanyada' : 'dia-resultat'}>
               <span aria-hidden="true">{result.won ? '🏆' : '🧩'}</span> {resultText(result)}
             </p>
-            <p className="muted small">{streakText(streak)}.</p>
-            <ShareButtons state={state} result={result} />
-            <InviteButton day={result.day} streak={streak} />
-            <GoogleAccount alias={profile.profile?.name ?? 'Jugador'} />
+            <ShareButton state={state} result={result} />
           </div>
         ),
-        primary: { label: 'Veure la partida del dia', run: () => goTo('dia') },
+        primary: { label: 'Veure el rànquing', run: () => goTo('dia') },
       };
     },
-    [goTo, profile.profile?.name],
+    [goTo],
   );
 
   /*
@@ -773,7 +779,7 @@ export function App() {
           daily={daily.value}
           today={today}
           savedDia={savedGames.saved.dia !== null && savedGames.saved.dia.setup.session === today}
-          onDaily={() => setView('dia')}
+          onDaily={() => void playDaily()}
           cloud={cloud}
           onFree={() => void startFree()}
           onChallenge={() => setView('repte')}
@@ -789,14 +795,10 @@ export function App() {
         <DiaScreen
           state={daily.value}
           today={today}
-          hasSavedGame={savedGames.saved.dia !== null && savedGames.saved.dia.setup.session === today}
-          rivals={dailyRivals(today)}
           playerName={profile.profile.name}
-          cloud={cloud}
           rankingVersion={rankingVersion}
           onPlay={() => void playDaily()}
           onHome={() => goTo('home')}
-          onProfile={() => setStatsOpen(true)}
         />
       )}
 
@@ -847,7 +849,6 @@ export function App() {
           onSwitchMode={switchMode}
           tileStyle={tileStyle}
           onTileStyle={setTileStyle}
-          cloud={cloud}
         />
       )}
 
