@@ -2,7 +2,7 @@ import type { FirebaseApp } from 'firebase/app';
 import type { Auth, User } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore/lite';
 import { cached, clearRankingCache } from './cache';
-import { RANKING_SIZE, type DayEntry, type PlayerEntry } from './ranking';
+import { RANKING_SIZE, legacyDayEntry, type DayEntry, type PlayerEntry } from './ranking';
 
 /**
  * La connexió amb Firebase (projecte `remigi-c37ac`): el compte de Google i
@@ -110,10 +110,21 @@ export async function signOutCloud(): Promise<void> {
 export async function submitDayResult(uid: string, day: string, entry: DayEntry): Promise<void> {
   const { db } = await load();
   const { doc, setDoc, serverTimestamp } = await import('firebase/firestore/lite');
+  const ref = doc(db, 'dia', day, 'resultats', uid);
+  const denied = (error: unknown) => (error as { code?: string }).code === 'permission-denied';
   try {
-    await setDoc(doc(db, 'dia', day, 'resultats', uid), { ...entry, at: serverTimestamp() });
+    await setDoc(ref, { ...entry, at: serverTimestamp() });
   } catch (error) {
-    if ((error as { code?: string }).code !== 'permission-denied') throw error;
+    if (!denied(error)) throw error;
+    /*
+     * O ja hi era, o les regles publicades encara són les d'abans del
+     * desempat (no accepten `rivals`): llavors, el format d'abans.
+     */
+    try {
+      await setDoc(ref, { ...legacyDayEntry(entry), at: serverTimestamp() });
+    } catch (again) {
+      if (!denied(again)) throw again;
+    }
   }
   clearRankingCache();
 }

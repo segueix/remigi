@@ -135,3 +135,18 @@ quan puges el teu resultat, perquè et vegis de seguida.
 El rànquing de ratxes demana l'índex compost de `firestore.indexes.json`
 (`jugadors`: `lastDay` ↑, `streak` ↓). Mentre no hi sigui, funciona igual però
 llegeix més files (30) i les filtra a l'aparell.
+
+## Desempat
+
+El rànquing del dia ordena per un sol camp, `score` (menys, millor):
+
+- **Victòria:** `jugades × 1000 + (999 − punts dels rivals)`. Primer menys
+  jugades; amb les mateixes, qui deixa els rivals amb més punts a la mà
+  (guanyar «més fort»).
+- **Derrota:** `1.000.000 + punts a la mà × 1000 + jugades`. Sempre per sota de
+  qualsevol victòria.
+
+El resultat porta el camp `rivals` (punts que els quedaven als rivals). Els
+resultats d'abans no en porten: compten com a 0 i l'app els torna a puntuar en
+llegir-los. Si les regles publicades encara són les d'abans, l'app desa el
+format antic (sense `rivals`) perquè el resultat no es perdi.

@@ -34,6 +34,12 @@ export interface DailyResult {
   moves: number;
   /** Punts que et quedaven a la mà (0 si has guanyat sense fitxes). */
   points: number;
+  /**
+   * Punts que els quedaven als rivals, sumats: el desempat entre victòries
+   * amb les mateixes jugades (guanyar «més fort» val més). Absent als
+   * resultats d'abans del desempat.
+   */
+  rivals?: number;
 }
 
 /**
@@ -192,7 +198,7 @@ export function firstPlayerOf(turn: number, currentPlayer: number, players: numb
  */
 export function compareResults(a: DailyResult, b: DailyResult): number {
   if (a.won !== b.won) return a.won ? -1 : 1;
-  if (a.won) return a.moves - b.moves;
+  if (a.won) return a.moves - b.moves || (b.rivals ?? 0) - (a.rivals ?? 0);
   return a.points - b.points || a.moves - b.moves;
 }
 
@@ -331,7 +337,10 @@ function validResult(value: unknown): DailyResult | null {
   const moves = Number(r.moves);
   const points = Number(r.points);
   if (!Number.isInteger(moves) || moves < 0 || !Number.isInteger(points) || points < 0) return null;
-  return { day: r.day, won: r.won, moves, points };
+  const rivals = Number(r.rivals);
+  return Number.isInteger(rivals) && rivals >= 0
+    ? { day: r.day, won: r.won, moves, points, rivals }
+    : { day: r.day, won: r.won, moves, points };
 }
 
 export function validCarried(value: unknown): CarriedStreak | null {

@@ -673,6 +673,8 @@ export function App() {
           won: humanWon(game),
           moves: humanMoves(game.turn, players, firstPlayerOf(game.turn, game.currentPlayer, players)),
           points: rackPoints(game.players[0]?.rack ?? []),
+          // El desempat: el que els quedava als rivals.
+          rivals: game.players.slice(1).reduce((sum, player) => sum + rackPoints(player.rack), 0),
         };
         const next = daily.update((current) => recordResult(current, result));
         if (next) setFinish(dailyFinish(next, result));

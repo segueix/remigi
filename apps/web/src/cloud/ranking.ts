@@ -23,12 +23,26 @@ export const MAX_ALIAS = 24;
  */
 export const RANKING_SIZE = 10;
 
+/** El desempat es compta fins aquí (amb més punts als rivals ja no cal distingir). */
+export const MAX_RIVAL_POINTS = 999;
+
 /**
- * Un sol número per ordenar el rànquing del dia (menys, millor): les
- * victòries per jugades (sempre per sota de 1000) i, després, les derrotes
- * per punts a la mà. Així Firestore ordena per un sol camp i no cal cap índex.
+ * Un sol número per ordenar el rànquing del dia (menys, millor), perquè
+ * Firestore ordeni per un sol camp i no calgui cap índex:
+ *
+ * - victòria: `jugades × 1000 + (999 − punts dels rivals)`: primer menys
+ *   jugades i, amb les mateixes, qui deixa els rivals amb més punts a la mà;
+ * - derrota: `1.000.000 + punts a la mà × 1000 + jugades`: sempre per sota de
+ *   qualsevol victòria, primer menys punts i després menys jugades.
  */
-export function rankScore(result: Pick<DailyResult, 'won' | 'moves' | 'points'>): number {
+export function rankScore(result: Pick<DailyResult, 'won' | 'moves' | 'points' | 'rivals'>): number {
+  const moves = Math.min(result.moves, 999);
+  if (result.won) return moves * 1000 + (MAX_RIVAL_POINTS - Math.min(result.rivals ?? 0, MAX_RIVAL_POINTS));
+  return 1_000_000 + Math.min(result.points, 2000) * 1000 + moves;
+}
+
+/** La puntuació d'abans del desempat (per a les regles antigues de Firestore). */
+export function legacyScore(result: Pick<DailyResult, 'won' | 'moves' | 'points'>): number {
   return result.won ? Math.min(result.moves, 999) : 1000 + result.points;
 }
 
@@ -42,6 +56,8 @@ export interface DayEntry {
   won: boolean;
   moves: number;
   points: number;
+  /** Punts que els quedaven als rivals (el desempat; 0 als resultats d'abans). */
+  rivals: number;
   score: number;
   /** La ratxa que portava en acabar la partida. */
   streak: number;
@@ -62,9 +78,16 @@ export function dayEntry(result: DailyResult, alias: string, streak: number): Da
     won: result.won,
     moves: result.moves,
     points: result.points,
+    rivals: Math.min(result.rivals ?? 0, MAX_RIVAL_POINTS),
     score: rankScore(result),
     streak,
   };
+}
+
+/** El mateix resultat amb el format d'abans del desempat (sense `rivals`). */
+export function legacyDayEntry(entry: DayEntry): Omit<DayEntry, 'rivals'> {
+  const { rivals: _rivals, ...rest } = entry;
+  return { ...rest, score: legacyScore(entry) };
 }
 
 const isCount = (value: unknown, max: number): value is number =>
@@ -75,10 +98,12 @@ export function parseDayEntry(value: unknown): DayEntry | null {
   if (typeof value !== 'object' || value === null) return null;
   const v = value as Record<string, unknown>;
   if (typeof v.alias !== 'string' || typeof v.won !== 'boolean') return null;
-  if (!isCount(v.moves, 999) || !isCount(v.points, 2000) || !isCount(v.score, 3000) || !isCount(v.streak, 100_000)) {
-    return null;
-  }
-  return { alias: cleanAlias(v.alias), won: v.won, moves: v.moves, points: v.points, score: v.score, streak: v.streak };
+  if (!isCount(v.moves, 999) || !isCount(v.points, 2000) || !isCount(v.streak, 100_000)) return null;
+  // Els resultats d'abans del desempat no porten `rivals`: hi compten com a 0.
+  const rivals = isCount(v.rivals, MAX_RIVAL_POINTS) ? v.rivals : 0;
+  const entry = { won: v.won, moves: v.moves, points: v.points, rivals };
+  // La puntuació es torna a calcular aquí: així els dos formats s'ordenen igual.
+  return { alias: cleanAlias(v.alias), ...entry, score: rankScore(entry), streak: v.streak };
 }
 
 export function parsePlayerEntry(value: unknown): PlayerEntry | null {
