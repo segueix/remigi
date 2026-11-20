@@ -19,6 +19,8 @@ import {
   resultText,
   shareText,
   withCarried,
+  inviteText,
+  dailyInviteUrl,
   type DailyResult,
   type DailyState,
 } from './daily';
@@ -191,5 +193,19 @@ describe('la ratxa que ve del compte', () => {
     expect(withCarried(state, { streak: 4, bestStreak: 4, lastDay: '2026-11-19' })).toBe(state);
     const kept = withCarried(EMPTY_DAILY, { streak: 2, bestStreak: 3, lastDay: '2026-11-19' });
     expect(parseDailyState(JSON.stringify(kept)).carried).toEqual({ streak: 2, bestStreak: 3, lastDay: '2026-11-19' });
+  });
+});
+
+describe('convidar a la partida del dia', () => {
+  it('l’enllaç obre directament la partida del dia', () => {
+    expect(dailyInviteUrl('https://eltauler.cat/remigi/')).toBe('https://eltauler.cat/remigi/?partida=dia');
+  });
+
+  it('la invitació porta el número del dia, la ratxa si n’hi ha i l’enllaç', () => {
+    const amb = inviteText('2026-11-21', 'https://eltauler.cat/remigi/', 3);
+    expect(amb).toContain('Partida del dia #2');
+    expect(amb).toContain('3 dies seguits de número 1');
+    expect(amb.endsWith('?partida=dia')).toBe(true);
+    expect(inviteText('2026-11-21', 'https://eltauler.cat/remigi/')).toContain('T’hi apuntes?');
   });
 });

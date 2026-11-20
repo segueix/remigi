@@ -301,6 +301,27 @@ export function shareText(state: DailyState, result: DailyResult, url: string): 
     .join('\n');
 }
 
+/** L'enllaç que obre directament la partida del dia. */
+export function dailyInviteUrl(base: string): string {
+  try {
+    const url = new URL(base);
+    url.searchParams.set('partida', 'dia');
+    return url.toString();
+  } catch {
+    return base;
+  }
+}
+
+/** La invitació a la partida del dia (per sumar-hi gent). */
+export function inviteText(day: string, url: string, streak = 0): string {
+  return [
+    `🎲 Partida del dia #${dayNumber(day)} al Remigi`,
+    'Avui tothom juga amb les mateixes fitxes. Qui guanya en menys jugades?',
+    streak > 0 ? `Jo porto ${plural(streak, 'dia', 'dies')} seguits de número 1 🔥. M’atrapes?` : 'T’hi apuntes?',
+    dailyInviteUrl(url),
+  ].join('\n');
+}
+
 /* ---------- Desat ---------- */
 
 function validResult(value: unknown): DailyResult | null {

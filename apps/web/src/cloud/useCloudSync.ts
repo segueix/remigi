@@ -47,7 +47,7 @@ export function useCloudSync({
   daily,
   onLeagueReplaced,
   onRankingChange,
-}: Options): void {
+}: Options): boolean {
   const [readyFor, setReadyFor] = useState<string | null>(null);
   const [retry, setRetry] = useState(0);
   const profileLoaded = profile !== null;
@@ -135,4 +135,6 @@ export function useCloudSync({
       }
     })();
   }, [ready, uid, dailyValue, playerName]);
+
+  return ready;
 }

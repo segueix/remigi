@@ -1,11 +1,14 @@
-import type { CloudHandle } from '../cloud/useCloud';
+import { useCloudContext, type CloudHandle } from '../cloud/useCloud';
 
 /**
  * Entrar i sortir del compte de Google. Al compte només es desa el nivell, la
  * lliga en curs i els rànquings de la partida del dia (vegeu
  * `cloud/cloudSave.ts`); al rànquing només surt el nom de Remigi.
  */
-export function GoogleAccount({ cloud, alias }: { cloud: CloudHandle; alias: string }) {
+export function GoogleAccount({ cloud: given, alias }: { cloud?: CloudHandle; alias: string }) {
+  const fromContext = useCloudContext();
+  const cloud = given ?? fromContext;
+  if (!cloud) return null;
   return (
     <div className="dia-compte">
       {cloud.checking ? (
@@ -21,9 +24,8 @@ export function GoogleAccount({ cloud, alias }: { cloud: CloudHandle; alias: str
       ) : (
         <>
           <p className="muted small">
-            Entra amb Google per sortir als rànquings i continuar el nivell i la lliga en un altre aparell. Al
-            compte només es desa això (cap historial de partides), i als rànquings només surt el teu nom de
-            Remigi, mai el nom ni el correu del compte.
+            Entra amb Google per sortir als rànquings i continuar el nivell i la lliga en un altre aparell. Als
+            rànquings només surt el teu nom de Remigi.
           </p>
           <button type="button" className="secondary dia-google" onClick={cloud.signIn}>
             <GoogleMark /> Entra amb Google
@@ -39,8 +41,26 @@ export function GoogleAccount({ cloud, alias }: { cloud: CloudHandle; alias: str
   );
 }
 
+/**
+ * A l'inici, al costat del jugador: «Entra amb Google» si no s'hi ha entrat;
+ * si s'hi ha entrat, res (el jugador ja porta la marca de compte desat).
+ */
+export function GoogleHeaderButton({ cloud }: { cloud: CloudHandle }) {
+  if (cloud.user || cloud.checking) return null;
+  return (
+    <button
+      type="button"
+      className="secondary inici-google"
+      onClick={cloud.signIn}
+      title="Entra amb Google per sortir als rànquings i desar el nivell i la lliga"
+    >
+      <GoogleMark /> <span>Entra</span>
+    </button>
+  );
+}
+
 /** La «G» de Google, en colors (el botó ha de ser reconeixible). */
-function GoogleMark() {
+export function GoogleMark() {
   return (
     <svg viewBox="0 0 48 48" width="18" height="18" aria-hidden="true">
       <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z" />

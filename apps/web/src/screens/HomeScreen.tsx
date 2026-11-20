@@ -1,6 +1,9 @@
 import { DIFFICULTIES, adaptiveLevelLabel, type PlayerProfile, type Tile } from '@remigi/core';
 import { TARGET_NAME, TARGET_URL } from '../appSwitch/appSwitch';
+import type { CloudHandle } from '../cloud/useCloud';
 import { ComEsJuga } from '../components/ComEsJuga';
+import { GoogleHeaderButton } from '../components/GoogleAccount';
+import { InviteButton } from '../components/InviteButton';
 import { PlayerAvatar } from '../components/PlayerAvatar';
 import { TileView } from '../components/TileView';
 import { ChallengeIcon, DailyIcon, FreePlayIcon, LeagueIcon } from '../components/icons';
@@ -44,6 +47,8 @@ interface Props {
   /** La partida d'avui és a mitges. */
   savedDia: boolean;
   onDaily(): void;
+  /** El compte de Google: el botó d'entrar va al costat del jugador. */
+  cloud: CloudHandle;
   onFree(): void;
   onChallenge(): void;
   onLeague(): void;
@@ -81,6 +86,7 @@ export function HomeScreen({
   today,
   savedDia,
   onDaily,
+  cloud,
   onFree,
   onChallenge,
   onLeague,
@@ -141,9 +147,11 @@ export function HomeScreen({
             <strong>{profile.name}</strong>
             <span className="muted small">
               {calibrating ? 'calibrant el nivell' : `habilitat ${profile.rating}`}
+              {cloud.user && ' · desat a Google'}
             </span>
           </span>
         </button>
+        <GoogleHeaderButton cloud={cloud} />
         <a className="inici-tauler" href={TARGET_URL} aria-label={`Obre ${TARGET_NAME}, els escacs`} title={`${TARGET_NAME} · escacs`}>
           <img src={`${import.meta.env.BASE_URL}eltauler-192.png`} alt="" width="44" height="44" />
         </a>
@@ -241,6 +249,7 @@ export function HomeScreen({
       </div>
 
       <div className="row inici-extres">
+        <InviteButton day={today} streak={streak} compact />
         <button type="button" className="secondary" onClick={onMusic}>
           🎵 Música infinita
         </button>

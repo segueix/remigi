@@ -3105,3 +3105,24 @@ del dia una mica més ampli i visible, podries posar ratxa de la persona».
 (3 de nous: dia de Barcelona a l'hivern i a l'estiu, compte enrere); e2e
 `inici`, `dia` i `modes` en verd; captures en mode fosc i clar, mòbil i
 escriptori.
+
+### Entrar amb Google amb el nom, i convidar a la partida del dia ✅ Feta (2026-11-20)
+
+Demanat pel jugador: el login de Google «el més natural» i que «integri el nom
+d'usuari», i «una opció de compartir el repte diari per fer que la gent s'hi
+sumi».
+
+- [x] «Entra» amb Google al capçal de l'inici, al costat del jugador; amb
+      sessió, sota el nom hi diu «desat a Google». També al perfil, al
+      rànquing del dia i al final de la partida del dia (`CloudContext`).
+- [x] En entrar amb el nom de casa («Jugador»), un diàleg demana un cop amb
+      quin nom vols jugar i proposa el nom de pila del compte
+      (`NameDialog`). El nom complet i el correu no surten mai.
+- [x] «📣 Convida amics» (menú de compartir del mòbil o WhatsApp, i copiar
+      l'enllaç) a l'inici, a la pantalla del dia i al final de la partida.
+      L'enllaç (`?partida=dia`) obre directament la partida del dia, i la
+      invitació porta el número del dia i la teva ratxa.
+
+**Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd
+(301 de la web); e2e sencer en verd (187, amb una de nova: l'enllaç
+d'invitació); captures al mòbil.

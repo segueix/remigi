@@ -74,3 +74,20 @@ test('la partida del dia es juga un cop: resultat per jugades o punts, i es pot 
   await page.reload();
   await expect(banner).toContainText('Resultat');
 });
+
+test('l’enllaç d’invitació obre la partida del dia, i s’hi pot convidar', async ({ page }) => {
+  await page.addInitScript(() => {
+    if (localStorage.getItem('e2e:net')) return;
+    localStorage.clear();
+    localStorage.setItem('e2e:net', '1');
+  });
+  await page.goto('./?partida=dia');
+  await expect(page.locator('.dia h2')).toContainText('Partida del dia #');
+  // L'adreça queda neta: recarregar no hi torna.
+  expect(page.url()).not.toContain('partida=dia');
+  await expect(page.locator('.dia').getByRole('button', { name: '📣 Convida amics' })).toBeVisible();
+  await page.getByRole('button', { name: '← Inici' }).click();
+  // A l'inici, convidar i entrar amb Google, a la vista.
+  await expect(page.getByRole('button', { name: '📣 Convida amics' })).toBeVisible();
+  await expect(page.locator('.inici-cap .inici-google')).toBeVisible();
+});

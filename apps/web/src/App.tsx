@@ -56,7 +56,10 @@ import {
   type DailyState,
 } from './dia/daily';
 import { DiaScreen, ShareButtons } from './screens/DiaScreen';
-import { useCloud } from './cloud/useCloud';
+import { CloudContext, useCloud } from './cloud/useCloud';
+import { GoogleAccount } from './components/GoogleAccount';
+import { InviteButton } from './components/InviteButton';
+import { NameDialog } from './components/NameDialog';
 import { useCloudSync } from './cloud/useCloudSync';
 import { GameScreen, type ModeFinish } from './screens/GameScreen';
 import { HomeScreen } from './screens/HomeScreen';
@@ -129,6 +132,15 @@ const parseFreePlayBox = (raw: string | null): { prefs: FreePlayPrefs | null } =
 const challengeSession = (challenge: Challenge) => `${challenge.startedAt}#${challenge.games.length}`;
 const leagueSession = (season: LeagueSeason) => `${season.seed}#${season.played}`;
 
+/** Ja s'ha preguntat el nom a aquest compte de Google en aquest aparell. */
+function wasNameAsked(uid: string): boolean {
+  try {
+    return localStorage.getItem(`remigi:nom-google:${uid}`) === '1';
+  } catch {
+    return false;
+  }
+}
+
 function safeLocalStorage(): Storage | null {
   try {
     return window.localStorage;
@@ -164,7 +176,22 @@ function lastGameOf(game: GameState): LastGame {
  * la seva partida a mitges, i es reprèn en tornar-hi.
  */
 export function App() {
-  const [view, setView] = useState<View>('home');
+  /*
+   * L'enllaç d'invitació a la partida del dia (`?partida=dia`) l'obre
+   * directament; després es treu de l'adreça perquè recarregar no hi torni.
+   */
+  const [view, setView] = useState<View>(() => {
+    if (typeof window === 'undefined') return 'home';
+    try {
+      const url = new URL(window.location.href);
+      if (url.searchParams.get('partida') !== 'dia') return 'home';
+      url.searchParams.delete('partida');
+      window.history.replaceState(null, '', url.toString());
+      return 'dia';
+    } catch {
+      return 'home';
+    }
+  });
   const [statsOpen, setStatsOpen] = useState(false);
   const [play, setPlay] = useState<Play | null>(null);
   const [finish, setFinish] = useState<ModeFinish | null>(null);
@@ -558,12 +585,14 @@ export function App() {
             </p>
             <p className="muted small">{streakText(streak)}.</p>
             <ShareButtons state={state} result={result} />
+            <InviteButton day={result.day} streak={streak} />
+            <GoogleAccount alias={profile.profile?.name ?? 'Jugador'} />
           </div>
         ),
         primary: { label: 'Veure la partida del dia', run: () => goTo('dia') },
       };
     },
-    [goTo],
+    [goTo, profile.profile?.name],
   );
 
   /*
@@ -572,7 +601,16 @@ export function App() {
    * als rànquings. Res més: cap historial (vegeu `cloud/cloudSave.ts`).
    */
   const clearSaved = savedGames.clear;
-  useCloudSync({
+  const [nameAskedFor, setNameAskedFor] = useState<string | null>(null);
+  const markNameAsked = useCallback((uid: string) => {
+    setNameAskedFor(uid);
+    try {
+      localStorage.setItem(`remigi:nom-google:${uid}`, '1');
+    } catch {
+      // Sense emmagatzematge, es tornarà a preguntar la propera vegada.
+    }
+  }, []);
+  const cloudReady = useCloudSync({
     uid: cloud.user?.uid ?? null,
     profile: profile.profile,
     setProgress: profile.setProgress,
@@ -659,6 +697,17 @@ export function App() {
     );
   }
 
+  /*
+   * En entrar amb Google amb el nom de casa («Jugador»), es demana un cop amb
+   * quin nom vol jugar, i es proposa el nom de pila del compte.
+   */
+  const showNameDialog =
+    cloudReady &&
+    cloud.user !== null &&
+    profile.profile.name === 'Jugador' &&
+    nameAskedFor !== cloud.user.uid &&
+    !wasNameAsked(cloud.user.uid);
+
   const inGame = view === 'game' && play !== null;
   const today = dayKey();
   const classes = [inGame && !statsOpen ? 'app app-joc' : 'app'];
@@ -678,6 +727,7 @@ export function App() {
   }
 
   return (
+    <CloudContext.Provider value={cloud}>
     <main className={classes.join(' ')}>
       {/*
        * La partida no es desmunta en anar a l'historial: es continua veient
@@ -724,6 +774,7 @@ export function App() {
           today={today}
           savedDia={savedGames.saved.dia !== null && savedGames.saved.dia.setup.session === today}
           onDaily={() => setView('dia')}
+          cloud={cloud}
           onFree={() => void startFree()}
           onChallenge={() => setView('repte')}
           onLeague={() => setView('lliga')}
@@ -838,6 +889,18 @@ export function App() {
           </section>
         </>
       )}
+
+      {showNameDialog && cloud.user && (
+        <NameDialog
+          suggestion={cloud.user.firstName}
+          onSave={(name) => {
+            void profile.setName(name);
+            markNameAsked(cloud.user!.uid);
+          }}
+          onSkip={() => markNameAsked(cloud.user!.uid)}
+        />
+      )}
     </main>
+    </CloudContext.Provider>
   );
 }

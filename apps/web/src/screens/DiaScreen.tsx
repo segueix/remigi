@@ -17,6 +17,7 @@ import {
   type DailyState,
 } from '../dia/daily';
 import { whatsappUrl } from '../lliga/champion';
+import { InviteButton } from '../components/InviteButton';
 import { DiaRanking } from './DiaRanking';
 
 interface Props {
@@ -147,6 +148,9 @@ export function DiaScreen({
           </div>
         </div>
       )}
+
+      {/* Convidar: com més gent juga la mateixa partida, més gràcia té el rànquing. */}
+      <InviteButton day={today} streak={streak} />
 
       <DiaRanking cloud={cloud} today={today} alias={playerName} version={rankingVersion} />
 

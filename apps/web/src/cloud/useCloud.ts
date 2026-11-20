@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { rememberSignedIn, signInWithGoogle, signOutCloud, wasSignedIn, watchUser, type CloudUser } from './firebase';
 
 export interface CloudHandle {
@@ -8,8 +8,19 @@ export interface CloudHandle {
   checking: boolean;
   /** Missatge si entrar ha fallat. */
   error: string | null;
+  /** S'acaba d'entrar amb el botó (no en obrir l'app amb la sessió ja feta). */
+  justSignedIn: boolean;
+  /** Ja s'ha atès l'entrada (s'ha confirmat el nom). */
+  ackSignedIn(): void;
   signIn(): void;
   signOut(): void;
+}
+
+/** La sessió amb Google, per a qualsevol pantalla (també els finals de partida, que es pinten un cop). */
+export const CloudContext = createContext<CloudHandle | null>(null);
+
+export function useCloudContext(): CloudHandle | null {
+  return useContext(CloudContext);
 }
 
 function errorText(error: unknown): string | null {
@@ -29,6 +40,7 @@ export function useCloud(active: boolean): CloudHandle {
   const [user, setUser] = useState<CloudUser | null>(null);
   const [checking, setChecking] = useState(started);
   const [error, setError] = useState<string | null>(null);
+  const [justSignedIn, setJustSignedIn] = useState(false);
 
   useEffect(() => {
     if (active) setStarted(true);
@@ -47,13 +59,18 @@ export function useCloud(active: boolean): CloudHandle {
   const signIn = useCallback(() => {
     setError(null);
     setStarted(true);
-    signInWithGoogle().catch((caught: unknown) => setError(errorText(caught)));
+    signInWithGoogle()
+      .then(() => setJustSignedIn(true))
+      .catch((caught: unknown) => setError(errorText(caught)));
   }, []);
+
+  const ackSignedIn = useCallback(() => setJustSignedIn(false), []);
 
   const signOut = useCallback(() => {
     setError(null);
+    setJustSignedIn(false);
     void signOutCloud().catch(() => {});
   }, []);
 
-  return { user, checking: started && checking, error, signIn, signOut };
+  return { user, checking: started && checking, error, justSignedIn, ackSignedIn, signIn, signOut };
 }

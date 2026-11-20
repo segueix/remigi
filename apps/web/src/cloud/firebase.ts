@@ -23,6 +23,11 @@ const FIREBASE_CONFIG = {
 
 export interface CloudUser {
   uid: string;
+  /**
+   * El nom de pila del compte de Google: només per proposar-lo com a nom de
+   * Remigi en entrar. No es desa enlloc tal qual.
+   */
+  firstName: string;
 }
 
 interface Services {
@@ -50,7 +55,8 @@ function load(): Promise<Services> {
   return services;
 }
 
-const toUser = (user: User | null): CloudUser | null => (user ? { uid: user.uid } : null);
+const toUser = (user: User | null): CloudUser | null =>
+  user ? { uid: user.uid, firstName: (user.displayName ?? '').trim().split(/\s+/)[0] ?? '' } : null;
 
 /** Avisa de cada canvi de sessió (i de la d'ara en començar). Torna com deixar d'escoltar. */
 export function watchUser(callback: (user: CloudUser | null) => void): () => void {

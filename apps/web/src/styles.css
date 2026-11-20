@@ -5859,3 +5859,39 @@ button.enllac {
     text-align: center;
   }
 }
+
+/* ---------- Compte de Google a l'inici i invitacions ---------- */
+
+/* «Entra» amb Google, al costat del jugador (El Tauler continua a la dreta). */
+.inici-google {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+}
+
+.convida {
+  margin: 0.6rem 0;
+}
+
+.inici-extres .convida {
+  margin: 0;
+}
+
+.nom-google-camp {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: 0.6rem 0 0.3rem;
+}
+
+.nom-google-camp input {
+  font-size: 1.1rem;
+  padding: 0.55rem 0.7rem;
+}
+
+.convida .row {
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
