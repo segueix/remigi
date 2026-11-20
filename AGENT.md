@@ -3227,3 +3227,24 @@ vermell.
 
 **Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd;
 e2e `dia` i `inici` en verd; captura amb dades de Firestore simulades.
+
+### Desempat del rànquing del dia ✅ Feta (2026-11-20)
+
+Demanat pel jugador, en lloc de canviar la dificultat (es queda Mitjà per a
+tothom fins que hi hagi dades).
+
+- [x] `score` amb desempat: victòria, `jugades × 1000 + (999 − punts dels
+      rivals)`; derrota, `1.000.000 + punts × 1000 + jugades`. Camp nou
+      `rivals` al resultat (i a `DailyResult`).
+- [x] Compatible amb els resultats d'abans (es tornen a puntuar en llegir-los)
+      i amb les regles d'abans (si no accepten `rivals`, es desa el format
+      antic).
+- [x] `firestore.rules` accepta els dos formats.
+
+**Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd
+(306, 2 de nous); e2e `dia` i `inici` en verd.
+
+### Problemes trobats
+
+- [2026-11-20] Cal tornar a publicar `firestore.rules` a la consola perquè
+  s'acceptin els resultats amb desempat; mentrestant es desen sense.

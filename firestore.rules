@@ -19,6 +19,23 @@ service cloud.firestore {
       return day.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
     }
 
+    // La puntuació del rànquing (menys, millor), amb el desempat: victòria,
+    // jugades × 1000 + (999 − punts dels rivals); derrota, 1.000.000 +
+    // punts × 1000 + jugades.
+    function tieBreakScore(d) {
+      return count(d.rivals, 999)
+        && (
+          (d.won == true && d.score == d.moves * 1000 + 999 - d.rivals)
+          || (d.won == false && d.score == 1000000 + d.points * 1000 + d.moves)
+        );
+    }
+
+    // La puntuació d'abans del desempat (resultats sense `rivals`).
+    function legacyScore(d) {
+      return (d.won == true && d.score == d.moves)
+        || (d.won == false && d.score == 1000 + d.points);
+    }
+
     // El resultat de cada jugador cada dia: tothom el pot llegir; només el
     // propi jugador el pot crear, un sol cop, i no es pot canviar ni esborrar.
     match /dia/{day}/resultats/{uid} {
@@ -26,7 +43,7 @@ service cloud.firestore {
       allow create: if request.auth != null
         && request.auth.uid == uid
         && isDay(day)
-        && request.resource.data.keys().hasOnly(['alias', 'won', 'moves', 'points', 'score', 'streak', 'at'])
+        && request.resource.data.keys().hasOnly(['alias', 'won', 'moves', 'points', 'rivals', 'score', 'streak', 'at'])
         && validAlias(request.resource.data.alias)
         && request.resource.data.won is bool
         && count(request.resource.data.moves, 999)
@@ -34,8 +51,8 @@ service cloud.firestore {
         && count(request.resource.data.points, 2000)
         && count(request.resource.data.streak, 100000)
         && (
-          (request.resource.data.won == true && request.resource.data.score == request.resource.data.moves)
-          || (request.resource.data.won == false && request.resource.data.score == 1000 + request.resource.data.points)
+          ('rivals' in request.resource.data && tieBreakScore(request.resource.data))
+          || (!('rivals' in request.resource.data) && legacyScore(request.resource.data))
         )
         && request.resource.data.at == request.time;
       allow update, delete: if false;
