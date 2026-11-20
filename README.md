@@ -33,7 +33,7 @@ les lligues d'escacs d'El Tauler, i 30 segons de relax entre jornades amb
 música que l'app compon en aquell moment). Tot el detall és a
 [`docs/LLIGA.md`](docs/LLIGA.md).
 
-A dalt de tot hi ha la **partida del dia**: una partida al dia igual per a
+Sota els tres modes hi ha la **partida del dia**: una partida al dia igual per a
 tothom (mateixa mà, el sac en el mateix ordre i els mateixos rivals). Si
 guanyes, compten les jugades; si no, els punts que et queden a la mà. La ratxa
 són els dies seguits que has quedat número 1, i el resultat es comparteix per

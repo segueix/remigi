@@ -1,7 +1,7 @@
 # La partida del dia
 
 Cada dia hi ha **una partida igual per a tothom**, a dalt de la taula de l'inici
-(«Partida del dia #N»). Codi: `apps/web/src/dia/daily.ts` (lògica pura),
+(«Partida del dia #N», en un bàner sota els tres modes). Codi: `apps/web/src/dia/daily.ts` (lògica pura),
 `apps/web/src/screens/DiaScreen.tsx` i `App.tsx`.
 
 ## Igual per a tothom

@@ -2988,7 +2988,7 @@ cas de no guanyar els punts restants. Després per ratxa de dies número 1.»
       (`recordResult`), i la partida a mitges es desa a part (`remigi:game:dia`).
 - [x] Ratxa de dies seguits de número 1 (`currentStreak`, viva fins que s'acaba
       el dia) i millor ratxa (`bestStreak`), amb els quadrets dels últims 7 dies.
-- [x] Bàner a dalt del feltre de l'inici, pantalla pròpia (`DiaScreen.tsx`),
+- [x] Bàner horitzontal sota els tres modes de l'inici, pantalla pròpia (`DiaScreen.tsx`),
       final de partida amb el resultat i botó de compartir (menú del mòbil o
       WhatsApp, i copiar). Accés també des del canvi de mode.
 

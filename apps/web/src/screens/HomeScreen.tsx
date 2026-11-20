@@ -140,24 +140,6 @@ export function HomeScreen({
 
       {/* La taula de joc, buida, amb les tres maneres de jugar al damunt. */}
       <div className="inici-taula">
-        {/* La partida del dia, a dalt de la taula: una al dia, igual per a tothom. */}
-        <button type="button" className="dia-boto mode-dia" onClick={onDaily} aria-label="Partida del dia">
-          <span className="dia-boto-icona" aria-hidden="true">
-            <DailyIcon />
-          </span>
-          <span className="dia-boto-text">
-            <strong>Partida del dia #{dayNumber(today)}</strong>
-            <span className="small">{dailyStatus}</span>
-          </span>
-          {streak > 0 && (
-            <span className="dia-boto-ratxa" aria-label={`Ratxa de ${streak} dies número 1`}>
-              🔥 {streak}
-            </span>
-          )}
-          <span className="dia-boto-cta" aria-hidden="true">
-            {todayResult ? 'Resultat' : savedDia ? 'Continua' : 'Juga'}
-          </span>
-        </button>
         <div className="inici-modes">
           <button type="button" className="mode-card mode-lliure" onClick={onFree} aria-label="Joc lliure">
             <span className="mode-icona" aria-hidden="true">
@@ -199,6 +181,24 @@ export function HomeScreen({
             </span>
           </button>
         </div>
+        {/* La partida del dia, en un bàner sota els tres modes: una al dia, igual per a tothom. */}
+        <button type="button" className="dia-boto mode-dia" onClick={onDaily} aria-label="Partida del dia">
+          <span className="dia-boto-icona" aria-hidden="true">
+            <DailyIcon />
+          </span>
+          <span className="dia-boto-text">
+            <strong>Partida del dia #{dayNumber(today)}</strong>
+            <span className="small">{dailyStatus}</span>
+          </span>
+          {streak > 0 && (
+            <span className="dia-boto-ratxa" aria-label={`Ratxa de ${streak} dies número 1`}>
+              🔥 {streak}
+            </span>
+          )}
+          <span className="dia-boto-cta" aria-hidden="true">
+            {todayResult ? 'Resultat' : savedDia ? 'Continua' : 'Juga'}
+          </span>
+        </button>
         <span className="marca-taula" aria-hidden="true">
           Remigi
         </span>

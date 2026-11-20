@@ -5447,7 +5447,7 @@ button.secondary.reset-nivell {
 
 /* ---------- Partida del dia ---------- */
 
-/* El bàner de l'inici, a dalt del feltre i a tota l'amplada. */
+/* El bàner de l'inici, sota els tres modes i a tota l'amplada. */
 .dia-boto {
   display: flex;
   align-items: center;
