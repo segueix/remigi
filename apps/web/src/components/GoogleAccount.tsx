@@ -1,27 +1,12 @@
-import type { CloudHandle } from '../cloud/useCloud';
+import { useCloudContext, type CloudHandle } from '../cloud/useCloud';
 
 /**
- * El compte de Google, a dalt de tot de l'inici (l'únic lloc on s'entra):
- * «Entra amb Google» si no s'hi ha entrat, i si s'hi ha entrat, la «G» amb un
- * ✓ (tocar-la permet sortir del compte).
+ * «Entra amb Google», a dalt de tot de l'inici (l'únic lloc on s'entra). Amb
+ * sessió no surt: la «G» passa a sobre de l'avatar del jugador, i per sortir
+ * del compte hi ha l'opció al perfil (`GoogleSignOut`).
  */
 export function GoogleHeaderButton({ cloud }: { cloud: CloudHandle }) {
-  if (cloud.checking) return null;
-  if (cloud.user) {
-    return (
-      <button
-        type="button"
-        className="secondary inici-google connectat"
-        aria-label="Compte de Google connectat. Toca per sortir."
-        title="Compte de Google connectat · toca per sortir"
-        onClick={() => {
-          if (window.confirm('Vols sortir del compte de Google? El que tens en aquest aparell es queda.')) cloud.signOut();
-        }}
-      >
-        <GoogleMark /> <span aria-hidden="true">✓</span>
-      </button>
-    );
-  }
+  if (cloud.checking || cloud.user) return null;
   return (
     <button type="button" className="secondary inici-google" onClick={cloud.signIn} aria-label="Entra amb Google">
       <GoogleMark />
@@ -29,6 +14,26 @@ export function GoogleHeaderButton({ cloud }: { cloud: CloudHandle }) {
         Entra<span className="inici-google-llarg"> amb Google</span>
       </span>
     </button>
+  );
+}
+
+/** Al perfil, amb sessió: sortir del compte de Google. */
+export function GoogleSignOut() {
+  const cloud = useCloudContext();
+  if (!cloud?.user) return null;
+  return (
+    <p className="muted small compte-google-sortir">
+      <GoogleMark /> Sincronitzat amb Google.{' '}
+      <button
+        type="button"
+        className="enllac"
+        onClick={() => {
+          if (window.confirm('Vols sortir del compte de Google? El que tens en aquest aparell es queda.')) cloud.signOut();
+        }}
+      >
+        Surt del compte
+      </button>
+    </p>
   );
 }
 

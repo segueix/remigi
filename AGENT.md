@@ -3198,3 +3198,18 @@ Demanat pel jugador: que Firebase arribi al màxim de gent sense pagar quotes.
   l'escriptori (30 i 36 s), amb el mateix codi que havia passat dues vegades a
   la branca. Resolt amb `test.slow()` al repte i a la temporada de lliga (el
   triple de temps), sense saltar cap test.
+
+### Sincronitzat amb Google: la «G» sobre l'avatar ✅ Feta (2026-11-20)
+
+Demanat pel jugador: que un cop sincronitzat no es desplaci la icona d'El
+Tauler, i el símbol de sincronitzat sobre la icona del jugador.
+
+- [x] Amb sessió, el botó de Google del capçal desapareix i la «G» surt a dalt
+      a l'esquerra de l'avatar (la roda és a baix a la dreta). El Tauler es
+      queda a la mateixa línia. Fora el text «· desat a Google».
+- [x] Sortir del compte: al perfil (`GoogleSignOut`), que s'obre tocant el
+      jugador.
+
+**Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd;
+e2e `dia`, `inici`, `perfil` i `modes` en verd; captura del capçal amb i
+sense sessió (la sessió, simulada).
