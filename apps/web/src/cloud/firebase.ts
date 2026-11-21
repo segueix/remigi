@@ -35,25 +35,39 @@ interface Services {
   app: FirebaseApp;
   auth: Auth;
   db: Firestore;
+  /** Les funcions d'Auth, ja carregades: entrar ha de poder anar sense esperar res. */
+  authApi: typeof import('firebase/auth');
 }
 
 let services: Promise<Services> | null = null;
+/** Els serveis, un cop carregats (per poder obrir la finestra de Google dins del toc). */
+let ready: Services | null = null;
 
 function load(): Promise<Services> {
   services ??= (async () => {
-    const [{ initializeApp }, { getAuth }, { getFirestore }] = await Promise.all([
+    const [{ initializeApp }, authApi, { getFirestore }] = await Promise.all([
       import('firebase/app'),
       import('firebase/auth'),
       import('firebase/firestore/lite'),
     ]);
     const app = initializeApp(FIREBASE_CONFIG);
-    return { app, auth: getAuth(app), db: getFirestore(app) };
+    ready = { app, auth: authApi.getAuth(app), db: getFirestore(app), authApi };
+    return ready;
   })();
   // Si falla (sense connexió), el pròxim intent ho torna a provar.
   services.catch(() => {
     services = null;
   });
   return services;
+}
+
+/**
+ * Carrega Firebase per endavant (a l'inici, mentre es veu «Entra»). Safari a
+ * l'iPhone només deixa obrir la finestra de Google dins del mateix toc: si en
+ * tocar encara s'ha de baixar Firebase, la finestra arriba tard i la bloqueja.
+ */
+export function preloadFirebase(): void {
+  void load().catch(() => {});
 }
 
 const toUser = (user: User | null): CloudUser | null =>
@@ -63,10 +77,10 @@ const toUser = (user: User | null): CloudUser | null =>
 export function watchUser(callback: (user: CloudUser | null) => void): () => void {
   let stop: (() => void) | null = null;
   let cancelled = false;
-  void Promise.all([load(), import('firebase/auth')])
-    .then(([{ auth }, { onAuthStateChanged }]) => {
+  void load()
+    .then(({ auth, authApi }) => {
       if (cancelled) return;
-      stop = onAuthStateChanged(auth, (user) => callback(toUser(user)));
+      stop = authApi.onAuthStateChanged(auth, (user) => callback(toUser(user)));
     })
     .catch(() => callback(null));
   return () => {
@@ -75,31 +89,77 @@ export function watchUser(callback: (user: CloudUser | null) => void): () => voi
   };
 }
 
-/**
- * Entra amb Google. Primer amb una finestra emergent; si el navegador no la
- * deixa obrir, redirigint la pàgina (i en tornar ja s'hi és).
- */
-export async function signInWithGoogle(): Promise<void> {
-  const { auth } = await load();
-  const { GoogleAuthProvider, signInWithPopup, signInWithRedirect } = await import('firebase/auth');
-  const provider = new GoogleAuthProvider();
-  provider.setCustomParameters({ prompt: 'select_account' });
+/** Marca que s'ha anat a Google per redirecció, per saber-ho en tornar. */
+const REDIRECT_KEY = 'remigi:google:redireccio';
+
+function markRedirect(on: boolean): void {
   try {
-    await signInWithPopup(auth, provider);
-  } catch (error) {
-    const code = (error as { code?: string }).code ?? '';
-    if (code === 'auth/popup-blocked' || code === 'auth/operation-not-supported-in-this-environment') {
-      await signInWithRedirect(auth, provider);
-      return;
-    }
-    throw error;
+    if (on) localStorage.setItem(REDIRECT_KEY, String(Date.now()));
+    else localStorage.removeItem(REDIRECT_KEY);
+  } catch {
+    // Sense emmagatzematge, no es podrà avisar si la redirecció falla.
+  }
+}
+
+/** Errors de la finestra emergent que es poden salvar amb una redirecció. */
+const REDIRECT_CODES = new Set([
+  'auth/popup-blocked',
+  'auth/operation-not-supported-in-this-environment',
+  'auth/web-storage-unsupported',
+  'auth/internal-error',
+]);
+
+/**
+ * Entra amb Google. Primer amb una finestra emergent, oberta **dins del mateix
+ * toc** si Firebase ja és carregat (Safari a l'iPhone no deixa obrir-la més
+ * tard); si el navegador no la deixa obrir, redirigint la pàgina.
+ */
+export function signInWithGoogle(): Promise<void> {
+  const popup = (s: Services) => {
+    const provider = new s.authApi.GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+    return s.authApi.signInWithPopup(s.auth, provider).then(
+      () => undefined,
+      async (error: unknown) => {
+        const code = (error as { code?: string }).code ?? '';
+        if (!REDIRECT_CODES.has(code)) throw error;
+        markRedirect(true);
+        await s.authApi.signInWithRedirect(s.auth, provider);
+      },
+    );
+  };
+  // Sense cap `await` abans de la finestra: ha de sortir dins del toc.
+  if (ready) return popup(ready);
+  return load().then(popup);
+}
+
+/**
+ * En tornar d'una redirecció de Google: si s'hi havia anat i no hi ha sessió,
+ * l'entrada no s'ha completat (a Safari passa quan el navegador no deixa
+ * compartir dades amb la pàgina d'inici de sessió de Google). Torna «failed»
+ * per avisar el jugador; «ok» o «none» si no cal dir res.
+ */
+export async function checkRedirect(): Promise<'ok' | 'failed' | 'none'> {
+  let pending = false;
+  try {
+    pending = localStorage.getItem(REDIRECT_KEY) !== null;
+  } catch {
+    pending = false;
+  }
+  if (!pending) return 'none';
+  markRedirect(false);
+  const { auth, authApi } = await load();
+  try {
+    const result = await authApi.getRedirectResult(auth);
+    return result?.user || auth.currentUser ? 'ok' : 'failed';
+  } catch {
+    return 'failed';
   }
 }
 
 export async function signOutCloud(): Promise<void> {
-  const { auth } = await load();
-  const { signOut } = await import('firebase/auth');
-  await signOut(auth);
+  const { auth, authApi } = await load();
+  await authApi.signOut(auth);
 }
 
 /**

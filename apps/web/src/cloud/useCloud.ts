@@ -1,5 +1,14 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import { rememberSignedIn, signInWithGoogle, signOutCloud, wasSignedIn, watchUser, type CloudUser } from './firebase';
+import { currentBrowser, inAppMessage, redirectFailedMessage } from './browser';
+import {
+  checkRedirect,
+  rememberSignedIn,
+  signInWithGoogle,
+  signOutCloud,
+  wasSignedIn,
+  watchUser,
+  type CloudUser,
+} from './firebase';
 
 export interface CloudHandle {
   /** El compte amb què s'ha entrat; null si no se n'ha entrat (o encara no se sap). */
@@ -32,8 +41,10 @@ function errorText(error: unknown): string | null {
 }
 
 /**
- * La sessió amb Google. Firebase només es carrega si cal (`active`: s'ha
- * obert la partida del dia) o si en aquest aparell ja s'hi havia entrat.
+ * La sessió amb Google. Firebase només es carrega si cal (`active`: l'inici,
+ * on hi ha «Entra», o la partida del dia) o si en aquest aparell ja s'hi
+ * havia entrat. A l'inici es carrega per endavant perquè, en tocar «Entra», la
+ * finestra de Google s'obri dins del mateix toc (Safari a l'iPhone ho exigeix).
  */
 export function useCloud(active: boolean): CloudHandle {
   const [started, setStarted] = useState(() => active || wasSignedIn());
@@ -49,16 +60,35 @@ export function useCloud(active: boolean): CloudHandle {
   useEffect(() => {
     if (!started) return;
     setChecking(true);
-    return watchUser((next) => {
+    let cancelled = false;
+    // En tornar d'una redirecció de Google sense sessió, avisa (sobretot a l'iPhone).
+    void checkRedirect().then((outcome) => {
+      if (cancelled) return;
+      if (outcome === 'failed') setError(redirectFailedMessage(currentBrowser()));
+      if (outcome === 'ok') setJustSignedIn(true);
+    });
+    const stop = watchUser((next) => {
       setUser(next);
       setChecking(false);
       rememberSignedIn(next !== null);
+      if (next) setError(null);
     });
+    return () => {
+      cancelled = true;
+      stop();
+    };
   }, [started]);
 
   const signIn = useCallback(() => {
     setError(null);
+    // Dins del navegador d'Instagram, Facebook… Google no deixa entrar: cal dir-ho.
+    const browser = currentBrowser();
+    if (browser.inApp) {
+      setError(inAppMessage(browser));
+      return;
+    }
     setStarted(true);
+    // Sense res abans: la finestra de Google s'ha d'obrir dins del mateix toc.
     signInWithGoogle()
       .then(() => setJustSignedIn(true))
       .catch((caught: unknown) => setError(errorText(caught)));

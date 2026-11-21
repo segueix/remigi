@@ -209,7 +209,9 @@ export function App() {
   const challenge = usePersisted(CHALLENGE_KEY, parseChallengeState);
   const league = usePersisted(LEAGUE_KEY, parseLeagueState);
   const daily = usePersisted(DAILY_KEY, parseDailyState);
-  const cloud = useCloud(view === 'dia' || play?.mode === 'dia');
+  // A l'inici també: Firebase s'ha de tenir carregat abans de tocar «Entra»
+  // (Safari a l'iPhone només obre la finestra de Google dins del mateix toc).
+  const cloud = useCloud(view === 'home' || view === 'dia' || play?.mode === 'dia');
   const [rankingVersion, setRankingVersion] = useState(0);
 
   /*
