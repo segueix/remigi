@@ -311,7 +311,7 @@ export function HomeScreen({
         </span>
         <div className="inici-nom">
           <h1>Remigi</h1>
-          <p className="inici-inspirat">El precursor del Rummikub®</p>
+          <p className="inici-inspirat">De la família del rummy</p>
           <p>Tria com vols jugar</p>
         </div>
       </div>

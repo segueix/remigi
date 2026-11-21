@@ -39,7 +39,7 @@ export function ComEsJuga({ obertPerDefecte }: { obertPerDefecte?: boolean }) {
 
       <p>
         <strong>Remigi</strong> és un joc de fitxes de la família del <strong>rummy</strong>,
-        pensat per jugar online gratis: és el precursor del Rummikub®, i s’hi juga igual, amb
+        pensat per jugar online gratis: s’hi juga com al Rummikub®, amb
         fitxes de quatre colors. Si hi has arribat cercant <strong>«remigio»</strong>, aquesta
         versió de Remigi es juga formant grups i escales i fent una obertura inicial de 30 punts.
         Busques el <a href="./rummikub-en-catala/">Rummikub en català</a>? Aquí ho tens explicat.

@@ -3475,3 +3475,8 @@ el Remigi.
 
 **Criteris d'acceptació (verificats)**: build correcte; e2e sencer en verd
 (195, 4 de nous a `seo.spec.ts`: la pàgina i el service worker); captura.
+- [2026-11-21] Pel risc de marca, decidit amb el jugador (opció A): fora
+  «el precursor del Rummikub®» de tot arreu (afirmació històrica no
+  demostrable); als títols (títol de les pàgines, h1, subtítol de l'inici),
+  «de la família del rummy», sense la marca; al text i a les respostes, el
+  Rummikub es manté com a comparació («com el Rummikub®»), amb l'avís de marca.

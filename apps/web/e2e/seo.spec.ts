@@ -7,9 +7,12 @@ import { expect, test } from '@playwright/test';
  */
 test('la pàgina «Rummikub en català» és en català, enllaça al joc i porta l’avís de marca', async ({ page }) => {
   await page.goto('./rummikub-en-catala/');
-  await expect(page).toHaveTitle(/Rummikub en català/);
+  // Als títols, «de la família del rummy» (sense la marca); al text, el Rummikub com a comparació.
+  await expect(page).toHaveTitle(/família del rummy/);
+  await expect(page).not.toHaveTitle(/Rummikub/);
   await expect(page.locator('html')).toHaveAttribute('lang', 'ca');
-  await expect(page.locator('h1')).toContainText('Rummikub');
+  await expect(page.locator('h1')).toContainText('família del rummy');
+  await expect(page.locator('main')).toContainText('Rummikub en català');
   await expect(page.locator('footer')).toContainText('marca registrada');
   await page.getByRole('link', { name: 'Juga al Remigi ara' }).click();
   await expect(page.locator('.mode-card').first()).toBeVisible();
@@ -20,7 +23,7 @@ test('el service worker no desa una altra pàgina com si fos la del joc', async 
   await page.evaluate(() => navigator.serviceWorker.ready);
   await page.reload();
   await page.goto('./rummikub-en-catala/');
-  await expect(page.locator('h1')).toContainText('Rummikub');
+  await expect(page.locator('h1')).toContainText('família del rummy');
   // Sense connexió, la pàgina del joc continua sent el joc.
   await context.setOffline(true);
   await page.goto('./');
