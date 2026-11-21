@@ -3418,3 +3418,20 @@ execucions dels jugadors automàtics a 2 al dia.
 **Criteris d'acceptació (verificats)**: `typecheck` net (web i script); `npm
 test` en verd (323, 4 de nous); `publica.ts --prova` amb les tres accions.
 L'escriptura de la fotografia no s'ha pogut provar aquí (cal el secret).
+
+### Els enllaços compartits, sempre a eltauler.cat/remigi ✅ Feta (2026-11-21)
+
+Demanat pel jugador: que l'adreça amb el nom del compte de GitHub
+(`segueix.github.io`) no s'escampi.
+
+- [x] `ui/gameUrl.ts` torna sempre `PUBLIC_REMIGI_URL` (eltauler.cat/remigi):
+      resultat del dia, «Em superes?» i campió. `ChampionCelebration` fa servir
+      la mateixa funció.
+- [x] L'avís de l'iPhone diu «obre eltauler.cat/remigi a Safari».
+- [x] README: l'adreça per jugar és eltauler.cat/remigi.
+- Pendent (opcional): que segueix.github.io/remigi porti sol a eltauler.cat
+  quan la majoria de jugadors hagin entrat amb Google (cada adreça té les seves
+  dades al mòbil).
+
+**Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd
+(324, 1 de nou).

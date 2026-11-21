@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { gameUrl } from '../ui/gameUrl';
 import { CloseButton, useEscapeToClose } from '../components/CloseButton';
 import { Confetti } from '../components/Confetti';
 import {
@@ -20,13 +21,6 @@ interface Props {
 }
 
 /** L'adreça del joc, per al missatge: la d'ara, sense paràmetres ni ancoratge. */
-function gameUrl(): string {
-  try {
-    return `${window.location.origin}${window.location.pathname}`;
-  } catch {
-    return 'https://segueix.github.io/remigi/';
-  }
-}
 
 function saveFile(blob: Blob, name: string): void {
   const url = URL.createObjectURL(blob);

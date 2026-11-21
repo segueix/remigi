@@ -102,11 +102,11 @@ describe('compartir per WhatsApp', () => {
   const record = closeSeason(newCareer(null), playedSeason(TOP_TIER, 900)).seasons[0];
 
   it('el missatge diu el títol i porta l’adreça del joc', () => {
-    const text = shareMessage(record, 'https://segueix.github.io/remigi/');
+    const text = shareMessage(record, 'https://eltauler.cat/remigi/');
     expect(text).toContain('millor jugador del món');
     expect(text).toContain('Lliga Mundial · Divisió A');
     expect(text).toContain('T’atreveixes a succeir-me? 🎲');
-    expect(text.endsWith('https://segueix.github.io/remigi/')).toBe(true);
+    expect(text.endsWith('https://eltauler.cat/remigi/')).toBe(true);
   });
 
   it('l’enllaç codifica el missatge (salts de línia, emoji i signes)', () => {
