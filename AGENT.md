@@ -3455,3 +3455,23 @@ relacioni amb el rummy i el Rummikub (aquest, ocult).
 
 **Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd
 (324); e2e sencer en verd (191); captura de la pàgina sense JavaScript.
+
+### Pàgina «Rummikub en català» ✅ Feta (2026-11-21)
+
+Demanat pel jugador: que qui cerqui «rummikub» amb el Google en català hi trobi
+el Remigi.
+
+- [x] `apps/web/public/rummikub-en-catala/index.html` (eltauler.cat/remigi/rummikub-en-catala/):
+      pàgina estàtica en català per a cerques com «rummikub en català»,
+      «rummikub online gratis»: què és, regles, modes, preguntes freqüents
+      (dades estructurades FAQPage) i avís de marca («Rummikub® és una marca
+      registrada… no hi tenim relació»). Tot visible.
+- [x] Enllaçada des de «Com es juga» i al `sitemap.xml` de Remigi.
+- [x] `sw.js`: només la pàgina del joc es desa com a «pàgina desada»; les
+      altres pàgines dins de /remigi/ van a la xarxa (abans s'haurien desat al
+      lloc del joc).
+- No es pot garantir la posició a Google; per «rummikub» a seques hi ha el web
+  oficial i botigues. Les cerques en català són les que es poden guanyar.
+
+**Criteris d'acceptació (verificats)**: build correcte; e2e sencer en verd
+(195, 4 de nous a `seo.spec.ts`: la pàgina i el service worker); captura.
