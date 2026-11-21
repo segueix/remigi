@@ -66,7 +66,7 @@ export function redirectFailedMessage(info: BrowserInfo): string {
   if (info.ios && info.standalone) {
     return (
       'L’iPhone no ha deixat completar l’entrada amb Google des de l’app instal·lada. ' +
-      'Torna-ho a provar; si continua passant, obre segueix.github.io/remigi a Safari i entra des d’allà.'
+      'Torna-ho a provar; si continua passant, obre eltauler.cat/remigi a Safari i entra des d’allà.'
     );
   }
   return (

@@ -21,7 +21,7 @@ El pla complet, fase a fase, és a **[`AGENT.md`](AGENT.md)**.
 | 6 | Motor avançat (IA que reordena la taula) | ✅ feta |
 | 7 | Desplegament a GitHub Pages | ✅ feta |
 
-**Ja s'hi pot jugar**: <https://segueix.github.io/remigi/>. Cada partida compta
+**Ja s'hi pot jugar**: <https://eltauler.cat/remigi/>. Cada partida compta
 per al teu perfil, els rivals s'ajusten al teu nivell, i pots jugar amb el ratolí
 o amb el dit i deixar una partida a mitges per continuar-la després.
 
@@ -95,7 +95,10 @@ remigi/
 
 ## Jugar-hi
 
-**https://segueix.github.io/remigi/**
+**https://eltauler.cat/remigi/**
+
+(També es publica a `segueix.github.io/remigi/`, però els enllaços que es
+comparteixen des de l'app apunten sempre a `eltauler.cat/remigi`.)
 
 És una aplicació que funciona del tot al navegador: es pot instal·lar al mòbil
 com una app i, un cop visitada, també s'hi pot jugar sense connexió.
