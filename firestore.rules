@@ -92,6 +92,14 @@ service cloud.firestore {
         && request.resource.data.at == request.time;
     }
 
+    // La fotografia de la classificació de cada dia: tothom la pot llegir;
+    // només l'escriu la tasca programada (amb la clau de servei, que no passa
+    // per aquestes regles).
+    match /classificacio/{day} {
+      allow read: if true;
+      allow write: if false;
+    }
+
     // Tota la resta, tancat.
     match /{document=**} {
       allow read, write: if false;

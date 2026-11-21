@@ -3396,3 +3396,25 @@ Firestore: cal el secret.
   No tenia res a veure amb el canvi. Resolt: recull les forces fora de marge i
   les comprova d'un sol cop, i porta el mateix límit de 30 s que el test del
   costat.
+
+### Classificació sencera amb fotografies, i 4 execucions al dia ✅ Feta (2026-11-21)
+
+Demanat pel jugador: una classificació tan gran com jugadors hi hagi sense
+passar de la quota, actualitzada a hores fixes (tres, triades per a la gent
+d'aquí), la primera de l'endemà amb el total del dia anterior; i reduir les
+execucions dels jugadors automàtics a 2 al dia.
+
+- [x] `cloud/snapshot.ts` (pur, amb proves): la fotografia (`classificacio/{dia}`,
+      tots els resultats en un document), la teva fila provisional i les hores.
+- [x] `fetchDayView`: amb menys de 50 jugadors, en directe i sencera; amb més,
+      la fotografia (1 lectura). Si la fotografia no es pot llegir, en directe.
+      La targeta (`DayPlace`) i la classificació fan servir la mateixa vista.
+- [x] La classificació diu d'on surt i quan s'actualitza; «Com funciona», també.
+- [x] Tasca: 4 cops al dia a hores fixes en UTC (08:02, 10:02, 14:02, 21:02 =
+      9, 11, 15 i 22 h a l'hivern; una hora més a l'estiu). Jugadors a les dues
+      primeres; fotografia a la 1a, 3a i 4a; final d'ahir a la 1a.
+- [x] `firestore.rules`: `classificacio` es pot llegir; només l'escriu la tasca.
+
+**Criteris d'acceptació (verificats)**: `typecheck` net (web i script); `npm
+test` en verd (323, 4 de nous); `publica.ts --prova` amb les tres accions.
+L'escriptura de la fotografia no s'ha pogut provar aquí (cal el secret).

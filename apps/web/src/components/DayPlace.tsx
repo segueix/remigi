@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { fetchMyDayPlace } from '../cloud/firebase';
+import { fetchDayView } from '../cloud/firebase';
 import { dayEntry } from '../cloud/ranking';
 import { useCloudContext } from '../cloud/useCloud';
 import type { DailyResult } from '../dia/daily';
@@ -19,8 +19,9 @@ export function DayPlace({ result }: { result: DailyResult }) {
     setPlace(null);
     if (!uid) return;
     let cancelled = false;
-    fetchMyDayPlace(result.day, uid, dayEntry(result, 'Tu', 0))
-      .then((found) => !cancelled && setPlace(found?.place ?? null))
+    // La mateixa vista que la classificació (i desada amb ella): la posició hi coincideix.
+    fetchDayView(result.day, uid, dayEntry(result, 'Tu', 0))
+      .then((view) => !cancelled && setPlace(view.rows.find((row) => row.you)?.place ?? null))
       .catch(() => {});
     return () => {
       cancelled = true;

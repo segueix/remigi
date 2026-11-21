@@ -2,7 +2,8 @@ import type { FirebaseApp } from 'firebase/app';
 import type { Auth, User } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore/lite';
 import { cached, clearRankingCache } from './cache';
-import { RANKING_SIZE, dayRanking, legacyDayEntry, parseDayEntry, type DayEntry, type PlayerEntry } from './ranking';
+import { RANKING_SIZE, dayRanking, legacyDayEntry, type DayEntry, type PlayerEntry, type RankRow } from './ranking';
+import { LIVE_LIMIT, parseSnapshot, snapshotRanking } from './snapshot';
 
 /**
  * La connexió amb Firebase (projecte `remigi-c37ac`): el compte de Google i
@@ -202,13 +203,44 @@ export interface RawRow {
   data: unknown;
 }
 
-/** El top del rànquing d'un dia (per `score`, de menys a més): `RANKING_SIZE` lectures, i 10 minuts desat. */
-export function fetchDayRanking(day: string): Promise<RawRow[]> {
-  return cached(`dia:${day}`, async () => {
+export interface DayView {
+  rows: RankRow<DayEntry>[];
+  /** D'on surt: en directe (pocs jugadors) o de la fotografia. */
+  source: 'directe' | 'fotografia';
+  /** Quan es va fer la fotografia (ms), si en surt. */
+  updatedAt: number | null;
+  /** És la classificació final del dia. */
+  final: boolean;
+  /** La teva fila hi és afegida després de la fotografia (posició provisional). */
+  provisional: boolean;
+}
+
+/**
+ * La classificació d'un dia, sencera. Primer, la fotografia (1 lectura):
+ * amb molts jugadors (`LIVE_LIMIT` o més), és la que es mostra, amb la teva
+ * fila al seu lloc si has jugat després. Amb pocs, la classificació es llegeix
+ * en directe (com a molt `LIVE_LIMIT` lectures). Tot es desa 10 minuts.
+ */
+export function fetchDayView(day: string, uid: string | null, mine: DayEntry | null): Promise<DayView> {
+  return cached(`vista:${day}:${uid ?? '-'}:${mine?.score ?? '-'}`, async () => {
     const { db } = await load();
-    const { collection, getDocs, limit, orderBy, query } = await import('firebase/firestore/lite');
-    const snap = await getDocs(query(collection(db, 'dia', day, 'resultats'), orderBy('score'), limit(RANKING_SIZE)));
-    return snap.docs.map((d) => ({ id: d.id, data: d.data() }));
+    const { collection, doc, getDoc, getDocs, limit, orderBy, query } = await import('firebase/firestore/lite');
+    // Si la fotografia no es pot llegir (regles sense publicar, per exemple), en directe.
+    const data = await getDoc(doc(db, 'classificacio', day)).then(
+      (snap) => (snap.exists() ? snap.data() : null),
+      () => null,
+    );
+    const at = data && typeof (data as { at?: { toMillis?: () => number } }).at?.toMillis === 'function'
+      ? (data as { at: { toMillis: () => number } }).at.toMillis()
+      : null;
+    const snapshot = parseSnapshot(data, at);
+    if (snapshot && snapshot.rows.length >= LIVE_LIMIT) {
+      const { rows, provisional } = snapshotRanking(snapshot, uid, mine);
+      return { rows, source: 'fotografia', updatedAt: snapshot.updatedAt, final: snapshot.final, provisional };
+    }
+    const live = await getDocs(query(collection(db, 'dia', day, 'resultats'), orderBy('score'), limit(LIVE_LIMIT)));
+    const rows = dayRanking(live.docs.map((d) => ({ id: d.id, data: d.data() })), uid);
+    return { rows, source: 'directe', updatedAt: null, final: snapshot?.final ?? false, provisional: false };
   });
 }
 
@@ -235,39 +267,6 @@ export function fetchStreakRanking(today: string, yesterday: string): Promise<Ra
       const snap = await getDocs(query(players, orderBy('streak', 'desc'), limit(RANKING_SIZE * 3)));
       return snap.docs.map((d) => ({ id: d.id, data: d.data() }));
     }
-  });
-}
-
-/**
- * La teva posició al rànquing d'un dia, la mateixa que surt a la llista: el
- * que compta és el resultat que hi ha a Firestore (el primer que vas pujar),
- * no el de l'aparell.
- *
- * - Si ets al top (que ja s'ha llegit i està desat), la posició de la llista:
- *   cap lectura més.
- * - Si no, el teu resultat desat (1 lectura; si encara no ha pujat, el de
- *   l'aparell) i quants n'hi ha de millors (1 recompte). Desat 10 minuts.
- */
-export async function fetchMyDayPlace(
-  day: string,
-  uid: string,
-  fallback: DayEntry | null,
-): Promise<{ place: number; entry: DayEntry } | null> {
-  const top = dayRanking(await fetchDayRanking(day), uid);
-  const mine = top.find((row) => row.you);
-  if (mine) return { place: mine.place, entry: mine.entry };
-  return cached(`posicio:${day}:${uid}`, async () => {
-    const { db } = await load();
-    const { collection, doc, getCount, getDoc, query, where } = await import('firebase/firestore/lite');
-    const snap = await getDoc(doc(db, 'dia', day, 'resultats', uid));
-    const stored = snap.exists() ? snap.data() : null;
-    const entry = parseDayEntry(stored) ?? fallback;
-    if (!entry) return null;
-    // Firestore compara les puntuacions tal com estan desades.
-    const raw = (stored as { score?: unknown } | null)?.score;
-    const score = typeof raw === 'number' ? raw : entry.score;
-    const better = await getCount(query(collection(db, 'dia', day, 'resultats'), where('score', '<', score)));
-    return { place: Math.max(better.data().count + 1, top.length + 1), entry };
   });
 }
 

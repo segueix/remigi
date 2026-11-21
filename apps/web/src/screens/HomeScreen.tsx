@@ -4,6 +4,7 @@ import { TARGET_NAME, TARGET_URL } from '../appSwitch/appSwitch';
 import type { CloudHandle } from '../cloud/useCloud';
 import { ComEsJuga } from '../components/ComEsJuga';
 import { dailyDifficulty } from '../dia/plan';
+import { snapshotHoursText } from '../cloud/snapshot';
 import { GoogleHeaderButton, GoogleMark } from '../components/GoogleAccount';
 import { PlayerAvatar } from '../components/PlayerAvatar';
 import { TileView } from '../components/TileView';
@@ -287,7 +288,8 @@ export function HomeScreen({
               <p>
                 Es juga <strong>sense rellotge</strong> i un sol cop al dia. Guanya qui necessita menys jugades; si
                 empaten, qui deixa els rivals amb més punts a la mà. La ratxa són les partides del dia que guanyes
-                seguides. Sempre es pot fer la sortida com a molt al 3r torn.
+                seguides. Sempre es pot fer la sortida com a molt al 3r torn. La classificació s’actualitza a les{' '}
+                {snapshotHoursText()} h, i la primera del dia tanca la del dia anterior.
               </p>
             </div>
           )}
