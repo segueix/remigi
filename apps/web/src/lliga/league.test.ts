@@ -170,17 +170,21 @@ describe('els rivals', () => {
   });
 
   it('el soroll no treu cap rival del marge del motor, a cap graó', () => {
+    // Unes 170.000 forces: es recullen les que surten del marge i es comprova
+    // un sol cop (un `expect` per força feia el test lent i, a la CI, passava
+    // dels 5 s per defecte).
+    const outside: string[] = [];
     for (let tier = 0; tier <= TOP_TIER; tier++) {
       for (let seed = 1; seed <= 300; seed++) {
         for (const count of [5, 7, 15]) {
           for (const rating of spreadRatings(tierRating(tier), count, createRng(seed))) {
-            expect(rating).toBeGreaterThanOrEqual(MIN_RATING);
-            expect(rating).toBeLessThanOrEqual(MAX_RATING);
+            if (rating < MIN_RATING || rating > MAX_RATING) outside.push(`graó ${tier}, llavor ${seed}: ${rating}`);
           }
         }
       }
     }
-  });
+    expect(outside).toEqual([]);
+  }, 30_000);
 
   it('les temporades generades es poden desar i recuperar senceres, a tots els graons', () => {
     for (let tier = 0; tier <= TOP_TIER; tier++) {

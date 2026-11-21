@@ -3390,3 +3390,9 @@ participació; es retiraran quan hi hagi prou gent). Document per crear-ne més.
 `npm test` en verd (5 de nous); `publica.ts --prova` per a 8 dies (força i
 resultat de cada dia, un dia sense jugar). No s'ha pogut provar l'escriptura a
 Firestore: cal el secret.
+- [2026-11-21] La CI de `main` va fallar en fusionar (#75) per temps: el test
+  «el soroll no treu cap rival del marge del motor» (unes 170.000 forces, un
+  `expect` per força) va trigar 5,2 s a la CI, amb el límit de 5 s per defecte.
+  No tenia res a veure amb el canvi. Resolt: recull les forces fora de marge i
+  les comprova d'un sol cop, i porta el mateix límit de 30 s que el test del
+  costat.
