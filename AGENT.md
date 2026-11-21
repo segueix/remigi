@@ -3435,3 +3435,48 @@ Demanat pel jugador: que l'adreça amb el nom del compte de GitHub
 
 **Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd
 (324, 1 de nou).
+
+### Remigi als cercadors: rummy i Rummikub®, visibles ✅ Feta (2026-11-21)
+
+Demanat pel jugador: mirar si Remigi està ben indexat i posar text que el
+relacioni amb el rummy i el Rummikub (aquest, ocult).
+
+- Revisat: títol, descripció, `canonical` a eltauler.cat/remigi, dades
+  estructurades, `robots.txt` i `sitemap.xml` d'El Tauler bé. Un cercador
+  provat no troba eltauler.cat/remigi per «remigi online gratis».
+- **No s'ha fet text ocult**: Google el castiga (política de «hidden text») i
+  Rummikub és una marca registrada. Tot el text és visible.
+- [x] `index.html`: text dins de `#root` (el llegeixen els cercadors sense
+      JavaScript; React el substitueix en arrencar), títol i descripcions amb
+      «rummy» i «precursor del Rummikub®», dades estructurades amb el gènere.
+- [x] «Com es juga»: el Remigi, de la família del rummy i precursor del
+      Rummikub®.
+- [x] `sitemap.xml` (el de Remigi): `lastmod` al dia.
+
+**Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd
+(324); e2e sencer en verd (191); captura de la pàgina sense JavaScript.
+
+### Pàgina «Rummikub en català» ✅ Feta (2026-11-21)
+
+Demanat pel jugador: que qui cerqui «rummikub» amb el Google en català hi trobi
+el Remigi.
+
+- [x] `apps/web/public/rummikub-en-catala/index.html` (eltauler.cat/remigi/rummikub-en-catala/):
+      pàgina estàtica en català per a cerques com «rummikub en català»,
+      «rummikub online gratis»: què és, regles, modes, preguntes freqüents
+      (dades estructurades FAQPage) i avís de marca («Rummikub® és una marca
+      registrada… no hi tenim relació»). Tot visible.
+- [x] Enllaçada des de «Com es juga» i al `sitemap.xml` de Remigi.
+- [x] `sw.js`: només la pàgina del joc es desa com a «pàgina desada»; les
+      altres pàgines dins de /remigi/ van a la xarxa (abans s'haurien desat al
+      lloc del joc).
+- No es pot garantir la posició a Google; per «rummikub» a seques hi ha el web
+  oficial i botigues. Les cerques en català són les que es poden guanyar.
+
+**Criteris d'acceptació (verificats)**: build correcte; e2e sencer en verd
+(195, 4 de nous a `seo.spec.ts`: la pàgina i el service worker); captura.
+- [2026-11-21] Pel risc de marca, decidit amb el jugador (opció A): fora
+  «el precursor del Rummikub®» de tot arreu (afirmació històrica no
+  demostrable); als títols (títol de les pàgines, h1, subtítol de l'inici),
+  «de la família del rummy», sense la marca; al text i a les respostes, el
+  Rummikub es manté com a comparació («com el Rummikub®»), amb l'avís de marca.

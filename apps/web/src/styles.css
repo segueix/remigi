@@ -6381,3 +6381,20 @@ button.enllac {
       'info info info';
   }
 }
+
+/* El text d'abans que carregui l'app (index.html): sobri, del color de la pàgina. */
+.precarrega {
+  max-width: 40rem;
+  margin: 3rem auto;
+  padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px));
+  color: var(--text-suau, #a8a29e);
+  line-height: 1.55;
+}
+
+.precarrega h1 {
+  color: var(--text, #f5f5f4);
+}
+
+.precarrega-estat {
+  opacity: 0.7;
+}
