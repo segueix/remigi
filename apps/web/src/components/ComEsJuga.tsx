@@ -38,9 +38,10 @@ export function ComEsJuga({ obertPerDefecte }: { obertPerDefecte?: boolean }) {
       <summary>Com es juga al Remigi (i com s’obre)</summary>
 
       <p>
-        <strong>Remigi</strong> és un joc de combinacions pensat per jugar online gratis. Si hi
-        has arribat cercant <strong>«remigio»</strong>, aquesta versió de Remigi es juga formant
-        grups i escales i fent una obertura inicial de 30 punts.
+        <strong>Remigi</strong> és un joc de fitxes de la família del <strong>rummy</strong>,
+        pensat per jugar online gratis: és el precursor del Rummikub®, i s’hi juga igual, amb
+        fitxes de quatre colors. Si hi has arribat cercant <strong>«remigio»</strong>, aquesta
+        versió de Remigi es juga formant grups i escales i fent una obertura inicial de 30 punts.
       </p>
 
       <p>Només hi ha dues jugades vàlides, i tota la resta no compta:</p>

@@ -3,15 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Remigi online gratis (Remigio) | El Tauler</title>
+    <title>Remigi online gratis (Remigio) · joc de fitxes tipus rummy | El Tauler</title>
     <meta
       name="description"
-      content="Juga al Remigi online gratis en català. Partides de Remigi (també cercat com a remigio) contra rivals que s'adapten al teu nivell, amb grups, escales i obertura de 30 punts."
+      content="Juga al Remigi online gratis en català: el joc de fitxes de la família del rummy, precursor del Rummikub®. Grups, escales i obertura de 30 punts contra rivals que s'adapten al teu nivell, i una partida del dia igual per a tothom."
     />
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta
       name="keywords"
-      content="remigi, remigio, remigi online, remigio online, jugar remigi, jugar remigio, remigi gratis, remigio gratis, joc remigi"
+      content="remigi, remigio, remigi online, remigio online, jugar remigi, jugar remigio, remigi gratis, remigio gratis, joc remigi, rummy, rummy de fitxes, joc de fitxes, rummikub"
     />
     <meta name="theme-color" content="#1c1917" />
     <script>
@@ -34,10 +34,10 @@
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="El Tauler" />
     <meta property="og:locale" content="ca_ES" />
-    <meta property="og:title" content="Remigi online gratis (Remigio) | El Tauler" />
+    <meta property="og:title" content="Remigi online gratis (Remigio) · joc de fitxes tipus rummy | El Tauler" />
     <meta
       property="og:description"
-      content="Juga al Remigi online gratis en català, contra rivals adaptats al teu nivell. Forma grups i escales i obre amb 30 punts."
+      content="Juga al Remigi online gratis en català, el joc de fitxes tipus rummy precursor del Rummikub®. Forma grups i escales i obre amb 30 punts."
     />
     <meta property="og:url" content="https://eltauler.cat/remigi/" />
     <meta property="og:image" content="https://eltauler.cat/remigi/icona-512.png" />
@@ -56,14 +56,14 @@
         "@context": "https://schema.org",
         "@type": ["VideoGame", "WebApplication"],
         "name": "Remigi",
-        "alternateName": ["Remigio", "Remigi online"],
+        "alternateName": ["Remigio", "Remigi online", "Rummy de fitxes"],
         "url": "https://eltauler.cat/remigi/",
-        "description": "Juga al Remigi online gratis en català contra rivals que s'adapten al teu nivell, formant grups i escales i obrint amb 30 punts.",
+        "description": "Juga al Remigi online gratis en català, el joc de fitxes de la família del rummy i precursor del Rummikub®, contra rivals que s'adapten al teu nivell, formant grups i escales i obrint amb 30 punts.",
         "inLanguage": "ca",
         "applicationCategory": "GameApplication",
         "operatingSystem": "Web",
         "gamePlatform": "Web browser",
-        "genre": ["Remigi", "Rummy", "Joc de combinacions"],
+        "genre": ["Remigi", "Rummy", "Rummy de fitxes", "Joc de combinacions"],
         "playMode": "SinglePlayer",
         "isAccessibleForFree": true,
         "image": "https://eltauler.cat/remigi/icona-512.png",
@@ -85,7 +85,28 @@
     <link rel="apple-touch-icon" href="./icona-192.png" />
   </head>
   <body>
-    <div id="root"></div>
+    <!--
+      Text de la pàgina abans que carregui l'app: el llegeixen els cercadors que
+      no executen JavaScript (i Google, abans de fer-ho). React el substitueix en
+      arrencar; mentrestant, el jugador el veu una fracció de segon.
+    -->
+    <div id="root">
+      <main class="precarrega">
+        <h1>Remigi online gratis</h1>
+        <p>
+          El <strong>Remigi</strong> (també dit <strong>remigio</strong>) és un joc de fitxes de la
+          família del <strong>rummy</strong>, el precursor del Rummikub®. Es juga formant grups (3 o 4
+          fitxes del mateix número, de colors diferents) i escales (3 o més fitxes seguides del
+          mateix color), amb una sortida inicial de 30 punts i dos jokers.
+        </p>
+        <p>
+          Juga-hi gratis en català, al navegador i sense registrar-te: partida lliure contra rivals
+          que s'adapten al teu nivell, reptes, una lliga del poble al món i la
+          <strong>partida del dia</strong>, la mateixa per a tothom, amb classificació.
+        </p>
+        <p class="precarrega-estat">Carregant el joc…</p>
+      </main>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

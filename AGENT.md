@@ -3435,3 +3435,23 @@ Demanat pel jugador: que l'adreça amb el nom del compte de GitHub
 
 **Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd
 (324, 1 de nou).
+
+### Remigi als cercadors: rummy i Rummikub®, visibles ✅ Feta (2026-11-21)
+
+Demanat pel jugador: mirar si Remigi està ben indexat i posar text que el
+relacioni amb el rummy i el Rummikub (aquest, ocult).
+
+- Revisat: títol, descripció, `canonical` a eltauler.cat/remigi, dades
+  estructurades, `robots.txt` i `sitemap.xml` d'El Tauler bé. Un cercador
+  provat no troba eltauler.cat/remigi per «remigi online gratis».
+- **No s'ha fet text ocult**: Google el castiga (política de «hidden text») i
+  Rummikub és una marca registrada. Tot el text és visible.
+- [x] `index.html`: text dins de `#root` (el llegeixen els cercadors sense
+      JavaScript; React el substitueix en arrencar), títol i descripcions amb
+      «rummy» i «precursor del Rummikub®», dades estructurades amb el gènere.
+- [x] «Com es juga»: el Remigi, de la família del rummy i precursor del
+      Rummikub®.
+- [x] `sitemap.xml` (el de Remigi): `lastmod` al dia.
+
+**Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd
+(324); e2e sencer en verd (191); captura de la pàgina sense JavaScript.
