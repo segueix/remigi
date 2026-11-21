@@ -4,8 +4,8 @@
   "description": "Publica cada dia els resultats dels jugadors automàtics de la partida del dia (vegeu docs/JUGADORS-AUTOMATICS.md).",
   "type": "module",
   "scripts": {
-    "publica": "tsx publica.ts",
-    "prova": "tsx publica.ts --prova --ara"
+    "publica": "tsx publica.ts --jugadors --classificacio",
+    "prova": "tsx publica.ts --prova --ara --jugadors --classificacio --tanca-ahir"
   },
   "dependencies": {
     "firebase-admin": "^13.10.0"

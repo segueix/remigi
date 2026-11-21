@@ -1,21 +1,34 @@
-name: Jugadors automàtics
+name: Partida del dia (jugadors i classificació)
 
-# Publica el resultat del dia dels jugadors automàtics de la partida del dia
-# (tools/jugadors-automatics, vegeu docs/JUGADORS-AUTOMATICS.md). Cada mitja
-# hora de 6 a 11 UTC, que cobreix de les 8 h a les 12 h de Barcelona tant a
-# l'hivern (UTC+1) com a l'estiu (UTC+2); cada jugador publica quan arriba la
-# seva hora del dia, i un sol cop.
+# La feina de servidor de la partida del dia (tools/jugadors-automatics, vegeu
+# docs/JUGADORS-AUTOMATICS.md), 4 cops al dia a hores fixes en UTC (Barcelona:
+# a l'hivern, la mateixa hora + 1; a l'estiu, + 2):
+#
+#   08:02 UTC  (9 h / 10 h)   jugadors automàtics + fotografia d'avui + final d'ahir
+#   10:02 UTC  (11 h / 12 h)  jugadors automàtics que falten (l'última)
+#   14:02 UTC  (15 h / 16 h)  fotografia d'avui
+#   21:02 UTC  (22 h / 23 h)  fotografia d'avui
+#
+# Un sol horari en UTC: no cal executar-la dos cops pel canvi d'hora.
 on:
   schedule:
-    - cron: '7,37 6-11 * * *'
+    - cron: '2 8 * * *'
+    - cron: '2 10 * * *'
+    - cron: '2 14 * * *'
+    - cron: '2 21 * * *'
   workflow_dispatch:
     inputs:
+      accio:
+        description: 'Què fer'
+        type: choice
+        options: [tot, jugadors, classificacio]
+        default: tot
       prova:
         description: 'Prova: no escriu res, només diu què faria'
         type: boolean
         default: true
       ara:
-        description: 'No esperar l’hora de cada jugador'
+        description: 'Els jugadors no esperen la seva hora'
         type: boolean
         default: false
 
@@ -28,7 +41,7 @@ concurrency:
 
 jobs:
   publica:
-    name: Publica els resultats
+    name: Jugadors i classificació
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     defaults:
@@ -49,10 +62,23 @@ jobs:
       - name: Juga i publica
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          SCHEDULE: ${{ github.event.schedule }}
+          ACCIO: ${{ inputs.accio }}
+          PROVA: ${{ inputs.prova }}
+          ARA: ${{ inputs.ara }}
         run: |
-          ARGS=""
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            if [ "${{ inputs.prova }}" = "true" ]; then ARGS="$ARGS --prova"; fi
-            if [ "${{ inputs.ara }}" = "true" ]; then ARGS="$ARGS --ara"; fi
-          fi
+          case "$SCHEDULE" in
+            '2 8 * * *')  ARGS="--tanca-ahir --jugadors --classificacio" ;;
+            '2 10 * * *') ARGS="--jugadors --ultima" ;;
+            '2 14 * * *'|'2 21 * * *') ARGS="--classificacio" ;;
+            *)
+              case "$ACCIO" in
+                jugadors) ARGS="--jugadors" ;;
+                classificacio) ARGS="--classificacio" ;;
+                *) ARGS="--jugadors --classificacio" ;;
+              esac
+              if [ "$PROVA" = "true" ]; then ARGS="$ARGS --prova"; fi
+              if [ "$ARA" = "true" ]; then ARGS="$ARGS --ara"; fi
+              ;;
+          esac
           npx tsx publica.ts $ARGS

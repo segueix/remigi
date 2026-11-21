@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { fetchDayRanking, fetchMyDayPlace, fetchStreakRanking } from '../cloud/firebase';
+import { fetchDayView, fetchStreakRanking, type DayView } from '../cloud/firebase';
+import { snapshotHourText, snapshotHoursText } from '../cloud/snapshot';
 import {
   RANKING_SIZE,
   dayEntry,
   dayRanking,
-  rankScore,
   streakRanking,
   type DayEntry,
   type PlayerEntry,
@@ -40,6 +40,7 @@ export function DiaRanking({ today, alias, mine = null, mineYesterday = null, ve
   const [tab, setTab] = useState<Tab>('avui');
   const [day, setDay] = useState<Load<DayEntry>>({ state: 'carregant' });
   const [streaks, setStreaks] = useState<Load<PlayerEntry>>({ state: 'carregant' });
+  const [meta, setMeta] = useState<DayView | null>(null);
   const uid = cloud?.user?.uid ?? null;
 
   useEffect(() => {
@@ -48,18 +49,14 @@ export function DiaRanking({ today, alias, mine = null, mineYesterday = null, ve
       const day = tab === 'avui' ? today : previousDay(today);
       const own = tab === 'avui' ? mine : mineYesterday;
       setDay({ state: 'carregant' });
+      setMeta(null);
       void (async () => {
         try {
-          const rows = dayRanking(await fetchDayRanking(day), uid);
-          /*
-           * Si no ets al top, la teva fila a sota amb la teva posició (el teu
-           * resultat desat i un recompte, desats com el rànquing).
-           */
-          if (uid && own && own.day === day && !rows.some((row) => row.you)) {
-            const found = await fetchMyDayPlace(day, uid, dayEntry(own, alias, 0));
-            if (found) rows.push({ id: uid, place: found.place, entry: found.entry, you: true, gap: true });
-          }
-          if (!cancelled) setDay({ state: 'fet', rows });
+          const ownEntry = own && own.day === day ? dayEntry(own, alias, 0) : null;
+          const view = await fetchDayView(day, uid, uid ? ownEntry : null);
+          if (cancelled) return;
+          setDay({ state: 'fet', rows: view.rows });
+          setMeta(view);
         } catch {
           if (!cancelled) setDay({ state: 'error' });
         }
@@ -126,6 +123,8 @@ export function DiaRanking({ today, alias, mine = null, mineYesterday = null, ve
         />
       )}
 
+      {tab !== 'ratxes' && <RankingNote meta={meta} />}
+
     </section>
   );
 }
@@ -190,5 +189,26 @@ function RankList<T extends { alias: string }>({
         </li>
       ))}
     </ol>
+  );
+}
+
+/**
+ * Com d'actual és la classificació: en directe (pocs jugadors) o la fotografia
+ * de les 9, 15 i 22 h, una hora més tard a l'estiu (la primera tanca la del
+ * dia anterior).
+ */
+function RankingNote({ meta }: { meta: DayView | null }) {
+  if (!meta) return null;
+  const hours = snapshotHoursText();
+  const first = hours.split(',')[0];
+  if (meta.source === 'directe') {
+    return <p className="muted small dia-ranking-nota">Classificació en directe.</p>;
+  }
+  return (
+    <p className="muted small dia-ranking-nota">
+      {meta.final ? 'Classificació final' : `Actualitzada a les ${snapshotHourText(meta.updatedAt ?? 0)}`} · s’actualitza a les{' '}
+      {hours} h; la de les {first} h tanca la del dia anterior.
+      {meta.provisional && ' La teva posició és provisional fins a la propera actualització.'}
+    </p>
   );
 }
