@@ -6398,3 +6398,91 @@ button.enllac {
 .precarrega-estat {
   opacity: 0.7;
 }
+
+/* ---------- Lliga: «i» de com es compten els punts ---------- */
+
+/*
+ * La targeta de la lliga va dins d'un embolcall perquè la «i» és un botó a
+ * part (un botó no en pot dur cap altre a dins), posat a la cantonada.
+ */
+.mode-card-embolcall {
+  position: relative;
+  display: flex;
+  min-width: 0;
+}
+
+.mode-card-embolcall > .mode-card {
+  flex: 1;
+  width: 100%;
+}
+
+.mode-info {
+  position: absolute;
+  top: 0.3rem;
+  right: 0.3rem;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  box-shadow: none;
+  color: #ffffff;
+}
+
+.mode-info .dia-boto-i {
+  width: 1.35rem;
+  height: 1.35rem;
+  font-size: 0.85rem;
+}
+
+.mode-info:hover:not(:disabled) {
+  filter: none;
+  background: rgb(0 0 0 / 0.12);
+}
+
+.mode-info:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: -2px;
+}
+
+.mode-info[aria-expanded='true'] {
+  background: rgb(0 0 0 / 0.18);
+}
+
+/* L'explicació, a tota l'amplada sota les tres targetes, amb l'or de la lliga. */
+.mode-info-panell {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.8rem 0.95rem;
+  border: 1px solid rgb(255 255 255 / 0.22);
+  border-radius: 0.9rem;
+  background: linear-gradient(180deg, var(--calaix), var(--calaix-fosc));
+  color: #ffffff;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.32);
+}
+
+.mode-info-panell p {
+  margin: 0;
+}
+
+@media (max-width: 560px) {
+  /* Al mòbil, la targeta és estreta: la «i» més a la cantonada, lluny de la icona. */
+  .mode-info {
+    top: 0.1rem;
+    right: 0.1rem;
+    width: 1.9rem;
+    height: 1.9rem;
+  }
+
+  .mode-info .dia-boto-i {
+    width: 1.2rem;
+    height: 1.2rem;
+    font-size: 0.78rem;
+  }
+}

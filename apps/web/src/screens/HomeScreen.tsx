@@ -137,6 +137,7 @@ export function HomeScreen({
   const best = bestStreak(daily);
   const played = playedStreak(daily, today);
   const [infoOpen, setInfoOpen] = useState(false);
+  const [leagueInfoOpen, setLeagueInfoOpen] = useState(false);
   const difficulty = dailyDifficulty(today);
   const nextIn = countdownText(msUntilNextDay());
   const dailyStatus = todayResult
@@ -210,22 +211,58 @@ export function HomeScreen({
             </span>
           </button>
 
-          <button type="button" className="mode-card mode-lliga" onClick={onLeague} aria-label="Lliga">
-            <span className="mode-icona" aria-hidden="true">
-              <LeagueIcon />
-            </span>
-            <strong className="mode-titol">Lliga</strong>
-            {leagueName ? (
-              <span className="mode-sub mode-lliga-nom">{leagueName}</span>
-            ) : (
-              <span className="mode-sub">Del poble al món, com a El Tauler</span>
-            )}
-            <span className="mode-estat">{leagueStatus}</span>
-            <span className="mode-cta" aria-hidden="true">
-              {running ? (savedLliga ? 'Continua' : 'Segueix') : 'Obre'}
-            </span>
-          </button>
+          {/*
+            * La lliga, amb una «i» a la cantonada (fora del botó de la targeta, que
+            * no pot dur cap altre botó a dins) que explica com es compten els punts.
+            */}
+          <div className="mode-card-embolcall">
+            <button type="button" className="mode-card mode-lliga" onClick={onLeague} aria-label="Lliga">
+              <span className="mode-icona" aria-hidden="true">
+                <LeagueIcon />
+              </span>
+              <strong className="mode-titol">Lliga</strong>
+              {leagueName ? (
+                <span className="mode-sub mode-lliga-nom">{leagueName}</span>
+              ) : (
+                <span className="mode-sub">Del poble al món, com a El Tauler</span>
+              )}
+              <span className="mode-estat">{leagueStatus}</span>
+              <span className="mode-cta" aria-hidden="true">
+                {running ? (savedLliga ? 'Continua' : 'Segueix') : 'Obre'}
+              </span>
+            </button>
+            <button
+              type="button"
+              className="mode-info"
+              aria-label="Com es compten els punts de la lliga"
+              aria-expanded={leagueInfoOpen}
+              aria-controls="lliga-info"
+              onClick={() => setLeagueInfoOpen((open) => !open)}
+            >
+              <span className="dia-boto-i" aria-hidden="true">i</span>
+            </button>
+          </div>
         </div>
+        {leagueInfoOpen && (
+          <div className="mode-info-panell mode-lliga" id="lliga-info">
+            <p>
+              <strong>Cada jornada és una partida</strong> a una taula de 3 o 4 jugadors. Qui es queda sense fitxes
+              guanya i <strong>suma els punts que els altres tenen a la mà</strong>; cada perdedor{' '}
+              <strong>resta els de les seves fitxes</strong> (el número de cada fitxa; un comodí, 30). Són els punts
+              de la partida.
+            </p>
+            <p>
+              Per als <strong>punts de lliga</strong> (Pts), la partida compta com un enfrontament contra cada rival
+              de la taula: <strong>1 punt per cada jugador que acaba per sota teu</strong>, ½ si empateu i 0 si
+              acaba per sobre. A una taula de quatre, guanyar dona 3 punts; quedar segon, 2, i tercer, 1.
+            </p>
+            <p>
+              A la classificació mana Pts; si hi ha empat, les victòries (V) i després la diferència (Dif), que és
+              la suma dels punts de totes les teves partides. En acabar la temporada, la quarta part de dalt puja de
+              divisió i la de baix baixa.
+            </p>
+          </div>
+        )}
         {/*
           * La partida del dia, en un bàner sota els tres modes: una al dia, igual
           * per a tothom. Tot el bàner porta a la partida (el botó principal

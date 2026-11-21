@@ -46,6 +46,21 @@ test('en obrir l’app surten les tres maneres de jugar: lliure, repte i lliga',
   expect(amplada).toBeLessThanOrEqual(0);
 });
 
+test('la «i» de la lliga explica com es compten els punts, sense obrir la lliga', async ({ page }) => {
+  await obreNet(page);
+  const info = page.getByRole('button', { name: 'Com es compten els punts de la lliga' });
+  await expect(info).toHaveAttribute('aria-expanded', 'false');
+  await info.click();
+  const panell = page.locator('#lliga-info');
+  await expect(panell).toContainText('suma els punts que els altres tenen a la mà');
+  await expect(panell).toContainText('1 punt per cada jugador que acaba per sota teu');
+  await expect(panell).toContainText('½ si empateu');
+  // Continua a l'inici: la «i» no entra a la lliga.
+  await expect(page.getByRole('button', { name: 'Lliga', exact: true })).toBeVisible();
+  await info.click();
+  await expect(panell).toHaveCount(0);
+});
+
 test('el joc lliure recorda els rivals i el nivell triats encara que s’acabi la partida', async ({ page }) => {
   await comencaDeZero(page);
   await obreMenu(page);
