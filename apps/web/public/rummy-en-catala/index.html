@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Joc de fitxes de la família del rummy, en català i gratis: el Remigi | El Tauler</title>
+  <meta name="description" content="Busques el Rummikub en català? El Remigi és un joc de fitxes de la família del rummy, amb grups, escales, jokers i sortida de 30 punts. Juga-hi online i gratis, en català, contra rivals al teu nivell i amb la partida del dia.">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <link rel="canonical" href="https://eltauler.cat/remigi/rummy-en-catala/">
+  <link rel="alternate" hreflang="ca" href="https://eltauler.cat/remigi/rummy-en-catala/">
+  <link rel="alternate" hreflang="x-default" href="https://eltauler.cat/remigi/rummy-en-catala/">
+  <link rel="icon" href="../icona-192.png">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="El Tauler">
+  <meta property="og:locale" content="ca_ES">
+  <meta property="og:title" content="Joc de fitxes de la família del rummy, en català i gratis: el Remigi">
+  <meta property="og:description" content="Un joc de fitxes de la família del rummy, en català i gratis: grups, escales, jokers i la partida del dia.">
+  <meta property="og:url" content="https://eltauler.cat/remigi/rummy-en-catala/">
+  <meta property="og:image" content="https://eltauler.cat/remigi/icona-512.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebPage",
+        "name": "Joc de fitxes de la família del rummy, en català i gratis: el Remigi",
+        "url": "https://eltauler.cat/remigi/rummy-en-catala/",
+        "inLanguage": "ca",
+        "isPartOf": { "@type": "WebSite", "name": "El Tauler", "url": "https://eltauler.cat/" },
+        "about": { "@type": "VideoGame", "name": "Remigi", "url": "https://eltauler.cat/remigi/", "genre": ["Rummy", "Rummy de fitxes"], "inLanguage": "ca", "isAccessibleForFree": true }
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Es pot jugar a un joc com el Rummikub en català?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Sí. El Remigi és un joc de fitxes de la família del rummy, amb grups, escales, jokers i sortida de 30 punts, i es juga online i gratis en català a eltauler.cat/remigi." }
+          },
+          {
+            "@type": "Question",
+            "name": "Cal registrar-se o pagar?",
+            "acceptedAnswer": { "@type": "Answer", "text": "No. Es juga al navegador, gratis i sense registre. Entrar amb Google és opcional i serveix per sortir a la classificació i continuar en un altre aparell." }
+          },
+          {
+            "@type": "Question",
+            "name": "Contra qui es juga?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Contra rivals de l'ordinador que s'adapten al teu nivell, en partides lliures, reptes i una lliga, i cada dia hi ha una partida del dia igual per a tothom, amb classificació." }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+  <style>
+    /* Una columna de lectura: el feltre verd de la taula a la capçalera, la resta en paper. */
+    :root {
+      --bg: #f4f3ee; --paper: #fcfcfb; --ink: #1c1917; --ink-2: #57534e; --line: #e4e2da;
+      --felt: #1f5d47; --felt-ink: #ffffff; --tile: #fffbeb;
+      --red: #cc0000; --blue: #1d4ed8; --gold: #b58900; --black: #1c1917; --cta: #1c1917; --cta-ink: #ffffff;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #121211; --paper: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --line: #2c2c2a;
+        --felt: #1a4a3a; --cta: #ffffff; --cta-ink: #1c1917; color-scheme: dark;
+      }
+    }
+    :root[data-theme="dark"] {
+      --bg: #121211; --paper: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --line: #2c2c2a;
+      --felt: #1a4a3a; --cta: #ffffff; --cta-ink: #1c1917; color-scheme: dark;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+    .pagina { max-width: 44rem; margin: 0 auto; padding-block: 1.5rem 3rem;
+      padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+    header { background: var(--felt); color: var(--felt-ink); border-radius: 1rem; padding: 1.6rem 1.4rem; display: grid; gap: 0.8rem; }
+    .fitxes { display: flex; gap: 0.4rem; }
+    .fitxa { width: 2rem; height: 2.6rem; border-radius: 0.35rem; background: var(--tile); display: grid; place-items: center;
+      font-weight: 800; box-shadow: 0 2px 4px rgb(0 0 0 / 0.35); }
+    .fitxa:nth-child(1) { color: var(--red); } .fitxa:nth-child(2) { color: var(--blue); }
+    .fitxa:nth-child(3) { color: var(--gold); } .fitxa:nth-child(4) { color: var(--black); }
+    h1 { margin: 0; font-size: clamp(1.6rem, 5vw, 2.3rem); line-height: 1.15; text-wrap: balance; }
+    header p { margin: 0; color: rgb(255 255 255 / 0.88); }
+    .accions { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+    .boto { display: inline-block; padding: 0.7rem 1.2rem; border-radius: 999px; background: #ffffff; color: #1c1917;
+      font-weight: 700; text-decoration: none; }
+    .boto.secundari { background: transparent; color: #ffffff; border: 1.5px solid rgb(255 255 255 / 0.6); }
+    .boto:focus-visible, a:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+    main section { background: var(--paper); border-radius: 0.9rem; padding: 1.1rem 1.2rem; margin-top: 1rem; }
+    h2 { margin: 0 0 0.5rem; font-size: 1.25rem; line-height: 1.25; }
+    p, li { color: var(--ink-2); }
+    strong { color: var(--ink); }
+    ul { padding-left: 1.2rem; margin: 0.4rem 0; }
+    .taula { overflow-x: auto; }
+    table { border-collapse: collapse; width: 100%; font-size: 0.95rem; }
+    th, td { text-align: left; padding: 0.45rem 0.5rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { color: var(--ink); }
+    footer { margin-top: 1.5rem; font-size: 0.82rem; color: var(--ink-2); }
+    footer a, main a { color: inherit; }
+  </style>
+</head>
+<body>
+  <div class="pagina">
+    <header>
+      <div class="fitxes" aria-hidden="true"><span class="fitxa">10</span><span class="fitxa">11</span><span class="fitxa">12</span><span class="fitxa">13</span></div>
+      <h1>Un joc de fitxes de la família del rummy, en català i gratis: el Remigi</h1>
+      <p>Si busques el <strong style="color:inherit">Rummikub en català</strong> per jugar online, el Remigi és un joc de fitxes de la família del rummy amb les mateixes bases: grups, escales, jokers i una sortida de 30 punts. Es juga al navegador, gratis i sense registrar-te.</p>
+      <div class="accions">
+        <a class="boto" href="../">Juga al Remigi ara</a>
+        <a class="boto secundari" href="../?partida=dia">La partida del dia</a>
+      </div>
+    </header>
+
+    <main>
+      <section>
+        <h2>Què és el Remigi</h2>
+        <p>El <strong>Remigi</strong> (també dit <strong>remigio</strong>) és un joc de combinacions amb fitxes numerades de l’1 al 13 en quatre colors, més dos jokers. Com tots els jocs de la família del <strong>rummy</strong>, l’objectiu és quedar-te sense fitxes baixant-les a la taula en combinacions vàlides.</p>
+      </section>
+
+      <section>
+        <h2>Les regles, en dos minuts</h2>
+        <ul>
+          <li><strong>Grup:</strong> 3 o 4 fitxes del mateix número, cada una d’un color diferent.</li>
+          <li><strong>Escala:</strong> 3 o més fitxes del mateix color amb números seguits.</li>
+          <li><strong>Sortida:</strong> la primera vegada que baixes, les teves combinacions han de sumar 30 punts o més.</li>
+          <li><strong>Jokers:</strong> fan de qualsevol fitxa i valen el número de la que substitueixen.</li>
+          <li><strong>Torn:</strong> si no pots o no vols baixar res, robes una fitxa de la pila.</li>
+          <li><strong>Taula compartida:</strong> pots reordenar les combinacions que ja hi ha a la taula, sempre que totes quedin vàlides.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Què hi trobaràs a El Tauler</h2>
+        <div class="taula">
+          <table>
+            <thead><tr><th>Mode</th><th>Com es juga</th></tr></thead>
+            <tbody>
+              <tr><td>Joc lliure</td><td>Contra 1, 2 o 3 rivals de l’ordinador que s’adapten al teu nivell.</td></tr>
+              <tr><td>Repte</td><td>Unes quantes partides seguides a un nivell fix, i se sumen els punts.</td></tr>
+              <tr><td>Lliga</td><td>Temporades del poble al món, pujant de divisió.</td></tr>
+              <tr><td>Partida del dia</td><td>Cada dia a les 00 h, la mateixa partida per a tothom (mateixes fitxes i mateix ordre de la pila), amb classificació.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2>Preguntes freqüents</h2>
+        <p><strong>Es pot jugar a un joc com el Rummikub en català?</strong><br>Sí: el Remigi està fet en català, de la interfície a les regles, i es juga online i gratis a <a href="../">eltauler.cat/remigi</a>.</p>
+        <p><strong>Cal registrar-se o pagar?</strong><br>No. Entrar amb Google és opcional: serveix per sortir a la classificació i continuar en un altre aparell.</p>
+        <p><strong>Es pot jugar al mòbil?</strong><br>Sí, al navegador del mòbil o de l’ordinador, i es pot instal·lar com una app.</p>
+      </section>
+    </main>
+
+    <footer>
+      <p>Rummikub® és una marca registrada dels seus propietaris. El Remigi i El Tauler no hi tenen cap relació ni n’estan avalats: s’esmenta només per descriure el tipus de joc.</p>
+      <p><a href="../">Remigi</a> · <a href="https://eltauler.cat/">El Tauler</a></p>
+    </footer>
+  </div>
+</body>
+</html>

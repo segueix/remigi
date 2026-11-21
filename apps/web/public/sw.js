@@ -38,7 +38,7 @@ self.addEventListener('fetch', (event) => {
 
   if (request.mode === 'navigate') {
     // Només la pàgina del joc és la «pàgina desada»: les altres pàgines dins de
-    // /remigi/ (com /remigi/rummikub-en-catala/) van a la xarxa tal qual.
+    // /remigi/ (com /remigi/rummy-en-catala/) van a la xarxa tal qual.
     const scope = new URL(self.registration.scope).pathname;
     const path = new URL(request.url).pathname;
     if (path !== scope && path !== scope + 'index.html') return;
