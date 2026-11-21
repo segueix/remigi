@@ -97,3 +97,38 @@ describe('el registre de peces', () => {
     );
   });
 });
+
+describe('la música del minut de relax de la lliga', () => {
+  it('cada estil compon un bucle de 64 s (el descans de la lliga és de 60 s), sense errors', async () => {
+    const R = (await import('./radioambient')).default;
+    for (const { id } of R.JINGLES) {
+      for (const seed of [1, 77, 4242]) {
+        const spec = R.composeJingle(id, seed, { loop: true, seconds: 64 });
+        const rate = 8000;
+        const samples = R.jingleSamples(spec, rate, () => 0.5);
+        const seconds = samples.length / rate;
+        expect(seconds).toBeGreaterThan(60);
+        expect(seconds).toBeLessThan(70);
+      }
+    }
+  }, 60_000);
+
+  it('per defecte, els bucles continuen sent de 32 s (repte i «Música infinita»)', async () => {
+    const R = (await import('./radioambient')).default;
+    const spec = R.composeJingle('rumba', 9, { loop: true });
+    const seconds = R.jingleSamples(spec, 8000, () => 0.5).length / 8000;
+    expect(seconds).toBeGreaterThan(29);
+    expect(seconds).toBeLessThan(36);
+  }, 30_000);
+});
+
+describe('el registre recorda la durada de les peces llargues', () => {
+  it('una peça de 64 s es torna a escoltar igual (amb la mateixa durada)', () => {
+    const store = memoryStore();
+    registerPiece(store, { style: 'rumba', seed: 5, seconds: 64 }, 1000);
+    registerPiece(store, { style: 'funk', seed: 6, seconds: 32 }, 2000);
+    const list = registryList(store);
+    expect(list.find((p) => p.seed === 5)?.seconds).toBe(64);
+    expect(list.find((p) => p.seed === 6)?.seconds).toBeUndefined();
+  });
+});

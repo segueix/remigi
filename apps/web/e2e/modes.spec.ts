@@ -214,7 +214,7 @@ test('una temporada sencera de lliga: jornades, classificació i temporada segü
   await page.getByRole('button', { name: 'Comença la temporada' }).click();
   await expect(page.locator('.lliga-taula tbody tr')).toHaveCount(6);
 
-  // Jornada 1: en acabar, 30 segons de relax; «Classificació» atura el compte.
+  // Jornada 1: en acabar, un minut de relax; «Classificació» atura el compte.
   let rivals = await page.locator('.lliga-rivals strong').allTextContents();
   expect(rivals).toHaveLength(2);
   await page.getByRole('button', { name: 'Juga la jornada 1' }).click();
@@ -226,7 +226,7 @@ test('una temporada sencera de lliga: jornades, classificació i temporada segü
   await page.locator('.menu-fons').click({ position: { x: 5, y: 5 } });
   await acabaLaPartida(page, '.interludi');
   await expect(page.locator('.interludi-jornada')).toContainText('Jornada2/3');
-  await expect(page.locator('.interludi-compte strong')).toHaveText(/^(30|29|28|27)$/);
+  await expect(page.locator('.interludi-compte strong')).toHaveText(/^(60|59|58|57)$/);
   rivals = await page.locator('.interludi-rival-text strong').allTextContents();
   expect(rivals).toHaveLength(2);
   // A la vista, sense lliscar: qui ha guanyat i els punts de cadascú a la
@@ -285,7 +285,7 @@ test('una temporada sencera de lliga: jornades, classificació i temporada segü
   expect(perfil).toMatchObject({ rating: 1100, gamesPlayed: 0 });
 });
 
-test('entre jornades: 30 segons de relax amb música composta, i la jornada següent comença sola', async ({ page }) => {
+test('entre jornades: un minut de relax amb música composta, i la jornada següent comença sola', async ({ page }) => {
   await page.clock.install();
   await obreNet(page);
   await page.getByRole('button', { name: 'Lliga', exact: true }).click();
@@ -306,10 +306,10 @@ test('entre jornades: 30 segons de relax amb música composta, i la jornada seg�
     Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
     document.dispatchEvent(new Event('visibilitychange'));
   });
-  await page.clock.runFor(40_000);
+  await page.clock.runFor(70_000);
   await expect(page.locator('.interludi')).toBeVisible();
   const quiet = Number(await page.locator('.interludi-compte strong').textContent());
-  expect(quiet).toBeGreaterThan(20);
+  expect(quiet).toBeGreaterThan(50);
 
   // Si el navegador ha suspès els temporitzadors, en tornar no es descompta
   // l'estona amagada: un salt de temps sense tocs no fa començar la jornada.
@@ -323,7 +323,7 @@ test('entre jornades: 30 segons de relax amb música composta, i la jornada seg�
   expect(Number(await page.locator('.interludi-compte strong').textContent())).toBeGreaterThan(quiet - 3);
 
   // A la vista, a zero comença sola la jornada 2 amb els rivals anunciats.
-  await page.clock.runFor(31_000);
+  await page.clock.runFor(61_000);
   await expect(page.locator('.player .player-nom')).toHaveText(['Jugador', ...rivals]);
   await expect(page.locator('.nivell-mode')).toContainText('jornada 2/3');
 

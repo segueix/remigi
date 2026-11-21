@@ -20,6 +20,7 @@ import {
   InterludeBox,
   InterludeCountdown,
   InterludeMusic,
+  LEAGUE_INTERLUDE_SECONDS,
   useInterludeCountdown,
   useInterludeMusic,
 } from './interlude';
@@ -40,7 +41,7 @@ interface Props {
 /**
  * Entre jornada i jornada de la lliga: com a les lligues de 30 s, 1 i 2 minuts
  * d'El Tauler, en acabar una partida no surt el resum llarg sinó una pantalla
- * amb poc text i 30 segons de relax amb música composta en aquell moment. El
+ * amb poc text i un minut de relax amb música composta en aquell moment. El
  * resultat en curt i el marcador de la teva taula (qui ha guanyat, els punts
  * de cadascú i, des de la segona jornada, l'acumulat), la jornada que toca
  * (gran), el compte enrere, i la teva posició cara a cara amb la dels rivals
@@ -52,8 +53,8 @@ interface Props {
  * ningú davant.
  */
 export function LeagueInterlude({ season, playerName, home, onPlayNow, onStandings, onHome }: Props) {
-  const countdown = useInterludeCountdown(onPlayNow);
-  const music = useInterludeMusic(countdown.elapsed);
+  const countdown = useInterludeCountdown(onPlayNow, LEAGUE_INTERLUDE_SECONDS);
+  const music = useInterludeMusic(countdown.elapsed, LEAGUE_INTERLUDE_SECONDS);
 
   const round = season.played; // jornada que s'acaba de jugar (des d'1)
   const mine = season.results.find((result) => result.round === round - 1 && result.ids.includes(YOU));

@@ -7,6 +7,8 @@ export interface JingleSpec {
   style: JingleStyle;
   seed: number;
   loop: boolean;
+  /** Durada en segons (dels bucles, 32 si no se n'ha triat cap altra). */
+  seconds?: number;
   tonic: number;
   mode: string;
   beat: number;
@@ -41,7 +43,8 @@ export interface RadioAmbient {
   JINGLE_SECONDS: number;
   MELODY_SECONDS: number;
   pickJingle(random?: () => number, previous?: string | null): JingleStyle;
-  composeJingle(style: string, seed: number, opts?: { loop?: boolean }): JingleSpec;
+  /** `seconds`: durada del bucle (per defecte, 32 s). Afegit a la còpia de Remigi. */
+  composeJingle(style: string, seed: number, opts?: { loop?: boolean; seconds?: number }): JingleSpec;
   jingleFingerprint(spec: JingleSpec): string;
   jingleTitle(spec: JingleSpec): string;
   jingleSamples(spec: JingleSpec, sampleRate?: number, random?: () => number): Float32Array;

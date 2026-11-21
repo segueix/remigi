@@ -3484,3 +3484,24 @@ el Remigi.
   la marca, com els títols). L'antiga, `/remigi/rummikub-en-catala/`, queda com
   a redirecció (`noindex`, `canonical` a la nova). Google encara no l'havia
   indexada.
+
+### Un minut de relax entre jornades de la lliga ✅ Feta (2026-11-21)
+
+Demanat pel jugador: allargar a un minut el descans entre jornades de la lliga
+i ajustar-hi la música.
+
+- [x] `LEAGUE_INTERLUDE_SECONDS` = 60 (el repte continua amb 30):
+      `useInterludeCountdown` i `useInterludeMusic` reben la durada.
+- [x] La música, un bucle una mica més llarg que el descans
+      (`musicSecondsFor`: 32 s per a 30, 64 s per a 60), per no sentir-la
+      repetir-se. `radioambient.js` (còpia d'El Tauler) accepta
+      `composeJingle(…, { loop, seconds })`, desa `spec.seconds` i renderitza
+      el bucle a aquesta durada; els bucles llargs fan A A' B A' B en lloc de
+      repetir la B sola. Si es torna a copiar el fitxer d'El Tauler, cal
+      conservar aquest canvi.
+- [x] «Música infinita» desa la durada de cada peça (`Piece.seconds`) i la
+      torna a compondre igual.
+
+**Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd
+(327, 3 de nous: els cinc estils a 64 s, 32 s per defecte, el registre); e2e
+`modes` en verd (26).

@@ -56,7 +56,7 @@ export function MusicScreen({ onHome }: Props) {
 
   const titleOf = useCallback(
     (piece: Piece) =>
-      R ? R.jingleTitle(R.composeJingle(piece.style, piece.seed, { loop: true })) : STYLE_NAMES[piece.style],
+      R ? R.jingleTitle(R.composeJingle(piece.style, piece.seed, { loop: true, seconds: piece.seconds })) : STYLE_NAMES[piece.style],
     [R],
   );
 
@@ -69,7 +69,7 @@ export function MusicScreen({ onHome }: Props) {
     }
     const { R: radio, player } = await jinglePlayer();
     setPlaying(key);
-    const ok = await player.play(radio.composeJingle(piece.style, piece.seed, { loop: true }), {
+    const ok = await player.play(radio.composeJingle(piece.style, piece.seed, { loop: true, seconds: piece.seconds }), {
       volume: prefs.volume > 0 ? prefs.volume : 60,
     });
     if (!ok) {
@@ -92,7 +92,7 @@ export function MusicScreen({ onHome }: Props) {
     try {
       setStatus('Preparant l’MP3…');
       const radio = await loadRadio();
-      const spec = radio.composeJingle(piece.style, piece.seed, { loop: true });
+      const spec = radio.composeJingle(piece.style, piece.seed, { loop: true, seconds: piece.seconds });
       const [samples, lame] = await Promise.all([radio.exportSamples(spec), loadLame()]);
       if (!samples) throw new Error('sense mostres');
       const parts = await radio.encodeMp3(samples, lame, {
