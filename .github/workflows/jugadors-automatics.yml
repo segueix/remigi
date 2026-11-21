@@ -1,0 +1,58 @@
+name: Jugadors automàtics
+
+# Publica el resultat del dia dels jugadors automàtics de la partida del dia
+# (tools/jugadors-automatics, vegeu docs/JUGADORS-AUTOMATICS.md). Cada mitja
+# hora de 6 a 11 UTC, que cobreix de les 8 h a les 12 h de Barcelona tant a
+# l'hivern (UTC+1) com a l'estiu (UTC+2); cada jugador publica quan arriba la
+# seva hora del dia, i un sol cop.
+on:
+  schedule:
+    - cron: '7,37 6-11 * * *'
+  workflow_dispatch:
+    inputs:
+      prova:
+        description: 'Prova: no escriu res, només diu què faria'
+        type: boolean
+        default: true
+      ara:
+        description: 'No esperar l’hora de cada jugador'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jugadors-automatics
+  cancel-in-progress: false
+
+jobs:
+  publica:
+    name: Publica els resultats
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: tools/jugadors-automatics
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: tools/jugadors-automatics/package-lock.json
+
+      - name: Instal·la
+        run: npm ci
+
+      - name: Juga i publica
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          ARGS=""
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            if [ "${{ inputs.prova }}" = "true" ]; then ARGS="$ARGS --prova"; fi
+            if [ "${{ inputs.ara }}" = "true" ]; then ARGS="$ARGS --ara"; fi
+          fi
+          npx tsx publica.ts $ARGS

@@ -1,0 +1,13 @@
+[
+  {
+    "key": "mirdetost",
+    "alias": "MirdeTost",
+    "uid": "IT926Mmn0WoJ6mjKPRYr9yVItbeJ",
+    "rating": 1200,
+    "spread": 180,
+    "skipRate": 0.15,
+    "from": "08:00",
+    "to": "12:00",
+    "active": true
+  }
+]
