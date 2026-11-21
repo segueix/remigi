@@ -3342,3 +3342,26 @@ Informat pel jugador: «hi ha problemes per loggejar a Google als iPhones».
 **Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd
 (314, 3 de nous); e2e sencer en verd (187). No s'ha pogut provar amb un iPhone
 de debò ni amb un compte real.
+
+### Ratxa de partides guanyades, sense rellotge, «Com funciona» i classificació d'ahir ✅ Feta (2026-11-21)
+
+Demanat pel jugador: la ratxa, de partides del dia guanyades seguides (no de
+quedar número 1 de la classificació); la partida del dia sempre sense
+rellotge; al bàner, una icona d'informació i un enllaç a la classificació; i
+a la classificació, també la del dia anterior (només aquell, sense històric).
+
+- [x] Textos de la ratxa: «partides guanyades seguides» (era «dies número 1»;
+      el càlcul ja era de partides guanyades).
+- [x] `GameScreen`: a la partida del dia, `turnSeconds` sempre null.
+- [x] Bàner: ara és un bloc (no un sol botó) amb el botó principal estès per
+      sobre (`::after`), «ⓘ Com funciona» (explicació desplegable: 00 h,
+      mateixes fitxes i ordre de la pila, sense rellotge, desempat) i
+      «🏆 Classificació» (pantalla del dia).
+- [x] Classificació: pestanyes Avui · Ahir · Ratxes; a «Ahir», la teva fila si
+      no ets al top. La línia de punts només separa la teva fila afegida
+      (`RankRow.gap`), no els empats.
+
+**Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd
+(314); e2e sencer en verd (190, 2 de nous: «Com funciona» i classificació; sense
+rellotge); la de lliscar cap a El Tauler (mòbil) va fallar un cop i passa 3 de
+3 repetida; captures del bàner i de la classificació d'ahir.

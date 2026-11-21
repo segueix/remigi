@@ -6266,3 +6266,118 @@ button.enllac {
 .dia-boto-punts .apagats {
   color: rgb(255 255 255 / 0.25);
 }
+
+/* ---------- Bàner del dia: «Com funciona» i classificació ---------- */
+
+/*
+ * El bàner ja no és un sol botó: el botó principal («Juga») s'estén per sobre
+ * de tot el bàner (el ::after), i les accions de sota hi queden per damunt.
+ */
+.inici-taula .dia-boto {
+  position: relative;
+  grid-template-areas:
+    'icona text ratxa cta'
+    'accions accions accions accions'
+    'info info info info';
+  cursor: pointer;
+}
+
+.inici-taula .dia-boto .dia-boto-cta {
+  border: 0;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.inici-taula .dia-boto .dia-boto-cta::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.inici-taula .dia-boto .dia-boto-cta:focus-visible {
+  outline: 3px solid #ffffff;
+  outline-offset: 2px;
+}
+
+.dia-boto-accions {
+  grid-area: accions;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.2rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid rgb(255 255 255 / 0.14);
+}
+
+.dia-boto-enllac {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.2rem 0;
+  border: 0;
+  border-radius: 0.3rem;
+  background: none;
+  box-shadow: none;
+  color: #ffffff;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dia-boto-enllac:hover {
+  filter: none;
+  text-decoration: underline;
+}
+
+.dia-boto-enllac:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.dia-boto-i {
+  display: grid;
+  place-items: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 0.75rem;
+  font-style: italic;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.dia-boto-info {
+  grid-area: info;
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: 0.6rem;
+  background: rgb(255 255 255 / 0.08);
+  color: rgb(255 255 255 / 0.9);
+  font-size: 0.88rem;
+  line-height: 1.5;
+  cursor: auto;
+}
+
+.dia-boto-info p {
+  margin: 0;
+}
+
+@media (max-width: 560px) {
+  .inici-taula .dia-boto {
+    grid-template-areas:
+      'icona text ratxa'
+      'cta cta cta'
+      'accions accions accions'
+      'info info info';
+  }
+}

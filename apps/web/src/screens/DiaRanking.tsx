@@ -13,7 +13,7 @@ import {
 import { useCloudContext } from '../cloud/useCloud';
 import { previousDay, resultText, type DailyResult } from '../dia/daily';
 
-type Tab = 'avui' | 'ratxes';
+type Tab = 'avui' | 'ahir' | 'ratxes';
 
 type Load<T> = { state: 'carregant' } | { state: 'error' } | { state: 'fet'; rows: RankRow<T>[] };
 
@@ -23,16 +23,19 @@ interface Props {
   alias: string;
   /** El teu resultat d'avui: si no ets al top, la teva fila surt a sota. */
   mine?: DailyResult | null;
+  /** El teu resultat d'ahir, per a la pestanya «Ahir». */
+  mineYesterday?: DailyResult | null;
   /** Canvia quan hi ha un resultat nou pujat: es torna a carregar. */
   version: number;
 }
 
 /**
- * Els rànquings de la partida del dia: el d'avui (victòries per menys jugades
- * i després derrotes per menys punts a la mà) i el de ratxes de dies número 1.
+ * Els rànquings de la partida del dia: el d'avui i el d'ahir (victòries per
+ * menys jugades i després derrotes per menys punts a la mà; només el dia
+ * anterior, sense històric) i el de ratxes de partides guanyades seguides.
  * Per sortir-hi cal entrar amb Google (a dalt de l'inici); per mirar-los, no.
  */
-export function DiaRanking({ today, alias, mine = null, version }: Props) {
+export function DiaRanking({ today, alias, mine = null, mineYesterday = null, version }: Props) {
   const cloud = useCloudContext();
   const [tab, setTab] = useState<Tab>('avui');
   const [day, setDay] = useState<Load<DayEntry>>({ state: 'carregant' });
@@ -41,18 +44,20 @@ export function DiaRanking({ today, alias, mine = null, version }: Props) {
 
   useEffect(() => {
     let cancelled = false;
-    if (tab === 'avui') {
+    if (tab === 'avui' || tab === 'ahir') {
+      const day = tab === 'avui' ? today : previousDay(today);
+      const own = tab === 'avui' ? mine : mineYesterday;
       setDay({ state: 'carregant' });
       void (async () => {
         try {
-          const rows = dayRanking(await fetchDayRanking(today), uid);
+          const rows = dayRanking(await fetchDayRanking(day), uid);
           /*
-           * Si no ets al top, la teva fila a sota amb la teva posició (dues
-           * consultes de recompte, desades com el rànquing).
+           * Si no ets al top, la teva fila a sota amb la teva posició (el teu
+           * resultat desat i un recompte, desats com el rànquing).
            */
-          if (uid && mine && mine.day === today && !rows.some((row) => row.you)) {
-            const found = await fetchMyDayPlace(today, uid, dayEntry(mine, alias, 0));
-            if (found) rows.push({ id: uid, place: found.place, entry: found.entry, you: true });
+          if (uid && own && own.day === day && !rows.some((row) => row.you)) {
+            const found = await fetchMyDayPlace(day, uid, dayEntry(own, alias, 0));
+            if (found) rows.push({ id: uid, place: found.place, entry: found.entry, you: true, gap: true });
           }
           if (!cancelled) setDay({ state: 'fet', rows });
         } catch {
@@ -71,38 +76,38 @@ export function DiaRanking({ today, alias, mine = null, version }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [tab, today, uid, version, mine, alias]);
+  }, [tab, today, uid, version, mine, mineYesterday, alias]);
 
   return (
     <section className="dia-ranking" aria-label="Rànquing">
       <div className="dia-ranking-cap">
         <h3>Rànquing</h3>
         <div className="dia-ranking-pestanyes" role="tablist">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={tab === 'avui'}
-            className={tab === 'avui' ? '' : 'secondary'}
-            onClick={() => setTab('avui')}
-          >
-            Avui
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={tab === 'ratxes'}
-            className={tab === 'ratxes' ? '' : 'secondary'}
-            onClick={() => setTab('ratxes')}
-          >
-            Ratxes
-          </button>
+          {(
+            [
+              ['avui', 'Avui'],
+              ['ahir', 'Ahir'],
+              ['ratxes', 'Ratxes'],
+            ] as const
+          ).map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              role="tab"
+              aria-selected={tab === key}
+              className={tab === key ? '' : 'secondary'}
+              onClick={() => setTab(key)}
+            >
+              {label}
+            </button>
+          ))}
         </div>
       </div>
 
-      {tab === 'avui' ? (
+      {tab !== 'ratxes' ? (
         <RankList
           load={day}
-          empty="Encara no hi ha ningú al rànquing d’avui. Sigues el primer!"
+          empty={tab === 'avui' ? 'Encara no hi ha ningú al rànquing d’avui. Sigues el primer!' : 'Ahir no hi va jugar ningú.'}
           column="Jugades"
           value={(e) => (e.won ? String(e.moves) : `−${e.points}`)}
           extraColumn="Rivals"
@@ -166,7 +171,7 @@ function RankList<T extends { alias: string }>({
         <li
           key={row.id}
           className={
-            [row.you && 'jo', i > 0 && row.place > load.rows[i - 1].place + 1 && 'salt'].filter(Boolean).join(' ') ||
+            [row.you && 'jo', row.gap && 'salt'].filter(Boolean).join(' ') ||
             undefined
           }
         >
