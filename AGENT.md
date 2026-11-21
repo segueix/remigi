@@ -3480,3 +3480,7 @@ el Remigi.
   demostrable); als títols (títol de les pàgines, h1, subtítol de l'inici),
   «de la família del rummy», sense la marca; al text i a les respostes, el
   Rummikub es manté com a comparació («com el Rummikub®»), amb l'avís de marca.
+- [2026-11-21] L'adreça de la pàgina passa a `/remigi/rummy-en-catala/` (sense
+  la marca, com els títols). L'antiga, `/remigi/rummikub-en-catala/`, queda com
+  a redirecció (`noindex`, `canonical` a la nova). Google encara no l'havia
+  indexada.

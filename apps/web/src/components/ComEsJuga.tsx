@@ -42,7 +42,7 @@ export function ComEsJuga({ obertPerDefecte }: { obertPerDefecte?: boolean }) {
         pensat per jugar online gratis: s’hi juga com al Rummikub®, amb
         fitxes de quatre colors. Si hi has arribat cercant <strong>«remigio»</strong>, aquesta
         versió de Remigi es juga formant grups i escales i fent una obertura inicial de 30 punts.
-        Busques el <a href="./rummikub-en-catala/">Rummikub en català</a>? Aquí ho tens explicat.
+        Busques el <a href="./rummy-en-catala/">Rummikub en català</a>? Aquí ho tens explicat.
       </p>
 
       <p>Només hi ha dues jugades vàlides, i tota la resta no compta:</p>
