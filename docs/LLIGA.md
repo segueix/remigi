@@ -277,6 +277,14 @@ la vista a la taula (Pts, V, Dif):
 4. si encara hi ha empat, la força i el nom, perquè l'ordre sigui sempre el
    mateix.
 
+A l'inici, la «i» de la cantonada de la targeta de la lliga ho explica al
+jugador (`#lliga-info`, a tota l'amplada sota les tres targetes): els punts de
+la partida (el guanyador suma les fitxes que els altres tenen a la mà; cada
+perdedor resta les seves, el comodí a 30), els punts de lliga (1 per rival per
+sota, ½ si empateu), l'ordre de la classificació (Pts, V, Dif) i que la quarta
+part de dalt puja i la de baix baixa. És un botó a part de la targeta (un botó
+no en pot dur cap altre a dins): tocar-la no obre la lliga.
+
 Fins al 2026-11-17 hi havia els enfrontaments directes com a segon criteri i la
 diferència abans que les victòries: un jugador amb menys victòries i pitjor
 diferència podia quedar per davant, sense que la taula digués per què.
