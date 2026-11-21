@@ -202,12 +202,7 @@ function RankingNote({ meta }: { meta: DayView | null }) {
   const hours = snapshotHoursText();
   const first = hours.split(',')[0];
   if (meta.source === 'directe') {
-    return (
-      <p className="muted small dia-ranking-nota">
-        Ara es veu en directe (hi ha pocs jugadors). Quan n’hi hagi més, s’actualitzarà a les {hours} h; la
-        primera del dia tanca la del dia anterior.
-      </p>
-    );
+    return <p className="muted small dia-ranking-nota">Classificació en directe.</p>;
   }
   return (
     <p className="muted small dia-ranking-nota">

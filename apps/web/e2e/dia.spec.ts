@@ -110,8 +110,6 @@ test('el bàner explica com funciona i porta a la classificació (avui, ahir i r
   await page.getByRole('button', { name: 'Classificació' }).click();
   await expect(page.locator('.dia h2')).toContainText('Partida del dia #');
   await expect(page.getByRole('tab')).toHaveText(['Avui', 'Ahir', 'Ratxes']);
-  // Les hores d'actualització es diuen sempre, també en directe (o sense connexió, l'error).
-  await expect(page.locator('.dia-ranking-nota, .dia-ranking p.muted').first()).toContainText(/(s’actualitz|No s’ha pogut)/);
 });
 
 test('la partida del dia no té rellotge encara que el joc lliure en tingui', async ({ page }) => {
