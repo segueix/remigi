@@ -3325,3 +3325,20 @@ canvis».
 
 **Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd
 (311); e2e `dia`, `inici`, `modes` i `perfil` en verd.
+
+### Entrar amb Google a l'iPhone ✅ Feta (2026-11-21)
+
+Informat pel jugador: «hi ha problemes per loggejar a Google als iPhones».
+
+- [x] Causa principal: en tocar «Entra», l'app primer baixava Firebase i després
+      obria la finestra de Google; Safari només la deixa obrir dins del mateix
+      toc, la bloquejava, i la redirecció de reserva no funciona a Safari.
+      Ara Firebase es carrega a l'inici (`preloadFirebase`, `useCloud` actiu a
+      l'inici) i la finestra s'obre sense cap espera.
+- [x] Navegadors integrats (Instagram, Facebook…): avís per obrir l'enllaç a
+      Safari o Chrome (`cloud/browser.ts`, amb proves).
+- [x] Redirecció que torna sense sessió: avís (`checkRedirect`).
+
+**Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd
+(314, 3 de nous); e2e sencer en verd (187). No s'ha pogut provar amb un iPhone
+de debò ni amb un compte real.

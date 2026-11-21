@@ -180,3 +180,17 @@ el 3r torn; amb el filtre, cap.
 
 El bàner diu el dia i la dificultat («Divendres · Exigent ●●●●○»), i la ratxa
 porta també els dies jugats seguits (`playedStreak`).
+
+## Entrar amb Google a l'iPhone
+
+- **Safari només obre la finestra de Google dins del mateix toc.** Per això,
+  a l'inici Firebase es carrega per endavant (el botó «Entra» surt quan ja és
+  a punt) i `signInWithGoogle` obre la finestra sense cap espera abans.
+- **Navegadors integrats d'apps** (Instagram, Facebook, Messenger, TikTok,
+  LinkedIn…): Google no hi deixa entrar («403: disallowed_useragent»). L'app
+  ho detecta (`cloud/browser.ts`) i diu que s'obri l'enllaç a Safari o Chrome.
+- **Redirecció**: si la finestra no es pot obrir, es prova la redirecció; si
+  en tornar no hi ha sessió, l'app ho diu (`checkRedirect`).
+- Pendent si encara falla a l'app instal·lada de l'iPhone: servir els fitxers
+  d'inici de sessió de Firebase des del mateix domini (`eltauler.cat/__/auth/`)
+  i fer servir aquest domini com a `authDomain`.
