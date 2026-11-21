@@ -189,7 +189,9 @@ export function GameScreen({
       ),
     );
   }, [drawnTileId, game.players]);
-  const [turnSeconds] = useTurnSeconds();
+  /* La partida del dia es juga sempre sense rellotge: compta l'habilitat, no la pressa. */
+  const [chosenTurnSeconds] = useTurnSeconds();
+  const turnSeconds = mode === 'dia' ? null : chosenTurnSeconds;
   /* Avís de temps exhaurit; s'apaga sol al cap d'uns segons. */
   const [timedOut, setTimedOut] = useState<string | null>(null);
   /*

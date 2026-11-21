@@ -817,6 +817,7 @@ export function App() {
           today={today}
           savedDia={savedGames.saved.dia !== null && savedGames.saved.dia.setup.session === today}
           onDaily={() => void playDaily()}
+          onDailyRanking={() => setView('dia')}
           cloud={cloud}
           onFree={() => void startFree()}
           onChallenge={() => setView('repte')}

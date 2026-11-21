@@ -43,10 +43,11 @@ test('la partida del dia té les mateixes fitxes i els mateixos rivals a tots el
 
 test('la partida del dia es juga un cop: resultat per jugades o punts, i es pot compartir', async ({ page }) => {
   await obreNet(page);
-  const banner = page.getByRole('button', { name: 'Partida del dia', exact: true });
+  const banner = page.locator('.dia-boto');
+  const juga = page.getByRole('button', { name: 'Partida del dia', exact: true });
   await expect(banner).toContainText('Partida del dia #');
-  await expect(banner).toContainText('Juga');
-  await banner.click();
+  await expect(juga).toHaveText('Juga');
+  await juga.click();
 
   // Directament a la partida, sense cap pantalla entremig.
   await expect(page.locator('.nivell-mode')).toContainText('Partida del dia #');
@@ -74,8 +75,8 @@ test('la partida del dia es juga un cop: resultat per jugades o punts, i es pot 
 
   // I en tornar a obrir l'app, el bàner porta al resultat, no a una altra partida.
   await page.reload();
-  await expect(banner).toContainText('Resultat');
-  await banner.click();
+  await expect(juga).toHaveText('Resultat');
+  await juga.click();
   await expect(page.locator('.dia .dia-targeta')).toBeVisible();
 });
 
@@ -91,4 +92,35 @@ test('l’enllaç compartit obre directament la partida del dia; a dalt de l’i
   expect(page.url()).not.toContain('partida=dia');
   await page.goto('./');
   await expect(page.locator('.inici-cap .inici-google')).toHaveText('Entra amb Google');
+});
+
+test('el bàner explica com funciona i porta a la classificació (avui, ahir i ratxes)', async ({ page }) => {
+  await page.addInitScript(() => {
+    if (localStorage.getItem('e2e:net')) return;
+    localStorage.clear();
+    localStorage.setItem('e2e:net', '1');
+  });
+  await page.goto('./');
+  const info = page.getByRole('button', { name: 'Com funciona' });
+  await info.click();
+  await expect(page.locator('#dia-info')).toContainText('mateixes fitxes inicials');
+  await expect(page.locator('#dia-info')).toContainText('sense rellotge');
+  await info.click();
+  await expect(page.locator('#dia-info')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Classificació' }).click();
+  await expect(page.locator('.dia h2')).toContainText('Partida del dia #');
+  await expect(page.getByRole('tab')).toHaveText(['Avui', 'Ahir', 'Ratxes']);
+});
+
+test('la partida del dia no té rellotge encara que el joc lliure en tingui', async ({ page }) => {
+  await page.addInitScript(() => {
+    if (localStorage.getItem('e2e:net')) return;
+    localStorage.clear();
+    localStorage.setItem('e2e:net', '1');
+    localStorage.setItem('remigi:temps-torn', '60');
+  });
+  await page.goto('./');
+  await page.getByRole('button', { name: 'Partida del dia', exact: true }).click();
+  await expect(page.locator('.rack .tile').first()).toBeVisible();
+  await expect(page.locator('.rellotge-torn')).toHaveCount(0);
 });

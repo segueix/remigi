@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { DIFFICULTIES, adaptiveLevelLabel, type PlayerProfile, type Tile } from '@remigi/core';
 import { TARGET_NAME, TARGET_URL } from '../appSwitch/appSwitch';
 import type { CloudHandle } from '../cloud/useCloud';
@@ -48,6 +49,8 @@ interface Props {
   /** La partida d'avui és a mitges. */
   savedDia: boolean;
   onDaily(): void;
+  /** La classificació de la partida del dia (d'avui i d'ahir). */
+  onDailyRanking(): void;
   /** El compte de Google: el botó d'entrar va al costat del jugador. */
   cloud: CloudHandle;
   onFree(): void;
@@ -87,6 +90,7 @@ export function HomeScreen({
   today,
   savedDia,
   onDaily,
+  onDailyRanking,
   cloud,
   onFree,
   onChallenge,
@@ -131,6 +135,7 @@ export function HomeScreen({
   const streak = currentStreak(daily, today);
   const best = bestStreak(daily);
   const played = playedStreak(daily, today);
+  const [infoOpen, setInfoOpen] = useState(false);
   const difficulty = dailyDifficulty(today);
   const nextIn = countdownText(msUntilNextDay());
   const dailyStatus = todayResult
@@ -220,8 +225,12 @@ export function HomeScreen({
             </span>
           </button>
         </div>
-        {/* La partida del dia, en un bàner sota els tres modes: una al dia, igual per a tothom. */}
-        <button type="button" className="dia-boto mode-dia" onClick={onDaily} aria-label="Partida del dia">
+        {/*
+          * La partida del dia, en un bàner sota els tres modes: una al dia, igual
+          * per a tothom. Tot el bàner porta a la partida (el botó principal
+          * s'estén per sobre); a sota, «Com funciona» i la classificació.
+          */}
+        <div className="dia-boto mode-dia">
           <span className="dia-boto-icona" aria-hidden="true">
             <DailyIcon />
           </span>
@@ -241,19 +250,48 @@ export function HomeScreen({
           </span>
           <span
             className={streak > 0 ? 'dia-boto-ratxa encesa' : 'dia-boto-ratxa'}
-            aria-label={`La teva ratxa: ${streak} ${streak === 1 ? 'dia' : 'dies'} número 1; la millor, ${best}`}
+            aria-label={`La teva ratxa: ${streak} ${streak === 1 ? 'partida guanyada' : 'partides guanyades'} seguides; la millor, ${best}`}
           >
             <span className="dia-boto-ratxa-num">
               <span aria-hidden="true">🔥</span> {streak}
             </span>
-            <span className="dia-boto-ratxa-etiqueta">{streak === 1 ? 'dia de ratxa' : 'dies de ratxa'}</span>
+            <span className="dia-boto-ratxa-etiqueta">{streak === 1 ? 'guanyada seguida' : 'guanyades seguides'}</span>
             <span className="dia-boto-ratxa-millor">millor: {best}</span>
             {played > 0 && <span className="dia-boto-ratxa-millor">jugats: {played}</span>}
           </span>
-          <span className="dia-boto-cta" aria-hidden="true">
+          <button type="button" className="dia-boto-cta" onClick={onDaily} aria-label="Partida del dia">
             {todayResult ? 'Resultat' : savedDia ? 'Continua' : 'Juga'}
-          </span>
-        </button>
+          </button>
+          <div className="dia-boto-accions">
+            <button
+              type="button"
+              className="dia-boto-enllac"
+              aria-expanded={infoOpen}
+              aria-controls="dia-info"
+              onClick={() => setInfoOpen((open) => !open)}
+            >
+              <span className="dia-boto-i" aria-hidden="true">i</span> Com funciona
+            </button>
+            <button type="button" className="dia-boto-enllac" onClick={onDailyRanking}>
+              <span aria-hidden="true">🏆</span> Classificació
+            </button>
+          </div>
+          {infoOpen && (
+            <div className="dia-boto-info" id="dia-info">
+              <p>
+                <strong>Cada dia a les 00 h</strong> (hora de Barcelona) hi ha una partida nova. Tothom té les{' '}
+                <strong>mateixes fitxes inicials</strong>, la pila amb les fitxes <strong>en el mateix ordre</strong> i
+                els mateixos rivals, que davant de la mateixa taula fan la mateixa jugada. Per això el resultat
+                depèn només de com jugues tu.
+              </p>
+              <p>
+                Es juga <strong>sense rellotge</strong> i un sol cop al dia. Guanya qui necessita menys jugades; si
+                empaten, qui deixa els rivals amb més punts a la mà. La ratxa són les partides del dia que guanyes
+                seguides. Sempre es pot fer la sortida com a molt al 3r torn.
+              </p>
+            </div>
+          )}
+        </div>
         <span className="marca-taula" aria-hidden="true">
           Remigi
         </span>

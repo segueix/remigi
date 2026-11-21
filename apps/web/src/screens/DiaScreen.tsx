@@ -5,6 +5,7 @@ import { DailyIcon, ShareIcon } from '../components/icons';
 import { gameUrl } from '../ui/gameUrl';
 import {
   dayNumber,
+  previousDay,
   resultFor,
   resultText,
   shareText,
@@ -57,7 +58,13 @@ export function DiaScreen({ state, today, playerName, rankingVersion, onPlay, on
         </>
       )}
 
-      <DiaRanking today={today} alias={playerName} mine={todayResult} version={rankingVersion} />
+      <DiaRanking
+        today={today}
+        alias={playerName}
+        mine={todayResult}
+        mineYesterday={resultFor(state, previousDay(today))}
+        version={rankingVersion}
+      />
     </section>
   );
 }

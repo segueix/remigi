@@ -11,7 +11,8 @@ import { createRng } from '@remigi/core';
  * Es juga un sol cop al dia. Si guanyes, compta en **quantes jugades** (els
  * teus torns: menys és millor); si no, **quants punts et queden a la mà**
  * (menys és millor). Qualsevol victòria val més que qualsevol derrota.
- * La ratxa són els dies seguits que has quedat número 1 de la taula.
+ * La ratxa són les partides del dia que has guanyat seguides (cada dia, la
+ * teva partida: no cal quedar primer de la classificació).
  *
  * Pur i serialitzable, com el repte i la lliga.
  */
@@ -30,7 +31,7 @@ export const MAX_RESULTS = 400;
 export interface DailyResult {
   /** Dia de la partida (`AAAA-MM-DD`, hora local). */
   day: string;
-  /** Has quedat número 1 de la taula. */
+  /** Has guanyat la partida (has quedat primer de la teva taula). */
   won: boolean;
   /** Les teves jugades (torns teus, robar inclòs) fins al final de la partida. */
   moves: number;
@@ -216,7 +217,7 @@ export function resultFor(state: DailyState, day: string): DailyResult | null {
 }
 
 /**
- * La ratxa: dies seguits que has quedat número 1. Compta fins avui si ja l'has
+ * La ratxa: partides del dia guanyades seguides. Compta fins avui si ja l'has
  * jugada; si encara no, fins ahir (no la perds fins que s'acaba el dia).
  */
 export function currentStreak(state: DailyState, today: string): number {
@@ -293,10 +294,10 @@ export function resultText(result: Pick<DailyResult, 'won' | 'moves' | 'points'>
 }
 
 export function streakText(streak: number): string {
-  return streak > 0 ? `🔥 ${plural(streak, 'dia', 'dies')} seguits número 1` : 'Cap ratxa en marxa';
+  return streak > 0 ? `🔥 ${plural(streak, 'partida guanyada', 'partides guanyades')} seguides` : 'Cap ratxa en marxa';
 }
 
-/** Els últims dies com a quadrets: 🟩 número 1, 🟥 no, ⬜ no jugada. */
+/** Els últims dies com a quadrets: 🟩 guanyada, 🟥 no, ⬜ no jugada. */
 export function recentSquares(state: DailyState, today: string, days = 7): string {
   const byDay = new Map(state.results.map((r) => [r.day, r]));
   const squares: string[] = [];
@@ -340,7 +341,7 @@ export function inviteText(day: string, url: string, streak = 0): string {
   return [
     `🎲 Partida del dia #${dayNumber(day)} al Remigi`,
     'Avui tothom juga amb les mateixes fitxes. Qui guanya en menys jugades?',
-    streak > 0 ? `Jo porto ${plural(streak, 'dia', 'dies')} seguits de número 1 🔥. M’atrapes?` : 'T’hi apuntes?',
+    streak > 0 ? `Jo porto ${plural(streak, 'partida guanyada', 'partides guanyades')} seguides 🔥. M’atrapes?` : 'T’hi apuntes?',
     dailyInviteUrl(url),
   ].join('\n');
 }

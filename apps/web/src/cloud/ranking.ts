@@ -127,6 +127,8 @@ export interface RankRow<T> {
   place: number;
   entry: T;
   you: boolean;
+  /** La teva fila afegida sota el top (no hi eres): va separada. */
+  gap?: boolean;
 }
 
 /** Posa la posició (els empats comparteixen posició) i marca la teva fila. */

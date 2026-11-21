@@ -119,7 +119,7 @@ describe('resultats', () => {
   });
 });
 
-describe('la ratxa de dies número 1', () => {
+describe('la ratxa de partides guanyades', () => {
   it('compta els dies seguits guanyats fins avui', () => {
     const state = withResults(win('2026-11-18'), win('2026-11-19'), win('2026-11-20'));
     expect(currentStreak(state, '2026-11-20')).toBe(3);
@@ -159,7 +159,7 @@ describe('la ratxa de dies número 1', () => {
     const text = shareText(state, state.results[0], 'https://exemple.cat/remigi/');
     expect(text).toContain('Partida del dia #2');
     expect(text).toContain('Guanyada en 9 jugades');
-    expect(text).toContain('2 dies seguits número 1');
+    expect(text).toContain('2 partides guanyades seguides');
     expect(text).toContain('Em superes?');
     expect(text.endsWith('https://exemple.cat/remigi/?partida=dia')).toBe(true);
   });
@@ -205,7 +205,7 @@ describe('convidar a la partida del dia', () => {
   it('la invitació porta el número del dia, la ratxa si n’hi ha i l’enllaç', () => {
     const amb = inviteText('2026-11-21', 'https://eltauler.cat/remigi/', 3);
     expect(amb).toContain('Partida del dia #2');
-    expect(amb).toContain('3 dies seguits de número 1');
+    expect(amb).toContain('3 partides guanyades seguides');
     expect(amb.endsWith('?partida=dia')).toBe(true);
     expect(inviteText('2026-11-21', 'https://eltauler.cat/remigi/')).toContain('T’hi apuntes?');
   });
