@@ -1,0 +1,16 @@
+{
+  "name": "remigi-jugadors-automatics",
+  "private": true,
+  "description": "Publica cada dia els resultats dels jugadors automàtics de la partida del dia (vegeu docs/JUGADORS-AUTOMATICS.md).",
+  "type": "module",
+  "scripts": {
+    "publica": "tsx publica.ts",
+    "prova": "tsx publica.ts --prova --ara"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.10.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.23.15"
+  }
+}

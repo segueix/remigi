@@ -3365,3 +3365,28 @@ a la classificació, també la del dia anterior (només aquell, sense històric)
 (314); e2e sencer en verd (190, 2 de nous: «Com funciona» i classificació; sense
 rellotge); la de lliscar cap a El Tauler (mòbil) va fallar un cop i passa 3 de
 3 repetida; captures del bàner i de la classificació d'ahir.
+
+### Jugadors automàtics de la partida del dia ✅ Feta (2026-11-21)
+
+Demanat pel jugador: que MirdeTost jugui sol cada dia la partida del dia,
+publiqui el resultat a la classificació amb la seva pròpia ratxa, més fort o
+més fluix segons el dia, alguns dies sense jugar, i entre les 8 h i les 12 h;
+barrejat com un jugador normal (decisió del jugador, per donar sensació de
+participació; es retiraran quan hi hagi prou gent). Document per crear-ne més.
+
+- [x] `apps/web/src/bots/automatic.ts` (pur, amb proves): força i hora de cada
+      dia, dies sense jugar, la partida jugada de debò amb el motor, la ratxa.
+- [x] `tools/jugadors-automatics/` (carpeta pròpia, amb `firebase-admin` i
+      `tsx`; no carrega la web): `jugadors.json` i `publica.ts` (`--prova`,
+      `--ara`, `--dia=`).
+- [x] `.github/workflows/jugadors-automatics.yml`: cada mitja hora de 6 a 11
+      UTC; escriu amb el secret `FIREBASE_SERVICE_ACCOUNT`.
+- [x] `docs/JUGADORS-AUTOMATICS.md`: com funcionen, posar-ho en marxa, crear-ne
+      més, retirar-los i cost.
+- MirdeTost automàtic és un jugador nou (uid propi), separat del compte de
+  Google que es deia igual.
+
+**Criteris d'acceptació (verificats)**: `typecheck` net (web i script);
+`npm test` en verd (5 de nous); `publica.ts --prova` per a 8 dies (força i
+resultat de cada dia, un dia sense jugar). No s'ha pogut provar l'escriptura a
+Firestore: cal el secret.
