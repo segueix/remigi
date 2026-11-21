@@ -71,7 +71,13 @@ function readList(store: Store | null, key: string): string[] {
  * no doni cap peça sentida ni aquí ni a El Tauler. Apunta la peça com a
  * sentida.
  */
-export function composeNew(R: RadioAmbient, store: Store | null, random: () => number = Math.random): JingleSpec {
+export function composeNew(
+  R: RadioAmbient,
+  store: Store | null,
+  random: () => number = Math.random,
+  /** Durada del bucle; per defecte, la de sempre (32 s). */
+  seconds?: number,
+): JingleSpec {
   let last: string | null = null;
   try {
     last = store?.getItem(MUSIC_LAST_KEY) ?? null;
@@ -81,9 +87,10 @@ export function composeNew(R: RadioAmbient, store: Store | null, random: () => n
   const seen = readList(store, MUSIC_SEEN_KEY);
   const heard = new Set([...seen, ...readList(store, EL_TAULER_SEEN_KEY)]);
   const style = R.pickJingle(random, last);
-  let spec = R.composeJingle(style, Math.floor(random() * 4294967295) + 1, { loop: true });
+  const opts = seconds ? { loop: true, seconds } : { loop: true };
+  let spec = R.composeJingle(style, Math.floor(random() * 4294967295) + 1, opts);
   for (let k = 1; k < 20 && heard.has(R.jingleFingerprint(spec)); k++) {
-    spec = R.composeJingle(style, Math.floor(random() * 4294967295) + 1, { loop: true });
+    spec = R.composeJingle(style, Math.floor(random() * 4294967295) + 1, opts);
   }
   try {
     store?.setItem(MUSIC_LAST_KEY, style);
@@ -102,6 +109,8 @@ export interface Piece {
   /** Quan va sonar (ms des de 1970). */
   at: number;
   fav: boolean;
+  /** Durada del bucle, si no és la de sempre (64 s al minut de la lliga). */
+  seconds?: number;
 }
 
 const STYLES: readonly JingleStyle[] = ['fanfarria', 'galop', 'rumba', 'funk', 'himne'];
@@ -117,7 +126,12 @@ export function registryList(store: Store | null): Piece[] {
         (p): p is Piece =>
           typeof p === 'object' && p !== null && STYLES.includes((p as Piece).style) && Number((p as Piece).seed) > 0,
       )
-      .map((p) => ({ style: p.style, seed: Number(p.seed) >>> 0, at: Number(p.at) || 0, fav: p.fav === true }));
+      .map((p) => {
+        const seconds = Number(p.seconds);
+        const piece: Piece = { style: p.style, seed: Number(p.seed) >>> 0, at: Number(p.at) || 0, fav: p.fav === true };
+        if (Number.isFinite(seconds) && seconds > 0 && seconds <= 120 && seconds !== 32) piece.seconds = seconds;
+        return piece;
+      });
   } catch {
     return [];
   }
@@ -136,10 +150,15 @@ function registrySave(store: Store | null, list: Piece[]): Piece[] {
 }
 
 /** Apunta una peça que ha sonat (la més nova primer; si ja hi era, conserva si és preferida). */
-export function registerPiece(store: Store | null, piece: Pick<Piece, 'style' | 'seed'>, at = Date.now()): Piece[] {
+export function registerPiece(
+  store: Store | null,
+  piece: Pick<Piece, 'style' | 'seed'> & { seconds?: number },
+  at = Date.now(),
+): Piece[] {
   const list = registryList(store);
   const old = list.findIndex((p) => pieceKey(p) === pieceKey(piece));
   const entry: Piece = { style: piece.style, seed: piece.seed >>> 0, at, fav: old >= 0 ? list[old].fav : false };
+  if (piece.seconds && piece.seconds !== 32) entry.seconds = piece.seconds;
   if (old >= 0) list.splice(old, 1);
   return registrySave(store, [entry, ...list]);
 }

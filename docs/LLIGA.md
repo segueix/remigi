@@ -4,7 +4,7 @@ En obrir Remigi surten tres opcions, l'una al costat de l'altra (també al mòbi
 
 | | Joc lliure (esquerra) | Repte (centre) | Lliga (dreta) |
 |---|---|---|---|
-| Què és | La partida de sempre | Unes quantes partides seguides, i se sumen els punts | Temporades de lliga, del poble al món, amb 30 s de relax i música entre jornades |
+| Què és | La partida de sempre | Unes quantes partides seguides, i se sumen els punts | Temporades de lliga, del poble al món, amb un minut de relax i música entre jornades |
 | Rivals | Els que triïs (1–3), automàtics o fixats | 1–3, al nivell que triïs | 2 o 3 per partida, els del calendari |
 | Nivell | Adaptatiu (puja i baixa amb tu) o fixat | Fix: Novell … Expert | El del graó: de Novell (local) a Expert (mundial) |
 | Mou la teva habilitat | Sí | No | No |
@@ -310,7 +310,7 @@ l'atzar entre 0,55 i 1,45 (ordenats perquè qui queda més avall en tingui més)
 el guanyador s'emporta la suma: el marcador de cada taula suma zero, com una
 partida de debò. Entre forces es fa interpolació lineal.
 
-### Entre jornades: 30 segons de relax
+### Entre jornades: un minut de relax
 
 Com a les lligues d'escacs d'El Tauler a 30 s, 1 i 2 minuts, en acabar una
 jornada no surt el resum llarg sinó una pantalla amb poc text
@@ -325,7 +325,7 @@ jornada no surt el resum llarg sinó una pantalla amb poc text
   la «Dif» de la classificació) i, sempre, els punts de lliga i la posició. Així
   es pot jugar amb tàctica. L'última jornada el porta al resum de sempre;
 - la **jornada que toca, gran i en un requadre** («JORNADA 3/7»);
-- «comença en» i el **compte enrere de 30 a 0**;
+- «comença en» i el **compte enrere de 60 a 0** (abans, 30; el repte continua amb 30);
 - un **carrusel de dues pàgines** (`Carousel`, el mateix que el del repte), que
   es passa fent lliscar el dit o tocant els **punts** de sota. La primera és la
   principal i és la de sempre: la teva posició a la classificació **cara a

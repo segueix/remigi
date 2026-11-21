@@ -1029,8 +1029,11 @@ function stepScale(from, dir, scalePcs, chord, lo, hi) {
 const JINGLE_END = [24.5, 26.5];
 // opts.loop: bucle de fons de 32 s per a la TV (sense cop final; l'últim
 // compàs és la dominant, que torna a la tònica en començar de nou).
+// opts.seconds (Remigi, afegit a aquesta còpia): durada del bucle, si no és la
+// de sempre (p. ex. 64 s per al minut de relax entre jornades de la lliga).
 function composeJingle(style, seed, opts) {
     const loop = !!(opts && opts.loop);
+    const loopSeconds = opts && opts.seconds > 0 ? opts.seconds : MELODY_SECONDS;
     const id = jingleId(style);
     const st = STYLES[id];
     const s = (seed >>> 0) || 1;
@@ -1038,7 +1041,7 @@ function composeJingle(style, seed, opts) {
     const tonic = pickOf(r, st.keys);
     const mode = st.mode;
     const wanted = st.beat[0] + r() * (st.beat[1] - st.beat[0]);
-    const target = loop ? MELODY_SECONDS : JINGLE_END[0] + r() * (JINGLE_END[1] - JINGLE_END[0]);
+    const target = loop ? loopSeconds : JINGLE_END[0] + r() * (JINGLE_END[1] - JINGLE_END[0]);
     const bars = Math.max(6, Math.round(target / (wanted * 4)));
     const beat = target / (bars * 4);
     const lead = pickOf(r, st.leads);
@@ -1050,7 +1053,8 @@ function composeJingle(style, seed, opts) {
     // A, A' (si hi cap), B i la dominant de la cadència.
     const body = bars - 1;
     let degrees;
-    if (body >= 8) degrees = a.concat(a2.slice(0, body - 8), b);
+    if (body >= 20) degrees = a.concat(a2, b, a2, b); // bucles llargs: A A' B A' B, sense repetir la B sola
+    else if (body >= 8) degrees = a.concat(a2.slice(0, body - 8), b);
     else degrees = a.concat(b.slice(0, Math.max(0, body - 4)));
     // Bucles lents (rumba a 32 s: fins a 14 compassos): A' té com a molt
     // quatre compassos i la B es repeteix fins a omplir-ho. Abans hi
@@ -1060,7 +1064,7 @@ function composeJingle(style, seed, opts) {
     const chords = degrees.map(dg => buildChord(tonic, mode, dg, st, st.seventh || (mode !== 'major' && dg === 4)));
     const finalPcs = chordPcs(tonic, mode, 0, st.seventh);
     const spec = {
-        style: id, seed: s, loop, tonic, mode, beat, degrees, lead, variant,
+        style: id, seed: s, loop, seconds: loop ? loopSeconds : JINGLE_SECONDS, tonic, mode, beat, degrees, lead, variant,
         keyName: PC_NAMES[tonic] + ' ' + MODE_NAMES[mode],
         leadName: LEAD_NAMES[lead],
         chords,
@@ -1308,13 +1312,13 @@ function asSpec(spec) {
 // es repeteixen sense tall, sense esvaïment.
 function jingleSamples(spec, sampleRate = 22050, random = Math.random) {
     const sp = asSpec(spec);
-    const syn = createSynth(sampleRate, sp.loop ? MELODY_SECONDS : JINGLE_SECONDS, random);
+    const syn = createSynth(sampleRate, sp.loop ? (sp.seconds || MELODY_SECONDS) : JINGLE_SECONDS, random);
     const data = syn.finish(JINGLE_SCORES[sp.style](syn, sp));
     return sp.loop ? data : shapeJingle(data, sampleRate);
 }
 function jingleSamplesAsync(spec, sampleRate = 22050, random = Math.random, opts = {}) {
     const sp = asSpec(spec);
-    return renderAsync(syn => JINGLE_SCORES[sp.style](syn, sp), sp.loop ? MELODY_SECONDS : JINGLE_SECONDS, sampleRate, random, opts)
+    return renderAsync(syn => JINGLE_SCORES[sp.style](syn, sp), sp.loop ? (sp.seconds || MELODY_SECONDS) : JINGLE_SECONDS, sampleRate, random, opts)
         .then(data => sp.loop ? data : shapeJingle(data, sampleRate));
 }
 

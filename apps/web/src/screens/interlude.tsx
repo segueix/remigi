@@ -12,12 +12,21 @@ import { safeStorage, useMusicPrefs } from '../musica/useMusicPrefs';
 
 /**
  * Les peces comunes de les pantalles de relax entre partides (la lliga i el
- * repte): el compte enrere de 30 segons i la música composta en aquell
- * moment, com a les lligues ràpides d'El Tauler.
+ * repte): el compte enrere (30 segons al repte, un minut a la lliga) i la
+ * música composta en aquell moment, com a les lligues ràpides d'El Tauler.
  */
 
-/** Els segons de relax entre partida i partida. */
+/** Els segons de relax entre partida i partida del repte. */
 export const INTERLUDE_SECONDS = 30;
+
+/** Entre jornada i jornada de la lliga, un minut. */
+export const LEAGUE_INTERLUDE_SECONDS = 60;
+
+/**
+ * La música dura una mica més que el descans (32 s per a 30, 64 s per a 60),
+ * perquè no se senti repetir-se abans no comenci la partida.
+ */
+export const musicSecondsFor = (seconds: number) => Math.round(seconds * 1.07);
 
 /**
  * El compte enrere: només corre amb l'app a la vista (amb la pestanya amagada
@@ -26,14 +35,14 @@ export const INTERLUDE_SECONDS = 30;
  * mòbil ha suspès els temporitzadors en segon pla, l'estona amagada no es
  * descompta (vegeu `countdown.ts`). A zero crida `onDone` una sola vegada.
  */
-export function useInterludeCountdown(onDone: () => void) {
-  const [left, setLeft] = useState(INTERLUDE_SECONDS * 1000);
-  const clock = useRef(startCountdown(INTERLUDE_SECONDS * 1000, performance.now()));
+export function useInterludeCountdown(onDone: () => void, seconds: number = INTERLUDE_SECONDS) {
+  const [left, setLeft] = useState(seconds * 1000);
+  const clock = useRef(startCountdown(seconds * 1000, performance.now()));
   const onDoneRef = useRef(onDone);
   onDoneRef.current = onDone;
 
   useEffect(() => {
-    clock.current = startCountdown(INTERLUDE_SECONDS * 1000, performance.now());
+    clock.current = startCountdown(seconds * 1000, performance.now());
     let done = false;
     const onVisibility = () => {
       clock.current = resyncCountdown(clock.current, performance.now());
@@ -57,12 +66,12 @@ export function useInterludeCountdown(onDone: () => void) {
       clearInterval(timer);
       document.removeEventListener('visibilitychange', onVisibility);
     };
-  }, []);
+  }, [seconds]);
 
   return {
     seconds: Math.max(0, Math.ceil(left / 1000)),
     /** Segons passats des del principi: la música hi comença si ha trigat a compondre's. */
-    elapsed: () => Math.max(0, (INTERLUDE_SECONDS * 1000 - clock.current.left) / 1000),
+    elapsed: () => Math.max(0, (seconds * 1000 - clock.current.left) / 1000),
   };
 }
 
@@ -71,7 +80,7 @@ export function useInterludeCountdown(onDone: () => void) {
  * comença la partida o se surt. Si generar-la triga una mica, comença pel punt
  * on va el compte enrere: el bucle no té final que s'hagi de fer coincidir.
  */
-export function useInterludeMusic(elapsed: () => number) {
+export function useInterludeMusic(elapsed: () => number, seconds: number = INTERLUDE_SECONDS) {
   const [music, setMusic] = useMusicPrefs();
   const [playing, setPlaying] = useState<string | null>(null);
   const musicOn = music.on && music.volume > 0;
@@ -87,7 +96,7 @@ export function useInterludeMusic(elapsed: () => number) {
       .then(({ R, player }) => {
         if (cancelled || !player.supported()) return;
         const store = safeStorage();
-        const spec = composeNew(R, store);
+        const spec = composeNew(R, store, Math.random, musicSecondsFor(seconds));
         return player
           .play(spec, { volume: volume.current, startedAt: () => elapsedRef.current() })
           .then((ok) => {
@@ -108,7 +117,7 @@ export function useInterludeMusic(elapsed: () => number) {
       stopMusic(true);
       setPlaying(null);
     };
-  }, [musicOn]);
+  }, [musicOn, seconds]);
 
   return {
     musicOn,
