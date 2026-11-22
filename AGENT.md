@@ -3539,7 +3539,8 @@ Wordle.
 - [x] Botó «Desfer» (`UndoButton`): un toc, un pas enrere; mantenir premut
       600 ms, tota la jugada (amb vibració curta on n'hi ha). Manté el nom
       accessible «Desfer canvis».
-- [x] Inici: «El teu nou divertiment diari, com el Paraulògic o el Wordle».
+- [x] Lema «El teu nou divertiment diari, com el Paraulògic o el Wordle», a
+      dalt del bàner de la partida del dia (a tota l'amplada).
 
 **Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd
 (333); e2e de desfer en verd (escriptori i mòbil, 1 de nou).

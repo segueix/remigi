@@ -3563,15 +3563,6 @@ button.secondary.reset-nivell {
   font-style: italic;
 }
 
-/* El lema: el Remigi com a passatemps de cada dia. */
-.inici-faristol .inici-lema {
-  margin-bottom: 0.2rem;
-  color: #fff;
-  font-size: 0.95rem;
-  font-weight: 600;
-  line-height: 1.3;
-}
-
 /* Cada mode és un botó gran sencer: es toca on sigui. */
 .mode-card {
   display: flex;
@@ -5750,7 +5741,9 @@ button.enllac {
 .inici-taula .dia-boto {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto auto;
-  grid-template-areas: 'icona text ratxa cta';
+  grid-template-areas:
+    'lema lema lema lema'
+    'icona text ratxa cta';
   gap: 0.9rem;
   padding: 1rem 1.2rem;
   border: 2px solid rgb(255 255 255 / 0.28);
@@ -5778,6 +5771,16 @@ button.enllac {
 .dia-boto-titol {
   font-size: 1.25rem;
   line-height: 1.2;
+}
+
+/* El lema: la partida del dia com a passatemps de cada dia. */
+.dia-boto-lema {
+  grid-area: lema;
+  color: rgb(255 255 255 / 0.85);
+  font-size: 0.9rem;
+  font-style: italic;
+  font-weight: 600;
+  line-height: 1.25;
 }
 
 .inici-taula .dia-boto .dia-boto-estat {
@@ -5840,6 +5843,7 @@ button.enllac {
   .inici-taula .dia-boto {
     grid-template-columns: auto minmax(0, 1fr) auto;
     grid-template-areas:
+      'lema lema lema'
       'icona text ratxa'
       'cta cta cta';
     gap: 0.6rem 0.7rem;
@@ -6285,6 +6289,7 @@ button.enllac {
 .inici-taula .dia-boto {
   position: relative;
   grid-template-areas:
+    'lema lema lema lema'
     'icona text ratxa cta'
     'accions accions accions accions'
     'info info info info';
@@ -6384,6 +6389,7 @@ button.enllac {
 @media (max-width: 560px) {
   .inici-taula .dia-boto {
     grid-template-areas:
+      'lema lema lema'
       'icona text ratxa'
       'cta cta cta'
       'accions accions accions'

@@ -269,6 +269,7 @@ export function HomeScreen({
           * s'estén per sobre); a sota, «Com funciona» i la classificació.
           */}
         <div className="dia-boto mode-dia">
+          <span className="dia-boto-lema">El teu nou divertiment diari, com el Paraulògic o el Wordle</span>
           <span className="dia-boto-icona" aria-hidden="true">
             <DailyIcon />
           </span>
@@ -348,7 +349,6 @@ export function HomeScreen({
         </span>
         <div className="inici-nom">
           <h1>Remigi</h1>
-          <p className="inici-lema">El teu nou divertiment diari, com el Paraulògic o el Wordle</p>
           <p className="inici-inspirat">De la família del rummy</p>
           <p>Tria com vols jugar</p>
         </div>
