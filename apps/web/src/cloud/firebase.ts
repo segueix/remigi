@@ -190,6 +190,17 @@ export async function submitDayResult(uid: string, day: string, entry: DayEntry)
   clearRankingCache();
 }
 
+/**
+ * El resultat del jugador d'un dia (`dia/{dia}/resultats/{uid}`), tal com el
+ * va desar el primer aparell que la va acabar; null si encara no hi és.
+ */
+export async function fetchDayResult(uid: string, day: string): Promise<unknown> {
+  const { db } = await load();
+  const { doc, getDoc } = await import('firebase/firestore/lite');
+  const snap = await getDoc(doc(db, 'dia', day, 'resultats', uid));
+  return snap.exists() ? snap.data() : null;
+}
+
 /** Desa l'àlies i la ratxa del jugador (per al rànquing de ratxes). */
 export async function submitPlayer(uid: string, entry: PlayerEntry): Promise<void> {
   const { db } = await load();

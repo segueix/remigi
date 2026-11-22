@@ -314,7 +314,8 @@ El que abans era una llista per repassar a mà ara ho comprova `npm run test:e2e
 - Partida sencera contra 1, 2 i 3 bots, sense errors de consola.
 - El motor rebutja la sortida de menys de 30 punts i la jugada de menys de 3
   fitxes, i no deixa endur-se al faristol una fitxa que ja era a la taula.
-- «Desfer canvis» retorna el torn a com estava, i «Avançar» acaba la jugada si
+- «Desfer» torna enrere l'últim moviment a cada toc (mantenir-lo premut retorna
+  el torn a com estava), i «Avançar» acaba la jugada si
   n'hi ha cap i roba si no n'hi ha (mai les dues coses).
 - Arrossegar del faristol a la taula amb el ratolí; amb tocs de debò, lliscar
   sobre les fitxes desplaça la taula i mantenir premut arrossega.

@@ -3563,6 +3563,15 @@ button.secondary.reset-nivell {
   font-style: italic;
 }
 
+/* El lema: el Remigi com a passatemps de cada dia. */
+.inici-faristol .inici-lema {
+  margin-bottom: 0.2rem;
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
 /* Cada mode és un botó gran sencer: es toca on sigui. */
 .mode-card {
   display: flex;

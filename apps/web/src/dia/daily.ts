@@ -212,6 +212,37 @@ export function recordResult(state: DailyState, result: DailyResult): DailyState
   return { ...state, results: results.slice(0, MAX_RESULTS) };
 }
 
+/**
+ * El resultat d'un dia que ve del compte (l'ha jugat un altre aparell). El
+ * compte mana: és el primer que es va acabar, i només es pot jugar un cop. Si
+ * aquí n'hi havia un altre, es canvia pel del compte.
+ *
+ * `streak` és la ratxa que hi havia en acabar-la (aquell dia inclòs): si aquí
+ * no consta el dia anterior, la ratxa d'abans es porta com a `carried`
+ * perquè no es perdi.
+ */
+export function adoptResult(state: DailyState, result: DailyResult, streak: number): DailyState {
+  const existing = resultFor(state, result.day);
+  if (
+    existing &&
+    existing.won === result.won &&
+    existing.moves === result.moves &&
+    existing.points === result.points &&
+    (existing.rivals ?? 0) === (result.rivals ?? 0)
+  ) {
+    return state;
+  }
+  const others = { ...state, results: state.results.filter((r) => r.day !== result.day) };
+  let next = recordResult(others, result);
+  const before = previousDay(result.day);
+  const priorStreak = result.won ? streak - 1 : 0;
+  if (priorStreak > 0 && !next.results.some((r) => r.day === before)) {
+    const best = Math.max(next.carried?.bestStreak ?? 0, streak);
+    next = { ...next, carried: { streak: priorStreak, bestStreak: best, lastDay: before } };
+  }
+  return next;
+}
+
 export function resultFor(state: DailyState, day: string): DailyResult | null {
   return state.results.find((r) => r.day === day) ?? null;
 }

@@ -842,16 +842,11 @@ export function GameScreen({
           {handle.canCommit ? <CheckIcon /> : game.bag.length === 0 ? <PassIcon /> : <DrawIcon />}
           <span className="btn-text">{handle.canCommit ? 'Acabar jugada' : 'Avançar'}</span>
         </button>
-        <button
-          className="secondary"
-          onClick={handle.resetTurn}
+        <UndoButton
           disabled={!isHumanTurn || !handle.canCommit}
-          aria-label="Desfer canvis"
-          title="Desfer canvis"
-        >
-          <UndoIcon />
-          <span className="btn-text">Desfer canvis</span>
-        </button>
+          onStep={handle.undoStep}
+          onAll={handle.resetTurn}
+        />
         {rotation.available && (
           <button
             className="secondary gir"
@@ -933,6 +928,66 @@ function TurnNotice({ player, slot }: { player: GameState['players'][number]; sl
         <span className="torn-avis-barra" />
       </div>
     </div>
+  );
+}
+
+/** Quant cal mantenir premut «Desfer» perquè ho desfaci tot. */
+const UNDO_HOLD_MS = 600;
+
+/**
+ * El botó de desfer: cada toc torna enrere un moviment, i mantenir-lo premut
+ * desfà tota la jugada d'una vegada. Quan salta la pulsació llarga, el clic
+ * que la segueix s'ignora perquè no desfaci res més.
+ */
+function UndoButton({
+  disabled,
+  onStep,
+  onAll,
+}: {
+  disabled: boolean;
+  onStep: () => void;
+  onAll: () => void;
+}) {
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const held = useRef(false);
+  const cancel = () => {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = null;
+  };
+  useEffect(() => cancel, []);
+  return (
+    <button
+      className="secondary"
+      disabled={disabled}
+      aria-label="Desfer canvis"
+      aria-description="Un toc desfà l'últim moviment; mantenir premut ho desfà tot"
+      title="Desfer: un toc desfà l'últim moviment; mantén premut per desfer-ho tot"
+      onPointerDown={(event) => {
+        if (event.button !== 0) return;
+        held.current = false;
+        cancel();
+        timer.current = setTimeout(() => {
+          timer.current = null;
+          held.current = true;
+          onAll();
+          navigator.vibrate?.(30);
+        }, UNDO_HOLD_MS);
+      }}
+      onPointerUp={cancel}
+      onPointerLeave={cancel}
+      onPointerCancel={cancel}
+      onContextMenu={(event) => event.preventDefault()}
+      onClick={() => {
+        if (held.current) {
+          held.current = false;
+          return;
+        }
+        onStep();
+      }}
+    >
+      <UndoIcon />
+      <span className="btn-text">Desfer</span>
+    </button>
   );
 }
 

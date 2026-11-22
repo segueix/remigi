@@ -348,6 +348,7 @@ export function HomeScreen({
         </span>
         <div className="inici-nom">
           <h1>Remigi</h1>
+          <p className="inici-lema">El teu nou divertiment diari, com el Paraulògic o el Wordle</p>
           <p className="inici-inspirat">De la família del rummy</p>
           <p>Tria com vols jugar</p>
         </div>
