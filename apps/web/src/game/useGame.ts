@@ -102,6 +102,9 @@ export interface GameHandle {
    * si no, es desfà i es roba (o es passa, si el sac és buit).
    */
   timeUp(): 'committed' | 'drew' | 'passed';
+  /** Torna enrere l'últim moviment de fitxa del torn. */
+  undoStep(): void;
+  /** Torna enrere tots els moviments del torn. */
   resetTurn(): void;
   restart(setup?: GameSetup): void;
 }
@@ -162,6 +165,12 @@ export function useGame(
   const [draft, setDraft] = useState<TurnDraft | null>(
     () => (initialGame && initialDraft ? restoreDraft(game, initialDraft) : null) ?? draftFor(game),
   );
+  /*
+   * Els esborranys anteriors del torn, un per moviment: desfer pas a pas els
+   * va traient d'aquí. Una partida represa comença sense història (desfer
+   * llavors torna a l'inici del torn).
+   */
+  const [history, setHistory] = useState<TurnDraft[]>([]);
   /* La partida per a la qual es va fer l'esborrany: en represa, no s'ha de refer. */
   const draftGame = useRef(game);
   const [selectedTileId, setSelectedTileId] = useState<string | null>(null);
@@ -185,6 +194,7 @@ export function useGame(
     if (draftGame.current === game) return;
     draftGame.current = game;
     setDraft(draftFor(game));
+    setHistory([]);
     setSelectedTileId(null);
     setError(null);
   }, [game]);
@@ -220,11 +230,18 @@ export function useGame(
     setError(null);
   }, []);
 
-  const moveTileTo = useCallback((tileId: string, destination: Destination) => {
-    setDraft((current) => (current ? moveTile(current, tileId, destination) : current));
-    setSelectedTileId(null);
-    setError(null);
-  }, []);
+  const moveTileTo = useCallback(
+    (tileId: string, destination: Destination) => {
+      setSelectedTileId(null);
+      setError(null);
+      if (!draft) return;
+      const next = moveTile(draft, tileId, destination);
+      if (next === draft) return;
+      setHistory((past) => [...past, draft]);
+      setDraft(next);
+    },
+    [draft],
+  );
 
   const placeSelected = useCallback(
     (destination: Destination) => {
@@ -326,9 +343,22 @@ export function useGame(
 
   const resetTurn = useCallback(() => {
     setDraft(draftFor(game));
+    setHistory([]);
     setSelectedTileId(null);
     setError(null);
   }, [game]);
+
+  const undoStep = useCallback(() => {
+    const previous = history[history.length - 1];
+    if (!previous) {
+      resetTurn();
+      return;
+    }
+    setDraft(previous);
+    setHistory(history.slice(0, -1));
+    setSelectedTileId(null);
+    setError(null);
+  }, [history, resetTurn]);
 
   const restart = useCallback((setup?: GameSetup) => {
     if (setup) setupRef.current = setup;
@@ -356,6 +386,7 @@ export function useGame(
     commit,
     draw,
     timeUp,
+    undoStep,
     resetTurn,
     restart,
   };

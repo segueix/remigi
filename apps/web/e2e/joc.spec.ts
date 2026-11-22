@@ -136,6 +136,31 @@ test.describe('qui mana és el motor', () => {
     await expect(page.locator('.rack .tile')).toHaveCount(abans);
     await expect(page.locator('.board .meld')).toHaveCount(jugadesAbans);
   });
+
+  test('un toc a «Desfer» torna enrere un moviment, i mantenir-lo premut ho desfà tot', async ({ page }) => {
+    await expect(avanca(page)).toBeEnabled();
+    const abans = await page.locator('.rack .tile').count();
+    const jugadesAbans = await page.locator('.board .meld').count();
+    for (let i = 0; i < 3; i++) {
+      await page.locator('.rack .tile').first().click();
+      await page.getByRole('button', { name: '+ Jugada nova' }).click();
+    }
+    await expect(page.locator('.rack .tile')).toHaveCount(abans - 3);
+
+    // Un toc: només torna l'última fitxa.
+    const desfer = page.getByRole('button', { name: 'Desfer canvis' });
+    await desfer.click();
+    await expect(page.locator('.rack .tile')).toHaveCount(abans - 2);
+    await expect(page.locator('.board .meld')).toHaveCount(jugadesAbans + 2);
+
+    // Mantenir premut: torna tota la jugada.
+    await desfer.hover();
+    await page.mouse.down();
+    await page.waitForTimeout(900);
+    await page.mouse.up();
+    await expect(page.locator('.rack .tile')).toHaveCount(abans);
+    await expect(page.locator('.board .meld')).toHaveCount(jugadesAbans);
+  });
 });
 
 test.describe('moure fitxes', () => {
