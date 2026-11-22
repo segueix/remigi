@@ -1,6 +1,20 @@
 /**
  * La feina de servidor de la partida del dia, que llança la tasca programada
- * `.github/workflows/jugadors-automatics.yml` 4 cops al dia:
+ * `.github/workflows/jugadors-automatics.yml` diversos cops al dia:
+ *
+ * - `--auto` (el que fan totes les execucions programades): tot el que falti,
+ *   segons l'hora de Barcelona i el que ja hi ha a Firestore. Les execucions
+ *   programades de GitHub poden arribar hores tard o no arribar; així
+ *   qualsevol execució que arribi posa al dia el que no s'ha fet, i si n'hi
+ *   ha de sobra no repeteixen res:
+ *   1. els jugadors automàtics que ahir havien de jugar i no van publicar;
+ *   2. la classificació final d'ahir, si encara no està tancada (des de les
+ *      6 h, o si el pas 1 hi ha afegit algú);
+ *   3. els jugadors automàtics d'avui als quals ja ha arribat l'hora;
+ *   4. la fotografia d'avui, si ja ha passat una hora de fotografia (9, 15 o
+ *      22 h) i la que hi ha és d'abans.
+ *
+ * I a mà, per parts:
  *
  * - `--jugadors`: els jugadors automàtics (jugadors.json) publiquen el
  *   resultat del dia, si ja ha arribat la seva hora. Amb `--ultima`, tots els
@@ -24,12 +38,13 @@ import { fileURLToPath } from 'node:url';
 import {
   barcelonaMinute,
   botDay,
+  botPending,
   botPublication,
   playDaily,
   type BotConfig,
 } from '../../apps/web/src/bots/automatic';
-import { parsePlayerEntry } from '../../apps/web/src/cloud/ranking';
-import { buildSnapshot } from '../../apps/web/src/cloud/snapshot';
+import { parsePlayerEntry, type PlayerEntry } from '../../apps/web/src/cloud/ranking';
+import { CLOSE_YESTERDAY_FROM_MINUTE, buildSnapshot, snapshotDue } from '../../apps/web/src/cloud/snapshot';
 import { dayKey, isDayKey, previousDay } from '../../apps/web/src/dia/daily';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -38,6 +53,7 @@ const bots = JSON.parse(readFileSync(join(here, 'jugadors.json'), 'utf8')) as Bo
 const args = process.argv.slice(2);
 const dryRun = args.includes('--prova');
 const now = args.includes('--ara') || args.includes('--ultima');
+const auto = args.includes('--auto');
 const doBots = args.includes('--jugadors');
 const doSnapshot = args.includes('--classificacio');
 const doCloseYesterday = args.includes('--tanca-ahir');
@@ -122,10 +138,105 @@ async function snapshot(target: string, final: boolean): Promise<void> {
   console.log(`- Classificació ${target}${final ? ' (final)' : ''}: ${built.count} jugadors.`);
 }
 
+/** Ms des de 1970 d'un camp `at` de Firestore (Timestamp), o null. */
+function millisOf(value: unknown): number | null {
+  const at = value as { toMillis?: () => number } | undefined;
+  return at && typeof at.toMillis === 'function' ? at.toMillis() : null;
+}
+
+/** Publica el resultat d'un jugador automàtic d'un dia; torna la fitxa nova. */
+async function publishBotDay(bot: BotConfig, target: string, previous: PlayerEntry | null): Promise<PlayerEntry | null> {
+  const tag = `${bot.alias} (${bot.key}) · ${target}`;
+  const plan = botDay(bot, target);
+  if (!dryRun) {
+    const store = await firestore();
+    if ((await store.doc(`dia/${target}/resultats/${bot.uid}`).get()).exists) {
+      console.log(`- ${tag}: ja hi havia el resultat.`);
+      return previous;
+    }
+  }
+  const result = playDaily(target, plan.rating, bot.uid);
+  const { entry, player } = botPublication(bot, result, previous);
+  const summary = result.won
+    ? `guanya en ${result.moves} jugades (rivals +${result.rivals})`
+    : `perd amb ${result.points} punts a la mà`;
+  console.log(`- ${tag}: força ${plan.rating}, ${summary}, ratxa ${player.streak}.`);
+  if (dryRun) return player;
+  const store = await firestore();
+  const { FieldValue } = await import('firebase-admin/firestore');
+  await store.doc(`dia/${target}/resultats/${bot.uid}`).set({ ...entry, at: FieldValue.serverTimestamp() });
+  await store.doc(`jugadors/${bot.uid}`).set({ ...player, at: FieldValue.serverTimestamp() });
+  console.log('  publicat.');
+  return player;
+}
+
+/** Tot el que falti (vegeu la capçalera). */
+async function runAuto(): Promise<void> {
+  const yesterday = previousDay(day);
+  let lateYesterday = false;
+
+  // 1 i 3: jugadors automàtics, primer ahir (si va quedar pendent) i després avui.
+  const todo: { bot: BotConfig; previous: PlayerEntry | null; pending: { yesterday: boolean; today: boolean } }[] = [];
+  for (const bot of bots) {
+    let previous: PlayerEntry | null = null;
+    if (!dryRun) {
+      const store = await firestore();
+      previous = parsePlayerEntry((await store.doc(`jugadors/${bot.uid}`).get()).data() ?? null);
+    }
+    const pending = botPending(bot, day, minute, previous, now);
+    const plan = botDay(bot, day);
+    if (!pending.yesterday && !pending.today) {
+      const why = !plan.plays
+        ? 'avui no juga'
+        : previous?.lastDay === day
+          ? 'ja ha publicat avui'
+          : `publicarà a partir de les ${hhmm(plan.publishAt)}`;
+      console.log(`- ${bot.alias} (${bot.key}): ${why}.`);
+    }
+    todo.push({ bot, previous, pending });
+  }
+  for (const item of todo) {
+    if (item.pending.yesterday) {
+      item.previous = await publishBotDay(item.bot, yesterday, item.previous);
+      lateYesterday = true;
+    }
+  }
+
+  // 2: la classificació final d'ahir.
+  if (dryRun) {
+    if (lateYesterday || minute >= CLOSE_YESTERDAY_FROM_MINUTE) console.log(`- Classificació ${yesterday}: es tancaria si no ho està.`);
+  } else {
+    const store = await firestore();
+    const closed = (await store.doc(`classificacio/${yesterday}`).get()).data()?.final === true;
+    if (lateYesterday || (!closed && minute >= CLOSE_YESTERDAY_FROM_MINUTE)) await snapshot(yesterday, true);
+    else if (closed) console.log(`- Classificació ${yesterday}: ja és la final.`);
+  }
+
+  for (const item of todo) {
+    if (item.pending.today) await publishBotDay(item.bot, day, item.previous);
+  }
+
+  // 4: la fotografia d'avui, si en toca una.
+  const nowMs = Date.now();
+  const dayStartMs = nowMs - minute * 60_000 - (nowMs % 60_000);
+  if (dryRun) {
+    console.log(`- Classificació ${day}: ${snapshotDue(null, nowMs, dayStartMs) ? 'es faria la fotografia si la que hi ha és d’abans de l’última hora' : 'encara no toca cap fotografia'}.`);
+    return;
+  }
+  const store = await firestore();
+  const lastAt = millisOf((await store.doc(`classificacio/${day}`).get()).data()?.at);
+  if (snapshotDue(lastAt, nowMs, dayStartMs)) await snapshot(day, false);
+  else console.log(`- Classificació ${day}: no toca cap fotografia nova.`);
+}
+
 async function main(): Promise<void> {
   console.log(`Partida del dia ${day} · ara són les ${hhmm(minute)} a Barcelona${dryRun ? ' · PROVA (no escriu res)' : ''}`);
+  if (auto) {
+    await runAuto();
+    return;
+  }
   if (!doBots && !doSnapshot && !doCloseYesterday) {
-    console.log('Res a fer: indica --jugadors, --classificacio o --tanca-ahir.');
+    console.log('Res a fer: indica --auto, --jugadors, --classificacio o --tanca-ahir.');
     return;
   }
   if (doCloseYesterday) await snapshot(previousDay(day), true);

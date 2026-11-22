@@ -3505,3 +3505,24 @@ i ajustar-hi la música.
 **Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd
 (327, 3 de nous: els cinc estils a 64 s, 32 s per defecte, el registre); e2e
 `modes` en verd (26).
+
+### Jugadors automàtics que no se salten cap dia ✅ Feta (2026-11-22)
+
+El 22-11-2026 les execucions programades de GitHub de les 9 i les 11 h no van
+arribar (i les del dia abans van arribar 4–6 h tard): MirdeTost no va publicar
+fins que es va llançar a mà. Demanat pel jugador: que no se salti cap dia que
+li toca jugar.
+
+- [x] `publica.ts --auto` (totes les programades): tot el que falti, segons
+      l'hora de Barcelona i Firestore — jugadors d'ahir pendents
+      (`botPending`, per la fitxa `jugadors/{uid}`), final d'ahir si no hi és
+      (des de les 6 h), jugadors d'avui als quals ha arribat l'hora, fotografia
+      d'avui si en toca (`snapshotDue`).
+- [x] 9 execucions al dia, a minuts lluny de l'inici de l'hora (`:17`, `:37`,
+      `:47`), amb reserves; no repeteixen res.
+- [x] El test e2e de la marca de l'inici, amb hora fixa (a mitjanit el bàner
+      es redibuixava enmig de les mesures).
+
+**Criteris d'acceptació (verificats)**: `typecheck` net (web i script); `npm
+test` en verd (333, 6 de nous); `publica.ts --auto --prova` avui i demà; e2e
+`inici` i `dia` en verd.

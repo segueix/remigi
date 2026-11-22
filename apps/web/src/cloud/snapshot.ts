@@ -15,11 +15,34 @@ import { dayRanking, parseDayEntry, placeRows, type DayEntry, type RankRow } fro
 export const LIVE_LIMIT = 50;
 
 /**
- * Les hores (UTC) en què la tasca programada refà la fotografia: les 9, 15 i
- * 22 h de Barcelona a l'hivern, una hora més tard a l'estiu (GitHub programa
- * en UTC, i així no cal executar-la dos cops).
+ * Les hores (UTC) de la fotografia: les 9, 15 i 22 h de Barcelona a l'hivern,
+ * una hora més tard a l'estiu (GitHub programa en UTC, i així no cal
+ * executar-la dos cops). La tasca s'executa també després de cada hora, de
+ * reserva: si l'execució de l'hora arriba tard o no arriba, la fa la següent
+ * (`snapshotDue`).
  */
 export const SNAPSHOT_UTC_HOURS = [8, 14, 21] as const;
+
+/**
+ * A partir de quina hora de Barcelona (minut del dia) es tanca la
+ * classificació d'ahir: de matinada encara pot arribar algun resultat d'ahir.
+ */
+export const CLOSE_YESTERDAY_FROM_MINUTE = 6 * 60;
+
+/**
+ * Cal refer la fotografia d'avui? Sí si ja ha passat alguna de les hores
+ * d'avui (des de les 00 h de Barcelona, `dayStartMs`) i la fotografia que hi
+ * ha (`lastAt`, null si no n'hi ha) és d'abans d'aquella hora.
+ */
+export function snapshotDue(lastAt: number | null, now: number, dayStartMs: number): boolean {
+  const date = new Date(now);
+  const slots = SNAPSHOT_UTC_HOURS.map((h) =>
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), h),
+  ).filter((slot) => slot <= now && slot >= dayStartMs);
+  if (slots.length === 0) return false;
+  const latest = Math.max(...slots);
+  return lastAt === null || lastAt < latest;
+}
 
 /** Aquestes hores a Barcelona, avui (o el dia donat): «9, 15 i 22». */
 export function snapshotHoursText(now: Date = new Date()): string {

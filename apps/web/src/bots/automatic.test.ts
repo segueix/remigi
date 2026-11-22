@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { botDay, botPublication, nextStreak, playDaily, type BotConfig } from './automatic';
+import { botDay, botPending, botPublication, nextStreak, playDaily, type BotConfig } from './automatic';
 
 const bot: BotConfig = {
   key: 'prova',
@@ -57,5 +57,33 @@ describe('jugadors automàtics', () => {
     const { entry, player } = botPublication(bot, { day: '2026-11-23', won: true, moves: 12, points: 0, rivals: 40 }, null);
     expect(entry).toEqual({ alias: 'Prova', won: true, moves: 12, points: 0, rivals: 40, score: 12_959, streak: 1 });
     expect(player).toEqual({ alias: 'Prova', streak: 1, bestStreak: 1, lastDay: '2026-11-23' });
+  });
+
+  it('no se salta cap dia que li toca: si ahir no va publicar, ho fa ara; avui, quan arriba la seva hora', () => {
+    const days = Array.from({ length: 40 }, (_, i) => new Date(Date.UTC(2026, 10, 22 + i)).toISOString().slice(0, 10));
+    // Un dia que juga i l'anterior també.
+    const day = days.find((d, i) => i > 0 && botDay(bot, d).plays && botDay(bot, days[i - 1]).plays)!;
+    const yesterday = days[days.indexOf(day) - 1];
+    const at = botDay(bot, day).publishAt;
+    const fitxa = (lastDay: string) => ({ alias: 'Prova', streak: 0, bestStreak: 0, lastDay });
+    // L'última vegada que va publicar va ser abans d'ahir: ahir queda pendent.
+    expect(botPending(bot, day, at - 1, fitxa('2026-11-01'))).toEqual({ yesterday: true, today: false });
+    expect(botPending(bot, day, at, fitxa('2026-11-01'))).toEqual({ yesterday: true, today: true });
+    // Sense fitxa (no ha publicat mai), també.
+    expect(botPending(bot, day, at, null)).toEqual({ yesterday: true, today: true });
+    // Ahir ja hi és: només avui, i un cop publicat, res.
+    expect(botPending(bot, day, at, fitxa(yesterday))).toEqual({ yesterday: false, today: true });
+    expect(botPending(bot, day, 1439, fitxa(day))).toEqual({ yesterday: false, today: false });
+    // A mà, sense esperar l'hora.
+    expect(botPending(bot, day, 0, fitxa(yesterday), true)).toEqual({ yesterday: false, today: true });
+  });
+
+  it('els dies que no li toca jugar no queden pendents, ni ahir ni avui', () => {
+    const days = Array.from({ length: 60 }, (_, i) => new Date(Date.UTC(2026, 10, 22 + i)).toISOString().slice(0, 10));
+    const off = days.find((d, i) => i < days.length - 1 && !botDay(bot, d).plays)!;
+    const next = days[days.indexOf(off) + 1];
+    expect(botPending(bot, off, 1439, null).today).toBe(false);
+    expect(botPending(bot, next, 0, null).yesterday).toBe(false);
+    expect(botPending({ ...bot, active: false }, next, 1439, null)).toEqual({ yesterday: false, today: false });
   });
 });

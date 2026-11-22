@@ -65,6 +65,34 @@ export function botDay(bot: BotConfig, day: string): BotDay {
   return { plays, rating, publishAt };
 }
 
+/**
+ * Què li falta publicar a un jugador automàtic, segons el que ja consta a la
+ * seva fitxa (`jugadors/{uid}`, l'últim dia que va publicar):
+ *
+ * - `yesterday`: ahir li tocava jugar i no va publicar (les execucions
+ *   programades de GitHub poden arribar hores tard o no arribar): ho fa ara,
+ *   perquè no se salti cap dia que li toca;
+ * - `today`: avui li toca, ja ha passat la seva hora i encara no ha publicat.
+ *
+ * Amb `now` (manual, «no esperis l'hora»), publica avui encara que no sigui
+ * l'hora. Els dies es comparen com a text (AAAA-MM-DD).
+ */
+export function botPending(
+  bot: BotConfig,
+  day: string,
+  minute: number,
+  previous: PlayerEntry | null,
+  now = false,
+): { yesterday: boolean; today: boolean } {
+  const last = previous?.lastDay ?? '';
+  const yesterdayKey = previousDay(day);
+  const plan = botDay(bot, day);
+  return {
+    yesterday: botDay(bot, yesterdayKey).plays && last < yesterdayKey,
+    today: plan.plays && (now || minute >= plan.publishAt) && last < day,
+  };
+}
+
 /** El minut del dia ara mateix, hora de Barcelona. */
 export function barcelonaMinute(now: Date = new Date()): number {
   return Math.max(0, 1440 - Math.ceil(msUntilNextDay(now) / 60_000));

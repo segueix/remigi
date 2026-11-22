@@ -1,28 +1,42 @@
 name: Partida del dia (jugadors i classificació)
 
 # La feina de servidor de la partida del dia (tools/jugadors-automatics, vegeu
-# docs/JUGADORS-AUTOMATICS.md), 4 cops al dia a hores fixes en UTC (Barcelona:
-# a l'hivern, la mateixa hora + 1; a l'estiu, + 2):
+# docs/JUGADORS-AUTOMATICS.md). Totes les execucions programades fan el mateix
+# (`--auto`): tot el que falti segons l'hora de Barcelona i el que ja hi ha a
+# Firestore (jugadors automàtics d'ahir pendents, classificació final d'ahir,
+# jugadors d'avui als quals ha arribat l'hora, fotografia d'avui si en toca
+# una). Les programades de GitHub poden arribar hores tard o no arribar: n'hi
+# ha de reserva i, si sobren, no repeteixen res. Minuts lluny de l'inici de
+# l'hora, que és quan GitHub en descarta més.
 #
-#   08:02 UTC  (9 h / 10 h)   jugadors automàtics + fotografia d'avui + final d'ahir
-#   10:02 UTC  (11 h / 12 h)  jugadors automàtics que falten (l'última)
-#   14:02 UTC  (15 h / 16 h)  fotografia d'avui
-#   21:02 UTC  (22 h / 23 h)  fotografia d'avui
-#
-# Un sol horari en UTC: no cal executar-la dos cops pel canvi d'hora.
+#   UTC    Barcelona (hivern / estiu)
+#   07:17  8:17 / 9:17     jugadors (franja 8–12 h) · tanca ahir
+#   08:17  9:17 / 10:17    jugadors · fotografia de les 9 h
+#   09:17  10:17 / 11:17   jugadors
+#   10:17  11:17 / 12:17   jugadors
+#   11:37  12:37 / 13:37   jugadors que falten
+#   14:17  15:17 / 16:17   fotografia de les 15 h
+#   16:17  17:17 / 18:17   reserva
+#   21:17  22:17 / 23:17   fotografia de les 22 h
+#   21:47  22:47 / 23:47   reserva
 on:
   schedule:
-    - cron: '2 8 * * *'
-    - cron: '2 10 * * *'
-    - cron: '2 14 * * *'
-    - cron: '2 21 * * *'
+    - cron: '17 7 * * *'
+    - cron: '17 8 * * *'
+    - cron: '17 9 * * *'
+    - cron: '17 10 * * *'
+    - cron: '37 11 * * *'
+    - cron: '17 14 * * *'
+    - cron: '17 16 * * *'
+    - cron: '17 21 * * *'
+    - cron: '47 21 * * *'
   workflow_dispatch:
     inputs:
       accio:
         description: 'Què fer'
         type: choice
-        options: [tot, jugadors, classificacio]
-        default: tot
+        options: [auto, jugadors, classificacio]
+        default: auto
       prova:
         description: 'Prova: no escriu res, només diu què faria'
         type: boolean
@@ -67,18 +81,15 @@ jobs:
           PROVA: ${{ inputs.prova }}
           ARA: ${{ inputs.ara }}
         run: |
-          case "$SCHEDULE" in
-            '2 8 * * *')  ARGS="--tanca-ahir --jugadors --classificacio" ;;
-            '2 10 * * *') ARGS="--jugadors --ultima" ;;
-            '2 14 * * *'|'2 21 * * *') ARGS="--classificacio" ;;
-            *)
-              case "$ACCIO" in
-                jugadors) ARGS="--jugadors" ;;
-                classificacio) ARGS="--classificacio" ;;
-                *) ARGS="--jugadors --classificacio" ;;
-              esac
-              if [ "$PROVA" = "true" ]; then ARGS="$ARGS --prova"; fi
-              if [ "$ARA" = "true" ]; then ARGS="$ARGS --ara"; fi
-              ;;
-          esac
+          if [ -n "$SCHEDULE" ]; then
+            ARGS="--auto"
+          else
+            case "$ACCIO" in
+              jugadors) ARGS="--jugadors" ;;
+              classificacio) ARGS="--classificacio" ;;
+              *) ARGS="--auto" ;;
+            esac
+            if [ "$PROVA" = "true" ]; then ARGS="$ARGS --prova"; fi
+            if [ "$ARA" = "true" ]; then ARGS="$ARGS --ara"; fi
+          fi
           npx tsx publica.ts $ARGS
