@@ -33,6 +33,14 @@ Es juga **un sol cop al dia**: compta el primer resultat. Una partida a mitges
 es desa (`remigi:game:dia`) i es reprèn; si s'acaba un altre dia, compta per al
 dia en què es va començar.
 
+Amb compte de Google, l'«un sol cop» val per a tots els aparells: el resultat
+el desa el primer aparell que acaba (`dia/{dia}/resultats/{uid}`, que només es
+pot crear un cop), i els altres el porten cap a ells (`adoptResult`) en entrar
+al compte, en tornar a l'app (com a molt cada 15 s) i abans de començar la
+partida. Si en un aparell hi havia la partida d'aquell dia oberta o a mitges,
+es tanca i es mostra el resultat; si s'acaba en dos aparells alhora, compta el
+del compte.
+
 ## Ratxa
 
 - **Ratxa**: dies seguits que has quedat número 1. Si avui encara no has jugat,

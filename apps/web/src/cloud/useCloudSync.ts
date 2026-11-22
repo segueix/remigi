@@ -1,12 +1,28 @@
 import type { PlayerProfile } from '@remigi/core';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { bestStreak, currentStreak, dayKey, previousDay, withCarried, type DailyState } from '../dia/daily';
+import {
+  adoptResult,
+  bestStreak,
+  currentStreak,
+  dayKey,
+  previousDay,
+  resultFor,
+  withCarried,
+  type DailyState,
+} from '../dia/daily';
 import type { LeagueState } from '../lliga/league';
 import type { ProfileProgress } from '../state/profileTransfer';
 import type { PersistedHandle } from '../state/usePersisted';
 import { buildCloudSave, mergeCloudSave, parseCloudSave, toFirestore } from './cloudSave';
-import { fetchCloudSave, fetchPlayer, submitCloudSave, submitDayResult, submitPlayer } from './firebase';
-import { cleanAlias, dayEntry, parsePlayerEntry } from './ranking';
+import {
+  fetchCloudSave,
+  fetchDayResult,
+  fetchPlayer,
+  submitCloudSave,
+  submitDayResult,
+  submitPlayer,
+} from './firebase';
+import { cleanAlias, dayEntry, parseDayEntry, parsePlayerEntry } from './ranking';
 
 interface Options {
   uid: string | null;
@@ -19,7 +35,26 @@ interface Options {
   onLeagueReplaced(): void;
   /** S'ha pujat un resultat o una ratxa: els rànquings es tornen a carregar. */
   onRankingChange(): void;
+  /**
+   * S'ha portat d'un altre aparell el resultat d'una partida del dia: la
+   * partida d'aquell dia que hi hagués a mitges aquí ja no es pot jugar.
+   */
+  onDailyAdopted(day: string): void;
 }
+
+export interface CloudSync {
+  /** S'ha llegit el compte i ja es pot pujar. */
+  ready: boolean;
+  /**
+   * Porta del compte el resultat d'avui (i d'ahir) si s'ha jugat en un altre
+   * aparell. Torna cert si n'ha portat cap. Sense compte o sense connexió, no
+   * fa res (i no espera més de `timeoutMs`).
+   */
+  checkDaily(timeoutMs?: number): Promise<boolean>;
+}
+
+/** Com a molt, una consulta del resultat del dia cada tant en tornar a l'app. */
+const DAILY_CHECK_EVERY_MS = 15_000;
 
 /** Espera abans de pujar un canvi, per ajuntar-ne uns quants en una sola escriptura. */
 const UPLOAD_DELAY_MS = 2000;
@@ -75,12 +110,41 @@ export function useCloudSync({
   daily,
   onLeagueReplaced,
   onRankingChange,
-}: Options): boolean {
+  onDailyAdopted,
+}: Options): CloudSync {
   const [readyFor, setReadyFor] = useState<string | null>(null);
   const [retry, setRetry] = useState(0);
   const profileLoaded = profile !== null;
-  const latest = useRef({ profile, setProgress, setName, league, daily, onLeagueReplaced, onRankingChange });
-  latest.current = { profile, setProgress, setName, league, daily, onLeagueReplaced, onRankingChange };
+  const latest = useRef({ profile, setProgress, setName, league, daily, onLeagueReplaced, onRankingChange, onDailyAdopted });
+  latest.current = { profile, setProgress, setName, league, daily, onLeagueReplaced, onRankingChange, onDailyAdopted };
+  /* L'última vegada que s'ha mirat al compte el resultat del dia. */
+  const lastDailyCheck = useRef(0);
+
+  /*
+   * El resultat del dia del compte: el desa el primer aparell que acaba la
+   * partida (només es pot crear un cop), i qualsevol altre aparell el porta
+   * cap aquí. Així la partida del dia es juga una sola vegada, i el resultat
+   * es veu a tots els aparells.
+   */
+  const adoptDay = useCallback(async (forUid: string, day: string): Promise<boolean> => {
+    const entry = parseDayEntry(await fetchDayResult(forUid, day));
+    if (!entry) return false;
+    const before = latest.current.daily.get();
+    const result = { day, won: entry.won, moves: entry.moves, points: entry.points, rivals: entry.rivals };
+    const next = latest.current.daily.update((state) => adoptResult(state, result, entry.streak));
+    const adopted = next !== null && next !== before && before !== null && resultFor(next, day) !== resultFor(before, day);
+    if (adopted) latest.current.onDailyAdopted(day);
+    return adopted;
+  }, []);
+
+  const pullDaily = useCallback(
+    async (forUid: string): Promise<boolean> => {
+      const today = dayKey();
+      const found = await Promise.all([adoptDay(forUid, today), adoptDay(forUid, previousDay(today))]);
+      return found.some(Boolean);
+    },
+    [adoptDay],
+  );
 
   /* 1. Recuperar el compte, un cop per sessió. */
   useEffect(() => {
@@ -109,6 +173,8 @@ export function useCloudSync({
             withCarried(state, { streak: player.streak, bestStreak: player.bestStreak, lastDay: player.lastDay }),
           );
         }
+        await pullDaily(uid);
+        lastDailyCheck.current = Date.now();
         if (!cancelled) setReadyFor(uid);
       } catch {
         // Sense connexió (o regles sense publicar): no es puja res i es torna a provar.
@@ -119,9 +185,39 @@ export function useCloudSync({
       cancelled = true;
       if (timer) clearTimeout(timer);
     };
-  }, [uid, profileLoaded, readyFor, retry]);
+  }, [uid, profileLoaded, readyFor, retry, pullDaily]);
 
   const ready = uid !== null && readyFor === uid;
+
+  /*
+   * En tornar a l'app (d'un altre aparell, potser), es mira si la partida del
+   * dia ja s'ha jugat en un altre lloc. Com a molt cada 15 segons.
+   */
+  const readyUid = ready ? uid : null;
+  const checkDaily = useCallback(
+    async (timeoutMs = 4000): Promise<boolean> => {
+      if (!readyUid) return false;
+      lastDailyCheck.current = Date.now();
+      const timeout = new Promise<boolean>((resolve) => setTimeout(() => resolve(false), timeoutMs));
+      return Promise.race([pullDaily(readyUid).catch(() => false), timeout]);
+    },
+    [readyUid, pullDaily],
+  );
+
+  useEffect(() => {
+    if (!readyUid) return;
+    const onShow = () => {
+      if (document.visibilityState !== 'visible') return;
+      if (Date.now() - lastDailyCheck.current < DAILY_CHECK_EVERY_MS) return;
+      void checkDaily();
+    };
+    document.addEventListener('visibilitychange', onShow);
+    window.addEventListener('focus', onShow);
+    return () => {
+      document.removeEventListener('visibilitychange', onShow);
+      window.removeEventListener('focus', onShow);
+    };
+  }, [readyUid, checkDaily]);
 
   /*
    * 2a. Pujar el nivell i la lliga: com a molt un cop cada 30 minuts (cada
@@ -180,6 +276,11 @@ export function useCloudSync({
     const recent = last.day === today || last.day === previousDay(today);
     void (async () => {
       try {
+        /*
+         * Si un altre aparell ja l'havia acabat, el bo és aquell: es porta
+         * aquí en comptes d'intentar pujar-ne un altre (que no es pot).
+         */
+        if (recent && (await adoptDay(uid, last.day))) return;
         if (recent) await submitDayResult(uid, last.day, dayEntry(last, alias, currentStreak(dailyValue, last.day)));
         await submitPlayer(uid, { alias, streak, bestStreak: Math.max(streak, bestStreak(dailyValue)), lastDay: last.day });
         latest.current.onRankingChange();
@@ -187,7 +288,7 @@ export function useCloudSync({
         synced.current = '';
       }
     })();
-  }, [ready, uid, dailyValue, playerName]);
+  }, [ready, uid, dailyValue, playerName, adoptDay]);
 
-  return ready;
+  return { ready, checkDaily };
 }

@@ -201,6 +201,8 @@ export function App() {
   const [statsOpen, setStatsOpen] = useState(false);
   const [play, setPlay] = useState<Play | null>(null);
   const [finish, setFinish] = useState<ModeFinish | null>(null);
+  /* La comprovació del resultat del dia al compte (vegeu `useCloudSync`). */
+  const checkDailyRef = useRef<() => Promise<boolean>>(() => Promise.resolve(false));
   const playKey = useRef(0);
   const profile = useProfile();
   const savedGames = useSavedGames();
@@ -563,9 +565,15 @@ export function App() {
 
   const playDaily = useCallback(async () => {
     const player = profile.profile;
-    const state = daily.get();
-    if (!player || !state) return;
+    if (!player || !daily.get()) return;
     const today = dayKey();
+    /*
+     * Amb compte de Google, abans de jugar es mira si avui ja s'ha jugat en
+     * un altre aparell: llavors es porta el resultat i no es torna a jugar.
+     */
+    if (!resultFor(daily.get() ?? EMPTY_DAILY, today)) await checkDailyRef.current();
+    const state = daily.get();
+    if (!state) return;
     // Només es juga un cop al dia: si ja està feta, es veu el resultat.
     if (resultFor(state, today)) {
       goTo('dia');
@@ -651,7 +659,31 @@ export function App() {
       // Sense emmagatzematge, es tornarà a preguntar la propera vegada.
     }
   }, []);
-  const cloudReady = useCloudSync({
+  /*
+   * El resultat del dia ha arribat d'un altre aparell: si aquí la partida
+   * d'aquell dia era oberta (o a mitges), es tanca i es mostra el resultat.
+   */
+  const playRef = useRef(play);
+  playRef.current = play;
+  const finishRef = useRef(finish);
+  finishRef.current = finish;
+  const onDailyAdopted = useCallback(
+    (day: string) => {
+      const current = playRef.current;
+      if (current?.mode === 'dia' && current.setup.session === day) {
+        if (!finishRef.current) {
+          goTo('dia');
+          return;
+        }
+        // Acabada aquí just després que a l'altre aparell: compta la d'allà.
+        const state = daily.get();
+        const result = state ? resultFor(state, day) : null;
+        if (state && result) setFinish(dailyFinish(state, result));
+      } else if (savedGames.saved.dia?.setup.session === day) clearSaved('dia');
+    },
+    [goTo, clearSaved, savedGames.saved.dia, daily, dailyFinish],
+  );
+  const { ready: cloudReady, checkDaily } = useCloudSync({
     uid: cloud.user?.uid ?? null,
     profile: profile.profile,
     setProgress: profile.setProgress,
@@ -660,7 +692,19 @@ export function App() {
     daily,
     onLeagueReplaced: useCallback(() => clearSaved('lliga'), [clearSaved]),
     onRankingChange: useCallback(() => setRankingVersion((v) => v + 1), []),
+    onDailyAdopted,
   });
+  checkDailyRef.current = checkDaily;
+
+  /*
+   * La partida del dia a mitges d'un dia que ja té resultat (jugada en un
+   * altre aparell) ja no serveix: fora, un cop no és a la pantalla.
+   */
+  const savedDiaSession = savedGames.saved.dia?.setup.session;
+  useEffect(() => {
+    if (view === 'game' || !savedDiaSession || !daily.value) return;
+    if (resultFor(daily.value, savedDiaSession)) clearSaved('dia');
+  }, [view, savedDiaSession, daily.value, clearSaved]);
 
   /* ---------- Final de partida ---------- */
 

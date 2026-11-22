@@ -3543,3 +3543,22 @@ Wordle.
 
 **Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd
 (333); e2e de desfer en verd (escriptori i mòbil, 1 de nou).
+
+### Partida del dia: un sol cop a tots els aparells ✅ Feta (2026-11-22)
+
+Demanat pel jugador: si has jugat la partida del dia al mòbil i vas a
+l'ordinador, que no la puguis tornar a jugar i que hi vegis el resultat.
+
+- [x] `fetchDayResult` (`dia/{dia}/resultats/{uid}`, que ja era de lectura
+      pública: cap canvi de regles) i `adoptResult` a `daily.ts`: el resultat
+      del compte mana i porta la ratxa dels dies que aquí no consten.
+- [x] `useCloudSync`: el porta en entrar al compte, en tornar a l'app (com a
+      molt cada 15 s) i, abans de pujar-ne un, mira si ja n'hi ha un altre.
+      Retorna `{ ready, checkDaily }`.
+- [x] `App`: `playDaily` comprova el compte abans de jugar (màxim 4 s); si la
+      partida d'aquell dia era oberta o a mitges, es tanca i es mostra el
+      resultat (i es treu el desat a mitges).
+
+**Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd
+(336, 3 de nous); e2e `dia` en verd. La sincronització amb Firebase real no
+es pot provar en aquest entorn (cal entrar amb Google).

@@ -23,6 +23,8 @@ import {
   dailyInviteUrl,
   type DailyResult,
   type DailyState,
+  adoptResult,
+  resultFor,
 } from './daily';
 
 const win = (day: string, moves = 10): DailyResult => ({ day, won: true, moves, points: 0 });
@@ -211,3 +213,26 @@ describe('convidar a la partida del dia', () => {
   });
 });
 
+
+describe('el resultat del dia que ve del compte (un altre aparell)', () => {
+  const day = '2026-11-22';
+  const won = { day, won: true, moves: 9, points: 0, rivals: 40 };
+
+  it('s’afegeix si aquí no s’havia jugat', () => {
+    const next = adoptResult(EMPTY_DAILY, won, 1);
+    expect(resultFor(next, day)).toEqual(won);
+  });
+
+  it('mana sobre el d’aquí si són diferents, i no canvia res si són iguals', () => {
+    const local = recordResult(EMPTY_DAILY, { day, won: false, moves: 12, points: 20, rivals: 0 });
+    expect(resultFor(adoptResult(local, won, 1), day)).toEqual(won);
+    const same = recordResult(EMPTY_DAILY, won);
+    expect(adoptResult(same, won, 1)).toBe(same);
+  });
+
+  it('porta la ratxa dels dies d’abans que aquí no consten', () => {
+    const next = adoptResult(EMPTY_DAILY, won, 5);
+    expect(currentStreak(next, day)).toBe(5);
+    expect(bestStreak(next)).toBe(5);
+  });
+});
