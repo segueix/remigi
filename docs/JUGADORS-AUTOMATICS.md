@@ -17,9 +17,14 @@ mentre hi ha pocs jugadors. Quan n'hi hagi prou, es retiren (vegeu
   mateixa per a aquell jugador i aquell dia.
 - **Alguns dies no juguen** (`skipRate`, per exemple 0,15 ≈ 1 dia de cada 7).
 - **Publiquen entre les 8 h i les 12 h** de Barcelona (`from`, `to`): cada dia,
-  un minut a l'atzar dins de la franja. La tasca s'executa per als jugadors
-  només 2 cops al dia (vegeu [Horari](#horari)): cada jugador publica en la
-  primera execució després del seu minut, i a la segona, tots els que falten.
+  un minut a l'atzar dins de la franja. Publica la primera execució de la tasca
+  que arriba després d'aquest minut (vegeu [Horari](#horari)).
+- **No se salten cap dia que els toca.** Les execucions programades de GitHub
+  poden arribar hores tard o no arribar (el 22-11-2026 no van arribar ni la de
+  les 9 h ni la de les 11 h). Per això cada execució mira la fitxa del jugador
+  (`jugadors/{uid}`, l'últim dia que va publicar) i publica el que falti: el
+  d'avui si ja ha passat la seva hora i, si ahir li tocava i no va publicar,
+  també el d'ahir (`botPending`).
 - **Ratxa pròpia**: la de partides guanyades seguides, a `jugadors/{uid}` com la
   de qualsevol jugador. Si un dia no juga o perd, torna a zero.
 - Tot és determinista per jugador i dia: si la tasca s'executa dues vegades no
@@ -32,7 +37,7 @@ mentre hi ha pocs jugadors. Quan n'hi hagi prou, es retiren (vegeu
 | `tools/jugadors-automatics/jugadors.json` | La llista de jugadors automàtics |
 | `tools/jugadors-automatics/publica.ts` | Decideix qui publica ara, juga i escriu a Firestore |
 | `apps/web/src/bots/automatic.ts` | La lògica (pura i amb proves): força del dia, hora, partida, ratxa |
-| `.github/workflows/jugadors-automatics.yml` | La tasca programada: 4 cops al dia (vegeu [Horari](#horari)) |
+| `.github/workflows/jugadors-automatics.yml` | La tasca programada: 9 cops al dia, amb reserves (vegeu [Horari](#horari)) |
 | Secret `FIREBASE_SERVICE_ACCOUNT` (GitHub) | La clau de servei de Firebase per escriure |
 
 La tasca escriu amb la clau de servei (Firebase Admin), que no passa per les
@@ -43,15 +48,32 @@ Google.
 
 La mateixa tasca fa també la **fotografia de la classificació**
 (`classificacio/{dia}`: tots els resultats en un sol document, vegeu
-`apps/web/src/cloud/snapshot.ts`). Hores fixes en UTC (Barcelona: +1 a
-l'hivern, +2 a l'estiu), sense execucions repetides pel canvi d'hora:
+`apps/web/src/cloud/snapshot.ts`). Totes les execucions programades fan el
+mateix, `publica.ts --auto`: **tot el que falti**, segons l'hora de Barcelona i
+el que ja hi ha a Firestore, en aquest ordre:
 
-| UTC | Barcelona (hivern / estiu) | Què fa |
+1. els jugadors automàtics que ahir havien de jugar i no van publicar;
+2. la classificació **final d'ahir**, si encara no està tancada (a partir de
+   les 6 h, o de seguida si el pas 1 hi ha afegit algú);
+3. els jugadors automàtics d'avui als quals ja ha arribat l'hora;
+4. la fotografia d'avui, si ja ha passat una de les hores (9, 15 o 22 h a
+   l'hivern; 10, 16 i 23 h a l'estiu) i la que hi ha és d'abans (`snapshotDue`).
+
+Hi ha execucions de reserva: si una no arriba, la següent ho posa al dia, i si
+sobren no repeteixen res. Hores fixes en UTC, a minuts lluny de l'inici de
+l'hora (que és quan GitHub en descarta més):
+
+| UTC | Barcelona (hivern / estiu) | Per a |
 |---|---|---|
-| 08:02 | 9 h / 10 h | Jugadors automàtics, fotografia d'avui i **final d'ahir** |
-| 10:02 | 11 h / 12 h | Jugadors automàtics que falten (l'última per a ells) |
-| 14:02 | 15 h / 16 h | Fotografia d'avui |
-| 21:02 | 22 h / 23 h | Fotografia d'avui |
+| 07:17 | 8:17 / 9:17 | jugadors · tancar ahir |
+| 08:17 | 9:17 / 10:17 | jugadors · fotografia de les 9 h |
+| 09:17 | 10:17 / 11:17 | jugadors |
+| 10:17 | 11:17 / 12:17 | jugadors |
+| 11:37 | 12:37 / 13:37 | jugadors que falten |
+| 14:17 | 15:17 / 16:17 | fotografia de les 15 h |
+| 16:17 | 17:17 / 18:17 | reserva |
+| 21:17 | 22:17 / 23:17 | fotografia de les 22 h |
+| 21:47 | 22:47 / 23:47 | reserva |
 
 Amb menys de 50 jugadors (`LIVE_LIMIT`), l'app llegeix la classificació en
 directe i sencera; amb més, llegeix la fotografia (1 lectura) i hi posa la teva
@@ -71,9 +93,10 @@ ho diu: «Actualitzada a les 15 h · s'actualitza a les 9, 15 i 22 h».
 3. **Publica les regles de Firestore** (`firestore.rules`): inclouen la lectura
    pública de `classificacio`.
 4. **Prova-ho.** `segueix/remigi` → **Actions → Partida del dia (jugadors i
-   classificació) → Run workflow**, amb «Prova» marcat: diu què faria sense
-   escriure res. Per publicar ja, desmarca «Prova» i marca «Els jugadors no
-   esperen la seva hora».
+   classificació) → Run workflow**, amb «auto» i «Prova» marcat: diu què faria
+   sense escriure res. Per fer ara tot el que falti, desmarca «Prova»; perquè
+   els jugadors no esperin la seva hora, marca també «Els jugadors no esperen
+   la seva hora».
 
 A partir d'aquí, la tasca s'executa sola cada dia.
 
@@ -103,7 +126,7 @@ A partir d'aquí, la tasca s'executa sola cada dia.
    | `rating` | Força mitjana: 800 Novell, 1000 Fàcil, 1200 Mitjà, 1400 Avançat, 1600 Expert |
    | `spread` | Quant puja o baixa cada dia (180 → de 1020 a 1380 si la mitjana és 1200) |
    | `skipRate` | Probabilitat de no jugar un dia (0 = cada dia, 0,3 ≈ 2 dies per setmana) |
-   | `from`, `to` | Franja per publicar, hora de Barcelona. Amb l'horari de la tasca, publiquen a les 9 o a les 11 h (hivern) o a les 10 o a les 12 h (estiu) |
+   | `from`, `to` | Franja per publicar, hora de Barcelona. Publica la primera execució de la tasca que arriba després del seu minut (vegeu [Horari](#horari)) |
    | `active` | `false` perquè deixi de jugar |
 
 2. Prova'l en local, sense escriure res:
@@ -111,8 +134,8 @@ A partir d'aquí, la tasca s'executa sola cada dia.
    ```bash
    cd tools/jugadors-automatics
    npm ci
-   npx tsx publica.ts --prova --ara                 # avui
-   npx tsx publica.ts --prova --ara --dia=2026-12-01
+   npx tsx publica.ts --auto --prova                # el que faria ara
+   npx tsx publica.ts --auto --prova --dia=2026-12-01
    ```
 
 3. Puja el canvi a `main` (amb una pull request). L'endemà ja juga.
@@ -138,11 +161,13 @@ victòries, puja `rating`.
 
 ## Cost
 
-- **GitHub Actions:** 4 execucions al dia d'un minut escàs ≈ 120 minuts al mes
+- **GitHub Actions:** 9 execucions al dia d'un minut escàs ≈ 270 minuts al mes
   (els 2.000 minuts gratuïts del pla gratuït són per a tots els repositoris
   privats del compte).
-- **Firestore:** per jugador automàtic i dia, 2–3 lectures i 2 escriptures; per
-  cada fotografia, una lectura per jugador del dia i 1 escriptura. Res.
+- **Firestore:** per execució, 1 lectura per jugador automàtic (la fitxa) i 2
+  de les classificacions d'ahir i d'avui; quan publica, 1 lectura més i 2
+  escriptures; per cada fotografia, una lectura per jugador del dia i 1
+  escriptura. Res.
 
 ## Jugadors actuals
 

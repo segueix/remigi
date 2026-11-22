@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { dayEntry } from './ranking';
-import { buildSnapshot, parseSnapshot, snapshotHoursText, snapshotRanking } from './snapshot';
+import { buildSnapshot, parseSnapshot, snapshotDue, snapshotHoursText, snapshotRanking } from './snapshot';
 
 const row = (id: string, alias: string, won: boolean, moves: number, points: number, rivals?: number) => ({
   id,
@@ -42,5 +42,33 @@ describe('la fotografia de la classificació', () => {
   it('descarta el que no té forma', () => {
     expect(parseSnapshot(null, 0)).toBeNull();
     expect(parseSnapshot({ rows: [{ i: 'x', a: 'X', w: 'sí' }] }, 0)?.rows).toEqual([]);
+  });
+});
+
+describe('quan toca refer la fotografia', () => {
+  // Diumenge 22 de novembre de 2026: a Barcelona el dia comença a les 23 h UTC del 21.
+  const dayStart = Date.UTC(2026, 10, 21, 23);
+  const at = (h: number, m = 0) => Date.UTC(2026, 10, 22, h, m);
+
+  it('abans de la primera hora (8 h UTC) no en toca cap', () => {
+    expect(snapshotDue(null, at(7, 59), dayStart)).toBe(false);
+  });
+
+  it('passada una hora, toca si no n’hi ha o la que hi ha és d’abans', () => {
+    expect(snapshotDue(null, at(8, 17), dayStart)).toBe(true);
+    expect(snapshotDue(at(7, 30), at(8, 17), dayStart)).toBe(true);
+    expect(snapshotDue(at(8, 18), at(9, 17), dayStart)).toBe(false);
+  });
+
+  it('una execució que arriba tard fa la que ha quedat pendent', () => {
+    // La de les 14 h no ha arribat: la de les 16 h la fa.
+    expect(snapshotDue(at(8, 18), at(16, 17), dayStart)).toBe(true);
+    expect(snapshotDue(at(16, 18), at(20, 59), dayStart)).toBe(false);
+    expect(snapshotDue(at(16, 18), at(21, 47), dayStart)).toBe(true);
+  });
+
+  it('just passada la mitjanit de Barcelona, la de les 21 h UTC és del dia d’abans', () => {
+    const nextStart = Date.UTC(2026, 10, 22, 23);
+    expect(snapshotDue(null, Date.UTC(2026, 10, 22, 23, 30), nextStart)).toBe(false);
   });
 });

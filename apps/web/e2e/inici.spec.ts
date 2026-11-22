@@ -1,6 +1,9 @@
 import { expect, test } from '@playwright/test';
 
 test('a l’inici, la marca «Remigi» és a baix a la dreta del feltre i no toca les targetes', async ({ page }) => {
+  // Hora fixa: a mitjanit canvia la partida del dia i el bàner es redibuixa
+  // enmig de les mesures (el CI hi va fallar a les 00 h).
+  await page.clock.setFixedTime(new Date('2026-11-22T11:00:00Z'));
   await page.goto('./');
   const taula = (await page.locator('.inici-taula').boundingBox())!;
   const marca = (await page.locator('.inici-taula .marca-taula').boundingBox())!;
