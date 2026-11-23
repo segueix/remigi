@@ -3563,3 +3563,16 @@ l'ordinador, que no la puguis tornar a jugar i que hi vegis el resultat.
 **Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd
 (336, 3 de nous); e2e `dia` en verd. La sincronització amb Firebase real no
 es pot provar en aquest entorn (cal entrar amb Google).
+
+### Ordre de l'inici: Remigi, partida del dia i modalitats ✅ Feta (2026-11-23)
+
+Demanat pel jugador: primer el faristol «Remigi · De la família del rummy»,
+després el bàner de la partida del dia i, finalment, les tres modalitats.
+
+- [x] `HomeScreen`: el faristol passa a dalt; dins del feltre, la partida del
+      dia va abans de les targetes (el panell d'informació de la lliga
+      continua sota les targetes).
+- [x] e2e `inici`: comprova el nou ordre.
+
+**Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd
+(336); e2e `inici`, `dia` i `seo` en verd.
