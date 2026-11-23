@@ -3576,3 +3576,22 @@ després el bàner de la partida del dia i, finalment, les tres modalitats.
 
 **Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd
 (336); e2e `inici`, `dia` i `seo` en verd.
+
+### Ajust de força de MirdeTost (2026-11-23)
+
+Demanat pel jugador: resultats menys allunyats de les partides humanes.
+Reproduïdes les 30 jugades i +118 del 23-11: són una partida real, amb 0
+punts a la mà de MirdeTost; +118 és la suma dels rivals. La força 1200 ±180
+limitava massa la reordenació de la taula.
+
+- [x] MirdeTost passa a 1450 ±80: més capacitat de reordenar i menys
+      oscil·lació diària, amb les mateixes regles, rivals i barreja.
+- [x] Comparades les mateixes 14 dates (20-11 a 03-12) amb les dues
+      configuracions: mitjana de 24 → 17,2 jugades, 3 → 9 victòries; encara
+      perd i té partides llargues. El 23-11 donaria 17 jugades, +131.
+- [x] Documentació actualitzada: els resultats continuen calculant-se amb
+      partides completes; les publicacions anteriors no es modifiquen.
+
+**Criteris d’acceptació (verificats)**: `npm run typecheck` net, `npm test`
+en verd (176 core + 336 web), `npm run build` correcte; publicació en mode
+`--prova` del 23-11: 17 jugades i +131, sense escriptures a Firestore.

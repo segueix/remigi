@@ -145,9 +145,17 @@ A partir d'aquí, la tasca s'executa sola cada dia.
 salta sovint), noms d'estils diferents (un nom de pila, un sobrenom, un nom amb
 números), i franges diferents (un a primera hora, un altre a mig matí).
 
-**Referència:** amb `rating` 1200, MirdeTost guanya aproximadament 1 de cada 4
-o 5 partides (perd més els dies difícils: divendres i dissabte). Per a més
-victòries, puja `rating`.
+**Referència:** MirdeTost juga amb `rating` 1450 i `spread` 80 (1370–1530).
+La configuració anterior, 1200 ±180, reordenava poc la taula i allargava
+moltes partides. En una comparació de 14 dies (20-11 a 03-12-2026), la
+mitjana baixa de 24 a 17,2 jugades i passa de 3 a 9 victòries. És una mostra,
+no un límit: encara hi ha derrotes i partides llargues o bloquejades.
+
+Els punts dels rivals són la suma de totes les seves mans: +118 contra dos
+rivals són 59 punts de mitjana per rival, no 118 punts a la mà de MirdeTost.
+No es retallen jugades ni punts, ni es tornen a jugar partides per triar un
+resultat més favorable. El canvi afecta les publicacions següents; les ja
+publicades es conserven.
 
 ## Retirar-los
 
@@ -173,4 +181,4 @@ victòries, puja `rating`.
 
 | `key` | Nom | Força | Marge | No juga | Franja |
 |---|---|---|---|---|---|
-| `mirdetost` | MirdeTost | 1200 | ±180 | 15 % | 08:00–12:00 |
+| `mirdetost` | MirdeTost | 1450 | ±80 | 15 % | 08:00–12:00 |
