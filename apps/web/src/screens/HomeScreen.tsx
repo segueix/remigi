@@ -184,8 +184,94 @@ export function HomeScreen({
         </p>
       )}
 
-      {/* La taula de joc, buida, amb les tres maneres de jugar al damunt. */}
+      {/*
+       * El faristol de fusta, amb tres fitxes en ventall i el nom del joc en
+       * blanc: que es vegi d'entrada que és un joc de fitxes com el Rummikub.
+       */}
+      <div className="rack inici-faristol">
+        <span className="inici-ventall" aria-hidden="true">
+          {VENTALL.map((tile) => (
+            <TileView key={tile.id} tile={tile} />
+          ))}
+        </span>
+        <div className="inici-nom">
+          <h1>Remigi</h1>
+          <p className="inici-inspirat">De la família del rummy</p>
+          <p>Tria com vols jugar</p>
+        </div>
+      </div>
+
+      {/* La taula de joc: la partida del dia i, a sota, les tres maneres de jugar. */}
       <div className="inici-taula">
+        {/*
+          * La partida del dia, en un bàner damunt dels tres modes: una al dia, igual
+          * per a tothom. Tot el bàner porta a la partida (el botó principal
+          * s'estén per sobre); a sota, «Com funciona» i la classificació.
+          */}
+        <div className="dia-boto mode-dia">
+          <span className="dia-boto-lema">El teu nou divertiment diari, com el Paraulògic o el Wordle</span>
+          <span className="dia-boto-icona" aria-hidden="true">
+            <DailyIcon />
+          </span>
+          <span className="dia-boto-text">
+            <strong className="dia-boto-titol">Partida del dia #{dayNumber(today)}</strong>
+            <span className="dia-boto-nivell" aria-label={`${difficulty.dayName}: ${difficulty.label}, dificultat ${difficulty.stars} de 5`}>
+              {difficulty.dayName} · {difficulty.label}{' '}
+              <span className="dia-boto-punts" aria-hidden="true">
+                {'●'.repeat(difficulty.stars)}
+                <span className="apagats">{'●'.repeat(5 - difficulty.stars)}</span>
+              </span>
+            </span>
+            <span className="dia-boto-estat">{dailyStatus}</span>
+            <span className="small dia-boto-rellotge">
+              {todayResult ? 'Nova partida' : 'Acaba'} en {nextIn} · hora de Barcelona
+            </span>
+          </span>
+          <span
+            className={streak > 0 ? 'dia-boto-ratxa encesa' : 'dia-boto-ratxa'}
+            aria-label={`La teva ratxa: ${streak} ${streak === 1 ? 'partida guanyada' : 'partides guanyades'} seguides; la millor, ${best}`}
+          >
+            <span className="dia-boto-ratxa-num">
+              <span aria-hidden="true">🔥</span> {streak}
+            </span>
+            <span className="dia-boto-ratxa-etiqueta">{streak === 1 ? 'guanyada seguida' : 'guanyades seguides'}</span>
+            <span className="dia-boto-ratxa-millor">millor: {best}</span>
+            {played > 0 && <span className="dia-boto-ratxa-millor">jugats: {played}</span>}
+          </span>
+          <button type="button" className="dia-boto-cta" onClick={onDaily} aria-label="Partida del dia">
+            {todayResult ? 'Resultat' : savedDia ? 'Continua' : 'Juga'}
+          </button>
+          <div className="dia-boto-accions">
+            <button
+              type="button"
+              className="dia-boto-enllac"
+              aria-expanded={infoOpen}
+              aria-controls="dia-info"
+              onClick={() => setInfoOpen((open) => !open)}
+            >
+              <span className="dia-boto-i" aria-hidden="true">i</span> Com funciona
+            </button>
+            <button type="button" className="dia-boto-enllac" onClick={onDailyRanking}>
+              <span aria-hidden="true">🏆</span> Classificació
+            </button>
+          </div>
+          {infoOpen && (
+            <div className="dia-boto-info" id="dia-info">
+              <p>
+                <strong>Cada dia a les 00 h</strong> (hora de Barcelona) hi ha una partida nova. Tothom té les{' '}
+                <strong>mateixes fitxes inicials</strong>, la pila amb les fitxes <strong>en el mateix ordre</strong> i
+                els mateixos rivals, que davant de la mateixa taula fan la mateixa jugada. Per això el resultat
+                depèn només de com jugues tu.
+              </p>
+              <p>
+                Es juga <strong>sense rellotge</strong> i un sol cop al dia. Guanya qui necessita menys jugades; si
+                empaten, qui deixa els rivals amb més punts a la mà. La ratxa són les partides del dia que guanyes
+                seguides. Sempre es pot fer la sortida com a molt al 3r torn. La classificació s’actualitza a les{' '}
+                {snapshotHoursText()} h, i la primera del dia tanca la del dia anterior.
+              </p>
+            </div>
+          )}
+        </div>
         <div className="inici-modes">
           <button type="button" className="mode-card mode-lliure" onClick={onFree} aria-label="Joc lliure">
             <span className="mode-icona" aria-hidden="true">
@@ -263,96 +349,11 @@ export function HomeScreen({
             </p>
           </div>
         )}
-        {/*
-          * La partida del dia, en un bàner sota els tres modes: una al dia, igual
-          * per a tothom. Tot el bàner porta a la partida (el botó principal
-          * s'estén per sobre); a sota, «Com funciona» i la classificació.
-          */}
-        <div className="dia-boto mode-dia">
-          <span className="dia-boto-lema">El teu nou divertiment diari, com el Paraulògic o el Wordle</span>
-          <span className="dia-boto-icona" aria-hidden="true">
-            <DailyIcon />
-          </span>
-          <span className="dia-boto-text">
-            <strong className="dia-boto-titol">Partida del dia #{dayNumber(today)}</strong>
-            <span className="dia-boto-nivell" aria-label={`${difficulty.dayName}: ${difficulty.label}, dificultat ${difficulty.stars} de 5`}>
-              {difficulty.dayName} · {difficulty.label}{' '}
-              <span className="dia-boto-punts" aria-hidden="true">
-                {'●'.repeat(difficulty.stars)}
-                <span className="apagats">{'●'.repeat(5 - difficulty.stars)}</span>
-              </span>
-            </span>
-            <span className="dia-boto-estat">{dailyStatus}</span>
-            <span className="small dia-boto-rellotge">
-              {todayResult ? 'Nova partida' : 'Acaba'} en {nextIn} · hora de Barcelona
-            </span>
-          </span>
-          <span
-            className={streak > 0 ? 'dia-boto-ratxa encesa' : 'dia-boto-ratxa'}
-            aria-label={`La teva ratxa: ${streak} ${streak === 1 ? 'partida guanyada' : 'partides guanyades'} seguides; la millor, ${best}`}
-          >
-            <span className="dia-boto-ratxa-num">
-              <span aria-hidden="true">🔥</span> {streak}
-            </span>
-            <span className="dia-boto-ratxa-etiqueta">{streak === 1 ? 'guanyada seguida' : 'guanyades seguides'}</span>
-            <span className="dia-boto-ratxa-millor">millor: {best}</span>
-            {played > 0 && <span className="dia-boto-ratxa-millor">jugats: {played}</span>}
-          </span>
-          <button type="button" className="dia-boto-cta" onClick={onDaily} aria-label="Partida del dia">
-            {todayResult ? 'Resultat' : savedDia ? 'Continua' : 'Juga'}
-          </button>
-          <div className="dia-boto-accions">
-            <button
-              type="button"
-              className="dia-boto-enllac"
-              aria-expanded={infoOpen}
-              aria-controls="dia-info"
-              onClick={() => setInfoOpen((open) => !open)}
-            >
-              <span className="dia-boto-i" aria-hidden="true">i</span> Com funciona
-            </button>
-            <button type="button" className="dia-boto-enllac" onClick={onDailyRanking}>
-              <span aria-hidden="true">🏆</span> Classificació
-            </button>
-          </div>
-          {infoOpen && (
-            <div className="dia-boto-info" id="dia-info">
-              <p>
-                <strong>Cada dia a les 00 h</strong> (hora de Barcelona) hi ha una partida nova. Tothom té les{' '}
-                <strong>mateixes fitxes inicials</strong>, la pila amb les fitxes <strong>en el mateix ordre</strong> i
-                els mateixos rivals, que davant de la mateixa taula fan la mateixa jugada. Per això el resultat
-                depèn només de com jugues tu.
-              </p>
-              <p>
-                Es juga <strong>sense rellotge</strong> i un sol cop al dia. Guanya qui necessita menys jugades; si
-                empaten, qui deixa els rivals amb més punts a la mà. La ratxa són les partides del dia que guanyes
-                seguides. Sempre es pot fer la sortida com a molt al 3r torn. La classificació s’actualitza a les{' '}
-                {snapshotHoursText()} h, i la primera del dia tanca la del dia anterior.
-              </p>
-            </div>
-          )}
-        </div>
         <span className="marca-taula" aria-hidden="true">
           Remigi
         </span>
       </div>
 
-      {/*
-       * El faristol de fusta, amb tres fitxes en ventall i el nom del joc en
-       * blanc: que es vegi d'entrada que és un joc de fitxes com el Rummikub.
-       */}
-      <div className="rack inici-faristol">
-        <span className="inici-ventall" aria-hidden="true">
-          {VENTALL.map((tile) => (
-            <TileView key={tile.id} tile={tile} />
-          ))}
-        </span>
-        <div className="inici-nom">
-          <h1>Remigi</h1>
-          <p className="inici-inspirat">De la família del rummy</p>
-          <p>Tria com vols jugar</p>
-        </div>
-      </div>
 
       <div className="row inici-extres">
         <button type="button" className="secondary" onClick={onMusic}>

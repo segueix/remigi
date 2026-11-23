@@ -13,9 +13,11 @@ test('a l’inici, la marca «Remigi» és a baix a la dreta del feltre i no toc
   // I cap targeta de mode no se li encavalca.
   const cards = await page.locator('.mode-card').all();
   expect(cards).toHaveLength(3);
-  // Ni el bàner de la partida del dia, que va sota les tres targetes.
+  // Ordre: el faristol de Remigi, el bàner de la partida del dia i, a sota, les tres targetes.
+  const faristol = (await page.locator('.inici-faristol').boundingBox())!;
   const bàner = (await page.locator('.dia-boto').boundingBox())!;
-  for (const card of cards) expect((await card.boundingBox())!.y).toBeLessThan(bàner.y);
+  expect(faristol.y + faristol.height).toBeLessThanOrEqual(bàner.y);
+  for (const card of cards) expect((await card.boundingBox())!.y).toBeGreaterThan(bàner.y + bàner.height - 1);
   for (const card of [...cards, page.locator('.dia-boto')]) {
     const b = (await card.boundingBox())!;
     expect(b.y + b.height <= marca.y || b.x + b.width <= marca.x).toBe(true);
