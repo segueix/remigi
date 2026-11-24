@@ -3595,3 +3595,18 @@ limitava massa la reordenació de la taula.
 **Criteris d’acceptació (verificats)**: `npm run typecheck` net, `npm test`
 en verd (176 core + 336 web), `npm run build` correcte; publicació en mode
 `--prova` del 23-11: 17 jugades i +131, sense escriptures a Firestore.
+
+### Dos jugadors automàtics més: Guineueta i Despertaferro (2026-11-24)
+
+Demanat pel jugador: dos jugadors automàtics més com MirdeTost, amb
+característiques i hores de publicació pròpies.
+
+- [x] `jugadors.json`: Guineueta (1150 ±200, no juga 30 %, 07:00–10:00) i
+      Despertaferro (1550 ±50, no juga 5 %, 13:00–17:00), amb uid nous.
+- [x] Les franges cauen dins d'execucions ja programades: no cal tocar el
+      workflow.
+- [x] `docs/JUGADORS-AUTOMATICS.md`: taula de jugadors actuals.
+
+**Criteris d'acceptació (verificats)**: `publica.ts --jugadors --prova --ara`
+per a 5 dies (25-11 a 29-11): tots tres juguen amb forces diferents, alguns
+dies no juguen.
