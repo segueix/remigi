@@ -94,7 +94,7 @@ test('l’enllaç compartit obre directament la partida del dia; a dalt de l’i
   await expect(page.locator('.inici-cap .inici-google')).toHaveText('Entra amb Google');
 });
 
-test('el bàner explica com funciona i porta a la classificació (avui, ahir i ratxes)', async ({ page }) => {
+test('el bàner explica com funciona i porta a la classificació (avui, ahir, setmana, mes i ratxes)', async ({ page }) => {
   await page.addInitScript(() => {
     if (localStorage.getItem('e2e:net')) return;
     localStorage.clear();
@@ -109,7 +109,7 @@ test('el bàner explica com funciona i porta a la classificació (avui, ahir i r
   await expect(page.locator('#dia-info')).toHaveCount(0);
   await page.getByRole('button', { name: 'Classificació' }).click();
   await expect(page.locator('.dia h2')).toContainText('Partida del dia #');
-  await expect(page.getByRole('tab')).toHaveText(['Avui', 'Ahir', 'Ratxes']);
+  await expect(page.getByRole('tab')).toHaveText(['Avui', 'Ahir', 'Setmana', 'Mes', 'Ratxes']);
 });
 
 test('la partida del dia no té rellotge encara que el joc lliure en tingui', async ({ page }) => {

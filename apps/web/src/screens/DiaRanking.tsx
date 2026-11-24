@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { fetchDayView, fetchStreakRanking, type DayView } from '../cloud/firebase';
+import { fetchDayView, fetchPeriodView, fetchStreakRanking, type DayView, type PeriodView } from '../cloud/firebase';
+import { dayText, periodKey, periodTitle, type PeriodEntry } from '../cloud/period';
 import { snapshotHourText, snapshotHoursText } from '../cloud/snapshot';
 import {
   RANKING_SIZE,
@@ -13,7 +14,7 @@ import {
 import { useCloudContext } from '../cloud/useCloud';
 import { previousDay, resultText, type DailyResult } from '../dia/daily';
 
-type Tab = 'avui' | 'ahir' | 'ratxes';
+type Tab = 'avui' | 'ahir' | 'setmana' | 'mes' | 'ratxes';
 
 type Load<T> = { state: 'carregant' } | { state: 'error' } | { state: 'fet'; rows: RankRow<T>[] };
 
@@ -32,7 +33,9 @@ interface Props {
 /**
  * Els rànquings de la partida del dia: el d'avui i el d'ahir (victòries per
  * menys jugades i després derrotes per menys punts a la mà; només el dia
- * anterior, sense històric) i el de ratxes de partides guanyades seguides.
+ * anterior, sense històric), el de la setmana i el del mes (punts del dia
+ * sumats, fins ahir; vegeu `cloud/period.ts`) i el de ratxes de partides
+ * guanyades seguides.
  * Per sortir-hi cal entrar amb Google (a dalt de l'inici); per mirar-los, no.
  */
 export function DiaRanking({ today, alias, mine = null, mineYesterday = null, version }: Props) {
@@ -40,6 +43,8 @@ export function DiaRanking({ today, alias, mine = null, mineYesterday = null, ve
   const [tab, setTab] = useState<Tab>('avui');
   const [day, setDay] = useState<Load<DayEntry>>({ state: 'carregant' });
   const [streaks, setStreaks] = useState<Load<PlayerEntry>>({ state: 'carregant' });
+  const [period, setPeriod] = useState<Load<PeriodEntry>>({ state: 'carregant' });
+  const [periodMeta, setPeriodMeta] = useState<PeriodView['meta']>(null);
   const [meta, setMeta] = useState<DayView | null>(null);
   const uid = cloud?.user?.uid ?? null;
 
@@ -61,6 +66,18 @@ export function DiaRanking({ today, alias, mine = null, mineYesterday = null, ve
           if (!cancelled) setDay({ state: 'error' });
         }
       })();
+    } else if (tab === 'setmana' || tab === 'mes') {
+      // El període que compta fins ahir: el dilluns, la setmana passada; el dia 1, el mes passat.
+      const key = periodKey(tab, previousDay(today));
+      setPeriod({ state: 'carregant' });
+      setPeriodMeta(null);
+      fetchPeriodView(tab, key, uid)
+        .then((view) => {
+          if (cancelled) return;
+          setPeriod({ state: 'fet', rows: view.rows });
+          setPeriodMeta(view.meta);
+        })
+        .catch(() => !cancelled && setPeriod({ state: 'error' }));
     } else {
       setStreaks({ state: 'carregant' });
       fetchStreakRanking(today, previousDay(today))
@@ -84,6 +101,8 @@ export function DiaRanking({ today, alias, mine = null, mineYesterday = null, ve
             [
               ['avui', 'Avui'],
               ['ahir', 'Ahir'],
+              ['setmana', 'Setmana'],
+              ['mes', 'Mes'],
               ['ratxes', 'Ratxes'],
             ] as const
           ).map(([key, label]) => (
@@ -101,7 +120,29 @@ export function DiaRanking({ today, alias, mine = null, mineYesterday = null, ve
         </div>
       </div>
 
-      {tab !== 'ratxes' ? (
+      {tab === 'setmana' || tab === 'mes' ? (
+        <>
+          {periodMeta && <p className="small dia-ranking-periode">{periodTitle(periodMeta.kind, periodMeta.from, periodMeta.to)}</p>}
+          <RankList
+            load={period}
+            empty={
+              tab === 'setmana'
+                ? 'Encara no hi ha la classificació de la setmana: es fa cada matí amb els dies ja acabats.'
+                : 'Encara no hi ha la classificació del mes: es fa cada matí amb els dies ja acabats.'
+            }
+            column="Punts"
+            value={(e) => String(e.points)}
+            extraColumn="Dies"
+            extra={(e) => String(e.days)}
+            extraNeutral
+            label={(e) =>
+              `${e.points} punts en ${e.days} ${e.days === 1 ? 'dia' : 'dies'}, ${e.wins} ${e.wins === 1 ? 'victòria' : 'victòries'}`
+            }
+            good={() => true}
+          />
+          <PeriodNote meta={periodMeta} today={today} />
+        </>
+      ) : tab !== 'ratxes' ? (
         <RankList
           load={day}
           empty={tab === 'avui' ? 'Encara no hi ha ningú al rànquing d’avui. Sigues el primer!' : 'Ahir no hi va jugar ningú.'}
@@ -123,7 +164,7 @@ export function DiaRanking({ today, alias, mine = null, mineYesterday = null, ve
         />
       )}
 
-      {tab !== 'ratxes' && <RankingNote meta={meta} />}
+      {(tab === 'avui' || tab === 'ahir') && <RankingNote meta={meta} />}
 
     </section>
   );
@@ -136,6 +177,7 @@ function RankList<T extends { alias: string }>({
   value,
   extraColumn,
   extra,
+  extraNeutral = false,
   label,
   good,
 }: {
@@ -151,6 +193,8 @@ function RankList<T extends { alias: string }>({
    */
   extraColumn?: string;
   extra?(entry: T): string;
+  /** La segona columna és un recompte (dies jugats), no un desempat: sense verd. */
+  extraNeutral?: boolean;
   /** El resultat sencer, per als lectors de pantalla. */
   label(entry: T): string;
   good(entry: T): boolean;
@@ -159,7 +203,7 @@ function RankList<T extends { alias: string }>({
   if (load.state === 'error') return <p className="muted small">No s’ha pogut carregar el rànquing. Torna-ho a provar més tard.</p>;
   if (load.rows.length === 0) return <p className="muted small">{empty}</p>;
   return (
-    <ol className={extra ? 'dia-ranking-llista amb-extra' : 'dia-ranking-llista'}>
+    <ol className={['dia-ranking-llista', extra && 'amb-extra', extraNeutral && 'neutre'].filter(Boolean).join(' ')}>
       <li className="dia-ranking-capcalera" aria-hidden="true">
         <span>#</span>
         <span>Jugador</span>
@@ -209,6 +253,22 @@ function RankingNote({ meta }: { meta: DayView | null }) {
       {meta.final ? 'Classificació final' : `Actualitzada a les ${snapshotHourText(meta.updatedAt ?? 0)}`} · s’actualitza a les{' '}
       {hours} h; la de les {first} h tanca la del dia anterior.
       {meta.provisional && ' La teva posició és provisional fins a la propera actualització.'}
+    </p>
+  );
+}
+
+/** Fins a quin dia compta el període, i com es fan els punts. */
+function PeriodNote({ meta, today }: { meta: PeriodView['meta']; today: string }) {
+  if (!meta) return null;
+  const until = meta.final
+    ? 'Classificació final'
+    : meta.until === previousDay(today)
+      ? 'Compta fins ahir'
+      : `Compta fins al ${dayText(meta.until)}`;
+  return (
+    <p className="muted small dia-ranking-nota">
+      {until} · s’actualitza cada matí. Cada dia dona fins a 100 punts segons la posició (el primer, 100) i es sumen
+      tots els dies; desempat: més victòries i, després, menys jugades.
     </p>
   );
 }

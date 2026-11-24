@@ -4,6 +4,7 @@ import type { Firestore } from 'firebase/firestore/lite';
 import { cached, clearRankingCache } from './cache';
 import { RANKING_SIZE, dayRanking, legacyDayEntry, type DayEntry, type PlayerEntry, type RankRow } from './ranking';
 import { LIVE_LIMIT, parseSnapshot, snapshotRanking } from './snapshot';
+import { parsePeriod, periodRanking, type PeriodEntry, type PeriodKind, type PeriodSnapshot } from './period';
 
 /**
  * La connexió amb Firebase (projecte `remigi-c37ac`): el compte de Google i
@@ -252,6 +253,31 @@ export function fetchDayView(day: string, uid: string | null, mine: DayEntry | n
     const live = await getDocs(query(collection(db, 'dia', day, 'resultats'), orderBy('score'), limit(LIVE_LIMIT)));
     const rows = dayRanking(live.docs.map((d) => ({ id: d.id, data: d.data() })), uid);
     return { rows, source: 'directe', updatedAt: null, final: snapshot?.final ?? false, provisional: false };
+  });
+}
+
+export interface PeriodView {
+  rows: RankRow<PeriodEntry>[];
+  /** El document, sense les files (null si encara no n'hi ha). */
+  meta: Omit<PeriodSnapshot, 'rows'> | null;
+}
+
+/**
+ * El rànquing de la setmana (`setmana/{AAAA-Www}`) o del mes (`mes/{AAAA-MM}`):
+ * un sol document, que la tasca programada refà cada matí (1 lectura). Es desa
+ * 10 minuts, com els altres.
+ */
+export function fetchPeriodView(kind: PeriodKind, key: string, uid: string | null): Promise<PeriodView> {
+  return cached(`periode:${kind}:${key}:${uid ?? '-'}`, async () => {
+    const { db } = await load();
+    const { doc, getDoc } = await import('firebase/firestore/lite');
+    const snap = await getDoc(doc(db, kind, key));
+    const data = snap.exists() ? snap.data() : null;
+    const at = (data as { at?: { toMillis?: () => number } } | null)?.at;
+    const period = parsePeriod(data, typeof at?.toMillis === 'function' ? at.toMillis() : null);
+    if (!period) return { rows: [], meta: null };
+    const { rows: _rows, ...meta } = period;
+    return { rows: periodRanking(period, uid), meta };
   });
 }
 

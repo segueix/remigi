@@ -5581,11 +5581,30 @@ button.secondary.reset-nivell {
 
 .dia-ranking-pestanyes {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.35rem;
 }
 
 .dia-ranking-pestanyes button {
   padding: 0.3rem 0.9rem;
+}
+
+/* Cinc pestanyes: al mòbil, més estretes perquè hi càpiguen en una fila. */
+@media (max-width: 480px) {
+  .dia-ranking-pestanyes {
+    gap: 0.25rem;
+  }
+
+  .dia-ranking-pestanyes button {
+    padding: 0.3rem 0.55rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* El títol del període: «Setmana del 23 al 29 de novembre». */
+.dia-ranking-periode {
+  margin: 0.6rem 0 0;
+  font-weight: 600;
 }
 
 .dia-ranking-llista {
@@ -6251,6 +6270,11 @@ button.enllac {
   color: var(--text-suau);
   font-size: 0.75rem;
   font-weight: 600;
+}
+
+/* Setmana i mes: els dies jugats, sense el verd del desempat. */
+.dia-ranking-llista.neutre .dia-ranking-extra {
+  color: var(--text-suau);
 }
 
 /* A la targeta del resultat: «+245 punts dels rivals», en verd. */
