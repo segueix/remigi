@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "publica": "tsx publica.ts --jugadors --classificacio",
-    "prova": "tsx publica.ts --prova --ara --jugadors --classificacio --tanca-ahir"
+    "prova": "tsx publica.ts --prova --ara --jugadors --classificacio --tanca-ahir --periodes"
   },
   "dependencies": {
     "firebase-admin": "^13.10.0"

@@ -100,6 +100,18 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Els rànquings de la setmana i del mes (punts del dia sumats): tothom els
+    // pot llegir; només els escriu la tasca programada, cada matí.
+    match /setmana/{week} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /mes/{month} {
+      allow read: if true;
+      allow write: if false;
+    }
+
     // Tota la resta, tancat.
     match /{document=**} {
       allow read, write: if false;

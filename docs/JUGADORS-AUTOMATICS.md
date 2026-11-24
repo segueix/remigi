@@ -57,7 +57,12 @@ el que ja hi ha a Firestore, en aquest ordre:
    les 6 h, o de seguida si el pas 1 hi ha afegit algú);
 3. els jugadors automàtics d'avui als quals ja ha arribat l'hora;
 4. la fotografia d'avui, si ja ha passat una de les hores (9, 15 o 22 h a
-   l'hivern; 10, 16 i 23 h a l'estiu) i la que hi ha és d'abans (`snapshotDue`).
+   l'hivern; 10, 16 i 23 h a l'estiu) i la que hi ha és d'abans (`snapshotDue`);
+5. els rànquings de la **setmana i del mes fins ahir** (`setmana/{AAAA-Www}`,
+   `mes/{AAAA-MM}`), un cop la classificació d'ahir és la final i si encara no
+   compten fins ahir (es fa just després del pas 2; vegeu
+   [PARTIDA-DEL-DIA.md](PARTIDA-DEL-DIA.md#setmana-i-mes)). A mà:
+   `publica.ts --periodes`, o «periodes» a **Run workflow**.
 
 Hi ha execucions de reserva: si una no arriba, la següent ho posa al dia, i si
 sobren no repeteixen res. Hores fixes en UTC, a minuts lluny de l'inici de
@@ -91,7 +96,7 @@ ho diu: «Actualitzada a les 15 h · s'actualitza a les 9, 15 i 22 h».
    tot el contingut del fitxer `.json` (obre'l amb un editor de text, copia-ho
    tot i enganxa-ho). Després, esborra el fitxer de l'ordinador.
 3. **Publica les regles de Firestore** (`firestore.rules`): inclouen la lectura
-   pública de `classificacio`.
+   pública de `classificacio`, `setmana` i `mes`.
 4. **Prova-ho.** `segueix/remigi` → **Actions → Partida del dia (jugadors i
    classificació) → Run workflow**, amb «auto» i «Prova» marcat: diu què faria
    sense escriure res. Per fer ara tot el que falti, desmarca «Prova»; perquè

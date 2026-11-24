@@ -12,7 +12,10 @@
  *      6 h, o si el pas 1 hi ha afegit algú);
  *   3. els jugadors automàtics d'avui als quals ja ha arribat l'hora;
  *   4. la fotografia d'avui, si ja ha passat una hora de fotografia (9, 15 o
- *      22 h) i la que hi ha és d'abans.
+ *      22 h) i la que hi ha és d'abans;
+ *   5. els rànquings de la setmana i del mes fins ahir (`setmana/{AAAA-Www}`,
+ *      `mes/{AAAA-MM}`), un cop la classificació d'ahir és la final i si
+ *      encara no compten fins ahir.
  *
  * I a mà, per parts:
  *
@@ -22,8 +25,10 @@
  * - `--classificacio`: la fotografia de la classificació d'avui
  *   (`classificacio/{dia}`).
  * - `--tanca-ahir`: la fotografia final d'ahir.
+ * - `--periodes`: els rànquings de la setmana i del mes fins ahir (els refà
+ *   encara que ja hi siguin).
  *
- *   npx tsx publica.ts --jugadors --classificacio --tanca-ahir
+ *   npx tsx publica.ts --jugadors --classificacio --tanca-ahir --periodes
  *   npx tsx publica.ts --prova …   no escriu res: només diu què faria
  *   npx tsx publica.ts --ara …     els jugadors no esperen la seva hora
  *   npx tsx publica.ts --dia=2026-11-22 …
@@ -44,7 +49,9 @@ import {
   type BotConfig,
 } from '../../apps/web/src/bots/automatic';
 import { parsePlayerEntry, type PlayerEntry } from '../../apps/web/src/cloud/ranking';
-import { CLOSE_YESTERDAY_FROM_MINUTE, buildSnapshot, snapshotDue } from '../../apps/web/src/cloud/snapshot';
+import { PERIOD_KINDS, buildPeriod, periodDays, periodKey, type DayStanding } from '../../apps/web/src/cloud/period';
+import { dayRanking } from '../../apps/web/src/cloud/ranking';
+import { CLOSE_YESTERDAY_FROM_MINUTE, buildSnapshot, parseSnapshot, snapshotDue } from '../../apps/web/src/cloud/snapshot';
 import { dayKey, isDayKey, previousDay } from '../../apps/web/src/dia/daily';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -57,6 +64,7 @@ const auto = args.includes('--auto');
 const doBots = args.includes('--jugadors');
 const doSnapshot = args.includes('--classificacio');
 const doCloseYesterday = args.includes('--tanca-ahir');
+const doPeriods = args.includes('--periodes');
 const dayArg = args.find((a) => a.startsWith('--dia='))?.slice('--dia='.length);
 const day = dayArg && isDayKey(dayArg) ? dayArg : dayKey();
 const minute = barcelonaMinute();
@@ -138,6 +146,45 @@ async function snapshot(target: string, final: boolean): Promise<void> {
   console.log(`- Classificació ${target}${final ? ' (final)' : ''}: ${built.count} jugadors.`);
 }
 
+/**
+ * La classificació final d'un dia ja passat: la fotografia (1 lectura) o, si
+ * no n'hi ha cap de final, els resultats (una lectura per jugador).
+ */
+async function dayStanding(target: string): Promise<DayStanding> {
+  const store = await firestore();
+  const snap = parseSnapshot((await store.doc(`classificacio/${target}`).get()).data() ?? null, null);
+  if (snap?.final) return { day: target, rows: snap.rows };
+  const docs = await store.collection(`dia/${target}/resultats`).get();
+  const rows = dayRanking(docs.docs.map((d) => ({ id: d.id, data: d.data() })), null).map(({ id, entry }) => ({ id, entry }));
+  return { day: target, rows };
+}
+
+/**
+ * Els rànquings de la setmana i del mes que contenen `until`, comptant fins a
+ * `until` (inclòs). Sense `force`, només si encara no compten fins aquell dia.
+ */
+async function periods(until: string, force: boolean): Promise<void> {
+  const standings = new Map<string, DayStanding>();
+  for (const kind of PERIOD_KINDS) {
+    const path = `${kind}/${periodKey(kind, until)}`;
+    if (dryRun) {
+      console.log(`- Rànquing ${path}: es refaria fins al ${until} si no hi arriba.`);
+      continue;
+    }
+    const store = await firestore();
+    if (!force && (await store.doc(path).get()).data()?.until === until) {
+      console.log(`- Rànquing ${path}: ja compta fins al ${until}.`);
+      continue;
+    }
+    const days = periodDays(kind, until).filter((d) => d <= until);
+    for (const d of days) if (!standings.has(d)) standings.set(d, await dayStanding(d));
+    const built = buildPeriod(kind, until, days.map((d) => standings.get(d)!));
+    const { FieldValue } = await import('firebase-admin/firestore');
+    await store.doc(path).set({ ...built, at: FieldValue.serverTimestamp() });
+    console.log(`- Rànquing ${path}${built.final ? ' (final)' : ''}: ${days.length} dies, ${built.count} jugadors.`);
+  }
+}
+
 /** Ms des de 1970 d'un camp `at` de Firestore (Timestamp), o null. */
 function millisOf(value: unknown): number | null {
   const at = value as { toMillis?: () => number } | undefined;
@@ -203,14 +250,24 @@ async function runAuto(): Promise<void> {
   }
 
   // 2: la classificació final d'ahir.
+  let yesterdayClosed = false;
   if (dryRun) {
     if (lateYesterday || minute >= CLOSE_YESTERDAY_FROM_MINUTE) console.log(`- Classificació ${yesterday}: es tancaria si no ho està.`);
   } else {
     const store = await firestore();
     const closed = (await store.doc(`classificacio/${yesterday}`).get()).data()?.final === true;
-    if (lateYesterday || (!closed && minute >= CLOSE_YESTERDAY_FROM_MINUTE)) await snapshot(yesterday, true);
-    else if (closed) console.log(`- Classificació ${yesterday}: ja és la final.`);
+    if (lateYesterday || (!closed && minute >= CLOSE_YESTERDAY_FROM_MINUTE)) {
+      await snapshot(yesterday, true);
+      yesterdayClosed = true;
+    } else if (closed) {
+      console.log(`- Classificació ${yesterday}: ja és la final.`);
+      yesterdayClosed = true;
+    }
   }
+
+  // 5 (aquí, perquè només depèn d'ahir): la setmana i el mes fins ahir.
+  // Si ahir s'hi ha afegit algun jugador automàtic tard, es refan.
+  if (dryRun || yesterdayClosed) await periods(yesterday, lateYesterday);
 
   for (const item of todo) {
     if (item.pending.today) await publishBotDay(item.bot, day, item.previous);
@@ -235,11 +292,12 @@ async function main(): Promise<void> {
     await runAuto();
     return;
   }
-  if (!doBots && !doSnapshot && !doCloseYesterday) {
-    console.log('Res a fer: indica --auto, --jugadors, --classificacio o --tanca-ahir.');
+  if (!doBots && !doSnapshot && !doCloseYesterday && !doPeriods) {
+    console.log('Res a fer: indica --auto, --jugadors, --classificacio, --tanca-ahir o --periodes.');
     return;
   }
   if (doCloseYesterday) await snapshot(previousDay(day), true);
+  if (doPeriods) await periods(previousDay(day), true);
   if (doBots) await publishBots();
   if (doSnapshot) await snapshot(day, false);
 }

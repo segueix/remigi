@@ -68,6 +68,9 @@ Projecte de Firebase `remigi-c37ac` (pla Spark, gratuït). Codi:
   (victòria: jugades; derrota: 1000 + punts a la mà). Es crea un sol cop.
 - **Rànquing de ratxes** (`jugadors/{uid}`): àlies, ratxa, millor ratxa i
   últim dia jugat. Una ratxa només compta si s'ha jugat avui o ahir.
+- **Rànquings de la setmana i del mes** (`setmana/{AAAA-Www}`,
+  `mes/{AAAA-MM}`): els punts del dia sumats, fins ahir. Vegeu
+  [Setmana i mes](#setmana-i-mes).
 - En acabar la partida del dia (o en entrar amb Google després), el resultat
   d'avui o d'ahir i la ratxa pugen sols.
 
@@ -132,6 +135,7 @@ gent sense pagar:
 | Obrir l'app amb sessió (llegir el compte i la ratxa) | 2 lectures |
 | Rànquing d'avui: top 10 (`RANKING_SIZE`), desat 10 min a l'aparell (`cloud/cache.ts`) | ≤ 10 lectures |
 | Rànquing de ratxes: top 10 de les vives, filtrat a Firestore | ≤ 10 lectures |
+| Rànquings de la setmana i del mes: un document cadascun, desat 10 min | 2 lectures |
 | Posició al rànquing: dos recomptes amb la puntuació que l'app ja sap | 2 lectures |
 | Pujar el resultat del dia (sense llegir-lo abans) i la ratxa | 2 escriptures |
 | Nivell i lliga: com a molt cada 30 min, i en tancar o amagar l'app | ~1–3 escriptures |
@@ -158,6 +162,41 @@ El resultat porta el camp `rivals` (punts que els quedaven als rivals). Els
 resultats d'abans no en porten: compten com a 0 i l'app els torna a puntuar en
 llegir-los. Si les regles publicades encara són les d'abans, l'app desa el
 format antic (sense `rivals`) perquè el resultat no es perdi.
+
+## Setmana i mes
+
+`apps/web/src/cloud/period.ts` (pur) i el pas `--periodes` de
+`tools/jugadors-automatics/publica.ts`.
+
+El `score` del dia no es pot sumar: una derrota val més d'un milió, i les
+jugades d'un dilluns (fàcil) no valen el que les d'un dissabte. Per això cada
+dia es converteix en **punts del dia** segons la posició a la classificació
+final d'aquell dia:
+
+    punts = round(100 × (N − posició + 1) / N)
+
+amb N jugadors aquell dia (els empats comparteixen posició i punts). El primer
+en treu 100 i l'últim una mica més de 0, hi jugui la gent que hi jugui. Per
+exemple, quedar 4t de 40 val 93 punts, sigui el dia que sigui.
+
+- **Setmana:** de dilluns a diumenge (setmana ISO), el cicle sencer de
+  dificultats. **Mes:** el mes natural.
+- Es **sumen tots els dies** jugats del període; qui no juga un dia no en suma.
+- **Desempat:** més victòries i, després, menys jugades sumades a les
+  victòries.
+- Els **jugadors automàtics hi compten**, com al rànquing del dia.
+- Compta **fins ahir**: la tasca programada, en tancar la classificació d'ahir
+  (a partir de les 6 h), refà `setmana/{clau}` i `mes/{clau}` llegint les
+  classificacions finals dels dies del període (com a molt 7 + 31 lectures,
+  un cop al dia). Si a un dia li falta la fotografia final, en llegeix els
+  resultats. La pestanya mostra el període que conté ahir: el dilluns, la
+  setmana passada (ja final); el dia 1, el mes passat.
+- Qui el mira llegeix **un sol document** (desat 10 minuts a l'aparell): les
+  deu primeres files i, a sota, la teva si no hi ets.
+- Cal publicar les regles de [`firestore.rules`](../firestore.rules) amb
+  `setmana/{id}` i `mes/{id}` (lectura per a tothom, escriptura només amb la
+  clau de servei); sense elles, les pestanyes diuen que no s'ha pogut
+  carregar.
 
 ## Dificultat de la setmana i sortida garantida
 

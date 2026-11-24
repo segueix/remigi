@@ -5,12 +5,13 @@ name: Partida del dia (jugadors i classificació)
 # (`--auto`): tot el que falti segons l'hora de Barcelona i el que ja hi ha a
 # Firestore (jugadors automàtics d'ahir pendents, classificació final d'ahir,
 # jugadors d'avui als quals ha arribat l'hora, fotografia d'avui si en toca
-# una). Les programades de GitHub poden arribar hores tard o no arribar: n'hi
-# ha de reserva i, si sobren, no repeteixen res. Minuts lluny de l'inici de
+# una, rànquings de la setmana i del mes fins ahir un cop tancat ahir). Les
+# programades de GitHub poden arribar hores tard o no arribar: n'hi ha de
+# reserva i, si sobren, no repeteixen res. Minuts lluny de l'inici de
 # l'hora, que és quan GitHub en descarta més.
 #
 #   UTC    Barcelona (hivern / estiu)
-#   07:17  8:17 / 9:17     jugadors (franja 8–12 h) · tanca ahir
+#   07:17  8:17 / 9:17     jugadors (franja 8–12 h) · tanca ahir · setmana i mes
 #   08:17  9:17 / 10:17    jugadors · fotografia de les 9 h
 #   09:17  10:17 / 11:17   jugadors
 #   10:17  11:17 / 12:17   jugadors
@@ -35,7 +36,7 @@ on:
       accio:
         description: 'Què fer'
         type: choice
-        options: [auto, jugadors, classificacio]
+        options: [auto, jugadors, classificacio, periodes]
         default: auto
       prova:
         description: 'Prova: no escriu res, només diu què faria'
@@ -87,6 +88,7 @@ jobs:
             case "$ACCIO" in
               jugadors) ARGS="--jugadors" ;;
               classificacio) ARGS="--classificacio" ;;
+              periodes) ARGS="--periodes" ;;
               *) ARGS="--auto" ;;
             esac
             if [ "$PROVA" = "true" ]; then ARGS="$ARGS --prova"; fi
