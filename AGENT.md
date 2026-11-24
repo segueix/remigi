@@ -3610,3 +3610,10 @@ característiques i hores de publicació pròpies.
 **Criteris d'acceptació (verificats)**: `publica.ts --jugadors --prova --ara`
 per a 5 dies (25-11 a 29-11): tots tres juguen amb forces diferents, alguns
 dies no juguen.
+
+### Despertaferro, més fluix (2026-11-24)
+
+Demanat pel jugador: baixar Despertaferro a 1400 aproximadament.
+
+- [x] `jugadors.json`: Despertaferro passa de 1550 ±50 a 1400 ±50 (1350–1450).
+- [x] `docs/JUGADORS-AUTOMATICS.md` actualitzat.

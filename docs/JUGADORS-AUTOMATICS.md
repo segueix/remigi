@@ -188,12 +188,12 @@ publicades es conserven.
 |---|---|---|---|---|---|
 | `mirdetost` | MirdeTost | 1450 | ±80 | 15 % | 08:00–12:00 |
 | `guineueta` | Guineueta | 1150 | ±200 | 30 % | 07:00–10:00 |
-| `despertaferro` | Despertaferro | 1550 | ±50 | 5 % | 13:00–17:00 |
+| `despertaferro` | Despertaferro | 1400 | ±50 | 5 % | 13:00–17:00 |
 
 - **Guineueta**: matinera i irregular. Força mitjana-baixa amb molta variació
   (950–1350) i salta uns 2 dies per setmana. Publica a primera hora (execucions
   de les 8:17, 9:17 o 10:17 a l'hivern).
-- **Despertaferro**: el més fort i constant (1500–1600; el motor no passa de
-  1600) i gairebé no falla cap dia. Publica a la tarda (execucions de les 15:17
+- **Despertaferro**: força mitjana-alta i molt constant (1350–1450), una mica
+  per sota de MirdeTost, i gairebé no falla cap dia. Publica a la tarda (execucions de les 15:17
   o 17:17 a l'hivern; 13:37, 16:17 o 18:17 a l'estiu), sense canviar l'horari
   de la tasca.
