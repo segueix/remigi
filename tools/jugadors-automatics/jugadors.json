@@ -9,5 +9,27 @@
     "from": "08:00",
     "to": "12:00",
     "active": true
+  },
+  {
+    "key": "guineueta",
+    "alias": "Guineueta",
+    "uid": "f94JU7lcwq3Eykv1sCrJf7Tg1BxE",
+    "rating": 1150,
+    "spread": 200,
+    "skipRate": 0.3,
+    "from": "07:00",
+    "to": "10:00",
+    "active": true
+  },
+  {
+    "key": "despertaferro",
+    "alias": "Despertaferro",
+    "uid": "8kfWNRJ0PM3Hrk32YziQcBg8DrYQ",
+    "rating": 1550,
+    "spread": 50,
+    "skipRate": 0.05,
+    "from": "13:00",
+    "to": "17:00",
+    "active": true
   }
 ]
