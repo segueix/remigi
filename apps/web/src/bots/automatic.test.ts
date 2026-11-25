@@ -1,5 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { botDay, botPending, botPublication, nextStreak, playDaily, type BotConfig } from './automatic';
+import { rankScore } from '../cloud/ranking';
+import {
+  DISTINCT_ATTEMPTS,
+  attemptRating,
+  botDay,
+  botPending,
+  botPublication,
+  nextStreak,
+  playDaily,
+  playDistinct,
+  type BotConfig,
+} from './automatic';
 
 const bot: BotConfig = {
   key: 'prova',
@@ -43,6 +54,33 @@ describe('jugadors automàtics', () => {
     expect(result.moves).toBeGreaterThan(0);
     expect(playDaily('2026-11-23', 1300, bot.uid)).toEqual(result);
   }, 30_000);
+
+  it('no empata mai amb un altre jugador automàtic: el 24-11, MirdeTost i Despertaferro', () => {
+    // Amb la partida de sempre, tots dos guanyaven en 18 jugades amb +58 dels rivals.
+    const mirdetost = playDaily('2026-11-24', 1420, 'IT926Mmn0WoJ6mjKPRYr9yVItbeJ');
+    const despertaferro = playDaily('2026-11-24', 1353, '8kfWNRJ0PM3Hrk32YziQcBg8DrYQ');
+    expect(rankScore(despertaferro)).toBe(rankScore(mirdetost));
+
+    const played = playDistinct('2026-11-24', 1353, '8kfWNRJ0PM3Hrk32YziQcBg8DrYQ', new Set([rankScore(mirdetost)]));
+    expect(played).not.toBeNull();
+    expect(played!.attempt).toBeGreaterThan(0);
+    expect(rankScore(played!.result)).not.toBe(rankScore(mirdetost));
+    // Sempre el mateix (determinista).
+    expect(playDistinct('2026-11-24', 1353, '8kfWNRJ0PM3Hrk32YziQcBg8DrYQ', new Set([rankScore(mirdetost)]))).toEqual(played);
+    // Sense empat, la partida de sempre.
+    expect(playDistinct('2026-11-24', 1353, '8kfWNRJ0PM3Hrk32YziQcBg8DrYQ', new Set())).toEqual({
+      result: despertaferro,
+      rating: 1353,
+      attempt: 0,
+    });
+  }, 30_000);
+
+  it('els intents canvien una mica la força, amunt i avall, dins de 800–1600', () => {
+    expect([0, 1, 2, 3, 4].map((a) => attemptRating(1400, a))).toEqual([1400, 1415, 1385, 1430, 1370]);
+    expect(attemptRating(1595, 1)).toBe(1600);
+    expect(attemptRating(805, 2)).toBe(800);
+    expect(DISTINCT_ATTEMPTS).toBeGreaterThan(10);
+  });
 
   it('la ratxa: suma si guanya l’endemà d’haver guanyat; si perd o salta un dia, torna a zero', () => {
     const win = (day: string) => ({ day, won: true, moves: 12, points: 0, rivals: 40 });

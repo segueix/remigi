@@ -45,10 +45,11 @@ import {
   botDay,
   botPending,
   botPublication,
-  playDaily,
+  playDistinct,
   type BotConfig,
 } from '../../apps/web/src/bots/automatic';
-import { parsePlayerEntry, type PlayerEntry } from '../../apps/web/src/cloud/ranking';
+import { parseDayEntry, parsePlayerEntry, rankScore, type PlayerEntry } from '../../apps/web/src/cloud/ranking';
+import type { DailyResult } from '../../apps/web/src/dia/daily';
 import { PERIOD_KINDS, buildPeriod, periodDays, periodKey, type DayStanding } from '../../apps/web/src/cloud/period';
 import { dayRanking } from '../../apps/web/src/cloud/ranking';
 import { CLOSE_YESTERDAY_FROM_MINUTE, buildSnapshot, parseSnapshot, snapshotDue } from '../../apps/web/src/cloud/snapshot';
@@ -84,6 +85,52 @@ async function firestore(): Promise<Db> {
   return db;
 }
 
+/** En prova (sense Firestore): les puntuacions que hauria publicat cada jugador automàtic, per dia. */
+const dryScores = new Map<string, Map<string, number>>();
+
+/**
+ * Les puntuacions de rànquing que els altres jugadors automàtics ja tenen un
+ * dia (`dia/{dia}/resultats/{uid}`), perquè cap no empati amb un altre.
+ */
+async function takenScores(bot: BotConfig, target: string): Promise<Set<number>> {
+  const others = bots.filter((other) => other.uid !== bot.uid);
+  if (dryRun) {
+    const scores = dryScores.get(target) ?? new Map<string, number>();
+    return new Set(others.flatMap((other) => (scores.has(other.uid) ? [scores.get(other.uid)!] : [])));
+  }
+  if (others.length === 0) return new Set();
+  const store = await firestore();
+  const docs = await store.getAll(...others.map((other) => store.doc(`dia/${target}/resultats/${other.uid}`)));
+  return new Set(docs.flatMap((d) => {
+    const entry = d.exists ? parseDayEntry(d.data()) : null;
+    return entry ? [entry.score] : [];
+  }));
+}
+
+/**
+ * Juga la partida d'un jugador automàtic sense empatar amb cap altre (vegeu
+ * `playDistinct`). Torna null si aquell dia no ha trobat cap resultat diferent
+ * (llavors no publica).
+ */
+async function botResult(
+  bot: BotConfig,
+  target: string,
+  rating: number,
+  tag: string,
+): Promise<{ result: DailyResult; rating: number } | null> {
+  const played = playDistinct(target, rating, bot.uid, await takenScores(bot, target));
+  if (!played) {
+    console.log(`- ${tag}: cap resultat diferent dels altres jugadors automàtics; avui no publica.`);
+    return null;
+  }
+  if (played.attempt > 0) console.log(`- ${tag}: empatava amb un altre jugador automàtic; la torna a jugar (intent ${played.attempt + 1}).`);
+  if (dryRun) {
+    if (!dryScores.has(target)) dryScores.set(target, new Map());
+    dryScores.get(target)!.set(bot.uid, rankScore(played.result));
+  }
+  return played;
+}
+
 async function publishBots(): Promise<void> {
   for (const bot of bots) {
     const plan = botDay(bot, day);
@@ -108,12 +155,14 @@ async function publishBots(): Promise<void> {
       previous = parsePlayerEntry((await store.doc(`jugadors/${bot.uid}`).get()).data() ?? null);
     }
 
-    const result = playDaily(day, plan.rating, bot.uid);
+    const played = await botResult(bot, day, plan.rating, tag);
+    if (!played) continue;
+    const { result } = played;
     const { entry, player } = botPublication(bot, result, previous);
     const summary = result.won
       ? `guanya en ${result.moves} jugades (rivals +${result.rivals})`
       : `perd amb ${result.points} punts a la mà`;
-    console.log(`- ${tag}: força ${plan.rating}, ${summary}, ratxa ${player.streak}.`);
+    console.log(`- ${tag}: força ${played.rating}, ${summary}, ratxa ${player.streak}.`);
 
     if (!dryRun) {
       const store = await firestore();
@@ -202,12 +251,14 @@ async function publishBotDay(bot: BotConfig, target: string, previous: PlayerEnt
       return previous;
     }
   }
-  const result = playDaily(target, plan.rating, bot.uid);
+  const played = await botResult(bot, target, plan.rating, tag);
+  if (!played) return previous;
+  const { result } = played;
   const { entry, player } = botPublication(bot, result, previous);
   const summary = result.won
     ? `guanya en ${result.moves} jugades (rivals +${result.rivals})`
     : `perd amb ${result.points} punts a la mà`;
-  console.log(`- ${tag}: força ${plan.rating}, ${summary}, ratxa ${player.streak}.`);
+  console.log(`- ${tag}: força ${played.rating}, ${summary}, ratxa ${player.streak}.`);
   if (dryRun) return player;
   const store = await firestore();
   const { FieldValue } = await import('firebase-admin/firestore');

@@ -1,5 +1,5 @@
 import { applyMove, createEngine, createRng, rackPoints, type GameState } from '@remigi/core';
-import { dayEntry, type DayEntry, type PlayerEntry } from '../cloud/ranking';
+import { dayEntry, rankScore, type DayEntry, type PlayerEntry } from '../cloud/ranking';
 import { humanMoves, msUntilNextDay, previousDay, turnSeed, type DailyResult } from '../dia/daily';
 import { computeDailyPlan, dailyGame } from '../dia/plan';
 
@@ -103,13 +103,15 @@ export function barcelonaMinute(now: Date = new Date()): number {
  * força donada. Els rivals juguen exactament com a l'app (força del dia, una
  * llavor per torn); el jugador automàtic, amb una llavor seva per torn.
  */
-export function playDaily(day: string, rating: number, uid: string): DailyResult {
+export function playDaily(day: string, rating: number, uid: string, attempt = 0): DailyResult {
   const plan = computeDailyPlan(day);
   let state: GameState = dailyGame(plan.seed, plan.difficulty);
+  // L'intent 0 és la partida de sempre; els altres, una llavor nova del jugador.
+  const who = attempt === 0 ? uid : `${uid}#${attempt}`;
   let guard = 0;
   while (state.status === 'playing' && guard++ < 2000) {
     const mover = state.currentPlayer;
-    const seed = mover === 0 ? hash(`${uid}:${day}:${state.turn}`) : turnSeed(plan.seed, state.turn);
+    const seed = mover === 0 ? hash(`${who}:${day}:${state.turn}`) : turnSeed(plan.seed, state.turn);
     const decision = createEngine({ seed }).play(state, {
       playerIndex: mover,
       rating: mover === 0 ? rating : plan.difficulty.rating,
@@ -125,6 +127,41 @@ export function playDaily(day: string, rating: number, uid: string): DailyResult
     points: rackPoints(state.players[0].rack),
     rivals: state.players.slice(1).reduce((sum, player) => sum + rackPoints(player.rack), 0),
   };
+}
+
+/** Quants intents prova un jugador automàtic per no empatar amb un altre. */
+export const DISTINCT_ATTEMPTS = 40;
+
+/** La força de l'intent `attempt`: la del dia i, després, una mica amunt i avall. */
+export function attemptRating(rating: number, attempt: number): number {
+  if (attempt === 0) return rating;
+  const step = Math.ceil(attempt / 2) * 15;
+  const shifted = attempt % 2 === 1 ? rating + step : rating - step;
+  return Math.min(1600, Math.max(800, shifted));
+}
+
+/**
+ * La partida del dia d'un jugador automàtic sense empatar amb cap altre
+ * jugador automàtic: `taken` són les puntuacions de rànquing (`rankScore`) que
+ * els altres ja tenen aquell dia. Si la partida de sempre (intent 0) hi empata,
+ * la torna a jugar de debò amb una llavor nova i la força una mica amunt o
+ * avall, fins que en surt una amb un resultat diferent. No tria el resultat
+ * més favorable: es queda el primer que no empata. Si cap dels
+ * `DISTINCT_ATTEMPTS` intents no se'n surt, torna `null` i aquell dia no juga
+ * (mai publica un empat amb un altre jugador automàtic).
+ */
+export function playDistinct(
+  day: string,
+  rating: number,
+  uid: string,
+  taken: ReadonlySet<number>,
+): { result: DailyResult; rating: number; attempt: number } | null {
+  for (let attempt = 0; attempt < DISTINCT_ATTEMPTS; attempt++) {
+    const strength = attemptRating(rating, attempt);
+    const result = playDaily(day, strength, uid, attempt);
+    if (!taken.has(rankScore(result))) return { result, rating: strength, attempt };
+  }
+  return null;
 }
 
 /** La ratxa nova del jugador automàtic després del resultat d'un dia. */

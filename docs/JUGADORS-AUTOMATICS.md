@@ -27,6 +27,16 @@ mentre hi ha pocs jugadors. Quan n'hi hagi prou, es retiren (vegeu
   també el d'ahir (`botPending`).
 - **Ratxa pròpia**: la de partides guanyades seguides, a `jugadors/{uid}` com la
   de qualsevol jugador. Si un dia no juga o perd, torna a zero.
+- **Mai no empaten entre ells.** Abans de publicar, cada jugador automàtic
+  mira els resultats que els altres ja tenen aquell dia
+  (`dia/{dia}/resultats/{uid}`). Si la seva partida hi empata (mateixa
+  puntuació de rànquing: mateixes jugades i mateixos punts dels rivals, o
+  mateixos punts a la mà si perd), la torna a jugar de debò amb una llavor nova
+  i la força una mica amunt o avall (±15, ±30…), fins que en surt una de
+  diferent (`playDistinct`). Es queda la primera que no empata, no la millor.
+  Si en 40 intents no se'n surt, aquell dia no publica. Com que les execucions
+  de la tasca no van mai en paral·lel, qui publica després sempre veu els
+  anteriors. Amb jugadors humans sí que poden empatar.
 - Tot és determinista per jugador i dia: si la tasca s'executa dues vegades no
   canvia res, i no publica mai dos cops el mateix dia.
 
@@ -159,7 +169,8 @@ no un límit: encara hi ha derrotes i partides llargues o bloquejades.
 Els punts dels rivals són la suma de totes les seves mans: +118 contra dos
 rivals són 59 punts de mitjana per rival, no 118 punts a la mà de MirdeTost.
 No es retallen jugades ni punts, ni es tornen a jugar partides per triar un
-resultat més favorable. El canvi afecta les publicacions següents; les ja
+resultat més favorable (només per no empatar amb un altre jugador automàtic, i
+es queda la primera que no empata). El canvi afecta les publicacions següents; les ja
 publicades es conserven.
 
 ## Retirar-los

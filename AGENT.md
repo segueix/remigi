@@ -3617,3 +3617,23 @@ Demanat pel jugador: baixar Despertaferro a 1400 aproximadament.
 
 - [x] `jugadors.json`: Despertaferro passa de 1550 ±50 a 1400 ±50 (1350–1450).
 - [x] `docs/JUGADORS-AUTOMATICS.md` actualitzat.
+
+### Cap empat entre jugadors automàtics (2026-11-25)
+
+Demanat pel jugador: el 24-11 MirdeTost i Despertaferro van treure el mateix
+resultat (18 jugades, +58); que cap jugador automàtic pugui empatar amb un
+altre. Sense el canvi, en 120 dies simulats hi havia 7 empats.
+
+- [x] `automatic.ts`: `playDaily` amb un intent (llavor nova del jugador a
+      partir del 2n); `playDistinct` torna a jugar de debò, amb la força
+      ±15, ±30… (`attemptRating`), fins que la puntuació de rànquing no coincideix
+      amb cap de les dels altres; si en 40 intents no se'n surt, aquell dia no
+      publica.
+- [x] `publica.ts`: abans de publicar, llegeix els resultats del dia dels altres
+      jugadors automàtics (en prova, els de la mateixa execució).
+- [x] `docs/JUGADORS-AUTOMATICS.md` actualitzat.
+
+**Criteris d'acceptació (verificats)**: `typecheck` net (web i script); proves
+de `automatic.ts` en verd (2 de noves); `publica.ts --auto --prova --ara
+--dia=2026-11-24`: Despertaferro empatava i ara guanya en 17 jugades (+53);
+120 dies simulats: cap empat, com a molt 3 intents.
