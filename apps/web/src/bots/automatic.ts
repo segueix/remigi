@@ -30,6 +30,44 @@ export interface BotConfig {
   to: string;
   /** Si és fals, ja no juga. */
   active: boolean;
+  /** Opcional: primer dia que juga (AAAA-MM-DD); abans, no juga. */
+  start?: string;
+  /**
+   * Com es mou la força mitjana amb els dies (opcional; sense, és `rating`
+   * cada dia). Vegeu `BotCurve`.
+   */
+  curve?: BotCurve;
+  /**
+   * Com reacciona al resultat del dia abans (opcional; sense, no reacciona).
+   * Vegeu `BotAdapt`.
+   */
+  adapt?: BotAdapt;
+}
+
+/**
+ * La corba de la força mitjana, abans del marge de cada dia:
+ *
+ * - `aprenent`: comença a `from` el dia `start` i s'acosta a `rating` (la
+ *   meitat del camí en `halfLife` dies). Abans de `start`, `from`.
+ * - `ones`: puja i baixa al voltant de `rating`, ±`amplitude`, amb un cicle de
+ *   `period` dies (bones i males temporades). El punt del cicle depèn de l'uid.
+ * - `setmana`: `rating` més un ajust per a cada dia de la setmana (`offsets`,
+ *   de diumenge a dissabte).
+ */
+export type BotCurve =
+  | { kind: 'aprenent'; start: string; from: number; halfLife: number }
+  | { kind: 'ones'; period: number; amplitude: number }
+  | { kind: 'setmana'; offsets: [number, number, number, number, number, number, number] };
+
+/**
+ * La reacció al dia abans (només si el dia abans va jugar; si no hi va jugar,
+ * res): `win` punts per cada victòria de la ratxa que porta, `loss` punts si
+ * el dia abans va perdre; el total, com a molt ±`max`.
+ */
+export interface BotAdapt {
+  win: number;
+  loss: number;
+  max: number;
 }
 
 export interface BotDay {
@@ -54,11 +92,46 @@ const minutesOf = (hhmm: string): number => {
   return h * 60 + (m || 0);
 };
 
-/** Què fa un jugador automàtic un dia: si juga, a quina força i a quina hora publica. */
-export function botDay(bot: BotConfig, day: string): BotDay {
+const DAY_MS = 86_400_000;
+const dayIndex = (day: string): number => Math.floor(Date.parse(`${day}T00:00:00Z`) / DAY_MS);
+
+/** La força mitjana d'un dia segons la corba (sense el marge ni la reacció). */
+export function curveRating(bot: BotConfig, day: string): number {
+  const curve = bot.curve;
+  if (!curve) return bot.rating;
+  if (curve.kind === 'aprenent') {
+    const t = Math.max(0, dayIndex(day) - dayIndex(curve.start));
+    return bot.rating - (bot.rating - curve.from) * 0.5 ** (t / Math.max(1, curve.halfLife));
+  }
+  if (curve.kind === 'ones') {
+    const period = Math.max(2, curve.period);
+    const phase = (dayIndex(day) + (hash(bot.uid) % period)) / period;
+    return bot.rating + curve.amplitude * Math.sin(2 * Math.PI * phase);
+  }
+  return bot.rating + (curve.offsets[new Date(dayIndex(day) * DAY_MS).getUTCDay()] ?? 0);
+}
+
+/**
+ * La reacció al resultat del dia abans de `day`, segons la fitxa del jugador
+ * (`previous`). Si no va jugar el dia abans (o no hi ha fitxa), 0.
+ */
+export function adaptDelta(bot: BotConfig, day: string, previous: PlayerEntry | null | undefined): number {
+  if (!bot.adapt || !previous || previous.lastDay !== previousDay(day)) return 0;
+  const { win, loss, max } = bot.adapt;
+  const delta = previous.streak > 0 ? win * previous.streak : loss;
+  return Math.max(-max, Math.min(max, delta));
+}
+
+/**
+ * Què fa un jugador automàtic un dia: si juga, a quina força i a quina hora
+ * publica. La força és la de la corba més el marge del dia i, si es dona la
+ * fitxa (`previous`), la reacció al dia abans.
+ */
+export function botDay(bot: BotConfig, day: string, previous?: PlayerEntry | null): BotDay {
   const rng = createRng(hash(`${bot.uid}:${day}`));
-  const plays = bot.active && rng() >= bot.skipRate;
-  const rating = Math.min(1600, Math.max(800, Math.round(bot.rating + (rng() * 2 - 1) * bot.spread)));
+  const plays = rng() >= bot.skipRate && bot.active && (!bot.start || day >= bot.start);
+  const base = curveRating(bot, day) + adaptDelta(bot, day, previous);
+  const rating = Math.min(1600, Math.max(800, Math.round(base + (rng() * 2 - 1) * bot.spread)));
   const from = minutesOf(bot.from);
   const to = Math.max(from + 1, minutesOf(bot.to));
   const publishAt = from + Math.floor(rng() * (to - from));

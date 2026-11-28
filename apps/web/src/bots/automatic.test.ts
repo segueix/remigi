@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { botDay, botPending, botPublication, nextStreak, playDaily, type BotConfig } from './automatic';
+import { adaptDelta, botDay, botPending, curveRating, botPublication, nextStreak, playDaily, type BotConfig } from './automatic';
 
 const bot: BotConfig = {
   key: 'prova',
@@ -31,6 +31,54 @@ describe('jugadors automàtics', () => {
     expect(new Set(plans.map((p) => p.rating)).size).toBeGreaterThan(10);
     // I és sempre la mateixa per al mateix dia.
     expect(botDay(bot, days[0])).toEqual(plans[0]);
+  });
+
+  it('corba d’aprenentatge: comença fluix i s’acosta a la seva força', () => {
+    const learner: BotConfig = { ...bot, rating: 1450, curve: { kind: 'aprenent', start: '2026-11-29', from: 1050, halfLife: 21 } };
+    expect(curveRating(learner, '2026-11-20')).toBe(1050);
+    expect(curveRating(learner, '2026-11-29')).toBe(1050);
+    expect(curveRating(learner, '2026-12-20')).toBeCloseTo(1250, 5);
+    expect(curveRating(learner, '2027-03-01')).toBeGreaterThan(1400);
+    expect(curveRating(learner, '2027-03-01')).toBeLessThan(1450);
+  });
+
+  it('corba d’ones: puja i baixa dins de l’amplitud, amb el cicle donat', () => {
+    const waves: BotConfig = { ...bot, rating: 1300, curve: { kind: 'ones', period: 9, amplitude: 180 } };
+    const values = Array.from({ length: 18 }, (_, i) => curveRating(waves, new Date(Date.UTC(2026, 11, 1 + i)).toISOString().slice(0, 10)));
+    for (const v of values) expect(Math.abs(v - 1300)).toBeLessThanOrEqual(180);
+    expect(Math.max(...values) - Math.min(...values)).toBeGreaterThan(300);
+    for (let i = 0; i < 9; i++) expect(values[i + 9]).toBeCloseTo(values[i], 5);
+  });
+
+  it('corba setmanal: un ajust per a cada dia de la setmana', () => {
+    const weekly: BotConfig = { ...bot, rating: 1250, curve: { kind: 'setmana', offsets: [150, -100, -50, -150, -50, 0, 150] } };
+    expect(curveRating(weekly, '2026-11-29')).toBe(1400); // diumenge
+    expect(curveRating(weekly, '2026-12-02')).toBe(1100); // dimecres
+    expect(curveRating(weekly, '2026-12-05')).toBe(1400); // dissabte
+  });
+
+  it('reacció al dia abans: per ratxa o per derrota, amb límit, i res si no va jugar', () => {
+    const moody: BotConfig = { ...bot, adapt: { win: 30, loss: -40, max: 120 } };
+    const entry = (streak: number, lastDay: string) => ({ alias: 'Prova', streak, bestStreak: streak, lastDay });
+    expect(adaptDelta(moody, '2026-12-02', entry(2, '2026-12-01'))).toBe(60);
+    expect(adaptDelta(moody, '2026-12-02', entry(9, '2026-12-01'))).toBe(120);
+    expect(adaptDelta(moody, '2026-12-02', entry(0, '2026-12-01'))).toBe(-40);
+    expect(adaptDelta(moody, '2026-12-02', entry(3, '2026-11-29'))).toBe(0);
+    expect(adaptDelta(moody, '2026-12-02', null)).toBe(0);
+    expect(adaptDelta(bot, '2026-12-02', entry(2, '2026-12-01'))).toBe(0);
+    // La reacció mou la força del dia, però no si juga ni l’hora.
+    const plain = botDay(moody, '2026-12-02');
+    const after = botDay(moody, '2026-12-02', entry(2, '2026-12-01'));
+    expect(after.plays).toBe(plain.plays);
+    expect(after.publishAt).toBe(plain.publishAt);
+    expect(after.rating - plain.rating).toBe(60);
+  });
+
+  it('amb `start`, no juga abans d’aquell dia (ni per posar-se al dia)', () => {
+    const late: BotConfig = { ...bot, skipRate: 0, start: '2026-11-28' };
+    expect(botDay(late, '2026-11-27').plays).toBe(false);
+    expect(botDay(late, '2026-11-28').plays).toBe(true);
+    expect(botPending(late, '2026-11-28', 23 * 60, null).yesterday).toBe(false);
   });
 
   it('un jugador desactivat no juga mai', () => {

@@ -108,12 +108,13 @@ async function publishBots(): Promise<void> {
       previous = parsePlayerEntry((await store.doc(`jugadors/${bot.uid}`).get()).data() ?? null);
     }
 
-    const result = playDaily(day, plan.rating, bot.uid);
+    const { rating } = botDay(bot, day, previous);
+    const result = playDaily(day, rating, bot.uid);
     const { entry, player } = botPublication(bot, result, previous);
     const summary = result.won
       ? `guanya en ${result.moves} jugades (rivals +${result.rivals})`
       : `perd amb ${result.points} punts a la mà`;
-    console.log(`- ${tag}: força ${plan.rating}, ${summary}, ratxa ${player.streak}.`);
+    console.log(`- ${tag}: força ${rating}, ${summary}, ratxa ${player.streak}.`);
 
     if (!dryRun) {
       const store = await firestore();
@@ -194,7 +195,7 @@ function millisOf(value: unknown): number | null {
 /** Publica el resultat d'un jugador automàtic d'un dia; torna la fitxa nova. */
 async function publishBotDay(bot: BotConfig, target: string, previous: PlayerEntry | null): Promise<PlayerEntry | null> {
   const tag = `${bot.alias} (${bot.key}) · ${target}`;
-  const plan = botDay(bot, target);
+  const plan = botDay(bot, target, previous);
   if (!dryRun) {
     const store = await firestore();
     if ((await store.doc(`dia/${target}/resultats/${bot.uid}`).get()).exists) {
