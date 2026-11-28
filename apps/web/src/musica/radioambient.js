@@ -2,8 +2,15 @@
  * Música composta al dispositiu: còpia de `radioambient.js` d'El Tauler
  * (segueix/eltauler, LLIGA.md §8, «Tornades musicals»), convertida a mòdul
  * ES. L'app compon cada vegada una peça nova (tonalitat, tempo, acords,
- * melodia, solista) sobre un de cinc estils i la sintetitza amb Web Audio:
- * sense enregistraments ni xarxa. Remigi la fa servir a la pantalla entre
+ * melodia, solista) sobre un estil i la sintetitza amb Web Audio: sense
+ * enregistraments ni xarxa.
+ *
+ * Canvis propis de Remigi (cal conservar-los si es torna a copiar el fitxer
+ * d'El Tauler; vegeu docs/LLIGA.md §4): `opts.seconds`, el generador
+ * d'estructures (versió 2, `composeStructured`), els estils d'ska (ska,
+ * rocksteady, dostons) amb els seus instruments (brass, organ, snare, hat i la
+ * batucada: surdo, skin, shaker, whistle, `BATUCADA`) i
+ * els estils retirats (`RETIRED_JINGLES`), que ja no se'n componen de nous. Remigi la fa servir a la pantalla entre
  * jornades de la lliga (vegeu `musica.ts`).
  *
  * Es carrega a demanda (`import()`), perquè no pesi a l'arrencada. Si canvia
@@ -321,6 +328,126 @@ function createSynth(sampleRate, seconds, random) {
             data[j] += level * (0.25 * hp + click);
         }
     }
+    // ── Afegits a la còpia de Remigi (estils d'ska) ──
+    // Metall (trompeta, trombó) i saxo: harmònics 1…8 amb una brillantor que
+    // s'obre a l'atac i s'assenta, una entrada lliscada des de sota i un
+    // vibrato que creix. El saxo hi afegeix alè i més harmònics senars.
+    function brass(start, midi, dur, vel, o) {
+        const p = o || {};
+        const f0 = midiHz(midi) / sr, vr = (p.vibRate || 5.4) / sr, vd = (p.vib === undefined ? 0.12 : p.vib) / 12 * 0.693;
+        const aN = Math.round((p.attack || 0.03) * sr), hold = Math.round(dur * sr), n = hold + Math.round(0.35 * sr);
+        const kR = decay(p.release || 0.07), kB = decay(p.blat || 0.09), kS = decay(0.035), odd = p.odd || 0;
+        const bright = p.bright === undefined ? 0.62 : p.bright, breath = p.breath || 0;
+        let j = at(start), rel = vel * (p.gain || 0.03), blat = 0.3, scoop = -(p.scoop === undefined ? 60 : p.scoop) / 1200 * 0.693, ph = 0;
+        let lp = 0, hp = 0, prev = 0;
+        for (let i = 0; i < n; i++, j++) {
+            if (j >= length) j -= length;
+            const attack = i < aN ? (1 - Math.cos(Math.PI * i / aN)) / 2 : 1;
+            if (i > hold) rel *= kR;
+            blat *= kB; scoop *= kS;
+            const grow = Math.min(1, i / (0.35 * sr));
+            ph += f0 * (1 + scoop + vd * grow * sin1(vr * i));
+            const b = bright + blat;
+            const s1 = sin1(ph), c2 = 2 * sin1(ph + 0.25);
+            let sum = s1, p2 = s1, p1 = c2 * s1, a = 1;
+            for (let k = 2; k <= 8; k++) {
+                a *= b;
+                sum += a * (k % 2 ? 1 + odd : 1 - odd) * p1 / k * 1.6;
+                const nx = c2 * p1 - p2; p2 = p1; p1 = nx;
+            }
+            let air = 0;
+            if (breath) { lp += 0.35 * ((random() * 2 - 1) - lp); hp = 0.8 * (hp + lp - prev); prev = lp; air = breath * hp; }
+            data[j] += attack * rel * (sum + air);
+        }
+    }
+    // Orgue de lleugeta (tipus Hammond): tires de 16', 8', 5⅓' i 4', un clic de
+    // percussió a l'atac i el trèmolo de l'altaveu giratori.
+    function organ(start, midi, dur, vel, o) {
+        const p = o || {};
+        const f = midiHz(midi) / sr, tr = (p.trem || 6.4) / sr, kR = decay(p.release || 0.04), kP = decay(0.06);
+        const hold = Math.round(dur * sr), n = hold + Math.round(0.25 * sr), aN = Math.round(0.004 * sr);
+        let j = at(start), rel = vel * (p.gain || 0.03), perc = p.perc === undefined ? 0.5 : p.perc;
+        for (let i = 0; i < n; i++, j++) {
+            if (j >= length) j -= length;
+            const attack = i < aN ? i / aN : 1;
+            if (i > hold) rel *= kR;
+            perc *= kP;
+            const ph = f * i, trem = 1 - 0.12 * (0.5 + 0.5 * sin1(tr * i));
+            data[j] += attack * rel * trem * (0.55 * sin1(ph * 0.5) + sin1(ph) + 0.35 * sin1(ph * 1.5 + 0.1) + 0.5 * sin1(ph * 2 + 0.2) + perc * sin1(ph * 3 + 0.3));
+        }
+    }
+    // Caixa: cop de to (≈ 190 Hz) i bordons (soroll brillant).
+    function snare(start, vel, tone = 190) {
+        const kT = decay(0.05), kN = decay(0.11), kA = decay(0.0008), n = Math.round(0.5 * sr), f = tone / sr;
+        let j = at(start), et = vel * 0.06, en = vel * 0.11, atk = 1, lp = 0, hp = 0, prev = 0;
+        for (let i = 0; i < n; i++, j++) {
+            if (j >= length) j -= length;
+            et *= kT; en *= kN; atk *= kA;
+            lp += 0.7 * ((random() * 2 - 1) - lp);
+            hp = 0.9 * (hp + lp - prev); prev = lp;
+            data[j] += (1 - atk) * (et * sin1(f * i) + en * hp);
+        }
+    }
+    // Xarleston: soroll molt agut, tancat (curt) o obert (llarg).
+    function hat(start, vel, open) {
+        const kE = decay(open ? 0.16 : 0.03), n = Math.round((open ? 0.6 : 0.15) * sr);
+        let j = at(start), env = vel * 0.05, prev = 0, hp = 0;
+        for (let i = 0; i < n; i++, j++) {
+            if (j >= length) j -= length;
+            env *= kE;
+            const w = random() * 2 - 1;
+            hp = 0.55 * (hp + w - prev); prev = w;
+            data[j] += env * hp;
+        }
+    }
+    // ── Batucada (afegits a la còpia de Remigi) ──
+    // Surdo: tambor greu (≈ 60-75 Hz) amb el to que cau; tapat (`muted`), curt.
+    function surdo(start, vel, hz = 66, muted = false) {
+        const tau = muted ? 0.07 : 0.32, kE = decay(tau), kP = decay(0.03), kN = decay(0.006), n = Math.round(tau * 5 * sr);
+        let j = at(start), phase = 0, env = vel * 0.085, sweep = hz * 0.6, nz = 0.25, lp = 0;
+        for (let i = 0; i < n; i++, j++) {
+            if (j >= length) j -= length;
+            env *= kE; sweep *= kP; nz *= kN;
+            phase += (hz + sweep) / sr;
+            lp += 0.2 * ((random() * 2 - 1) - lp);
+            data[j] += env * (sin1(phase) + 0.25 * sin1(2 * phase + 0.1) + nz * lp);
+        }
+    }
+    // Repinique i tamborim: pell petita i tensa, cop sec amb la vora.
+    function skin(start, vel, hz, tau, crack) {
+        const f = hz / sr, kE = decay(tau), kN = decay(tau * 0.4), n = Math.round(tau * 6 * sr);
+        let j = at(start), env = vel * 0.045, nz = crack, hp = 0, prev = 0;
+        for (let i = 0; i < n; i++, j++) {
+            if (j >= length) j -= length;
+            env *= kE; nz *= kN;
+            const w = random() * 2 - 1;
+            hp = 0.7 * (hp + w - prev); prev = w;
+            data[j] += env * (sin1(f * i) + 0.5 * sin1(1.58 * f * i + 0.2) + nz * hp);
+        }
+    }
+    // Xocalho (ganzá): gra de soroll molt agut amb una entrada suau.
+    function shaker(start, vel, len = 0.07) {
+        const n = Math.round(len * 2.2 * sr), aN = Math.round(len * 0.35 * sr), kE = decay(len * 0.5);
+        let j = at(start), env = vel * 0.028, prev = 0, hp = 0;
+        for (let i = 0; i < n; i++, j++) {
+            if (j >= length) j -= length;
+            if (i > aN) env *= kE;
+            const w = random() * 2 - 1;
+            hp = 0.45 * (hp + w - prev); prev = w;
+            data[j] += env * Math.min(1, i / Math.max(1, aN)) * hp;
+        }
+    }
+    // Xiulet de batucada (apito): to agut amb el trinat de la boleta.
+    function whistle(start, dur, vel) {
+        const f = 2300 / sr, tr = 28 / sr, n = Math.round(dur * sr), aN = Math.round(0.01 * sr), rN = Math.round(0.03 * sr);
+        let j = at(start), ph = 0;
+        for (let i = 0; i < n; i++, j++) {
+            if (j >= length) j -= length;
+            const env = Math.min(1, i / aN, (n - i) / rN);
+            ph += f * (1 + 0.035 * sin1(tr * i));
+            data[j] += vel * 0.018 * env * (sin1(ph) + 0.2 * sin1(2 * ph));
+        }
+    }
     // Marge fix: el pic queda per sota de 0,72 i el volum mitjà és el de
     // la sintonia suau, perquè totes les melodies sonin igual de fort.
     function finish(targetRms) {
@@ -332,7 +459,7 @@ function createSynth(sampleRate, seconds, random) {
         for (let i = 0; i < length; i++) data[i] *= k;
         return data;
     }
-    return { sr, length, data, epiano, pad, strings, bass, vibes, kick, brush, pluck, flute, struck, block, reed, crackle, finish };
+    return { sr, length, data, epiano, pad, strings, bass, vibes, kick, brush, pluck, flute, struck, block, reed, crackle, brass, organ, snare, hat, surdo, skin, shaker, whistle, finish };
 }
 
 function themeScore(syn) {
@@ -803,7 +930,7 @@ function lofiScore(syn) {
 
 const SCORES = { theme: themeScore, oriental: orientalScore, bossa: bossaScore, vals: valsScore, capvespre: capvespreScore,
     havanera: havaneraScore, celta: celtaScore, nocturn: nocturnScore, marimba: marimbaScore, lofi: lofiScore };
-const INSTRUMENTS = ['epiano', 'pad', 'strings', 'bass', 'vibes', 'kick', 'brush', 'pluck', 'flute', 'struck', 'block', 'reed', 'crackle'];
+const INSTRUMENTS = ['epiano', 'pad', 'strings', 'bass', 'vibes', 'kick', 'brush', 'pluck', 'flute', 'struck', 'block', 'reed', 'crackle', 'brass', 'organ', 'snare', 'hat', 'surdo', 'skin', 'shaker', 'whistle'];
 // Mostres d'una melodia (Float32Array, 32 s, a `sampleRate`). No hi ha
 // enregistraments, veus ni xarxa: tot es calcula aquí.
 function samples(melody, sampleRate = 22050, random = Math.random) {
@@ -853,13 +980,22 @@ const JINGLES = [
     { id: 'galop', name: 'Tic-tac del rellotge', description: 'arpegis de marimba, celesta, arpa o vibràfon sobre el tic-tac d’un rellotge' },
     { id: 'rumba', name: 'Rumba de la classificació', description: 'rumba catalana tranquil·la: guitarra, palmes suaus i acordió, flauta o vibràfon' },
     { id: 'funk', name: 'Groove de la jugada', description: 'piano elèctric, baix i bateria suaus, amb vibràfon, flauta o cordes' },
-    { id: 'himne', name: 'Himne de la lliga', description: 'cordes, arpa, celesta o trompa, solemne i calmat' }
+    { id: 'himne', name: 'Himne de la lliga', description: 'cordes, arpa, celesta o trompa, solemne i calmat' },
+    // Afegits a la còpia de Remigi: estils d'ska (sempre amb el generador
+    // d'estructures, versió 2).
+    { id: 'ska', name: 'Ska de la jugada', description: 'ska clàssic: guitarra i piano a contratemps, baix caminant i vents (trompeta, saxo o trombó)' },
+    { id: 'rocksteady', name: 'Rocksteady del descans', description: 'rocksteady pausat: bateria «one drop», baix rodó, orgue i trombó, saxo o melòdica' },
+    { id: 'dostons', name: 'Dos tons de la lliga', description: 'ska «2 Tone» ràpid: orgue, guitarra a tots els contratemps, xarleston i vents' }
 ];
+// A Remigi ja no se'n componen de noves (s'allunyen de l'ska), però les
+// receptes desades (registre, preferides) continuen sonant igual.
+const RETIRED_JINGLES = ['fanfarria', 'rumba', 'funk'];
 function jingleId(id) { return JINGLES.some(j => j.id === id) ? id : JINGLES[0].id; }
 function jingleInfo(id) { return JINGLES.find(j => j.id === jingleId(id)); }
 function pickJingle(random = Math.random, previous = null) {
-    const pool = JINGLES.filter(j => j.id !== previous);
-    const list = pool.length ? pool : JINGLES;
+    const active = JINGLES.filter(j => RETIRED_JINGLES.indexOf(j.id) < 0);
+    const pool = active.filter(j => j.id !== previous);
+    const list = pool.length ? pool : active;
     const r = Math.max(0, Math.min(0.999999, Number(random()) || 0));
     return list[Math.floor(r * list.length)].id;
 }
@@ -924,13 +1060,21 @@ const RHYTHMS = {
     r6: [[0.5, 0.5], [1, 1], [2.5, 0.5], [3, 1]],
     r7: [[0, 2], [2, 2]],
     r8: [[0, 3], [3, 1]],
-    r9: [[0.5, 0.5], [1, 1], [2, 2]]
+    r9: [[0.5, 0.5], [1, 1], [2, 2]],
+    // Frases de vents d'ska (Remigi): notes curtes i anticipacions.
+    s1: [[0, 0.5], [0.5, 0.5], [1, 1], [2.5, 0.5], [3, 1]],
+    s2: [[0, 1.5], [1.5, 0.5], [2, 0.5], [2.5, 1.5]],
+    s3: [[0.5, 0.5], [1, 0.5], [1.5, 1], [2.5, 0.5], [3, 1]],
+    s4: [[0, 1], [1.5, 1], [2.5, 1.5]],
+    s5: [[0, 0.5], [0.5, 0.5], [1, 0.5], [1.5, 0.5], [2, 2]],
+    s6: [[0, 2], [2.5, 0.5], [3, 1]]
 };
 const CADENCE_RHYTHMS = [RHYTHMS.r2, RHYTHMS.r3, RHYTHMS.r7];
 // Instruments solistes possibles (nom en català per a la pantalla).
 const LEAD_NAMES = {
     flute: 'flauta', vibes: 'vibràfon', epiano: 'piano elèctric', accordion: 'acordió', clarinet: 'clarinet',
-    horn: 'trompa', strings: 'cordes', harp: 'arpa', guitar: 'guitarra', marimba: 'marimba', celesta: 'celesta'
+    horn: 'trompa', strings: 'cordes', harp: 'arpa', guitar: 'guitarra', marimba: 'marimba', celesta: 'celesta',
+    trumpet: 'trompeta', sax: 'saxo', trombone: 'trombó', organ: 'orgue', melodica: 'melòdica'
 };
 // Cada estil: mode, tonalitats, tempo (durada del temps, s), registres,
 // ritmes de melodia, salt màxim, solistes i nombre de variants
@@ -945,7 +1089,19 @@ const STYLES = {
     funk: { mode: 'dorian', keys: [4, 9, 2, 7, 0, 5], beat: [0.62, 0.71], chordBase: 59, seventh: true, mel: [69, 86], maxJump: 3,
         rhythms: ['r6', 'r5', 'r9', 'r2', 'r3'], leads: ['vibes', 'epiano', 'flute', 'strings'], variants: 2 },
     himne: { mode: 'major', keys: [0, 2, 5, 7, 10, 3], beat: [0.71, 0.83], chordBase: 59, seventh: false, mel: [65, 84], maxJump: 4,
-        rhythms: ['r2', 'r3', 'r7', 'r8', 'r4'], leads: ['strings', 'celesta', 'horn', 'flute'], variants: 2 }
+        rhythms: ['r2', 'r3', 'r7', 'r8', 'r4'], leads: ['strings', 'celesta', 'horn', 'flute'], variants: 2 },
+    // Estils d'ska (Remigi): `modes` (en tria un), `bank` (progressions
+    // típiques, que el generador barreja amb les seves) i `v2` (només amb el
+    // generador d'estructures).
+    ska: { mode: 'major', modes: ['major', 'major', 'minor'], keys: [0, 2, 5, 7, 10, 3], beat: [0.38, 0.44], chordBase: 60, seventh: false, mel: [65, 84], maxJump: 3,
+        rhythms: ['s1', 's2', 's3', 's4', 's5', 's6', 'r4'], leads: ['trumpet', 'sax', 'trombone', 'melodica'], variants: 3, v2: true, batucada: true,
+        bank: { major: [[0, 3, 4, 3], [0, 4, 0, 4], [0, 5, 3, 4], [0, 9, 3, 0], [0, 0, 3, 4], [1, 4, 0, 0]], minor: [[0, 3, 0, 4], [0, 6, 5, 4], [0, 0, 3, 3]] } },
+    rocksteady: { mode: 'major', modes: ['major', 'minor'], keys: [0, 2, 5, 7, 9, 10], beat: [0.58, 0.66], chordBase: 57, seventh: false, mel: [62, 81], maxJump: 3,
+        rhythms: ['r2', 'r3', 'r4', 's2', 's4', 's6'], leads: ['trombone', 'sax', 'organ', 'melodica'], variants: 2, v2: true, batucada: true,
+        bank: { major: [[0, 5, 3, 4], [0, 3, 0, 4], [0, 0, 1, 4], [0, 8, 3, 3]], minor: [[0, 3, 0, 4], [0, 5, 6, 0], [0, 6, 3, 4]] } },
+    dostons: { mode: 'minor', modes: ['minor', 'dorian', 'major'], keys: [9, 4, 2, 7, 0, 5], beat: [0.33, 0.37], chordBase: 59, seventh: false, mel: [64, 83], maxJump: 3,
+        rhythms: ['s1', 's3', 's5', 's6', 'r2', 'r7'], leads: ['sax', 'trumpet', 'organ'], variants: 2, v2: true, batucada: true,
+        bank: { major: [[0, 3, 4, 4], [0, 9, 3, 0]], minor: [[0, 6, 5, 4], [0, 3, 0, 3], [0, 5, 3, 4]], dorian: [[0, 3, 0, 3], [0, 6, 3, 0]] } }
 };
 // Arpegis del rellotge (índexs de l'acord; -1 = silenci): quatre patrons.
 const GALOP_PATTERNS = [[0, 1, 2, 3, 2, 1, 0, -1], [3, 2, 1, 0, 1, 2, 3, -1], [0, 2, 1, 3, 2, 3, 1, -1], [0, 1, 2, 1, 3, 2, 1, -1]];
@@ -1036,6 +1192,7 @@ function composeJingle(style, seed, opts) {
     const loopSeconds = opts && opts.seconds > 0 ? opts.seconds : MELODY_SECONDS;
     const id = jingleId(style);
     const st = STYLES[id];
+    if (st.v2 || (opts && opts.v === 2)) return composeStructured(id, seed, loop, loopSeconds);
     const s = (seed >>> 0) || 1;
     const r = seededRng(s);
     const tonic = pickOf(r, st.keys);
@@ -1095,18 +1252,288 @@ function composeJingle(style, seed, opts) {
     spec.melody = notes;
     return spec;
 }
+// ── Generador d'estructures (versió 2, afegit a la còpia de Remigi) ──
+// En lloc de la forma fixa (A A' B), cada llavor tria una forma: cançó
+// (AABA), rondó (ABACA…), tornada (estrofa i tornada), binària (AA'BB'),
+// tema i variacions o amb pont. Les seccions són de quatre compassos (els
+// que sobren fan una introducció només de ritme). Cada lletra té la seva
+// progressió, generada amb funcions tonals (tònica → subdominant →
+// dominant), amb dominants secundàries i el ♭VII; una secció que torna és
+// la mateixa música, i una prima (A′) en canvia la meitat. Algunes
+// seccions porten un altre solista, una pausa del solista, un crescendo cap
+// a la tornada o una modulació (el pont). Tot surt de la llavor: les
+// receptes de la versió 1 (sense `v`) continuen donant la mateixa peça.
+const FORMS = ['canco', 'rondo', 'tornada', 'binaria', 'variacions', 'pont'];
+const FORM_NAMES = { canco: 'cançó', rondo: 'rondó', tornada: 'estrofa i tornada', binaria: 'binària', variacions: 'tema i variacions', pont: 'amb pont' };
+// Lletres d'una forma per a n seccions; `p` = nombre de primes (A′, A″…).
+function formLetters(kind, n) {
+    const cycle = {
+        canco: ['A', 'A', 'B', 'A'],
+        rondo: ['A', 'B', 'A', 'C'],
+        tornada: ['A', 'A', 'B', 'B', 'A', 'B', 'B'],
+        binaria: ['A', 'A', 'B', 'B'],
+        variacions: ['A', 'A', 'A', 'B'],
+        pont: ['A', 'B', 'A', 'B', 'C', 'B', 'B']
+    }[kind];
+    const out = [];
+    const seen = {};
+    for (let i = 0; i < n; i++) {
+        const letter = cycle[i % cycle.length];
+        const round = Math.floor(i / cycle.length);
+        const k = seen[letter] || 0;
+        seen[letter] = k + 1;
+        // A la binària i a les variacions cada repetició és una prima; a la
+        // resta, la segona volta del cicle.
+        const prime = kind === 'variacions' && letter === 'A' ? k : (kind === 'binaria' ? k % 2 : round);
+        out.push({ letter, prime });
+    }
+    // Si acaba en C (rondó), el bucle torna a l'A en començar de nou.
+    return out;
+}
+// Funcions tonals per mode: d'on es pot anar (graus 0-6; 7 = V/V, 8 = I7
+// (V/IV), 9 = ♭VII, només en major).
+const NEXT = {
+    major: { 0: [3, 4, 5, 1, 9, 8, 3], 1: [4, 7, 4], 2: [5, 3], 3: [4, 0, 1, 7, 4], 4: [0, 5, 0], 5: [3, 1, 4, 2], 7: [4], 8: [3], 9: [3, 0] },
+    minor: { 0: [3, 5, 6, 4, 3], 2: [5, 3], 3: [4, 0, 6], 4: [0, 5, 0], 5: [6, 3, 2, 4], 6: [2, 0, 5] },
+    dorian: { 0: [3, 6, 0, 3], 2: [3], 3: [0, 4, 6], 4: [0], 5: [4, 3], 6: [0, 3] }
+};
+const STARTS = { A: [0], B: [3, 5, 1, 3], C: [5, 3, 9, 2] };
+function genProgression(r, len, letter, mode, st) {
+    const bank = st.bank && st.bank[mode];
+    if (letter === 'A' && bank && r() < 0.6) {
+        const base = pickOf(r, bank);
+        return Array.from({ length: len }, (_, k) => base[k % base.length]);
+    }
+    const next = NEXT[mode];
+    let starts = (STARTS[letter] || STARTS.B).filter(d => next[d]);
+    if (!starts.length) starts = [0];
+    const out = [pickOf(r, starts)];
+    while (out.length < len) out.push(pickOf(r, next[out[out.length - 1]] || [0]));
+    // Final de frase: semicadència (V) a les seccions obertes, tònica a l'A.
+    if (len >= 2) out[len - 1] = letter === 'A' && r() < 0.5 ? 0 : 4;
+    if (len >= 3 && out[len - 1] === 4 && out[len - 2] === 4) out[len - 2] = pickOf(r, mode === 'major' ? [3, 1, 7] : [3, 5]);
+    return out;
+}
+function chordPcsV2(tonic, mode, code, seventh) {
+    if (code === 7) return [2, 6, 9, 0].map(i => (tonic + i) % 12);           // V/V (II7)
+    if (code === 8) return [0, 4, 7, 10].map(i => (tonic + i) % 12);          // I7 (V/IV)
+    if (code === 9) return [10, 2, 5].map(i => (tonic + i) % 12);             // ♭VII
+    return chordPcs(tonic, mode, code, seventh);
+}
+function buildChordV2(tonic, mode, code, st, shift) {
+    const t = (tonic + (shift || 0)) % 12;
+    const pcs = chordPcsV2(t, mode, code, st.seventh || (mode !== 'major' && code === 4));
+    return { degree: code, pcs, root: bassOf(pcs[0]), notes: voice(pcs, st.chordBase, !!st.four), shift: shift || 0 };
+}
+// Nom curt de la forma: «Intro · A A′ B A».
+function formLabel(sections) {
+    return sections.map(sc => sc.letter === 'I' ? 'intro' : sc.letter + (sc.prime >= 3 ? String(sc.prime) : ['', '′', '″'][sc.prime])).join(' ');
+}
+// Batucada (estils d'ska): ritmes d'un compàs en setzenes, [posició, força
+// (, so)]. Cada peça en tria de dos a quatre instruments, amb un ritme
+// cadascun; la B i la C hi sumen un instrument més, i la intro i la pausa
+// poden ser només de batucada.
+const BATUCADA = {
+    surdo: [
+        [[0, 0.5, 'm'], [4, 1, 'o'], [8, 0.5, 'm'], [12, 1, 'o']],
+        [[4, 1, 'o'], [12, 1, 'o'], [14, 0.6, 'm']],
+        [[0, 1, 'o'], [6, 0.7, 'm'], [8, 0.9, 'o'], [10, 0.6, 'm'], [12, 1, 'o']]
+    ],
+    repinique: [
+        [[2, 0.7], [3, 0.5], [6, 0.9], [10, 0.7], [11, 0.5], [14, 0.9]],
+        [[2, 0.9], [6, 0.9], [10, 0.9], [14, 0.9]],
+        [[0, 1], [3, 0.8], [6, 1], [8, 0.7], [11, 0.8], [14, 1]]
+    ],
+    tamborim: [
+        [[0, 1], [2, 0.7], [3, 0.9], [5, 0.7], [7, 1], [8, 0.7], [10, 0.9], [13, 0.8]],
+        [[2, 1], [6, 1], [10, 1], [14, 1], [15, 0.6]],
+        [[0, 1], [3, 1], [6, 1], [8, 0.8], [11, 1], [14, 1]]
+    ],
+    agogo: [
+        [[0, 1, 'h'], [2, 0.7, 'l'], [4, 0.9, 'h'], [7, 0.8, 'l'], [8, 1, 'h'], [10, 0.7, 'h'], [12, 0.8, 'l']],
+        [[0, 1, 'h'], [3, 0.8, 'l'], [6, 0.9, 'h'], [8, 0.8, 'l'], [10, 0.9, 'h'], [12, 0.7, 'l'], [14, 0.7, 'l']]
+    ],
+    xocalho: [
+        Array.from({ length: 16 }, (_, k) => [k, k % 4 === 2 ? 0.95 : 0.4]),
+        Array.from({ length: 8 }, (_, k) => [k * 2, k % 2 ? 0.9 : 0.45])
+    ],
+    caixa: [
+        Array.from({ length: 16 }, (_, k) => [k, k % 4 === 2 ? 0.8 : 0.22]),
+        [[2, 0.8], [3, 0.3], [6, 0.8], [7, 0.3], [9, 0.4], [10, 0.8], [14, 0.8], [15, 0.4]]
+    ]
+};
+const BATUCADA_NAMES = { surdo: 'surdo', repinique: 'repinique', tamborim: 'tamborim', agogo: 'agogô', xocalho: 'xocalho', caixa: 'caixa' };
+function pickBatucada(r) {
+    const all = Object.keys(BATUCADA);
+    const pool = all.slice();
+    const count = 2 + Math.floor(r() * 3);
+    const layers = [];
+    // Gairebé sempre el surdo (el cor de la batucada).
+    if (r() < 0.75) { layers.push('surdo'); pool.splice(pool.indexOf('surdo'), 1); }
+    while (layers.length < count) layers.push(pool.splice(Math.floor(r() * pool.length) % pool.length, 1)[0]);
+    const extra = pool.length ? pool[Math.floor(r() * pool.length) % pool.length] : null;
+    const pat = inst => Math.floor(r() * BATUCADA[inst].length) % BATUCADA[inst].length;
+    return {
+        layers: layers.map(inst => ({ inst, pat: pat(inst) })),
+        extra: extra ? { inst: extra, pat: pat(extra) } : null,
+        surdoHz: 58 + Math.floor(r() * 18),
+        // La intro i la pausa, només de batucada? I el xiulet als canvis?
+        introSolo: r() < 0.5,
+        pausaSolo: r() < 0.6,
+        apito: r() < 0.4
+    };
+}
+function batucadaLabel(perc) {
+    const names = perc.layers.map(l => BATUCADA_NAMES[l.inst]);
+    return names.slice(0, -1).join(', ') + (names.length > 1 ? ' i ' : '') + names[names.length - 1];
+}
+function composeStructured(id, seed, loop, loopSeconds) {
+    const st = STYLES[id];
+    const s = (seed >>> 0) || 1;
+    const r = seededRng(s ^ 0x5bd1e995);
+    const mode = st.modes ? pickOf(r, st.modes) : st.mode;
+    const tonic = mode !== st.mode && mode === 'major' ? pickOf(r, [0, 2, 5, 7, 10]) : pickOf(r, st.keys);
+    const wanted = st.beat[0] + r() * (st.beat[1] - st.beat[0]);
+    const target = loop ? loopSeconds : JINGLE_END[0] + r() * (JINGLE_END[1] - JINGLE_END[0]);
+    const bars = Math.max(6, Math.round(target / (wanted * 4)));
+    const beat = target / (bars * 4);
+    const lead = pickOf(r, st.leads);
+    const altLeads = st.leads.filter(l => l !== lead);
+    const altLead = altLeads.length ? pickOf(r, altLeads) : lead;
+    const variant = Math.floor(r() * st.variants);
+    const body = bars - 1;
+    const n = Math.max(1, Math.floor(body / 4));
+    const intro = body - n * 4;
+    let kinds = FORMS;
+    if (n <= 2) kinds = ['binaria', 'rondo'];
+    else if (n === 3) kinds = ['canco', 'rondo', 'variacions'];
+    const form = pickOf(r, kinds);
+    const letters = n === 1 ? [{ letter: 'A', prime: 0 }] : formLetters(form, n);
+    // Una sola tria per lletra: progressió, si modula i si canvia de solista.
+    const per = {};
+    letters.forEach(({ letter }) => {
+        if (per[letter]) return;
+        const shift = letter === 'C' && r() < 0.4 ? pickOf(r, [5, 7, 10]) : 0;
+        per[letter] = { prog: genProgression(r, 4, letter, mode, st), shift, lead: letter !== 'A' && r() < 0.5 ? altLead : lead, primes: {} };
+    });
+    // Textures: una A del mig (no la primera ni l'última) fa pausa del
+    // solista; la secció abans de l'última fa crescendo (si n'hi ha prou).
+    const textures = letters.map(() => 'ple');
+    if (n >= 5 && r() < 0.6) {
+        const mids = letters.map((x, i) => i).filter(i => i > 1 && i < n - 1 && letters[i].letter === 'A');
+        if (mids.length) textures[pickOf(r, mids)] = 'pausa';
+    }
+    if (n >= 3 && r() < 0.6 && textures[n - 2] === 'ple') textures[n - 2] = 'crescendo';
+    const sections = [];
+    let at = 0;
+    if (intro > 0) { sections.push({ letter: 'I', prime: 0, start: 0, bars: intro, shift: 0, texture: 'intro', lead }); at = intro; }
+    letters.forEach(({ letter, prime }, i) => {
+        sections.push({ letter, prime, start: at, bars: 4, shift: per[letter].shift, texture: textures[i], lead: per[letter].lead });
+        at += 4;
+    });
+    // Acords de cada compàs.
+    const degrees = [], chords = [], barInfo = [];
+    sections.forEach((sc, si) => {
+        let prog;
+        if (sc.letter === 'I') prog = Array.from({ length: sc.bars }, (_, k) => (k % 2 ? 4 : 0));
+        else {
+            const info = per[sc.letter];
+            prog = info.prog;
+            // Prima: la mateixa primera meitat i una segona meitat nova
+            // (a les variacions, les mateixes harmonies).
+            if (sc.prime && form !== 'variacions') {
+                info.primes[sc.prime] = info.primes[sc.prime] || prog.slice(0, 2).concat(genProgression(r, 4, sc.letter, mode, st).slice(2));
+                prog = info.primes[sc.prime];
+            }
+        }
+        prog.forEach(code => {
+            degrees.push(code);
+            chords.push(buildChordV2(tonic, mode, code, st, sc.shift));
+            barInfo.push({ sec: si, texture: sc.texture, lead: sc.lead });
+        });
+    });
+    // L'últim compàs: la dominant, que torna a començar (bucle) o al final.
+    degrees.push(4);
+    chords.push(buildChordV2(tonic, mode, 4, st, 0));
+    barInfo.push({ sec: sections.length - 1, texture: 'ple', lead });
+    const finalPcs = chordPcs(tonic, mode, 0, st.seventh);
+    const spec = {
+        style: id, seed: s, v: 2, loop, seconds: loop ? loopSeconds : JINGLE_SECONDS, tonic, mode, beat, degrees, lead, variant,
+        keyName: PC_NAMES[tonic] + ' ' + MODE_NAMES[mode],
+        leadName: LEAD_NAMES[lead],
+        form, formName: FORM_NAMES[form], formLabel: formLabel(sections), sections, barInfo,
+        chords,
+        final: { root: bassOf(tonic), notes: voiceRoot(finalPcs.slice(0, 3), 57), top: nearestTone(st.mel ? st.mel[1] - 6 : 79, [tonic], 72, 88) },
+        melody: [], patterns: []
+    };
+    if (st.batucada) {
+        // Una llavor pròpia: no mou la resta de la peça.
+        spec.perc = pickBatucada(seededRng((s ^ 0x27d4eb2f ^ Math.imul(id.length, 0x9e3779b1)) >>> 0));
+        spec.percName = batucadaLabel(spec.perc);
+    }
+    if (!st.mel) {
+        // Arpegis (galop): els mateixos patrons quan torna una secció.
+        const memo = {};
+        sections.forEach(sc => {
+            const key = sc.letter + sc.prime;
+            const pats = memo[key] || Array.from({ length: sc.bars }, () => pickOf(r, GALOP_PATTERNS));
+            if (sc.letter !== 'I') memo[key] = pats;
+            for (let k = 0; k < sc.bars; k++) spec.patterns.push(pats[k % pats.length]);
+        });
+        spec.patterns.push(pickOf(r, GALOP_PATTERNS));
+        return spec;
+    }
+    const ctx = { chords, lo: st.mel[0], hi: st.mel[1], center: (st.mel[0] + st.mel[1]) / 2, maxJump: st.maxJump };
+    ctx.prev = nearestTone(ctx.center - 3, chords[Math.min(intro, chords.length - 1)].pcs, ctx.lo, ctx.hi);
+    const rh = k => Array.from({ length: k }, () => RHYTHMS[pickOf(r, st.rhythms)]);
+    const idx = (start, k) => Array.from({ length: k }, (_, i) => start + i);
+    const motifs = {}; // lletra → { rhythms, dirs, notes, start }
+    let notes = [];
+    sections.forEach(sc => {
+        if (sc.letter === 'I') return;
+        ctx.scalePcs = SCALES[mode].map(i => (tonic + sc.shift + i) % 12);
+        const m = motifs[sc.letter];
+        let phrase;
+        if (m && !sc.prime) {
+            // Torna la secció: la mateixa melodia.
+            phrase = m.notes.map(([b, t, nn, d]) => [b - m.start + sc.start, t, nn, d]);
+        } else if (m) {
+            // Prima: el mateix ritme i contorn (a les variacions, ritme nou).
+            const rhythms = form === 'variacions' ? rh(sc.bars) : m.rhythms;
+            phrase = composePhrase(r, ctx, idx(sc.start, sc.bars), rhythms, m.dirs).notes;
+        } else {
+            const rhythms = rh(sc.bars);
+            const res = composePhrase(r, ctx, idx(sc.start, sc.bars), rhythms);
+            motifs[sc.letter] = { rhythms, dirs: res.dirs, notes: res.notes, start: sc.start };
+            phrase = res.notes;
+        }
+        if (phrase.length) ctx.prev = phrase[phrase.length - 1][2];
+        if (sc.texture !== 'pausa') notes = notes.concat(phrase);
+    });
+    ctx.scalePcs = SCALES[mode].map(i => (tonic + i) % 12);
+    notes = notes.concat(composePhrase(r, ctx, [bars - 1], [pickOf(r, CADENCE_RHYTHMS)]).notes);
+    spec.melody = notes;
+    return spec;
+}
+// Informació d'un compàs (versió 2): textura i solista. Versió 1: tot ple.
+const FULL_BAR = { texture: 'ple', lead: null };
+function barAt(spec, b) { return (spec.barInfo && spec.barInfo[b]) || FULL_BAR; }
+function leadAt(spec, b) { return barAt(spec, b).lead || spec.lead; }
+
 // Empremta d'una peça (melodia, harmonia, solista i variant), per no
 // repetir-ne cap.
 function jingleFingerprint(spec) {
     const str = spec.style + '|' + spec.tonic + '|' + spec.lead + '|' + spec.variant + '|' + spec.degrees.join('') + '|'
-        + spec.melody.map(m => m[2] + ':' + m[1]).join(',') + '|' + spec.patterns.map(p => p.join('')).join('');
+        + spec.melody.map(m => m[2] + ':' + m[1]).join(',') + '|' + spec.patterns.map(p => p.join('')).join('')
+        + (spec.v === 2 ? '|v2|' + spec.mode + '|' + spec.formLabel + '|' + spec.chords.map(c => c.shift).join('') : '')
+        + (spec.perc ? '|' + spec.perc.layers.map(l => l.inst + l.pat).join(',') + (spec.perc.extra ? '+' + spec.perc.extra.inst : '') : '');
     let h = 2166136261;
     for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
     return (h >>> 0).toString(36);
 }
 function jingleTitle(spec) {
     const info = jingleInfo(spec && spec.style);
-    return info.name + ' · ' + (spec ? spec.keyName + ' · ' + spec.leadName : '');
+    return info.name + ' · ' + (spec ? spec.keyName + ' · ' + spec.leadName + (spec.v === 2 ? ' · ' + spec.formName : '') + (spec.percName ? ' · ' + spec.percName : '') : '');
 }
 
 // Instrument solista: una nota.
@@ -1127,6 +1554,12 @@ function playLead(syn, kind, start, n, dur, v) {
         case 'guitar': syn.pluck(start, n, 0.95 * v, { decay: 1.0, partials: [1, 0.5, 0.28, 0.14], damp: 1.3, gain: 0.12, attack: 0.004, vib: 0.1 }); break;
         case 'marimba': syn.struck(start, n, v, [1, 3.98, 9.9], [1, 0.22, 0.05], [0.6, 0.12, 0.04], { gain: 0.11 }); break;
         case 'celesta': syn.struck(start, n, v, [1, 2, 3.01, 4.2], [1, 0.35, 0.12, 0.06], [0.9, 0.4, 0.2, 0.1], { gain: 0.08 }); break;
+        // Afegits a Remigi (ska).
+        case 'trumpet': syn.brass(start, n, d, v, { gain: 0.024, bright: 0.66, attack: 0.022, scoop: 45, vib: 0.1 }); break;
+        case 'trombone': syn.brass(start, n - 12, d, v, { gain: 0.032, bright: 0.56, attack: 0.045, scoop: 90, vib: 0.08, release: 0.09 }); break;
+        case 'sax': syn.brass(start, n, d, v, { gain: 0.026, bright: 0.58, attack: 0.03, odd: 0.3, breath: 0.22, scoop: 70, vib: 0.2 }); break;
+        case 'organ': syn.organ(start, n, d, v, { gain: 0.02, perc: 0.6 }); break;
+        case 'melodica': syn.reed(start, n, d, v, { gain: 0.03, attack: 0.03, release: 0.08, detune: 3 }); break;
         default: syn.flute(start, n, d, 0.85 * v, { gain: 0.06 });
     }
 }
@@ -1182,7 +1615,7 @@ function galopScore(syn, spec) {
         chord.notes.forEach(n => syn.pad(t0, n, bar, 0.006, 0.5));
         spec.patterns[b].forEach((idx, e) => {
             if (idx < 0) return;
-            playLead(syn, spec.lead, t0 + e * eighth, tones[idx], (e === 6 ? 2 : 1) * eighth - 0.02, (e % 2 ? 0.6 : 0.75) * v);
+            playLead(syn, leadAt(spec, b), t0 + e * eighth, tones[idx], (e === 6 ? 2 : 1) * eighth - 0.02, (e % 2 ? 0.6 : 0.75) * v);
         });
         if (spec.variant === 0) for (let t = 0; t < 4; t++) syn.block(t0 + t * beat, 0.25, t % 2 ? 1450 : 1900, 0.008, 0.5);
     });
@@ -1284,7 +1717,7 @@ function himneScore(syn, spec) {
     if (!spec.loop) for (let k = 0; k < 8; k++) syn.kick(end - bar / 2 + k * bar / 16, 0.2 + 0.03 * k, 46);
     spec.melody.forEach(([b, t, n, d]) => {
         const start = b * bar + t * beat;
-        playLead(syn, spec.lead, start, n, d * beat - 0.05, cr(start, end));
+        playLead(syn, leadAt(spec, b), start, n, d * beat - 0.05, cr(start, end));
     });
     if (!spec.loop) {
         jingleFinal(syn, end, spec.final.notes, spec.final.root, { hold: 1.0 });
@@ -1293,7 +1726,172 @@ function himneScore(syn, spec) {
     return TARGET_RMS;
 }
 
-const JINGLE_SCORES = { fanfarria: fanfarriaScore, galop: galopScore, rumba: rumbaScore, funk: funkScore, himne: himneScore };
+// ── Estils d'ska (afegits a la còpia de Remigi) ─────────────────────
+// Comú: la dinàmica de cada compàs segons la textura de la secció
+// (intro i pausa més suaus, crescendo cap a l'última secció) i la línia de
+// vents (el solista, i a les variants 0 i 2 el trombó una octava per sota).
+function skaDyn(spec, b) {
+    const info = barAt(spec, b);
+    if (info.texture === 'intro') return 0.8;
+    if (info.texture === 'pausa') return 0.85;
+    if (info.texture === 'crescendo') {
+        const sc = spec.sections[info.sec];
+        return 0.82 + 0.18 * ((b - sc.start + 1) / sc.bars);
+    }
+    return 1;
+}
+function hornLine(syn, spec) {
+    const beat = spec.beat, bar = beat * 4;
+    spec.melody.forEach(([b, t, n, d]) => {
+        const start = b * bar + t * beat, dur = Math.max(0.1, d * beat - 0.05), v = skaDyn(spec, b);
+        const lead = leadAt(spec, b);
+        playLead(syn, lead, start, n, dur, v);
+        if (spec.variant !== 1 && (lead === 'trumpet' || lead === 'sax')) playLead(syn, 'trombone', start + 0.006, n, dur, 0.5 * v);
+    });
+}
+// Redoble de caixa a l'últim compàs d'un crescendo (i a l'intro).
+function skaFill(syn, spec, b, t0, beat) {
+    const info = barAt(spec, b), next = barAt(spec, b + 1);
+    if (info.sec === next.sec || (info.texture !== 'crescendo' && info.texture !== 'intro')) return false;
+    for (let k = 0; k < 8; k++) syn.snare(t0 + 2 * beat + k * beat / 4, 0.35 + 0.07 * k);
+    return true;
+}
+// Línia de baix caminant: fonamental, tercera, quinta i una nota de pas cap
+// a la fonamental següent.
+function walking(chord, next) {
+    const rt = chord.root, third = rt + ((chord.pcs[1] - chord.pcs[0] + 12) % 12), fifth = rt + ((chord.pcs[2] - chord.pcs[0] + 12) % 12);
+    const nr = next ? next.root : rt;
+    const approach = nr > rt ? nr - 1 : nr + 1;
+    return [rt, third, fifth, Math.abs(approach - rt) > 7 ? fifth : approach];
+}
+// Un cop d'un instrument de batucada.
+function batucadaHit(syn, inst, t, vel, sound, hz) {
+    switch (inst) {
+        case 'surdo': syn.surdo(t, vel, hz, sound === 'm'); break;
+        case 'repinique': syn.skin(t, vel, 340, 0.07, 0.5); break;
+        case 'tamborim': syn.skin(t, 0.8 * vel, 880, 0.025, 0.9); break;
+        case 'agogo': syn.struck(t, sound === 'h' ? 84 : 79, vel, [1, 2.42, 3.9], [1, 0.45, 0.2], [0.22, 0.1, 0.05], { gain: 0.022 }); break;
+        case 'xocalho': syn.shaker(t, vel); break;
+        case 'caixa': syn.snare(t, 0.32 * vel, 280); break;
+    }
+}
+// La batucada de tota la peça (si l'estil en porta). Torna, per a cada
+// compàs, si la bateria ha de callar (intro o pausa només de batucada).
+function batucada(syn, spec) {
+    const quiet = spec.chords.map(() => false);
+    const perc = spec.perc;
+    if (!perc) return quiet;
+    const beat = spec.beat, bar = beat * 4, six = beat / 4;
+    spec.chords.forEach((chord, b) => {
+        const info = barAt(spec, b), sc = spec.sections && spec.sections[info.sec];
+        const t0 = b * bar, v = skaDyn(spec, b);
+        let layers = perc.layers;
+        if (sc && (sc.letter === 'B' || sc.letter === 'C') && perc.extra) layers = layers.concat([perc.extra]);
+        if (info.texture === 'intro') {
+            quiet[b] = perc.introSolo;
+            // La intro entra de mica en mica: primer el surdo (o el primer), després la resta.
+            const sinceStart = sc ? b - sc.start : 0;
+            layers = layers.slice(0, Math.max(1, sinceStart + 1));
+        }
+        if (info.texture === 'pausa' && perc.pausaSolo) { quiet[b] = true; if (perc.extra) layers = layers.concat([perc.extra]); }
+        layers.forEach(({ inst, pat }) => BATUCADA[inst][pat].forEach(([pos, vel, sound]) =>
+            batucadaHit(syn, inst, t0 + pos * six, vel * v, sound, perc.surdoHz)));
+        // Crescendo: la crida del repinique a l'últim compàs de la secció.
+        const next = barAt(spec, b + 1);
+        if (info.texture === 'crescendo' && next.sec !== info.sec)
+            [8, 9, 10, 12, 13, 14, 15].forEach((pos, k) => syn.skin(t0 + pos * six, 0.6 + 0.06 * k, 340, 0.07, 0.6));
+        // El xiulet marca l'entrada de les seccions B i de la pausa.
+        if (perc.apito && sc && b === sc.start && (sc.letter === 'B' || info.texture === 'pausa') && b > 0) {
+            syn.whistle(t0 - beat, beat * 0.45, 0.9);
+            syn.whistle(t0 - beat / 2, beat * 0.3, 0.8);
+        }
+    });
+    return quiet;
+}
+function skaFinal(syn, spec, end) {
+    if (spec.loop) return;
+    jingleFinal(syn, end, spec.final.notes, spec.final.root, { hold: 1.0 });
+    spec.final.notes.forEach(n => syn.brass(end, n, 1.0, 0.7, { gain: 0.012, bright: 0.6 }));
+    playLead(syn, spec.lead, end, spec.final.top, 1.2, 1);
+}
+// Ska clàssic: guitarra (i piano o orgue, segons la variant) a contratemps,
+// baix caminant, bombo a l'1 i el 3, caixa al 2 i el 4, xarleston.
+function skaScore(syn, spec) {
+    const beat = spec.beat, bar = beat * 4, eighth = beat / 2, end = spec.chords.length * bar;
+    const chop = { decay: 0.08, partials: [1, 0.6, 0.4, 0.25, 0.12], damp: 0.6, gain: 0.07, attack: 0.002 };
+    const piano = { decay: 0.12, partials: [1, 0.45, 0.25, 0.1], damp: 0.9, gain: 0.05, attack: 0.002 };
+    const quiet = batucada(syn, spec);
+    spec.chords.forEach((chord, b) => {
+        const t0 = b * bar, v = skaDyn(spec, b), info = barAt(spec, b);
+        const walk = walking(chord, spec.chords[(b + 1) % spec.chords.length]);
+        [0.5, 1.5, 2.5, 3.5].forEach(t => {
+            chord.notes.forEach((n, k) => syn.pluck(t0 + t * beat + k * 0.004, n + 12, 0.8 * v, chop));
+            if (spec.variant === 0) chord.notes.forEach(n => syn.pluck(t0 + t * beat, n, 0.7 * v, piano));
+            if (spec.variant === 1) chord.notes.forEach(n => syn.organ(t0 + t * beat, n, eighth * 0.7, 0.6 * v, { gain: 0.007, perc: 0.3 }));
+            if (spec.variant === 2) chord.notes.forEach((n, k) => syn.pluck(t0 + t * beat + eighth / 2 + k * 0.004, n + 12, 0.45 * v, chop));
+        });
+        walk.forEach((n, k) => syn.bass(t0 + k * beat, n, (k ? 0.65 : 0.85) * v, 0.3));
+        if (quiet[b]) return;
+        const fill = skaFill(syn, spec, b, t0, beat);
+        if (info.texture !== 'pausa') [0, 2].forEach(t => syn.kick(t0 + t * beat, 0.6 * v, 50));
+        [1, 3].forEach(t => { if (!(fill && t === 3)) syn.snare(t0 + t * beat, (info.texture === 'pausa' ? 0.45 : 0.7) * v); });
+        for (let k = 0; k < 8; k++) syn.hat(t0 + k * eighth, (k % 2 ? 0.9 : 0.5) * v, k === 7 && b % 2 === 1);
+    });
+    hornLine(syn, spec);
+    skaFinal(syn, spec, end);
+    return TARGET_RMS;
+}
+// Rocksteady: més lent; «one drop» (bombo i cop de vora només al 3),
+// guitarra al 2 i el 4, orgue «bubble» (variant 0) o acords llargs
+// (variant 1) i un baix rodó i melòdic.
+function rocksteadyScore(syn, spec) {
+    const beat = spec.beat, bar = beat * 4, eighth = beat / 2, end = spec.chords.length * bar;
+    const chop = { decay: 0.1, partials: [1, 0.55, 0.35, 0.2], damp: 0.7, gain: 0.07, attack: 0.002 };
+    const quiet = batucada(syn, spec);
+    spec.chords.forEach((chord, b) => {
+        const t0 = b * bar, v = skaDyn(spec, b), info = barAt(spec, b);
+        [1, 3].forEach(t => chord.notes.forEach((n, k) => syn.pluck(t0 + t * beat + k * 0.005, n + 12, 0.8 * v, chop)));
+        if (spec.variant === 0) [0.5, 1.5, 2.5, 3.5].forEach((t, k) => chord.notes.forEach(n => syn.organ(t0 + t * beat, n - (k % 2 ? 0 : 12), eighth * 0.8, 0.55 * v, { gain: 0.007, perc: 0.2 })));
+        else chord.notes.forEach(n => syn.organ(t0, n, bar - 0.05, 0.5 * v, { gain: 0.006, perc: 0, trem: 6.8 }));
+        const rt = chord.root, fifth = rt + ((chord.pcs[2] - chord.pcs[0] + 12) % 12), third = rt + ((chord.pcs[1] - chord.pcs[0] + 12) % 12);
+        [[0, rt, 1, 0.6], [1.5, fifth, 0.6, 0.3], [2, rt + 12, 0.7, 0.3], [3, third, 0.6, 0.3], [3.5, fifth, 0.5, 0.25]]
+            .forEach(([t, n, vel, tau]) => syn.bass(t0 + t * beat, n, vel * v, tau));
+        if (quiet[b]) return;
+        const fill = skaFill(syn, spec, b, t0, beat);
+        if (info.texture !== 'intro' || b % 2) { syn.kick(t0 + 2 * beat, 0.75 * v, 46); if (!fill) syn.block(t0 + 2 * beat, 0.5 * v, 1700, 0.012, 0.6); }
+        for (let k = 0; k < 8; k++) syn.hat(t0 + k * eighth + (k % 2 ? eighth * 0.12 : 0), (k % 2 ? 0.45 : 0.7) * v, false);
+    });
+    hornLine(syn, spec);
+    skaFinal(syn, spec, end);
+    return TARGET_RMS;
+}
+// 2 Tone: ràpid i enèrgic; guitarra a tots els contratemps, orgue a cops
+// (variant 0) o sostingut (variant 1), baix a corxeres, caixa forta al 2 i
+// el 4 i bombo a cada temps.
+function dostonsScore(syn, spec) {
+    const beat = spec.beat, bar = beat * 4, eighth = beat / 2, end = spec.chords.length * bar;
+    const chop = { decay: 0.06, partials: [1, 0.7, 0.5, 0.3, 0.15], damp: 0.5, gain: 0.075, attack: 0.002 };
+    const quiet = batucada(syn, spec);
+    spec.chords.forEach((chord, b) => {
+        const t0 = b * bar, v = skaDyn(spec, b), info = barAt(spec, b);
+        [0.5, 1.5, 2.5, 3.5].forEach(t => chord.notes.forEach((n, k) => syn.pluck(t0 + t * beat + k * 0.003, n + 12, 0.85 * v, chop)));
+        if (spec.variant === 0) [0.5, 1.5, 2.5, 3.5].forEach(t => chord.notes.forEach(n => syn.organ(t0 + t * beat, n, eighth * 0.6, 0.6 * v, { gain: 0.008, perc: 0.5 })));
+        else chord.notes.forEach(n => syn.organ(t0, n, bar - 0.04, 0.5 * v, { gain: 0.006, perc: 0.1 }));
+        const rt = chord.root, fifth = rt + ((chord.pcs[2] - chord.pcs[0] + 12) % 12);
+        for (let k = 0; k < 8; k++) syn.bass(t0 + k * eighth, k === 6 ? fifth : (k === 7 ? rt + 12 : rt), (k % 2 ? 0.5 : 0.75) * v, 0.16);
+        if (quiet[b]) return;
+        const fill = skaFill(syn, spec, b, t0, beat);
+        if (info.texture !== 'pausa') for (let k = 0; k < 4; k++) syn.kick(t0 + k * beat, (k % 2 ? 0.45 : 0.6) * v, 52);
+        [1, 3].forEach(t => { if (!(fill && t === 3)) syn.snare(t0 + t * beat, 0.8 * v, 210); });
+        for (let k = 0; k < 8; k++) syn.hat(t0 + k * eighth, (k % 2 ? 0.7 : 0.5) * v, false);
+    });
+    hornLine(syn, spec);
+    skaFinal(syn, spec, end);
+    return TARGET_RMS;
+}
+
+const JINGLE_SCORES = { fanfarria: fanfarriaScore, galop: galopScore, rumba: rumbaScore, funk: funkScore, himne: himneScore,
+    ska: skaScore, rocksteady: rocksteadyScore, dostons: dostonsScore };
 // Entrada i sortida: un esvaïment molt curt al principi i un de llarg al
 // final, perquè la peça s'acabi sense tall encara que l'acord final ressoni.
 function shapeJingle(data, sampleRate) {
@@ -1520,7 +2118,7 @@ function createJinglePlayer(env = {}) {
             stop(true);
             const my = ++token;
             const sp = asSpec(spec);
-            const jid = sp.style + ':' + sp.seed;
+            const jid = sp.style + ':' + sp.seed + ':' + (sp.v || 1) + ':' + (sp.loop ? sp.seconds || MELODY_SECONDS : 't');
             if (!allowed || !supported || !(o.volume > 0)) return Promise.resolve(false);
             let ctx;
             try { ctx = ensureContext(); } catch (err) { return Promise.resolve(false); }
@@ -1732,7 +2330,7 @@ function createPlayer(env = {}) {
 const api = { normalize, setAllowed, isAllowed, othersPlaying, canPlay, samples, samplesAsync, createPlayer, pickMelody, melodyId, melodyInfo,
     MELODIES, LEVEL, DUCK, TARGET_RMS, THEME_SECONDS, MELODY_SECONDS,
     // Tornades de la lliga (pantalla entre partides).
-    JINGLES, JINGLE_SECONDS, JINGLE_LEVEL, jingleId, jingleInfo, pickJingle, jingleSamples, jingleSamplesAsync, createJinglePlayer,
+    JINGLES, RETIRED_JINGLES, JINGLE_SECONDS, JINGLE_LEVEL, jingleId, jingleInfo, pickJingle, jingleSamples, jingleSamplesAsync, createJinglePlayer,
     composeJingle, jingleFingerprint, jingleTitle, _jingleStyles: STYLES, _scales: SCALES, _leadNames: LEAD_NAMES,
     // Música composta a la TV i registre de les peces compostes.
     composedMelodyId, parseComposedId, composedLoopSpec, composeMelodyId,

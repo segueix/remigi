@@ -3645,3 +3645,42 @@ de `bots` en verd (12, 5 de noves); simulació de 21 dies (29-11 a 19-12)
 encadenant la ratxa: les tres corbes es veuen i alguns dies no juguen;
 comprovat amb els `cron` de la tasca que cap execució publica dos jugadors.
 
+### Música: generador d'estructures i estils d'ska (2026-11-28)
+
+Demanat pel jugador: poder fer noves estructures a la composició i estils més
+d'ska (no de folk català). Fora fanfàrria, rumba i funk, que s'allunyen de
+l'ska.
+
+- [x] `radioambient.js` (còpia d'El Tauler, amb canvis propis llistats a la
+      capçalera i a LLIGA.md §4): generador d'estructures (`v: 2`,
+      `composeStructured`). Té sis formes, introducció, progressions per
+      funcions tonals amb V/V, I7 i ♭VII, seccions que tornen iguals i primes,
+      i textures: un altre solista, una pausa, un crescendo amb redoble i
+      modulació.
+- [x] Estils `ska`, `rocksteady` i `dostons` (2 Tone), amb instruments nous:
+      metall i saxo (`brass`), orgue, caixa i xarleston. Solistes nous:
+      trompeta, saxo, trombó, orgue i melòdica.
+- [x] `fanfarria`, `rumba` i `funk` retirats (`RETIRED_JINGLES`): no se'n
+      componen de nous, però les desades sonen igual.
+- [x] `musica.ts`: les peces noves són de la versió 2. El registre desa `v`
+      (`pieceKey` amb `:2`, `pieceOpts`). `MusicScreen` torna a compondre amb
+      la versió.
+- [x] La memòria cau del reproductor tenia en compte només l'estil i la
+      llavor. Ara també compta la versió i la durada; abans, una peça de 64 s
+      i una de 32 s amb la mateixa recepta compartien àudio.
+
+- [x] Demanat després: batucada als estils d'ska, diferent a cada tema.
+      Instruments `surdo`, `skin` (repinique, tamborim), `shaker`
+      (xocalho) i `whistle` (apito), a més de l'agogô (`struck`) i la caixa.
+      Cada peça en tria de dos a quatre, amb ritmes propis; la B i la C n'hi
+      sumen un. La intro i la pausa poden ser només de batucada, el crescendo
+      porta la crida del repinique, i hi ha xiulet a l'entrada de seccions.
+      Ajustada perquè la música en conservi uns 85 %. El títol diu els
+      instruments.
+
+**Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd;
+les 50 peces de la versió 1 provades són idèntiques bit a bit a les d'abans;
+mostres de 64 s dels tres estils d'ska en MP3; e2e: 200 passen i en falla 1,
+la de lliscar cap a El Tauler (mòbil), que no toca la música i ja fallava de
+tant en tant (1 de 3 repetida).
+

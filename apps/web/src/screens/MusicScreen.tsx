@@ -6,6 +6,7 @@ import {
   loadRadio,
   mp3FileName,
   pieceKey,
+  pieceOpts,
   registerPiece,
   registryGroups,
   registryList,
@@ -26,6 +27,9 @@ const STYLE_NAMES: Record<Piece['style'], string> = {
   rumba: 'Rumba de la classificació',
   funk: 'Groove de la jugada',
   himne: 'Himne de la lliga',
+  ska: 'Ska de la jugada',
+  rocksteady: 'Rocksteady del descans',
+  dostons: 'Dos tons de la lliga',
 };
 
 /**
@@ -56,7 +60,7 @@ export function MusicScreen({ onHome }: Props) {
 
   const titleOf = useCallback(
     (piece: Piece) =>
-      R ? R.jingleTitle(R.composeJingle(piece.style, piece.seed, { loop: true, seconds: piece.seconds })) : STYLE_NAMES[piece.style],
+      R ? R.jingleTitle(R.composeJingle(piece.style, piece.seed, pieceOpts(piece))) : STYLE_NAMES[piece.style],
     [R],
   );
 
@@ -69,7 +73,7 @@ export function MusicScreen({ onHome }: Props) {
     }
     const { R: radio, player } = await jinglePlayer();
     setPlaying(key);
-    const ok = await player.play(radio.composeJingle(piece.style, piece.seed, { loop: true, seconds: piece.seconds }), {
+    const ok = await player.play(radio.composeJingle(piece.style, piece.seed, pieceOpts(piece)), {
       volume: prefs.volume > 0 ? prefs.volume : 60,
     });
     if (!ok) {
@@ -81,7 +85,7 @@ export function MusicScreen({ onHome }: Props) {
   async function composeFresh() {
     const { R: radio, player } = await jinglePlayer();
     const spec = composeNew(radio, store);
-    const piece: Piece = { style: spec.style, seed: spec.seed, at: Date.now(), fav: false };
+    const piece: Piece = { style: spec.style, seed: spec.seed, at: Date.now(), fav: false, ...(spec.v === 2 ? { v: 2 as const } : {}) };
     setPlaying(pieceKey(piece));
     const ok = await player.play(spec, { volume: prefs.volume > 0 ? prefs.volume : 60 });
     if (ok) setList(registerPiece(store, piece));
@@ -92,7 +96,7 @@ export function MusicScreen({ onHome }: Props) {
     try {
       setStatus('Preparant l’MP3…');
       const radio = await loadRadio();
-      const spec = radio.composeJingle(piece.style, piece.seed, { loop: true, seconds: piece.seconds });
+      const spec = radio.composeJingle(piece.style, piece.seed, pieceOpts(piece));
       const [samples, lame] = await Promise.all([radio.exportSamples(spec), loadLame()]);
       if (!samples) throw new Error('sense mostres');
       const parts = await radio.encodeMp3(samples, lame, {

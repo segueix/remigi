@@ -8,6 +8,7 @@ import {
   mp3FileName,
   parseMusicPrefs,
   pieceKey,
+  pieceOpts,
   registerPiece,
   registryGroups,
   registryList,
@@ -46,7 +47,7 @@ describe('la música composta', () => {
     let k = 0;
     const seq = [0.5, 0.1, 0.1, 0.7];
     const random = () => seq[k++ % seq.length];
-    const first = R.composeJingle(R.pickJingle(() => 0.5, null), Math.floor(0.1 * 4294967295) + 1, { loop: true });
+    const first = R.composeJingle(R.pickJingle(() => 0.5, null), Math.floor(0.1 * 4294967295) + 1, { loop: true, v: 2 });
     const tauler = JSON.stringify([R.jingleFingerprint(first)]);
     const store = memoryStore({ [EL_TAULER_SEEN_KEY]: tauler });
     const spec = composeNew(R, store, random);
@@ -132,3 +133,104 @@ describe('el registre recorda la durada de les peces llargues', () => {
     expect(list.find((p) => p.seed === 6)?.seconds).toBeUndefined();
   });
 });
+
+describe('el generador d’estructures (versió 2) i els estils d’ska', () => {
+  it('les receptes d’abans (versió 1) donen exactament les mateixes peces', () => {
+    // Empremtes de la versió anterior del compositor (abans del generador).
+    const before: Record<string, [string, string]> = {
+      fanfarria: ['8djej1', 'v08t4p'],
+      galop: ['758tfi', '1dmj4kh'],
+      rumba: ['f7h65h', '1kb5ncv'],
+      funk: ['mqlsyc', '1k0v1ih'],
+      himne: ['6lvzbf', '12v98p5'],
+    };
+    for (const [style, [a, b]] of Object.entries(before)) {
+      expect(R.jingleFingerprint(R.composeJingle(style, 1, { loop: true, seconds: 32 }))).toBe(a);
+      expect(R.jingleFingerprint(R.composeJingle(style, 4242, { loop: true, seconds: 64 }))).toBe(b);
+    }
+  });
+
+  it('ja no es componen peces noves de fanfàrria, rumba ni funk', () => {
+    let k = 0;
+    const random = () => ((k++ * 0.137) % 1);
+    let previous: string | null = null;
+    const picked = new Set<string>();
+    for (let i = 0; i < 200; i++) picked.add((previous = R.pickJingle(random, previous)));
+    expect([...picked].sort()).toEqual(['dostons', 'galop', 'himne', 'rocksteady', 'ska']);
+    expect(R.RETIRED_JINGLES).toEqual(['fanfarria', 'rumba', 'funk']);
+  });
+
+  it('cada llavor tria una forma; els compassos quadren amb la durada', () => {
+    const forms = new Set<string>();
+    for (const style of ['ska', 'rocksteady', 'dostons', 'galop', 'himne']) {
+      for (let seed = 1; seed <= 30; seed++) {
+        const spec = R.composeJingle(style, seed * 7919, { loop: true, seconds: 64, v: 2 });
+        expect(spec.v).toBe(2);
+        forms.add(spec.form!);
+        const sections = spec.sections!;
+        const bars = sections.reduce((sum, sc) => sum + sc.bars, 0) + 1;
+        expect(bars).toBe(Math.round(64 / (spec.beat * 4)));
+        expect(sections.filter((sc) => sc.letter !== 'I').every((sc) => sc.bars === 4)).toBe(true);
+        expect(R.jingleTitle(spec)).toContain(spec.formName!);
+      }
+    }
+    expect(forms.size).toBe(6);
+  });
+
+  it('una secció que torna (sense prima) és la mateixa melodia', () => {
+    let checked = 0;
+    for (let seed = 1; seed <= 40 && checked < 5; seed++) {
+      const spec = R.composeJingle('ska', seed, { loop: true, seconds: 64, v: 2 });
+      const sections = spec.sections!.filter((sc) => sc.texture !== 'pausa' && sc.letter !== 'I');
+      const first = sections[0];
+      const again = sections.find((sc, i) => i > 0 && sc.letter === first.letter && sc.prime === first.prime);
+      if (!again) continue;
+      const melody = spec.melody as [number, number, number, number][];
+      const notes = (sc: typeof first) =>
+        melody.filter(([b]) => b >= sc.start && b < sc.start + sc.bars).map(([b, t, n, d]) => [b - sc.start, t, n, d]);
+      expect(notes(again)).toEqual(notes(first));
+      checked++;
+    }
+    expect(checked).toBeGreaterThan(0);
+  });
+
+  it('el reproductor (síntesi per trossos) també sap tocar els estils d’ska', async () => {
+    for (const style of ['ska', 'rocksteady', 'dostons']) {
+      const spec = R.composeJingle(style, 11, { loop: true, v: 2 });
+      const samples = await R.exportSamples(spec, { cycles: 1, fadeSeconds: 0 });
+      expect(samples).not.toBeNull();
+      expect(samples!.some((v) => Math.abs(v) > 0.05)).toBe(true);
+    }
+  }, 30_000);
+
+  it('cada tema d’ska porta la seva batucada (instruments i ritmes diferents)', () => {
+    const sets = new Set<string>();
+    for (const style of ['ska', 'rocksteady', 'dostons']) {
+      for (let seed = 1; seed <= 40; seed++) {
+        const spec = R.composeJingle(style, seed * 104729, { loop: true, v: 2 });
+        const layers = spec.perc!.layers;
+        expect(layers.length).toBeGreaterThanOrEqual(2);
+        expect(layers.length).toBeLessThanOrEqual(4);
+        expect(new Set(layers.map((l) => l.inst)).size).toBe(layers.length);
+        expect(R.jingleTitle(spec)).toContain(spec.percName!);
+        sets.add(layers.map((l) => `${l.inst}${l.pat}`).sort().join(','));
+      }
+    }
+    expect(sets.size).toBeGreaterThan(50);
+    // Els estils d'abans no en porten.
+    expect(R.composeJingle('himne', 3, { loop: true, v: 2 }).perc).toBeUndefined();
+  });
+
+  it('les peces noves són de la versió 2 i el registre ho recorda', () => {
+    const store = memoryStore();
+    const spec = composeNew(R, store);
+    expect(spec.v).toBe(2);
+    registerPiece(store, spec, 1000);
+    registerPiece(store, { style: 'himne', seed: spec.seed }, 2000);
+    const list = registryList(store);
+    expect(list.map(pieceKey)).toEqual([`himne:${spec.seed}`, `${spec.style}:${spec.seed}:2`]);
+    const again = R.composeJingle(list[1].style, list[1].seed, pieceOpts(list[1]));
+    expect(R.jingleFingerprint(again)).toBe(R.jingleFingerprint(spec));
+  });
+});
+
