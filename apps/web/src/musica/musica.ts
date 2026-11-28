@@ -87,7 +87,8 @@ export function composeNew(
   const seen = readList(store, MUSIC_SEEN_KEY);
   const heard = new Set([...seen, ...readList(store, EL_TAULER_SEEN_KEY)]);
   const style = R.pickJingle(random, last);
-  const opts = seconds ? { loop: true, seconds } : { loop: true };
+  // Les peces noves, sempre amb el generador d'estructures (versió 2).
+  const opts = seconds ? { loop: true, seconds, v: 2 as const } : { loop: true, v: 2 as const };
   let spec = R.composeJingle(style, Math.floor(random() * 4294967295) + 1, opts);
   for (let k = 1; k < 20 && heard.has(R.jingleFingerprint(spec)); k++) {
     spec = R.composeJingle(style, Math.floor(random() * 4294967295) + 1, opts);
@@ -111,11 +112,22 @@ export interface Piece {
   fav: boolean;
   /** Durada del bucle, si no és la de sempre (64 s al minut de la lliga). */
   seconds?: number;
+  /** 2: composta amb el generador d'estructures. Sense: la versió 1 (les peces d'abans). */
+  v?: 2;
 }
 
-const STYLES: readonly JingleStyle[] = ['fanfarria', 'galop', 'rumba', 'funk', 'himne'];
+const STYLES: readonly JingleStyle[] = ['fanfarria', 'galop', 'rumba', 'funk', 'himne', 'ska', 'rocksteady', 'dostons'];
 
-export const pieceKey = (piece: Pick<Piece, 'style' | 'seed'>) => `${piece.style}:${piece.seed}`;
+/** La clau d'una peça: estil i llavor (i la versió, si és la 2). */
+export const pieceKey = (piece: Pick<Piece, 'style' | 'seed' | 'v'>) =>
+  `${piece.style}:${piece.seed}${piece.v === 2 ? ':2' : ''}`;
+
+/** Les opcions per tornar a compondre exactament una peça del registre. */
+export const pieceOpts = (piece: Pick<Piece, 'seconds' | 'v'>) => ({
+  loop: true,
+  seconds: piece.seconds,
+  ...(piece.v === 2 ? { v: 2 as const } : {}),
+});
 
 export function registryList(store: Store | null): Piece[] {
   try {
@@ -130,6 +142,7 @@ export function registryList(store: Store | null): Piece[] {
         const seconds = Number(p.seconds);
         const piece: Piece = { style: p.style, seed: Number(p.seed) >>> 0, at: Number(p.at) || 0, fav: p.fav === true };
         if (Number.isFinite(seconds) && seconds > 0 && seconds <= 120 && seconds !== 32) piece.seconds = seconds;
+        if (p.v === 2) piece.v = 2;
         return piece;
       });
   } catch {
@@ -152,13 +165,14 @@ function registrySave(store: Store | null, list: Piece[]): Piece[] {
 /** Apunta una peça que ha sonat (la més nova primer; si ja hi era, conserva si és preferida). */
 export function registerPiece(
   store: Store | null,
-  piece: Pick<Piece, 'style' | 'seed'> & { seconds?: number },
+  piece: Pick<Piece, 'style' | 'seed'> & { seconds?: number; v?: 2 },
   at = Date.now(),
 ): Piece[] {
   const list = registryList(store);
   const old = list.findIndex((p) => pieceKey(p) === pieceKey(piece));
   const entry: Piece = { style: piece.style, seed: piece.seed >>> 0, at, fav: old >= 0 ? list[old].fav : false };
   if (piece.seconds && piece.seconds !== 32) entry.seconds = piece.seconds;
+  if (piece.v === 2) entry.v = 2;
   if (old >= 0) list.splice(old, 1);
   return registrySave(store, [entry, ...list]);
 }
