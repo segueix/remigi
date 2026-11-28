@@ -3617,3 +3617,26 @@ Demanat pel jugador: baixar Despertaferro a 1400 aproximadament.
 
 - [x] `jugadors.json`: Despertaferro passa de 1550 ±50 a 1400 ±50 (1350–1450).
 - [x] `docs/JUGADORS-AUTOMATICS.md` actualitzat.
+
+### Tres jugadors automàtics més amb corbes pròpies (2026-11-28)
+
+Demanat pel jugador: tres perfils més com MirdeTost (Urgellenc, Garrapinyada i
+CapitàEnciam) que juguin la partida del dia a un nivell propi i adaptatiu, amb
+corbes diferents de la resta.
+
+- [x] `automatic.ts`: `curve` opcional (`aprenent`, `ones`, `setmana`) i
+      `adapt` opcional (reacció a la ratxa o a la derrota del dia abans, amb
+      límit). Sense aquests camps, la força surt igual que abans (els tres
+      jugadors d'abans no canvien).
+- [x] `publica.ts`: la força es calcula amb la fitxa del jugador.
+- [x] `jugadors.json`: Urgellenc (aprenent 1050 → 1450, +60 després de
+      perdre, 10:00–13:00), Garrapinyada (ones de 9 dies 1300 ±180, +30 per
+      victòria / −40 per derrota, 17:00–22:00) i CapitàEnciam (fort el cap de
+      setmana, −35 per victòria / +20 per derrota, 12:00–15:00), amb uid nous.
+      Les franges cauen dins d'execucions ja programades.
+- [x] `docs/JUGADORS-AUTOMATICS.md`: corbes, reacció i jugadors actuals.
+
+**Criteris d'acceptació (verificats)**: `typecheck` net (web i script); proves
+de `bots` en verd (11, 4 de noves); simulació de 21 dies (29-11 a 19-12)
+encadenant la ratxa: les tres corbes es veuen i alguns dies no juguen.
+

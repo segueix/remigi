@@ -133,6 +133,8 @@ A partir d'aquí, la tasca s'executa sola cada dia.
    | `skipRate` | Probabilitat de no jugar un dia (0 = cada dia, 0,3 ≈ 2 dies per setmana) |
    | `from`, `to` | Franja per publicar, hora de Barcelona. Publica la primera execució de la tasca que arriba després del seu minut (vegeu [Horari](#horari)) |
    | `active` | `false` perquè deixi de jugar |
+   | `curve` | Opcional. Com es mou la força mitjana amb els dies (vegeu [Corbes](#corbes-i-reaccio)) |
+   | `adapt` | Opcional. Com reacciona al resultat del dia abans (vegeu [Corbes](#corbes-i-reaccio)) |
 
 2. Prova'l en local, sense escriure res:
 
@@ -162,6 +164,27 @@ No es retallen jugades ni punts, ni es tornen a jugar partides per triar un
 resultat més favorable. El canvi afecta les publicacions següents; les ja
 publicades es conserven.
 
+## Corbes i reacció
+
+Sense `curve` ni `adapt`, la força de cada dia és `rating` ± `spread` (com
+MirdeTost, Guineueta i Despertaferro). Amb aquests camps, cada jugador té la
+seva pròpia forma (`curveRating` i `adaptDelta` a `automatic.ts`):
+
+**Força del dia = corba(dia) + reacció(dia abans) ± `spread`**, entre 800 i 1600.
+
+| `curve.kind` | Camps | Què fa |
+|---|---|---|
+| `aprenent` | `start`, `from`, `halfLife` | Comença a `from` el dia `start` i s'acosta a `rating`: fa la meitat del camí en `halfLife` dies, la meitat del que queda en uns altres `halfLife`, etc. |
+| `ones` | `period`, `amplitude` | Puja i baixa al voltant de `rating`, ±`amplitude`, amb un cicle de `period` dies (bones i males temporades) |
+| `setmana` | `offsets` (7 valors, de diumenge a dissabte) | `rating` més l'ajust del dia de la setmana |
+
+`adapt` = `{ win, loss, max }`: si el dia abans va jugar, suma `win` per cada
+victòria de la ratxa que porta, o `loss` si va perdre; com a molt ±`max`. Si
+el dia abans no va jugar, res. La reacció es calcula amb la fitxa
+(`jugadors/{uid}`), així que `--prova` sense Firestore no la mostra (surt la
+força sense reacció). Ni la corba ni la reacció canvien si juga ni a quina
+hora publica.
+
 ## Retirar-los
 
 - **Un sol jugador:** posa `"active": false` a `jugadors.json`. Deixa de jugar
@@ -189,6 +212,9 @@ publicades es conserven.
 | `mirdetost` | MirdeTost | 1450 | ±80 | 15 % | 08:00–12:00 |
 | `guineueta` | Guineueta | 1150 | ±200 | 30 % | 07:00–10:00 |
 | `despertaferro` | Despertaferro | 1400 | ±50 | 5 % | 13:00–17:00 |
+| `urgellenc` | Urgellenc | 1050 → 1450 (aprenent) | ±60 | 10 % | 10:00–13:00 |
+| `garrapinyada` | Garrapinyada | 1300 ±180 (ones de 9 dies) | ±40 | 20 % | 17:00–22:00 |
+| `capitaenciam` | CapitàEnciam | 1250 + dia de la setmana | ±60 | 25 % | 12:00–15:00 |
 
 - **Guineueta**: matinera i irregular. Força mitjana-baixa amb molta variació
   (950–1350) i salta uns 2 dies per setmana. Publica a primera hora (execucions
@@ -197,3 +223,17 @@ publicades es conserven.
   per sota de MirdeTost, i gairebé no falla cap dia. Publica a la tarda (execucions de les 15:17
   o 17:17 a l'hivern; 13:37, 16:17 o 18:17 a l'estiu), sense canviar l'horari
   de la tasca.
+- **Urgellenc**: l'aprenent tossut. Comença fluix (1050 el 29-11-2026) i
+  millora amb una corba d'aprenentatge: ~1250 a les 3 setmanes, ~1350 a les 6,
+  i s'acosta a 1450 sense arribar-hi. Quan perd, l'endemà s'hi posa més
+  (+60); les victòries no el canvien. Publica a mig matí (10:17, 11:17 o 12:37
+  a l'hivern).
+- **Garrapinyada**: de ratxes. La força fa ones de 9 dies entre 1120 i 1480, i
+  a més s'engresca quan guanya (+30 per victòria seguida, fins a +120) i
+  s'enfonsa quan perd (−40): ratxes llargues bones i dolentes. Salta 1 dia de
+  cada 5. Publica al vespre (17:17 o 22:17 a l'hivern).
+- **CapitàEnciam**: de cap de setmana. Fort el dissabte i el diumenge (1400),
+  fluix entre setmana (1100 el dimecres), i es confia quan guanya (−35 per
+  victòria seguida, fins a −105) i es pica quan perd (+20): poques ratxes
+  llargues. Salta 1 dia de cada 4. Publica a l'hora de dinar (12:37 o 15:17 a
+  l'hivern).

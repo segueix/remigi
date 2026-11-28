@@ -31,5 +31,68 @@
     "from": "13:00",
     "to": "17:00",
     "active": true
+  },
+  {
+    "key": "urgellenc",
+    "alias": "Urgellenc",
+    "uid": "hhxU4s6n0hGEf1Wy0qHWCz9ZyFGg",
+    "rating": 1450,
+    "spread": 60,
+    "skipRate": 0.1,
+    "from": "10:00",
+    "to": "13:00",
+    "active": true,
+    "curve": {
+      "kind": "aprenent",
+      "start": "2026-11-29",
+      "from": 1050,
+      "halfLife": 21
+    },
+    "adapt": {
+      "win": 0,
+      "loss": 60,
+      "max": 60
+    }
+  },
+  {
+    "key": "garrapinyada",
+    "alias": "Garrapinyada",
+    "uid": "Ni2zutRyLVpUUxWZGnVGzCYZrxLZ",
+    "rating": 1300,
+    "spread": 40,
+    "skipRate": 0.2,
+    "from": "17:00",
+    "to": "22:00",
+    "active": true,
+    "curve": {
+      "kind": "ones",
+      "period": 9,
+      "amplitude": 180
+    },
+    "adapt": {
+      "win": 30,
+      "loss": -40,
+      "max": 120
+    }
+  },
+  {
+    "key": "capitaenciam",
+    "alias": "CapitàEnciam",
+    "uid": "wptgHZYdAziYRMhwU8onthzYPhsu",
+    "rating": 1250,
+    "spread": 60,
+    "skipRate": 0.25,
+    "from": "12:00",
+    "to": "15:00",
+    "active": true,
+    "curve": {
+      "kind": "setmana",
+      "offsets": [150, -100, -50, -150, -50, 0, 150]
+    },
+    "adapt": {
+      "win": -35,
+      "loss": 20,
+      "max": 105
+    }
   }
 ]
