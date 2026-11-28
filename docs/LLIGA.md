@@ -411,6 +411,22 @@ llegeix).
 | `galop` | Tic-tac del rellotge | El d'El Tauler |
 | `himne` | Himne de la lliga | El d'El Tauler |
 
+**Batucada (estils d'ska).**
+- Cada peça tria de dos a quatre instruments: surdo, repinique, tamborim,
+  agogô, xocalho o caixa. El surdo hi és tres de cada quatre vegades.
+- Cada instrument hi toca un dels seus ritmes (`BATUCADA`) i el surdo té una
+  afinació pròpia. Amb el mateix estil, cada peça sona amb percussions
+  diferents.
+- La B i la C hi sumen un instrument més.
+- La intro entra instrument a instrument i, a vegades, només amb batucada,
+  sense bateria. La pausa del solista pot ser un «break» de batucada.
+- El crescendo porta la crida del repinique.
+- Quatre de cada deu peces porten xiulet (apito) a l'entrada de la B i de la
+  pausa.
+- El títol diu els instruments («… · surdo, tamborim i agogô»).
+- Està ajustada perquè la música (vents, guitarra, baix) en conservi uns
+  85 %.
+
 **Retirats:** Passeig de jornada (`fanfarria`), Rumba de la classificació
 (`rumba`) i Groove de la jugada (`funk`) s'allunyaven de l'ska. Ja no se'n
 componen de nous (`RETIRED_JINGLES`), però les peces desades al registre
@@ -445,7 +461,9 @@ canvis propis de Remigi:
 - `composeStructured` i les seves taules;
 - els estils `ska`, `rocksteady` i `dostons`, amb `skaScore`, `rocksteadyScore`
   i `dostonsScore`;
-- els instruments `brass`, `organ`, `snare` i `hat`, també a `INSTRUMENTS`;
+- els instruments `brass`, `organ`, `snare` i `hat`, i els de batucada
+  (`surdo`, `skin`, `shaker`, `whistle`), també a `INSTRUMENTS`;
+- `BATUCADA`, `pickBatucada` i `batucada`;
 - els solistes nous;
 - `RETIRED_JINGLES`;
 - la clau de la memòria cau del reproductor, amb la versió i la durada.
@@ -489,7 +507,7 @@ música entre jornades o canviar-ne el volum (`remigi:musica`).
   la mateixa peça, síntesi de 32 s, registre i preferides, nom de l'MP3;
   versió 1 idèntica per empremtes, estils retirats que no surten, formes i
   compassos de la versió 2, seccions que tornen iguals, síntesi per trossos
-  dels estils d'ska, versió al registre).
+  dels estils d'ska, batucada diferent a cada tema, versió al registre).
 - Navegador: `e2e/modes.spec.ts` (les tres opcions de costat també al mòbil,
   el joc lliure que recorda 3 Experts després de recarregar sense partida, la
   tornada a l'inici i represa, un repte de 3 partides amb el total i sense

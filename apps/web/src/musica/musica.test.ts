@@ -203,6 +203,24 @@ describe('el generador d’estructures (versió 2) i els estils d’ska', () => 
     }
   }, 30_000);
 
+  it('cada tema d’ska porta la seva batucada (instruments i ritmes diferents)', () => {
+    const sets = new Set<string>();
+    for (const style of ['ska', 'rocksteady', 'dostons']) {
+      for (let seed = 1; seed <= 40; seed++) {
+        const spec = R.composeJingle(style, seed * 104729, { loop: true, v: 2 });
+        const layers = spec.perc!.layers;
+        expect(layers.length).toBeGreaterThanOrEqual(2);
+        expect(layers.length).toBeLessThanOrEqual(4);
+        expect(new Set(layers.map((l) => l.inst)).size).toBe(layers.length);
+        expect(R.jingleTitle(spec)).toContain(spec.percName!);
+        sets.add(layers.map((l) => `${l.inst}${l.pat}`).sort().join(','));
+      }
+    }
+    expect(sets.size).toBeGreaterThan(50);
+    // Els estils d'abans no en porten.
+    expect(R.composeJingle('himne', 3, { loop: true, v: 2 }).perc).toBeUndefined();
+  });
+
   it('les peces noves són de la versió 2 i el registre ho recorda', () => {
     const store = memoryStore();
     const spec = composeNew(R, store);

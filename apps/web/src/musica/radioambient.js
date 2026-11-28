@@ -8,7 +8,8 @@
  * Canvis propis de Remigi (cal conservar-los si es torna a copiar el fitxer
  * d'El Tauler; vegeu docs/LLIGA.md §4): `opts.seconds`, el generador
  * d'estructures (versió 2, `composeStructured`), els estils d'ska (ska,
- * rocksteady, dostons) amb els seus instruments (brass, organ, snare, hat) i
+ * rocksteady, dostons) amb els seus instruments (brass, organ, snare, hat i la
+ * batucada: surdo, skin, shaker, whistle, `BATUCADA`) i
  * els estils retirats (`RETIRED_JINGLES`), que ja no se'n componen de nous. Remigi la fa servir a la pantalla entre
  * jornades de la lliga (vegeu `musica.ts`).
  *
@@ -399,6 +400,54 @@ function createSynth(sampleRate, seconds, random) {
             data[j] += env * hp;
         }
     }
+    // ── Batucada (afegits a la còpia de Remigi) ──
+    // Surdo: tambor greu (≈ 60-75 Hz) amb el to que cau; tapat (`muted`), curt.
+    function surdo(start, vel, hz = 66, muted = false) {
+        const tau = muted ? 0.07 : 0.32, kE = decay(tau), kP = decay(0.03), kN = decay(0.006), n = Math.round(tau * 5 * sr);
+        let j = at(start), phase = 0, env = vel * 0.085, sweep = hz * 0.6, nz = 0.25, lp = 0;
+        for (let i = 0; i < n; i++, j++) {
+            if (j >= length) j -= length;
+            env *= kE; sweep *= kP; nz *= kN;
+            phase += (hz + sweep) / sr;
+            lp += 0.2 * ((random() * 2 - 1) - lp);
+            data[j] += env * (sin1(phase) + 0.25 * sin1(2 * phase + 0.1) + nz * lp);
+        }
+    }
+    // Repinique i tamborim: pell petita i tensa, cop sec amb la vora.
+    function skin(start, vel, hz, tau, crack) {
+        const f = hz / sr, kE = decay(tau), kN = decay(tau * 0.4), n = Math.round(tau * 6 * sr);
+        let j = at(start), env = vel * 0.045, nz = crack, hp = 0, prev = 0;
+        for (let i = 0; i < n; i++, j++) {
+            if (j >= length) j -= length;
+            env *= kE; nz *= kN;
+            const w = random() * 2 - 1;
+            hp = 0.7 * (hp + w - prev); prev = w;
+            data[j] += env * (sin1(f * i) + 0.5 * sin1(1.58 * f * i + 0.2) + nz * hp);
+        }
+    }
+    // Xocalho (ganzá): gra de soroll molt agut amb una entrada suau.
+    function shaker(start, vel, len = 0.07) {
+        const n = Math.round(len * 2.2 * sr), aN = Math.round(len * 0.35 * sr), kE = decay(len * 0.5);
+        let j = at(start), env = vel * 0.028, prev = 0, hp = 0;
+        for (let i = 0; i < n; i++, j++) {
+            if (j >= length) j -= length;
+            if (i > aN) env *= kE;
+            const w = random() * 2 - 1;
+            hp = 0.45 * (hp + w - prev); prev = w;
+            data[j] += env * Math.min(1, i / Math.max(1, aN)) * hp;
+        }
+    }
+    // Xiulet de batucada (apito): to agut amb el trinat de la boleta.
+    function whistle(start, dur, vel) {
+        const f = 2300 / sr, tr = 28 / sr, n = Math.round(dur * sr), aN = Math.round(0.01 * sr), rN = Math.round(0.03 * sr);
+        let j = at(start), ph = 0;
+        for (let i = 0; i < n; i++, j++) {
+            if (j >= length) j -= length;
+            const env = Math.min(1, i / aN, (n - i) / rN);
+            ph += f * (1 + 0.035 * sin1(tr * i));
+            data[j] += vel * 0.018 * env * (sin1(ph) + 0.2 * sin1(2 * ph));
+        }
+    }
     // Marge fix: el pic queda per sota de 0,72 i el volum mitjà és el de
     // la sintonia suau, perquè totes les melodies sonin igual de fort.
     function finish(targetRms) {
@@ -410,7 +459,7 @@ function createSynth(sampleRate, seconds, random) {
         for (let i = 0; i < length; i++) data[i] *= k;
         return data;
     }
-    return { sr, length, data, epiano, pad, strings, bass, vibes, kick, brush, pluck, flute, struck, block, reed, crackle, brass, organ, snare, hat, finish };
+    return { sr, length, data, epiano, pad, strings, bass, vibes, kick, brush, pluck, flute, struck, block, reed, crackle, brass, organ, snare, hat, surdo, skin, shaker, whistle, finish };
 }
 
 function themeScore(syn) {
@@ -881,7 +930,7 @@ function lofiScore(syn) {
 
 const SCORES = { theme: themeScore, oriental: orientalScore, bossa: bossaScore, vals: valsScore, capvespre: capvespreScore,
     havanera: havaneraScore, celta: celtaScore, nocturn: nocturnScore, marimba: marimbaScore, lofi: lofiScore };
-const INSTRUMENTS = ['epiano', 'pad', 'strings', 'bass', 'vibes', 'kick', 'brush', 'pluck', 'flute', 'struck', 'block', 'reed', 'crackle', 'brass', 'organ', 'snare', 'hat'];
+const INSTRUMENTS = ['epiano', 'pad', 'strings', 'bass', 'vibes', 'kick', 'brush', 'pluck', 'flute', 'struck', 'block', 'reed', 'crackle', 'brass', 'organ', 'snare', 'hat', 'surdo', 'skin', 'shaker', 'whistle'];
 // Mostres d'una melodia (Float32Array, 32 s, a `sampleRate`). No hi ha
 // enregistraments, veus ni xarxa: tot es calcula aquí.
 function samples(melody, sampleRate = 22050, random = Math.random) {
@@ -1045,13 +1094,13 @@ const STYLES = {
     // típiques, que el generador barreja amb les seves) i `v2` (només amb el
     // generador d'estructures).
     ska: { mode: 'major', modes: ['major', 'major', 'minor'], keys: [0, 2, 5, 7, 10, 3], beat: [0.38, 0.44], chordBase: 60, seventh: false, mel: [65, 84], maxJump: 3,
-        rhythms: ['s1', 's2', 's3', 's4', 's5', 's6', 'r4'], leads: ['trumpet', 'sax', 'trombone', 'melodica'], variants: 3, v2: true,
+        rhythms: ['s1', 's2', 's3', 's4', 's5', 's6', 'r4'], leads: ['trumpet', 'sax', 'trombone', 'melodica'], variants: 3, v2: true, batucada: true,
         bank: { major: [[0, 3, 4, 3], [0, 4, 0, 4], [0, 5, 3, 4], [0, 9, 3, 0], [0, 0, 3, 4], [1, 4, 0, 0]], minor: [[0, 3, 0, 4], [0, 6, 5, 4], [0, 0, 3, 3]] } },
     rocksteady: { mode: 'major', modes: ['major', 'minor'], keys: [0, 2, 5, 7, 9, 10], beat: [0.58, 0.66], chordBase: 57, seventh: false, mel: [62, 81], maxJump: 3,
-        rhythms: ['r2', 'r3', 'r4', 's2', 's4', 's6'], leads: ['trombone', 'sax', 'organ', 'melodica'], variants: 2, v2: true,
+        rhythms: ['r2', 'r3', 'r4', 's2', 's4', 's6'], leads: ['trombone', 'sax', 'organ', 'melodica'], variants: 2, v2: true, batucada: true,
         bank: { major: [[0, 5, 3, 4], [0, 3, 0, 4], [0, 0, 1, 4], [0, 8, 3, 3]], minor: [[0, 3, 0, 4], [0, 5, 6, 0], [0, 6, 3, 4]] } },
     dostons: { mode: 'minor', modes: ['minor', 'dorian', 'major'], keys: [9, 4, 2, 7, 0, 5], beat: [0.33, 0.37], chordBase: 59, seventh: false, mel: [64, 83], maxJump: 3,
-        rhythms: ['s1', 's3', 's5', 's6', 'r2', 'r7'], leads: ['sax', 'trumpet', 'organ'], variants: 2, v2: true,
+        rhythms: ['s1', 's3', 's5', 's6', 'r2', 'r7'], leads: ['sax', 'trumpet', 'organ'], variants: 2, v2: true, batucada: true,
         bank: { major: [[0, 3, 4, 4], [0, 9, 3, 0]], minor: [[0, 6, 5, 4], [0, 3, 0, 3], [0, 5, 3, 4]], dorian: [[0, 3, 0, 3], [0, 6, 3, 0]] } }
 };
 // Arpegis del rellotge (índexs de l'acord; -1 = silenci): quatre patrons.
@@ -1280,6 +1329,64 @@ function buildChordV2(tonic, mode, code, st, shift) {
 function formLabel(sections) {
     return sections.map(sc => sc.letter === 'I' ? 'intro' : sc.letter + (sc.prime >= 3 ? String(sc.prime) : ['', '′', '″'][sc.prime])).join(' ');
 }
+// Batucada (estils d'ska): ritmes d'un compàs en setzenes, [posició, força
+// (, so)]. Cada peça en tria de dos a quatre instruments, amb un ritme
+// cadascun; la B i la C hi sumen un instrument més, i la intro i la pausa
+// poden ser només de batucada.
+const BATUCADA = {
+    surdo: [
+        [[0, 0.5, 'm'], [4, 1, 'o'], [8, 0.5, 'm'], [12, 1, 'o']],
+        [[4, 1, 'o'], [12, 1, 'o'], [14, 0.6, 'm']],
+        [[0, 1, 'o'], [6, 0.7, 'm'], [8, 0.9, 'o'], [10, 0.6, 'm'], [12, 1, 'o']]
+    ],
+    repinique: [
+        [[2, 0.7], [3, 0.5], [6, 0.9], [10, 0.7], [11, 0.5], [14, 0.9]],
+        [[2, 0.9], [6, 0.9], [10, 0.9], [14, 0.9]],
+        [[0, 1], [3, 0.8], [6, 1], [8, 0.7], [11, 0.8], [14, 1]]
+    ],
+    tamborim: [
+        [[0, 1], [2, 0.7], [3, 0.9], [5, 0.7], [7, 1], [8, 0.7], [10, 0.9], [13, 0.8]],
+        [[2, 1], [6, 1], [10, 1], [14, 1], [15, 0.6]],
+        [[0, 1], [3, 1], [6, 1], [8, 0.8], [11, 1], [14, 1]]
+    ],
+    agogo: [
+        [[0, 1, 'h'], [2, 0.7, 'l'], [4, 0.9, 'h'], [7, 0.8, 'l'], [8, 1, 'h'], [10, 0.7, 'h'], [12, 0.8, 'l']],
+        [[0, 1, 'h'], [3, 0.8, 'l'], [6, 0.9, 'h'], [8, 0.8, 'l'], [10, 0.9, 'h'], [12, 0.7, 'l'], [14, 0.7, 'l']]
+    ],
+    xocalho: [
+        Array.from({ length: 16 }, (_, k) => [k, k % 4 === 2 ? 0.95 : 0.4]),
+        Array.from({ length: 8 }, (_, k) => [k * 2, k % 2 ? 0.9 : 0.45])
+    ],
+    caixa: [
+        Array.from({ length: 16 }, (_, k) => [k, k % 4 === 2 ? 0.8 : 0.22]),
+        [[2, 0.8], [3, 0.3], [6, 0.8], [7, 0.3], [9, 0.4], [10, 0.8], [14, 0.8], [15, 0.4]]
+    ]
+};
+const BATUCADA_NAMES = { surdo: 'surdo', repinique: 'repinique', tamborim: 'tamborim', agogo: 'agogô', xocalho: 'xocalho', caixa: 'caixa' };
+function pickBatucada(r) {
+    const all = Object.keys(BATUCADA);
+    const pool = all.slice();
+    const count = 2 + Math.floor(r() * 3);
+    const layers = [];
+    // Gairebé sempre el surdo (el cor de la batucada).
+    if (r() < 0.75) { layers.push('surdo'); pool.splice(pool.indexOf('surdo'), 1); }
+    while (layers.length < count) layers.push(pool.splice(Math.floor(r() * pool.length) % pool.length, 1)[0]);
+    const extra = pool.length ? pool[Math.floor(r() * pool.length) % pool.length] : null;
+    const pat = inst => Math.floor(r() * BATUCADA[inst].length) % BATUCADA[inst].length;
+    return {
+        layers: layers.map(inst => ({ inst, pat: pat(inst) })),
+        extra: extra ? { inst: extra, pat: pat(extra) } : null,
+        surdoHz: 58 + Math.floor(r() * 18),
+        // La intro i la pausa, només de batucada? I el xiulet als canvis?
+        introSolo: r() < 0.5,
+        pausaSolo: r() < 0.6,
+        apito: r() < 0.4
+    };
+}
+function batucadaLabel(perc) {
+    const names = perc.layers.map(l => BATUCADA_NAMES[l.inst]);
+    return names.slice(0, -1).join(', ') + (names.length > 1 ? ' i ' : '') + names[names.length - 1];
+}
 function composeStructured(id, seed, loop, loopSeconds) {
     const st = STYLES[id];
     const s = (seed >>> 0) || 1;
@@ -1359,6 +1466,11 @@ function composeStructured(id, seed, loop, loopSeconds) {
         final: { root: bassOf(tonic), notes: voiceRoot(finalPcs.slice(0, 3), 57), top: nearestTone(st.mel ? st.mel[1] - 6 : 79, [tonic], 72, 88) },
         melody: [], patterns: []
     };
+    if (st.batucada) {
+        // Una llavor pròpia: no mou la resta de la peça.
+        spec.perc = pickBatucada(seededRng((s ^ 0x27d4eb2f ^ Math.imul(id.length, 0x9e3779b1)) >>> 0));
+        spec.percName = batucadaLabel(spec.perc);
+    }
     if (!st.mel) {
         // Arpegis (galop): els mateixos patrons quan torna una secció.
         const memo = {};
@@ -1413,14 +1525,15 @@ function leadAt(spec, b) { return barAt(spec, b).lead || spec.lead; }
 function jingleFingerprint(spec) {
     const str = spec.style + '|' + spec.tonic + '|' + spec.lead + '|' + spec.variant + '|' + spec.degrees.join('') + '|'
         + spec.melody.map(m => m[2] + ':' + m[1]).join(',') + '|' + spec.patterns.map(p => p.join('')).join('')
-        + (spec.v === 2 ? '|v2|' + spec.mode + '|' + spec.formLabel + '|' + spec.chords.map(c => c.shift).join('') : '');
+        + (spec.v === 2 ? '|v2|' + spec.mode + '|' + spec.formLabel + '|' + spec.chords.map(c => c.shift).join('') : '')
+        + (spec.perc ? '|' + spec.perc.layers.map(l => l.inst + l.pat).join(',') + (spec.perc.extra ? '+' + spec.perc.extra.inst : '') : '');
     let h = 2166136261;
     for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
     return (h >>> 0).toString(36);
 }
 function jingleTitle(spec) {
     const info = jingleInfo(spec && spec.style);
-    return info.name + ' · ' + (spec ? spec.keyName + ' · ' + spec.leadName + (spec.v === 2 ? ' · ' + spec.formName : '') : '');
+    return info.name + ' · ' + (spec ? spec.keyName + ' · ' + spec.leadName + (spec.v === 2 ? ' · ' + spec.formName : '') + (spec.percName ? ' · ' + spec.percName : '') : '');
 }
 
 // Instrument solista: una nota.
@@ -1651,6 +1764,50 @@ function walking(chord, next) {
     const approach = nr > rt ? nr - 1 : nr + 1;
     return [rt, third, fifth, Math.abs(approach - rt) > 7 ? fifth : approach];
 }
+// Un cop d'un instrument de batucada.
+function batucadaHit(syn, inst, t, vel, sound, hz) {
+    switch (inst) {
+        case 'surdo': syn.surdo(t, vel, hz, sound === 'm'); break;
+        case 'repinique': syn.skin(t, vel, 340, 0.07, 0.5); break;
+        case 'tamborim': syn.skin(t, 0.8 * vel, 880, 0.025, 0.9); break;
+        case 'agogo': syn.struck(t, sound === 'h' ? 84 : 79, vel, [1, 2.42, 3.9], [1, 0.45, 0.2], [0.22, 0.1, 0.05], { gain: 0.022 }); break;
+        case 'xocalho': syn.shaker(t, vel); break;
+        case 'caixa': syn.snare(t, 0.32 * vel, 280); break;
+    }
+}
+// La batucada de tota la peça (si l'estil en porta). Torna, per a cada
+// compàs, si la bateria ha de callar (intro o pausa només de batucada).
+function batucada(syn, spec) {
+    const quiet = spec.chords.map(() => false);
+    const perc = spec.perc;
+    if (!perc) return quiet;
+    const beat = spec.beat, bar = beat * 4, six = beat / 4;
+    spec.chords.forEach((chord, b) => {
+        const info = barAt(spec, b), sc = spec.sections && spec.sections[info.sec];
+        const t0 = b * bar, v = skaDyn(spec, b);
+        let layers = perc.layers;
+        if (sc && (sc.letter === 'B' || sc.letter === 'C') && perc.extra) layers = layers.concat([perc.extra]);
+        if (info.texture === 'intro') {
+            quiet[b] = perc.introSolo;
+            // La intro entra de mica en mica: primer el surdo (o el primer), després la resta.
+            const sinceStart = sc ? b - sc.start : 0;
+            layers = layers.slice(0, Math.max(1, sinceStart + 1));
+        }
+        if (info.texture === 'pausa' && perc.pausaSolo) { quiet[b] = true; if (perc.extra) layers = layers.concat([perc.extra]); }
+        layers.forEach(({ inst, pat }) => BATUCADA[inst][pat].forEach(([pos, vel, sound]) =>
+            batucadaHit(syn, inst, t0 + pos * six, vel * v, sound, perc.surdoHz)));
+        // Crescendo: la crida del repinique a l'últim compàs de la secció.
+        const next = barAt(spec, b + 1);
+        if (info.texture === 'crescendo' && next.sec !== info.sec)
+            [8, 9, 10, 12, 13, 14, 15].forEach((pos, k) => syn.skin(t0 + pos * six, 0.6 + 0.06 * k, 340, 0.07, 0.6));
+        // El xiulet marca l'entrada de les seccions B i de la pausa.
+        if (perc.apito && sc && b === sc.start && (sc.letter === 'B' || info.texture === 'pausa') && b > 0) {
+            syn.whistle(t0 - beat, beat * 0.45, 0.9);
+            syn.whistle(t0 - beat / 2, beat * 0.3, 0.8);
+        }
+    });
+    return quiet;
+}
 function skaFinal(syn, spec, end) {
     if (spec.loop) return;
     jingleFinal(syn, end, spec.final.notes, spec.final.root, { hold: 1.0 });
@@ -1663,6 +1820,7 @@ function skaScore(syn, spec) {
     const beat = spec.beat, bar = beat * 4, eighth = beat / 2, end = spec.chords.length * bar;
     const chop = { decay: 0.08, partials: [1, 0.6, 0.4, 0.25, 0.12], damp: 0.6, gain: 0.07, attack: 0.002 };
     const piano = { decay: 0.12, partials: [1, 0.45, 0.25, 0.1], damp: 0.9, gain: 0.05, attack: 0.002 };
+    const quiet = batucada(syn, spec);
     spec.chords.forEach((chord, b) => {
         const t0 = b * bar, v = skaDyn(spec, b), info = barAt(spec, b);
         const walk = walking(chord, spec.chords[(b + 1) % spec.chords.length]);
@@ -1673,6 +1831,7 @@ function skaScore(syn, spec) {
             if (spec.variant === 2) chord.notes.forEach((n, k) => syn.pluck(t0 + t * beat + eighth / 2 + k * 0.004, n + 12, 0.45 * v, chop));
         });
         walk.forEach((n, k) => syn.bass(t0 + k * beat, n, (k ? 0.65 : 0.85) * v, 0.3));
+        if (quiet[b]) return;
         const fill = skaFill(syn, spec, b, t0, beat);
         if (info.texture !== 'pausa') [0, 2].forEach(t => syn.kick(t0 + t * beat, 0.6 * v, 50));
         [1, 3].forEach(t => { if (!(fill && t === 3)) syn.snare(t0 + t * beat, (info.texture === 'pausa' ? 0.45 : 0.7) * v); });
@@ -1688,6 +1847,7 @@ function skaScore(syn, spec) {
 function rocksteadyScore(syn, spec) {
     const beat = spec.beat, bar = beat * 4, eighth = beat / 2, end = spec.chords.length * bar;
     const chop = { decay: 0.1, partials: [1, 0.55, 0.35, 0.2], damp: 0.7, gain: 0.07, attack: 0.002 };
+    const quiet = batucada(syn, spec);
     spec.chords.forEach((chord, b) => {
         const t0 = b * bar, v = skaDyn(spec, b), info = barAt(spec, b);
         [1, 3].forEach(t => chord.notes.forEach((n, k) => syn.pluck(t0 + t * beat + k * 0.005, n + 12, 0.8 * v, chop)));
@@ -1696,6 +1856,7 @@ function rocksteadyScore(syn, spec) {
         const rt = chord.root, fifth = rt + ((chord.pcs[2] - chord.pcs[0] + 12) % 12), third = rt + ((chord.pcs[1] - chord.pcs[0] + 12) % 12);
         [[0, rt, 1, 0.6], [1.5, fifth, 0.6, 0.3], [2, rt + 12, 0.7, 0.3], [3, third, 0.6, 0.3], [3.5, fifth, 0.5, 0.25]]
             .forEach(([t, n, vel, tau]) => syn.bass(t0 + t * beat, n, vel * v, tau));
+        if (quiet[b]) return;
         const fill = skaFill(syn, spec, b, t0, beat);
         if (info.texture !== 'intro' || b % 2) { syn.kick(t0 + 2 * beat, 0.75 * v, 46); if (!fill) syn.block(t0 + 2 * beat, 0.5 * v, 1700, 0.012, 0.6); }
         for (let k = 0; k < 8; k++) syn.hat(t0 + k * eighth + (k % 2 ? eighth * 0.12 : 0), (k % 2 ? 0.45 : 0.7) * v, false);
@@ -1710,6 +1871,7 @@ function rocksteadyScore(syn, spec) {
 function dostonsScore(syn, spec) {
     const beat = spec.beat, bar = beat * 4, eighth = beat / 2, end = spec.chords.length * bar;
     const chop = { decay: 0.06, partials: [1, 0.7, 0.5, 0.3, 0.15], damp: 0.5, gain: 0.075, attack: 0.002 };
+    const quiet = batucada(syn, spec);
     spec.chords.forEach((chord, b) => {
         const t0 = b * bar, v = skaDyn(spec, b), info = barAt(spec, b);
         [0.5, 1.5, 2.5, 3.5].forEach(t => chord.notes.forEach((n, k) => syn.pluck(t0 + t * beat + k * 0.003, n + 12, 0.85 * v, chop)));
@@ -1717,6 +1879,7 @@ function dostonsScore(syn, spec) {
         else chord.notes.forEach(n => syn.organ(t0, n, bar - 0.04, 0.5 * v, { gain: 0.006, perc: 0.1 }));
         const rt = chord.root, fifth = rt + ((chord.pcs[2] - chord.pcs[0] + 12) % 12);
         for (let k = 0; k < 8; k++) syn.bass(t0 + k * eighth, k === 6 ? fifth : (k === 7 ? rt + 12 : rt), (k % 2 ? 0.5 : 0.75) * v, 0.16);
+        if (quiet[b]) return;
         const fill = skaFill(syn, spec, b, t0, beat);
         if (info.texture !== 'pausa') for (let k = 0; k < 4; k++) syn.kick(t0 + k * beat, (k % 2 ? 0.45 : 0.6) * v, 52);
         [1, 3].forEach(t => { if (!(fill && t === 3)) syn.snare(t0 + t * beat, 0.8 * v, 210); });

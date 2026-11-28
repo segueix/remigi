@@ -28,6 +28,16 @@ export interface JingleSpec {
   formName?: string;
   formLabel?: string;
   sections?: JingleSection[];
+  /** Estils d'ska: la batucada de la peça (instruments i ritmes) i els noms («surdo, tamborim i agogô»). */
+  perc?: {
+    layers: { inst: string; pat: number }[];
+    extra: { inst: string; pat: number } | null;
+    surdoHz: number;
+    introSolo: boolean;
+    pausaSolo: boolean;
+    apito: boolean;
+  };
+  percName?: string;
   tonic: number;
   mode: string;
   beat: number;

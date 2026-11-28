@@ -3669,7 +3669,18 @@ l'ska.
       llavor. Ara també compta la versió i la durada; abans, una peça de 64 s
       i una de 32 s amb la mateixa recepta compartien àudio.
 
+- [x] Demanat després: batucada als estils d'ska, diferent a cada tema.
+      Instruments `surdo`, `skin` (repinique, tamborim), `shaker`
+      (xocalho) i `whistle` (apito), a més de l'agogô (`struck`) i la caixa.
+      Cada peça en tria de dos a quatre, amb ritmes propis; la B i la C n'hi
+      sumen un. La intro i la pausa poden ser només de batucada, el crescendo
+      porta la crida del repinique, i hi ha xiulet a l'entrada de seccions.
+      Ajustada perquè la música en conservi uns 85 %. El títol diu els
+      instruments.
+
 **Criteris d'acceptació (verificats)**: `typecheck` net; `npm test` en verd;
 les 50 peces de la versió 1 provades són idèntiques bit a bit a les d'abans;
-mostres de 64 s dels tres estils d'ska en MP3; e2e.
+mostres de 64 s dels tres estils d'ska en MP3; e2e: 200 passen i en falla 1,
+la de lliscar cap a El Tauler (mòbil), que no toca la música i ja fallava de
+tant en tant (1 de 3 repetida).
 
