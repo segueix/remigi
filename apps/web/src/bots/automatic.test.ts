@@ -74,6 +74,13 @@ describe('jugadors automàtics', () => {
     expect(after.rating - plain.rating).toBe(60);
   });
 
+  it('amb `start`, no juga abans d’aquell dia (ni per posar-se al dia)', () => {
+    const late: BotConfig = { ...bot, skipRate: 0, start: '2026-11-28' };
+    expect(botDay(late, '2026-11-27').plays).toBe(false);
+    expect(botDay(late, '2026-11-28').plays).toBe(true);
+    expect(botPending(late, '2026-11-28', 23 * 60, null).yesterday).toBe(false);
+  });
+
   it('un jugador desactivat no juga mai', () => {
     expect(botDay({ ...bot, active: false }, '2026-11-22').plays).toBe(false);
   });

@@ -3635,8 +3635,13 @@ corbes diferents de la resta.
       setmana, −35 per victòria / +20 per derrota, 12:00–15:00), amb uid nous.
       Les franges cauen dins d'execucions ja programades.
 - [x] `docs/JUGADORS-AUTOMATICS.md`: corbes, reacció i jugadors actuals.
+- [x] Demanat després: cadascun dels sis publica en una execució diferent del
+      dia, a l'hivern i a l'estiu (franges que no se solapen, de :20 a :15).
+      MirdeTost passa a 09:20–10:15. `start` (2026-11-28) perquè els nous no
+      publiquin també el dia abans en la primera execució.
 
 **Criteris d'acceptació (verificats)**: `typecheck` net (web i script); proves
-de `bots` en verd (11, 4 de noves); simulació de 21 dies (29-11 a 19-12)
-encadenant la ratxa: les tres corbes es veuen i alguns dies no juguen.
+de `bots` en verd (12, 5 de noves); simulació de 21 dies (29-11 a 19-12)
+encadenant la ratxa: les tres corbes es veuen i alguns dies no juguen;
+comprovat amb els `cron` de la tasca que cap execució publica dos jugadors.
 

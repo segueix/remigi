@@ -6,8 +6,8 @@
     "rating": 1450,
     "spread": 80,
     "skipRate": 0.15,
-    "from": "08:00",
-    "to": "12:00",
+    "from": "09:20",
+    "to": "10:15",
     "active": true
   },
   {
@@ -18,7 +18,7 @@
     "spread": 200,
     "skipRate": 0.3,
     "from": "07:00",
-    "to": "10:00",
+    "to": "09:15",
     "active": true
   },
   {
@@ -28,8 +28,8 @@
     "rating": 1400,
     "spread": 50,
     "skipRate": 0.05,
-    "from": "13:00",
-    "to": "17:00",
+    "from": "15:20",
+    "to": "17:15",
     "active": true
   },
   {
@@ -39,12 +39,13 @@
     "rating": 1450,
     "spread": 60,
     "skipRate": 0.1,
-    "from": "10:00",
-    "to": "13:00",
+    "from": "10:20",
+    "to": "11:15",
     "active": true,
+    "start": "2026-11-28",
     "curve": {
       "kind": "aprenent",
-      "start": "2026-11-29",
+      "start": "2026-11-28",
       "from": 1050,
       "halfLife": 21
     },
@@ -61,9 +62,10 @@
     "rating": 1300,
     "spread": 40,
     "skipRate": 0.2,
-    "from": "17:00",
-    "to": "22:00",
+    "from": "18:20",
+    "to": "22:15",
     "active": true,
+    "start": "2026-11-28",
     "curve": {
       "kind": "ones",
       "period": 9,
@@ -82,9 +84,10 @@
     "rating": 1250,
     "spread": 60,
     "skipRate": 0.25,
-    "from": "12:00",
-    "to": "15:00",
+    "from": "11:20",
+    "to": "13:35",
     "active": true,
+    "start": "2026-11-28",
     "curve": {
       "kind": "setmana",
       "offsets": [150, -100, -50, -150, -50, 0, 150]

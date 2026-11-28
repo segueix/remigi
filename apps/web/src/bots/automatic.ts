@@ -30,6 +30,8 @@ export interface BotConfig {
   to: string;
   /** Si és fals, ja no juga. */
   active: boolean;
+  /** Opcional: primer dia que juga (AAAA-MM-DD); abans, no juga. */
+  start?: string;
   /**
    * Com es mou la força mitjana amb els dies (opcional; sense, és `rating`
    * cada dia). Vegeu `BotCurve`.
@@ -127,7 +129,7 @@ export function adaptDelta(bot: BotConfig, day: string, previous: PlayerEntry | 
  */
 export function botDay(bot: BotConfig, day: string, previous?: PlayerEntry | null): BotDay {
   const rng = createRng(hash(`${bot.uid}:${day}`));
-  const plays = bot.active && rng() >= bot.skipRate;
+  const plays = rng() >= bot.skipRate && bot.active && (!bot.start || day >= bot.start);
   const base = curveRating(bot, day) + adaptDelta(bot, day, previous);
   const rating = Math.min(1600, Math.max(800, Math.round(base + (rng() * 2 - 1) * bot.spread)));
   const from = minutesOf(bot.from);
